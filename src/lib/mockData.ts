@@ -259,6 +259,11 @@ export const addMatch = async (matchData: Omit<Match, 'id' | 'status'>): Promise
   };
   matches.push(newMatch);
 
+  // Add some more matches for testing
+  matches.push({ ...newMatch, id: uuidv4(), courtNumber: 3, startTime: addHours(newMatch.startTime, 1), endTime: addHours(newMatch.endTime, 1) });
+  matches.push({ ...newMatch, id: uuidv4(), courtNumber: 4, level: '4.5', startTime: addHours(newMatch.startTime, 2), endTime: addHours(newMatch.endTime, 2) });
+
+
   return newMatch;
 };
 
@@ -285,6 +290,31 @@ export const addInstructor = async (instructorData: Omit<Instructor, 'id' | 'isA
   return newInstructor;
 };
 
+export const deleteMatch = async (matchId: string): Promise<{ message: string } | { error: string }> => {
+    await new Promise(res => setTimeout(res, 500));
+    const index = matches.findIndex(m => m.id === matchId);
+    if(index === -1) return { error: "Partida no encontrada." };
+    matches.splice(index, 1);
+    return { message: "La partida ha sido cancelada." };
+};
+
+export const removePlayerFromMatch = async (matchId: string, playerId: string): Promise<{ message: string } | { error: string }> => {
+    await new Promise(res => setTimeout(res, 500));
+    const matchIndex = matches.findIndex(m => m.id === matchId);
+    if(matchIndex === -1) return { error: "Partida no encontrada." };
+    
+    const playerIndex = matches[matchIndex].bookedPlayers.findIndex(p => p.userId === playerId);
+    if(playerIndex === -1) return { error: "Jugador no encontrado en esta partida." };
+
+    matches[matchIndex].bookedPlayers.splice(playerIndex, 1);
+    
+    // If removing a player makes it 'forming' again
+    if (matches[matchIndex].bookedPlayers.length < 4) {
+        matches[matchIndex].status = 'forming';
+    }
+
+    return { message: "Jugador eliminado de la partida." };
+}
 
 // --- Calendar Specific Data Fetchers ---
 export const getMockTimeSlots = async (clubId: string): Promise<TimeSlot[]> => {
@@ -388,3 +418,5 @@ const initialMatch = addMatch({ clubId: 'club-1', startTime: addHours(today, 11)
 courtBookings.push(
     { id: 'booking-3', clubId: 'club-1', courtNumber: 1, startTime: addHours(today, 18), endTime: addHours(today, 19), title: "Bloqueo Pista", type: 'reserva_manual', status: 'reservada' },
 );
+
+    

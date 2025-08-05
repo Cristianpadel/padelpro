@@ -268,3 +268,5 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminClub }) => {
 };
 
 export default AdminPanel;
+
+    
