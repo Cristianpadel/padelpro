@@ -86,11 +86,14 @@ export interface Match {
     id: string;
     clubId: string;
     startTime: Date;
+    endTime: Date;
     durationMinutes: number;
     courtNumber: number;
     level: MatchPadelLevel;
     category: PadelCategoryForSlot;
     status?: 'forming' | 'confirmed' | 'cancelled';
+    bookedPlayers?: { userId: string, name: string }[];
+    isPlaceholder?: boolean;
 }
 
 export interface PointTransaction {
@@ -106,6 +109,7 @@ export interface User {
     id: string;
     name: string;
     loyaltyPoints?: number;
+    level?: NumericMatchPadelLevel;
 }
 
 export interface ClubLevelRange {

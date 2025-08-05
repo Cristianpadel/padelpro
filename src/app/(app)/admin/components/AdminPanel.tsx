@@ -57,7 +57,7 @@ interface AdminPanelContentProps {
     loading: boolean;
     onDataChanged: () => void;
     onClubSettingsUpdated: (updatedClub: Club) => void;
-    onActivityAdded: () => void;
+    onActivityAdded: (activity?: TimeSlot | Match) => void;
     onEventCreated: (event: MatchDayEvent) => void;
 }
 

@@ -22,11 +22,12 @@ export let padelCourts: PadelCourt[] = [
 ];
 
 let timeSlots: TimeSlot[] = [];
+let matches: Match[] = [];
 let courtBookings: CourtGridBooking[] = [];
 let pointTransactions: PointTransaction[] = [];
 let students: User[] = [
-    { id: 'user-1', name: 'Alex García', loyaltyPoints: 1250 },
-    { id: 'user-2', name: 'Beatriz Reyes', loyaltyPoints: 800 },
+    { id: 'user-1', name: 'Alex García', loyaltyPoints: 1250, level: '3.5' },
+    { id: 'user-2', name: 'Beatriz Reyes', loyaltyPoints: 800, level: '4.0' },
 ];
 
 
@@ -134,6 +135,14 @@ export const isSlotEffectivelyCompleted = (slot: TimeSlot | Match): boolean => {
     return confirmedStatuses.includes(slot.status);
 };
 
+export const calculateActivityPrice = (club: Club, startTime: Date): number => {
+    // This is a placeholder. A real implementation would check club-specific rate tiers.
+    const hour = startTime.getHours();
+    if (hour >= 18) {
+        return 28; // Peak time
+    }
+    return 20; // Off-peak
+}
 
 // --- Points & Students ---
 export const fetchPointTransactions = async (clubId: string): Promise<PointTransaction[]> => {
@@ -170,6 +179,36 @@ export const addTimeSlot = async (slotData: Omit<TimeSlot, 'id'>): Promise<TimeS
   timeSlots.push(newTimeSlot);
   return newTimeSlot;
 };
+
+export const addMatch = async (matchData: Omit<Match, 'id'>): Promise<Match | { error: string }> => {
+  await new Promise(res => setTimeout(res, 500));
+  
+  const newMatch: Match = {
+      id: uuidv4(),
+      ...matchData,
+      status: 'forming', // Default status
+  };
+  matches.push(newMatch);
+  
+  // Also create a corresponding court booking
+  const newBooking: CourtGridBooking = {
+      id: uuidv4(),
+      clubId: newMatch.clubId,
+      courtNumber: newMatch.courtNumber,
+      startTime: newMatch.startTime,
+      endTime: newMatch.endTime,
+      title: `Partida Nivel ${newMatch.level}`,
+      type: 'partida',
+      status: 'proceso_inscripcion',
+      activityStatus: newMatch.status,
+      participants: newMatch.bookedPlayers?.length || 0,
+      maxParticipants: 4,
+  };
+  courtBookings.push(newBooking);
+
+  return newMatch;
+};
+
 
 export const addInstructor = async (instructorData: Omit<Instructor, 'id' | 'isAvailable' | 'assignedClubId' | 'assignedCourtNumber'>): Promise<Instructor | { error: string }> => {
   await new Promise(res => setTimeout(res, 500));
