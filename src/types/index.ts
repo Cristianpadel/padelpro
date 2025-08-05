@@ -22,7 +22,7 @@ export type PadelLevelRange = {
 };
 
 export type ClassPadelLevel = 'abierto' | PadelLevelRange;
-export type MatchPadelLevel = 'abierto' | NumericMatchPadelLevel | PadelLevelRange;
+export type MatchPadelLevel = 'abierto' | NumericMatchPadelLevel;
 
 export const daysOfWeek = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'] as const;
 export type DayOfWeek = typeof daysOfWeek[number];
@@ -50,6 +50,11 @@ export interface ClubLevelRange {
     max: NumericMatchPadelLevel;
 }
 
+export interface TimeRange {
+    start: string; // "HH:mm"
+    end: string;   // "HH:mm"
+}
+
 export interface Club {
     id: string;
     name: string;
@@ -58,6 +63,7 @@ export interface Club {
     isMatchDayEnabled?: boolean;
     pointSettings?: PointSettings;
     levelRanges?: ClubLevelRange[];
+    unavailableMatchHours?: Partial<Record<DayOfWeek, TimeRange[]>>;
     // other club properties
 }
 
