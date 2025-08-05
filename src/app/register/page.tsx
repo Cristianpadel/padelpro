@@ -6,7 +6,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
@@ -14,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PadelRacketIcon } from '@/components/PadelRacketIcon';
 
-export default function LoginPage() {
+export default function RegisterPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
@@ -27,13 +26,17 @@ export default function LoginPage() {
               </h1>
             </div>
             <CardTitle className="font-headline text-2xl">
-              Welcome Back!
+              Create an Account
             </CardTitle>
             <CardDescription>
-              Enter your credentials to access your account.
+              Join our community and start playing.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input id="name" type="text" placeholder="Alex Doe" />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" placeholder="student@example.com" />
@@ -45,33 +48,18 @@ export default function LoginPage() {
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
             <Button className="w-full" asChild>
-              <Link href="/dashboard">Login</Link>
+              <Link href="/dashboard">Register</Link>
             </Button>
             <div className="text-center text-sm text-muted-foreground">
-              Don&apos;t have an account?{' '}
+              Already have an account?{' '}
               <Link
-                href="/register"
+                href="/"
                 className="font-medium text-primary underline-offset-4 hover:underline"
               >
-                Register
+                Login
               </Link>
             </div>
           </CardFooter>
-        </Card>
-        <Card className="mt-4">
-          <CardContent className="p-4 text-center">
-            <p className="mb-2 text-sm text-muted-foreground">
-              Are you staff?
-            </p>
-            <div className="flex justify-center gap-2">
-              <Button variant="outline" size="sm" asChild>
-                <Link href="#">Instructor Login</Link>
-              </Button>
-              <Button variant="outline" size="sm" asChild>
-                <Link href="#">Admin Login</Link>
-              </Button>
-            </div>
-          </CardContent>
         </Card>
       </div>
     </main>
