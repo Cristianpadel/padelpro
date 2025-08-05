@@ -1,4 +1,4 @@
-{// types/index.ts
+// types/index.ts
 
 export type PadelCategoryForSlot = 'abierta' | 'chica' | 'chico';
 
@@ -149,7 +149,12 @@ export interface MatchDayEvent {
     eventEndTime?: Date;
     courtIds: string[];
     maxPlayers: number;
+    reservePlayers?: number;
+    price?: number;
+    inscriptions?: string[]; // Array of user IDs
+    matchesGenerated?: boolean;
 }
+
 
 export interface CourtGridBooking {
     id: string;

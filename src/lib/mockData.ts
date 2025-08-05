@@ -1,4 +1,4 @@
-{// lib/mockData.ts
+// lib/mockData.ts
 import type { TimeSlot, Club, Instructor, PadelCourt, CourtGridBooking, PointTransaction, User, Match, ClubLevelRange, MatchDayEvent } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { startOfDay, addHours, addMinutes, subDays } from 'date-fns';
@@ -249,17 +249,12 @@ export const addTimeSlot = async (slotData: Omit<TimeSlot, 'id' | 'instructorNam
   return newTimeSlot;
 };
 
-export const addMatch = async (matchData: Omit<Match, 'id' | 'status' | 'durationMinutes'>): Promise<Match | { error: string }> => {
+export const addMatch = async (matchData: Omit<Match, 'id' | 'status'>): Promise<Match | { error: string }> => {
   await new Promise(res => setTimeout(res, 500));
-  
-  const durationMinutes = 90;
-  const endTime = addMinutes(matchData.startTime, durationMinutes);
   
   const newMatch: Match = {
       id: uuidv4(),
       ...matchData,
-      durationMinutes,
-      endTime,
       status: (matchData.bookedPlayers?.length || 0) === 4 ? 'confirmed' : 'forming',
   };
   matches.push(newMatch);
@@ -326,12 +321,69 @@ export const updateClubAdminPassword = async (clubId: string, currentPassword: s
     return { success: true };
 };
 
+// --- Match-Day Specific Mock Functions ---
+
+export const createMatchDayEvent = async (eventData: Omit<MatchDayEvent, 'id'>): Promise<MatchDayEvent | { error: string }> => {
+  await new Promise(res => setTimeout(res, 500));
+  // Check for conflicts? For now, we'll keep it simple.
+  const newEvent: MatchDayEvent = {
+    ...eventData,
+    id: uuidv4(),
+    inscriptions: [],
+    matchesGenerated: false,
+  };
+  matchDayEvents.push(newEvent);
+  return newEvent;
+};
+
+export const fetchActiveMatchDayEvents = async (clubId: string): Promise<MatchDayEvent[]> => {
+    await new Promise(res => setTimeout(res, 300));
+    const now = new Date();
+    return matchDayEvents
+        .filter(e => e.clubId === clubId && new Date(e.eventDate) >= now)
+        .sort((a,b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime());
+}
+
+export const getMatchDayInscriptions = async (eventId: string): Promise<string[]> => {
+    await new Promise(res => setTimeout(res, 150));
+    const event = matchDayEvents.find(e => e.id === eventId);
+    return event?.inscriptions || [];
+}
+
+export const deleteMatchDayEvent = async (eventId: string): Promise<{success: true} | {error: string}> => {
+    await new Promise(res => setTimeout(res, 400));
+    const index = matchDayEvents.findIndex(e => e.id === eventId);
+    if(index === -1) return { error: "Evento no encontrado." };
+    matchDayEvents.splice(index, 1);
+    return { success: true };
+}
+
+export const manuallyTriggerMatchDayDraw = async (eventId: string): Promise<{ matchesCreated: number } | { error: string }> => {
+    await new Promise(res => setTimeout(res, 1000));
+    const eventIndex = matchDayEvents.findIndex(e => e.id === eventId);
+    if(eventIndex === -1) return { error: "Evento no encontrado." };
+    
+    const event = matchDayEvents[eventIndex];
+    if(event.matchesGenerated) return { error: "El sorteo para este evento ya se ha realizado." };
+    
+    const inscriptions = event.inscriptions || [];
+    if(inscriptions.length < 4) return { error: "No hay suficientes jugadores inscritos para el sorteo." };
+
+    const matchesToCreate = Math.floor(inscriptions.length / 4);
+    
+    // This is a super simplified draw logic. A real one would be much more complex.
+    console.log(`Generating ${matchesToCreate} matches for event ${eventId}`);
+    matchDayEvents[eventIndex].matchesGenerated = true;
+
+    return { matchesCreated: matchesToCreate };
+}
+
 
 // Initial mock data
 const today = startOfDay(new Date());
 
 const initialTimeSlot = addTimeSlot({ clubId: 'club-1', startTime: addHours(today, 10), durationMinutes: 60, instructorId: 'inst-2', maxPlayers: 4, courtNumber: 1, level: 'abierto', category: 'abierta'});
-const initialMatch = addMatch({ clubId: 'club-1', startTime: addHours(today, 11), courtNumber: 2, level: '3.0', category: 'abierta', bookedPlayers: [{userId: 'user-1', name: 'Alex García'}, {userId: 'user-2', name: 'Beatriz Reyes'}]});
+const initialMatch = addMatch({ clubId: 'club-1', startTime: addHours(today, 11), endTime: addMinutes(addHours(today, 11), 90), durationMinutes: 90, courtNumber: 2, level: '3.0', category: 'abierta', bookedPlayers: [{userId: 'user-1', name: 'Alex García'}, {userId: 'user-2', name: 'Beatriz Reyes'}]});
 
 courtBookings.push(
     { id: 'booking-3', clubId: 'club-1', courtNumber: 1, startTime: addHours(today, 18), endTime: addHours(today, 19), title: "Bloqueo Pista", type: 'reserva_manual', status: 'reservada' },
