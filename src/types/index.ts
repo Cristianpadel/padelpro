@@ -26,20 +26,36 @@ export type MatchPadelLevel = 'abierto' | NumericMatchPadelLevel | PadelLevelRan
 
 export const daysOfWeek = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'] as const;
 export type DayOfWeek = typeof daysOfWeek[number];
+export const dayOfWeekLabels: Record<DayOfWeek, string> = {
+    Lunes: 'Lunes',
+    Martes: 'Martes',
+    Miércoles: 'Miércoles',
+    Jueves: 'Jueves',
+    Viernes: 'Viernes',
+    Sábado: 'Sábado',
+    Domingo: 'Domingo',
+};
 
 
 export interface Club {
     id: string;
     name: string;
+    showClassesTabOnFrontend?: boolean;
+    showMatchesTabOnFrontend?: boolean;
+    isMatchDayEnabled?: boolean;
     // other club properties
 }
 
 export interface Instructor {
     id: string;
     name: string;
+    email?: string;
     isAvailable: boolean;
+    isBlocked?: boolean;
     assignedClubId: string;
     assignedCourtNumber?: number;
+    defaultRatePerHour?: number;
+    rateTiers?: InstructorRateTier[];
     // other instructor properties
 }
 
@@ -48,6 +64,7 @@ export interface PadelCourt {
     name: string;
     clubId: string;
     courtNumber: number;
+    isActive?: boolean;
     // other court properties
 }
 
@@ -61,5 +78,69 @@ export interface TimeSlot {
     courtNumber: number;
     level: ClassPadelLevel;
     category: PadelCategoryForSlot;
+    status?: 'forming' | 'confirmed' | 'confirmed_private' | 'cancelled';
     // other slot properties
+}
+
+export interface Match {
+    id: string;
+    clubId: string;
+    startTime: Date;
+    durationMinutes: number;
+    courtNumber: number;
+    level: MatchPadelLevel;
+    category: PadelCategoryForSlot;
+    status?: 'forming' | 'confirmed' | 'cancelled';
+}
+
+export interface PointTransaction {
+    id: string;
+    clubId: string;
+    studentId: string;
+    amount: number;
+    reason: string;
+    date: Date;
+}
+
+export interface User {
+    id: string;
+    name: string;
+    loyaltyPoints?: number;
+}
+
+export interface ClubLevelRange {
+    min: number;
+    max: number;
+}
+
+export interface MatchDayEvent {
+    id: string;
+    name: string;
+    clubId: string;
+    date: Date;
+}
+
+export interface CourtGridBooking {
+    id: string;
+    clubId: string;
+    courtNumber: number;
+    startTime: Date;
+    endTime: Date;
+    title: string;
+    type: 'clase' | 'partida' | 'mantenimiento' | 'reserva_manual' | 'bloqueo_provisional';
+    status?: PadelCourtStatus;
+    activityStatus?: TimeSlot['status'] | Match['status'];
+    provisionalExpiresAt?: Date;
+    participants?: number;
+    maxParticipants?: number;
+}
+
+export type PadelCourtStatus = 'disponible' | 'reservada' | 'mantenimiento' | 'desactivada' | 'bloqueo_provisional' | 'proceso_inscripcion';
+
+export interface InstructorRateTier {
+  id: string;
+  days: DayOfWeek[];
+  startTime: string; // "HH:mm"
+  endTime: string; // "HH:mm"
+  rate: number;
 }

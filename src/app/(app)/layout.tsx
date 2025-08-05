@@ -16,7 +16,8 @@ import {
   CircleHelp,
   BarChart,
   UserPlus,
-  PlusCircle
+  PlusCircle,
+  Shield,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -45,7 +46,8 @@ const navItems = [
 
 const adminItems = [
     { href: '/add-class', icon: PlusCircle, label: 'Añadir Clase' },
-    { href: '/add-instructor', icon: UserPlus, label: 'Añadir Instructor'}
+    { href: '/add-instructor', icon: UserPlus, label: 'Añadir Instructor'},
+    { href: '/admin', icon: Shield, label: 'Panel de Admin' }
 ]
 
 const timeFilters = [
