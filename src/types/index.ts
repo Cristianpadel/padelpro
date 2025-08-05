@@ -81,6 +81,28 @@ export interface DynamicPricingTier {
   maxPrice: number;
 }
 
+export type ProductCategory = 'pala' | 'pelotas' | 'ropa' | 'accesorios';
+
+export const productCategories: { value: ProductCategory, label: string }[] = [
+    { value: 'pala', label: 'Palas' },
+    { value: 'pelotas', label: 'Pelotas' },
+    { value: 'ropa', label: 'Ropa' },
+    { value: 'accesorios', label: 'Accesorios' },
+];
+
+export interface Product {
+    id: string;
+    clubId: string;
+    name: string;
+    category: ProductCategory;
+    status: 'in-stock' | 'on-order';
+    officialPrice: number;
+    offerPrice: number;
+    images: string[];
+    aiHint: string;
+    isDealOfTheDay?: boolean;
+}
+
 
 export interface Club {
     id: string;
@@ -95,6 +117,7 @@ export interface Club {
     dynamicPricingEnabled?: boolean;
     courtRateTiers?: CourtRateTier[];
     dynamicPricingTiers?: DynamicPricingTier[];
+    shopReservationFee?: number;
 }
 
 export interface Instructor {

@@ -1,5 +1,5 @@
 // lib/mockData.ts
-import type { TimeSlot, Club, Instructor, PadelCourt, CourtGridBooking, PointTransaction, User, Match, ClubLevelRange, MatchDayEvent, CourtRateTier, DynamicPricingTier, PenaltyTier, DayOfWeek } from '@/types';
+import type { TimeSlot, Club, Instructor, PadelCourt, CourtGridBooking, PointTransaction, User, Match, ClubLevelRange, MatchDayEvent, CourtRateTier, DynamicPricingTier, PenaltyTier, DayOfWeek, Product } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { startOfDay, addHours, addMinutes, subDays, getDay } from 'date-fns';
 import { daysOfWeek as daysOfWeekArray } from '@/types';
@@ -39,7 +39,8 @@ export let clubs: Club[] = [
             { id: 'rate-1', name: 'Tarifa General', days: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'], startTime: '09:00', endTime: '18:00', rate: 20 },
             { id: 'rate-2', name: 'Horas Punta (Tardes)', days: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'], startTime: '18:00', endTime: '22:00', rate: 28 },
             { id: 'rate-3', name: 'Fin de Semana', days: ['Sábado', 'Domingo'], startTime: '09:00', endTime: '22:00', rate: 30 },
-        ]
+        ],
+        shopReservationFee: 1.0,
     },
     { id: 'club-2', name: 'Padel Club Pozuelo' },
 ];
@@ -76,6 +77,10 @@ let students: User[] = [
     { id: 'user-6', name: 'Fernanda Alonso', loyaltyPoints: 1100, level: '6.0', profilePictureUrl: 'https://i.pravatar.cc/150?u=user-6' },
 ];
 let matchDayEvents: MatchDayEvent[] = [];
+let products: Product[] = [
+    { id: 'prod-1', clubId: 'club-1', name: 'Bullpadel Vertex 04', category: 'pala', status: 'in-stock', officialPrice: 280, offerPrice: 250, images: ['https://placehold.co/600x400.png'], aiHint: 'padel racket', isDealOfTheDay: true },
+    { id: 'prod-2', clubId: 'club-1', name: 'Head Pro S Balls (3-pack)', category: 'pelotas', status: 'in-stock', officialPrice: 6, offerPrice: 5, images: ['https://placehold.co/600x400.png'], aiHint: 'padel balls' },
+];
 
 
 // --- Instructors ---
@@ -511,6 +516,36 @@ export const clearSimulatedBookings = async (clubId: string): Promise<{ message:
     return { message: `Limpieza completada. Se eliminaron ${playersRemoved} inscripciones simuladas.` };
 };
 
+// --- Shop Functions ---
+export const fetchProductsByClub = async (clubId: string): Promise<Product[]> => {
+    await new Promise(res => setTimeout(res, 400));
+    return products.filter(p => p.clubId === clubId);
+};
+
+export const addProduct = async (productData: Omit<Product, 'id'>): Promise<Product | { error: string }> => {
+    await new Promise(res => setTimeout(res, 500));
+    const newProduct: Product = { ...productData, id: uuidv4() };
+    products.push(newProduct);
+    return newProduct;
+};
+
+export const updateProduct = async (productId: string, updateData: Partial<Product>): Promise<Product | { error: string }> => {
+    await new Promise(res => setTimeout(res, 500));
+    const index = products.findIndex(p => p.id === productId);
+    if (index === -1) return { error: "Producto no encontrado." };
+    products[index] = { ...products[index], ...updateData };
+    return products[index];
+};
+
+export const deleteProduct = async (productId: string): Promise<{ success: true } | { error: string }> => {
+    await new Promise(res => setTimeout(res, 500));
+    const index = products.findIndex(p => p.id === productId);
+    if (index === -1) return { error: "Producto no encontrado." };
+    products.splice(index, 1);
+    return { success: true };
+};
+
+
 
 // Initial mock data
 const today = startOfDay(new Date());
@@ -521,6 +556,8 @@ const initialMatch = addMatch({ clubId: 'club-1', startTime: addHours(today, 11)
 courtBookings.push(
     { id: 'booking-3', clubId: 'club-1', courtNumber: 1, startTime: addHours(today, 18), endTime: addHours(today, 19), title: "Bloqueo Pista", type: 'reserva_manual', status: 'reservada' },
 );
+
+    
 
     
 
