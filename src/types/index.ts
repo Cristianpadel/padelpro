@@ -36,6 +36,13 @@ export const dayOfWeekLabels: Record<DayOfWeek, string> = {
     Domingo: 'Domingo',
 };
 
+export interface PointSettings {
+    cancellationPointPerEuro?: number;
+    inviteFriend?: number;
+    firstToJoinClass?: number;
+    firstToJoinMatch?: number;
+    pointsCostForCourt?: number;
+}
 
 export interface Club {
     id: string;
@@ -43,6 +50,7 @@ export interface Club {
     showClassesTabOnFrontend?: boolean;
     showMatchesTabOnFrontend?: boolean;
     isMatchDayEnabled?: boolean;
+    pointSettings?: PointSettings;
     // other club properties
 }
 
@@ -92,8 +100,9 @@ export interface Match {
     level: MatchPadelLevel;
     category: PadelCategoryForSlot;
     status?: 'forming' | 'confirmed' | 'cancelled';
-    bookedPlayers?: { userId: string, name: string }[];
+    bookedPlayers?: { userId: string, name?: string }[];
     isPlaceholder?: boolean;
+    totalCourtFee?: number;
 }
 
 export interface PointTransaction {

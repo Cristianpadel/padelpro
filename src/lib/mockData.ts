@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { startOfDay, addHours } from 'date-fns';
 
 export let clubs: Club[] = [
-    { id: 'club-1', name: 'Padel Club Madrid Centro' },
+    { id: 'club-1', name: 'Padel Club Madrid Centro', pointSettings: { cancellationPointPerEuro: 1, inviteFriend: 5, firstToJoinClass: 2, firstToJoinMatch: 2, pointsCostForCourt: 20 } },
     { id: 'club-2', name: 'Padel Club Pozuelo' },
 ];
 
@@ -220,9 +220,8 @@ export const addInstructor = async (instructorData: Omit<Instructor, 'id' | 'isA
 
   const newInstructor: Instructor = {
     id: uuidv4(),
-    name: instructorData.name,
+    ...instructorData,
     isAvailable: true, // Default value
-    assignedClubId: 'club-1', // Default value
   };
   instructors.push(newInstructor);
   return newInstructor;
