@@ -15,6 +15,8 @@ import {
   Clock,
   CircleHelp,
   BarChart,
+  UserPlus,
+  PlusCircle
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -40,6 +42,11 @@ const navItems = [
   { href: '/view-points', icon: Eye, label: 'Ver Puntos' },
   { href: '/store', icon: Store, label: 'Tienda' },
 ];
+
+const adminItems = [
+    { href: '/add-class', icon: PlusCircle, label: 'Añadir Clase' },
+    { href: '/add-instructor', icon: UserPlus, label: 'Añadir Instructor'}
+]
 
 const timeFilters = [
     { icon: Clock, label: "Todos los Horarios" },
@@ -70,9 +77,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
             <div className="flex flex-col">
               <h2 className="font-headline text-lg font-semibold tracking-tighter text-sidebar-foreground">
-                PadelEstrella
+                PadelPro
               </h2>
-              <p className="text-xs text-sidebar-foreground/70">Madrid, España</p>
             </div>
             <div className="ml-auto">
               <SidebarTrigger className="text-sidebar-foreground" />
@@ -96,85 +102,49 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                         />
                         <AvatarFallback>AD</AvatarFallback>
                     </Avatar>
-                    <span>Agenda</span>
+                    <span>Mi Agenda</span>
                   </Link>
                 </SidebarMenuButton>
              </SidebarMenuItem>
-             <SidebarMenuItem>
-                <SidebarMenuButton
-                    asChild
-                    isActive={pathname === '/activities'}
-                    tooltip={{ children: "Classes" }}
-                >
-                    <Link href="/activities">
-                    <Users />
-                    <span>Classes</span>
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-             <SidebarMenuItem>
-                <SidebarMenuButton
-                    asChild
-                    isActive={pathname.startsWith('/matches')}
-                    tooltip={{ children: "Partidas" }}
-                >
-                    <Link href="#">
-                    <Trophy />
-                    <span>Partidas</span>
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-                <SidebarMenuButton
-                    asChild
-                    isActive={pathname === '/match-day'}
-                    tooltip={{ children: "Match-Day" }}
-                >
-                    <Link href="/match-day">
-                    <CalendarDays />
-                    <span>Match-Day</span>
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-                <SidebarMenuButton
-                    asChild
-                    isActive={pathname === '/book-with-points'}
-                    tooltip={{ children: "Reservar con Puntos" }}
-                >
-                    <Link href="/book-with-points">
-                    <Star />
-                    <span>Reservar con Puntos</span>
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-                <SidebarMenuButton
-                    asChild
-                    isActive={pathname === '/view-points'}
-                    tooltip={{ children: "Ver Puntos" }}
-                >
-                    <Link href="#">
-                    <Eye />
-                    <span>Ver Puntos</span>
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-                <SidebarMenuButton
-                    asChild
-                    isActive={pathname === '/store'}
-                    tooltip={{ children: "Tienda" }}
-                >
-                    <Link href="/store">
-                    <Store />
-                    <span>Tienda</span>
-                    </Link>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
-
+            {navItems.slice(1).map((item) => (
+                <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                        asChild
+                        isActive={pathname.startsWith(item.href)}
+                        tooltip={{ children: item.label }}
+                    >
+                        <Link href={item.href}>
+                        <item.icon />
+                        <span>{item.label}</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            ))}
           </SidebarMenu>
+
            <SidebarSeparator className="my-4"/>
+            <SidebarMenu>
+                <SidebarMenuItem>
+                    <div className="px-2 text-xs font-medium text-sidebar-foreground/70 group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0">Admin Panel</div>
+                </SidebarMenuItem>
+                {adminItems.map((item, index) => (
+                    <SidebarMenuItem key={index}>
+                        <SidebarMenuButton
+                        asChild
+                        isActive={pathname.startsWith(item.href)}
+                        tooltip={{ children: item.label }}
+                        >
+                        <Link href={item.href}>
+                            <item.icon />
+                            <span>{item.label}</span>
+                        </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                ))}
+            </SidebarMenu>
+
+
+            <SidebarSeparator className="my-4"/>
             <SidebarMenu>
                 {timeFilters.map((item, index) => (
                     <SidebarMenuItem key={index}>

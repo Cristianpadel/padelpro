@@ -45,3 +45,21 @@ export const addTimeSlot = async (slotData: Omit<TimeSlot, 'id'>): Promise<TimeS
   timeSlots.push(newTimeSlot);
   return newTimeSlot;
 };
+
+export const addInstructor = async (instructorData: Omit<Instructor, 'id' | 'isAvailable' | 'assignedClubId' | 'assignedCourtNumber'>): Promise<Instructor | { error: string }> => {
+  await new Promise(res => setTimeout(res, 500));
+
+  const existingInstructor = instructors.find(inst => inst.name.toLowerCase() === instructorData.name.toLowerCase());
+  if (existingInstructor) {
+    return { error: 'Ya existe un instructor con este nombre.' };
+  }
+
+  const newInstructor: Instructor = {
+    id: uuidv4(),
+    name: instructorData.name,
+    isAvailable: true, // Default value
+    assignedClubId: 'club-1', // Default value
+  };
+  instructors.push(newInstructor);
+  return newInstructor;
+};
