@@ -77,13 +77,47 @@ export const getMockPadelCourts = (): PadelCourt[] => {
     return padelCourts;
 }
 
+export const addPadelCourt = async (courtData: Omit<PadelCourt, 'id' | 'isActive'>): Promise<PadelCourt | { error: string }> => {
+    await new Promise(res => setTimeout(res, 500));
+    const existing = padelCourts.find(c => c.clubId === courtData.clubId && c.courtNumber === courtData.courtNumber);
+    if(existing) return { error: `Ya existe una pista con el número ${courtData.courtNumber} en este club.`};
+    const newCourt: PadelCourt = { ...courtData, id: uuidv4(), isActive: true };
+    padelCourts.push(newCourt);
+    return newCourt;
+};
+
+export const updatePadelCourt = async (id: string, data: Partial<Omit<PadelCourt, 'id' | 'clubId'>>): Promise<PadelCourt | { error: string }> => {
+    await new Promise(res => setTimeout(res, 400));
+    const index = padelCourts.findIndex(c => c.id === id);
+    if(index === -1) return { error: 'Pista no encontrada' };
+    const originalCourt = padelCourts[index];
+
+    // Check for court number conflict if it's being changed
+    if(data.courtNumber && data.courtNumber !== originalCourt.courtNumber) {
+        const existing = padelCourts.find(c => c.clubId === originalCourt.clubId && c.courtNumber === data.courtNumber);
+        if(existing) return { error: `Ya existe una pista con el número ${data.courtNumber} en este club.`};
+    }
+
+    padelCourts[index] = { ...originalCourt, ...data };
+    return padelCourts[index];
+};
+
+export const deletePadelCourt = async (id: string): Promise<{ success: true } | { error: string }> => {
+    await new Promise(res => setTimeout(res, 600));
+    const index = padelCourts.findIndex(c => c.id === id);
+    if(index === -1) return { error: 'Pista no encontrada' };
+    padelCourts.splice(index, 1);
+    return { success: true };
+}
+
+
 // --- Bookings & TimeSlots ---
 export const fetchCourtBookingsForDay = async (clubId: string, date: Date): Promise<CourtGridBooking[]> => {
     await new Promise(res => setTimeout(res, 500));
     return courtBookings.filter(b => b.clubId === clubId && b.startTime.toDateString() === date.toDateString());
 }
 
-export const addManualCourtBooking = async (clubId: string, bookingData: Omit<CourtGridBooking, 'id'>): Promise<CourtGridBooking | { error: string }> => {
+export const addManualCourtBooking = async (clubId: string, bookingData: Omit<CourtGridBooking, 'id' | 'status'>): Promise<CourtGridBooking | { error: string }> => {
     await new Promise(res => setTimeout(res, 500));
      const newBooking: CourtGridBooking = {
         id: uuidv4(),
