@@ -1,7 +1,8 @@
 // lib/mockData.ts
-import type { TimeSlot, Club, Instructor, PadelCourt, CourtGridBooking, PointTransaction, User, Match, ClubLevelRange, MatchDayEvent, CourtRateTier, DynamicPricingTier, PenaltyTier } from '@/types';
+import type { TimeSlot, Club, Instructor, PadelCourt, CourtGridBooking, PointTransaction, User, Match, ClubLevelRange, MatchDayEvent, CourtRateTier, DynamicPricingTier, PenaltyTier, DayOfWeek } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
-import { startOfDay, addHours, addMinutes, subDays } from 'date-fns';
+import { startOfDay, addHours, addMinutes, subDays, getDay } from 'date-fns';
+import { daysOfWeek as daysOfWeekArray } from '@/types';
 
 export let clubs: Club[] = [
     { 
@@ -429,6 +430,87 @@ export const manuallyTriggerMatchDayDraw = async (eventId: string): Promise<{ ma
     return { matchesCreated: matchesToCreate };
 }
 
+// --- Simulation Functions ---
+export const simulateBookings = async (options: {
+    clubId: string,
+    activityType: 'clases' | 'partidas',
+    days: DayOfWeek[],
+    timeRanges: ('morning' | 'midday' | 'evening')[],
+    studentCount: number,
+    density: number
+}): Promise<{ message: string }> => {
+    await new Promise(res => setTimeout(res, 1000));
+    const { activityType, days, timeRanges, studentCount, density, clubId } = options;
+    const allStudents = await getMockStudents();
+    let inscriptionsMade = 0;
+
+    const timeRangeMap = {
+        morning: { start: 8, end: 13 },
+        midday: { start: 13, end: 18 },
+        evening: { start: 18, end: 22 },
+    };
+
+    const targetActivities = activityType === 'clases' ? timeSlots : matches;
+
+    for (const activity of targetActivities) {
+        if (activity.clubId !== clubId) continue;
+        if (activity.status !== 'forming') continue;
+
+        const activityDate = new Date(activity.startTime);
+        const activityDay = daysOfWeekArray[getDay(activityDate) === 0 ? 6 : getDay(activityDate) - 1];
+        const activityHour = activityDate.getHours();
+
+        const isInDay = days.includes(activityDay);
+        const isInTimeRange = timeRanges.some(range => {
+            const { start, end } = timeRangeMap[range];
+            return activityHour >= start && activityHour < end;
+        });
+        
+        const shouldProcess = Math.random() * 100 < density;
+
+        if (isInDay && isInTimeRange && shouldProcess) {
+            const availableSlots = ('maxPlayers' in activity ? activity.maxPlayers : 4) - activity.bookedPlayers.length;
+            const playersToAddCount = Math.min(availableSlots, studentCount);
+
+            if (playersToAddCount > 0) {
+                const currentBookedIds = new Set(activity.bookedPlayers.map(p => p.userId));
+                const availableStudents = allStudents.filter(s => !currentBookedIds.has(s.id));
+                
+                // Shuffle and pick students
+                const shuffledStudents = availableStudents.sort(() => 0.5 - Math.random());
+                const playersToAdd = shuffledStudents.slice(0, playersToAddCount);
+
+                for (const player of playersToAdd) {
+                    activity.bookedPlayers.push({ userId: player.id, name: player.name, isSimulated: true });
+                    inscriptionsMade++;
+                }
+            }
+        }
+    }
+
+    return { message: `Simulación completada. Se realizaron ${inscriptionsMade} inscripciones.` };
+};
+
+export const clearSimulatedBookings = async (clubId: string): Promise<{ message: string }> => {
+    await new Promise(res => setTimeout(res, 500));
+    let playersRemoved = 0;
+
+    const clearInArray = (arr: (TimeSlot | Match)[]) => {
+        for (const activity of arr) {
+            if (activity.clubId === clubId) {
+                const originalCount = activity.bookedPlayers.length;
+                activity.bookedPlayers = activity.bookedPlayers.filter(p => !p.isSimulated);
+                playersRemoved += originalCount - activity.bookedPlayers.length;
+            }
+        }
+    };
+
+    clearInArray(timeSlots);
+    clearInArray(matches);
+
+    return { message: `Limpieza completada. Se eliminaron ${playersRemoved} inscripciones simuladas.` };
+};
+
 
 // Initial mock data
 const today = startOfDay(new Date());
@@ -439,5 +521,7 @@ const initialMatch = addMatch({ clubId: 'club-1', startTime: addHours(today, 11)
 courtBookings.push(
     { id: 'booking-3', clubId: 'club-1', courtNumber: 1, startTime: addHours(today, 18), endTime: addHours(today, 19), title: "Bloqueo Pista", type: 'reserva_manual', status: 'reservada' },
 );
+
+    
 
     

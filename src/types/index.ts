@@ -132,7 +132,7 @@ export interface TimeSlot {
     level: ClassPadelLevel;
     category: PadelCategoryForSlot;
     status: 'forming' | 'confirmed' | 'confirmed_private' | 'cancelled';
-    bookedPlayers: { userId: string, name?: string }[];
+    bookedPlayers: { userId: string, name?: string, isSimulated?: boolean }[];
 }
 
 export interface Match {
@@ -145,7 +145,7 @@ export interface Match {
     level: MatchPadelLevel;
     category: PadelCategoryForSlot;
     status: 'forming' | 'confirmed' | 'confirmed_private' | 'cancelled';
-    bookedPlayers: { userId: string, name?: string }[];
+    bookedPlayers: { userId: string, name?: string, isSimulated?: boolean }[];
     isPlaceholder?: boolean;
     isProvisional?: boolean;
     provisionalForUserId?: string;
@@ -234,3 +234,5 @@ export const displayActivityStatusWithDetails = (
         default: return 'Desconocido';
     }
 }
+
+    
