@@ -36,12 +36,18 @@ export const dayOfWeekLabels: Record<DayOfWeek, string> = {
     Domingo: 'Domingo',
 };
 
+export interface PenaltyTier {
+    hoursBefore: number;
+    penaltyPercentage: number;
+}
+
 export interface PointSettings {
     cancellationPointPerEuro?: number;
     inviteFriend?: number;
     firstToJoinClass?: number;
     firstToJoinMatch?: number;
     pointsCostForCourt?: number;
+    cancellationPenaltyTiers?: PenaltyTier[];
 }
 
 export interface ClubLevelRange {
