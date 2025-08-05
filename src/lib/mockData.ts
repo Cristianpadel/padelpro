@@ -18,6 +18,10 @@ export let clubs: Club[] = [
             'Sábado': [{start: '14:00', end: '16:00'}],
             'Domingo': [{start: '14:00', end: '16:00'}],
         },
+        pointBookingSlots: {
+             'Sábado': [{start: '20:00', end: '22:00'}],
+             'Domingo': [{start: '20:00', end: '22:00'}],
+        },
         dynamicPricingEnabled: false,
         courtRateTiers: [
             { id: 'rate-1', name: 'Tarifa General', days: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'], startTime: '09:00', endTime: '18:00', rate: 20 },

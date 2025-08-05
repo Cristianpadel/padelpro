@@ -85,6 +85,7 @@ export interface Club {
     pointSettings?: PointSettings;
     levelRanges?: ClubLevelRange[];
     unavailableMatchHours?: Partial<Record<DayOfWeek, TimeRange[]>>;
+    pointBookingSlots?: Partial<Record<DayOfWeek, TimeRange[]>>;
     dynamicPricingEnabled?: boolean;
     courtRateTiers?: CourtRateTier[];
     dynamicPricingTiers?: DynamicPricingTier[];
