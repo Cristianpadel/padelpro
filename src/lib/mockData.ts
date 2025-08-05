@@ -1,5 +1,5 @@
 // lib/mockData.ts
-import type { TimeSlot, Club, Instructor, PadelCourt, CourtGridBooking, PointTransaction, User, Match, ClubLevelRange, MatchDayEvent } from '@/types';
+import type { TimeSlot, Club, Instructor, PadelCourt, CourtGridBooking, PointTransaction, User, Match, ClubLevelRange, MatchDayEvent, CourtRateTier, DynamicPricingTier } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { startOfDay, addHours, addMinutes, subDays } from 'date-fns';
 
@@ -17,7 +17,13 @@ export let clubs: Club[] = [
         unavailableMatchHours: {
             'Sábado': [{start: '14:00', end: '16:00'}],
             'Domingo': [{start: '14:00', end: '16:00'}],
-        }
+        },
+        dynamicPricingEnabled: false,
+        courtRateTiers: [
+            { id: 'rate-1', name: 'Tarifa General', days: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'], startTime: '09:00', endTime: '18:00', rate: 20 },
+            { id: 'rate-2', name: 'Horas Punta (Tardes)', days: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'], startTime: '18:00', endTime: '22:00', rate: 28 },
+            { id: 'rate-3', name: 'Fin de Semana', days: ['Sábado', 'Domingo'], startTime: '09:00', endTime: '22:00', rate: 30 },
+        ]
     },
     { id: 'club-2', name: 'Padel Club Pozuelo' },
 ];

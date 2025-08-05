@@ -56,6 +56,26 @@ export interface TimeRange {
     end: string;   // "HH:mm"
 }
 
+export interface CourtRateTier {
+  id: string;
+  name: string;
+  days: DayOfWeek[];
+  startTime: string; // "HH:mm"
+  endTime: string; // "HH:mm"
+  rate: number; // price per hour
+}
+
+export interface DynamicPricingTier {
+  id: string;
+  days: DayOfWeek[];
+  startTime: string; // "HH:mm"
+  endTime: string; // "HH:mm"
+  minPrice: number;
+  startPrice: number;
+  maxPrice: number;
+}
+
+
 export interface Club {
     id: string;
     name: string;
@@ -65,7 +85,9 @@ export interface Club {
     pointSettings?: PointSettings;
     levelRanges?: ClubLevelRange[];
     unavailableMatchHours?: Partial<Record<DayOfWeek, TimeRange[]>>;
-    // other club properties
+    dynamicPricingEnabled?: boolean;
+    courtRateTiers?: CourtRateTier[];
+    dynamicPricingTiers?: DynamicPricingTier[];
 }
 
 export interface Instructor {
