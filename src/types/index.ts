@@ -1,4 +1,4 @@
-// types/index.ts
+{// types/index.ts
 
 export type PadelCategoryForSlot = 'abierta' | 'chica' | 'chico';
 
@@ -48,6 +48,7 @@ export interface ClubLevelRange {
     name: string;
     min: NumericMatchPadelLevel;
     max: NumericMatchPadelLevel;
+    color?: string;
 }
 
 export interface TimeRange {
@@ -71,13 +72,13 @@ export interface Instructor {
     id: string;
     name: string;
     email?: string;
+    profilePictureUrl?: string;
     isAvailable: boolean;
     isBlocked?: boolean;
-    assignedClubId: string;
+    assignedClubId: string | 'all';
     assignedCourtNumber?: number;
     defaultRatePerHour?: number;
     rateTiers?: InstructorRateTier[];
-    // other instructor properties
 }
 
 export interface PadelCourt {
@@ -85,7 +86,7 @@ export interface PadelCourt {
     name: string;
     clubId: string;
     courtNumber: number;
-    isActive?: boolean;
+    isActive: boolean;
     // other court properties
 }
 
@@ -93,14 +94,16 @@ export interface TimeSlot {
     id: string;
     clubId: string;
     startTime: Date;
+    endTime: Date;
     durationMinutes: number;
     instructorId: string;
+    instructorName: string;
     maxPlayers: number;
     courtNumber: number;
     level: ClassPadelLevel;
     category: PadelCategoryForSlot;
-    status?: 'forming' | 'confirmed' | 'confirmed_private' | 'cancelled';
-    // other slot properties
+    status: 'forming' | 'confirmed' | 'confirmed_private' | 'cancelled';
+    bookedPlayers: { userId: string, name?: string }[];
 }
 
 export interface Match {
@@ -112,18 +115,21 @@ export interface Match {
     courtNumber: number;
     level: MatchPadelLevel;
     category: PadelCategoryForSlot;
-    status?: 'forming' | 'confirmed' | 'cancelled';
-    bookedPlayers?: { userId: string, name?: string }[];
+    status: 'forming' | 'confirmed' | 'confirmed_private' | 'cancelled';
+    bookedPlayers: { userId: string, name?: string }[];
     isPlaceholder?: boolean;
+    isProvisional?: boolean;
+    provisionalForUserId?: string;
+    provisionalExpiresAt?: Date;
     totalCourtFee?: number;
 }
 
 export interface PointTransaction {
     id: string;
     clubId: string;
-    studentId: string;
-    amount: number;
-    reason: string;
+    userId: string;
+    points: number;
+    description: string;
     date: Date;
 }
 
@@ -132,13 +138,17 @@ export interface User {
     name: string;
     loyaltyPoints?: number;
     level?: NumericMatchPadelLevel;
+    profilePictureUrl?: string;
 }
 
 export interface MatchDayEvent {
     id: string;
     name: string;
     clubId: string;
-    date: Date;
+    eventDate: Date;
+    eventEndTime?: Date;
+    courtIds: string[];
+    maxPlayers: number;
 }
 
 export interface CourtGridBooking {
@@ -164,4 +174,29 @@ export interface InstructorRateTier {
   startTime: string; // "HH:mm"
   endTime: string; // "HH:mm"
   rate: number;
+}
+
+
+// --- Display Helpers ---
+export const displayClassLevel = (level: ClassPadelLevel): string => {
+    if (level === 'abierto') return "Abierto";
+    return `${level.min}-${level.max}`;
+}
+
+export const displayClassCategory = (category: PadelCategoryForSlot): string => {
+    const option = padelCategoryForSlotOptions.find(o => o.value === category);
+    return option ? option.label : category;
+}
+
+export const displayActivityStatusWithDetails = (
+    activity: { rawActivity: TimeSlot | Match, status?: TimeSlot['status'] | Match['status']},
+    instructor?: Instructor
+): string => {
+    switch(activity.status) {
+        case 'forming': return 'Formándose';
+        case 'confirmed': return 'Confirmada';
+        case 'confirmed_private': return 'Privada';
+        case 'cancelled': return 'Cancelada';
+        default: return 'Desconocido';
+    }
 }

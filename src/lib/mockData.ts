@@ -1,7 +1,7 @@
-// lib/mockData.ts
+{// lib/mockData.ts
 import type { TimeSlot, Club, Instructor, PadelCourt, CourtGridBooking, PointTransaction, User, Match, ClubLevelRange, MatchDayEvent } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
-import { startOfDay, addHours, addMinutes } from 'date-fns';
+import { startOfDay, addHours, addMinutes, subDays } from 'date-fns';
 
 export let clubs: Club[] = [
     { 
@@ -40,7 +40,11 @@ export let padelCourts: PadelCourt[] = [
 let timeSlots: TimeSlot[] = [];
 let matches: Match[] = [];
 let courtBookings: CourtGridBooking[] = [];
-let pointTransactions: PointTransaction[] = [];
+let pointTransactions: PointTransaction[] = [
+    { id: 'txn-1', clubId: 'club-1', userId: 'user-1', points: 5, description: "Invitación de amigo", date: new Date() },
+    { id: 'txn-2', clubId: 'club-1', userId: 'user-2', points: -20, description: "Reserva de pista", date: subDays(new Date(), 1) },
+    { id: 'txn-3', clubId: 'club-1', userId: 'user-1', points: 2, description: "Primero en unirse a clase", date: subDays(new Date(), 2) },
+];
 let students: User[] = [
     { id: 'user-1', name: 'Alex García', loyaltyPoints: 1250, level: '3.5', profilePictureUrl: 'https://i.pravatar.cc/150?u=user-1' },
     { id: 'user-2', name: 'Beatriz Reyes', loyaltyPoints: 800, level: '4.0', profilePictureUrl: 'https://i.pravatar.cc/150?u=user-2' },
@@ -136,7 +140,40 @@ export const deletePadelCourt = async (id: string): Promise<{ success: true } | 
 // --- Bookings & TimeSlots ---
 export const fetchCourtBookingsForDay = async (clubId: string, date: Date): Promise<CourtGridBooking[]> => {
     await new Promise(res => setTimeout(res, 500));
-    return courtBookings.filter(b => b.clubId === clubId && b.startTime.toDateString() === date.toDateString());
+    const dayBookings = courtBookings.filter(b => b.clubId === clubId && b.startTime.toDateString() === date.toDateString());
+    const dayTimeSlots = timeSlots.filter(ts => ts.clubId === clubId && ts.startTime.toDateString() === date.toDateString() && ts.status === 'confirmed');
+    const dayMatches = matches.filter(m => m.clubId === clubId && m.startTime.toDateString() === date.toDateString() && m.status === 'confirmed');
+
+    const activityBookings: CourtGridBooking[] = [
+        ...dayTimeSlots.map(ts => ({
+            id: `ts-booking-${ts.id}`,
+            clubId: ts.clubId,
+            courtNumber: ts.courtNumber,
+            startTime: ts.startTime,
+            endTime: ts.endTime,
+            title: `Clase con ${ts.instructorName}`,
+            type: 'clase' as const,
+            status: 'reservada' as const,
+            activityStatus: ts.status,
+            participants: ts.bookedPlayers.length,
+            maxParticipants: ts.maxPlayers
+        })),
+        ...dayMatches.map(m => ({
+            id: `match-booking-${m.id}`,
+            clubId: m.clubId,
+            courtNumber: m.courtNumber,
+            startTime: m.startTime,
+            endTime: m.endTime,
+            title: `Partida Nivel ${m.level}`,
+            type: 'partida' as const,
+            status: 'reservada' as const,
+            activityStatus: m.status,
+            participants: m.bookedPlayers?.length,
+            maxParticipants: 4
+        }))
+    ];
+    
+    return [...dayBookings, ...activityBookings];
 }
 
 export const addManualCourtBooking = async (clubId: string, bookingData: Omit<CourtGridBooking, 'id' | 'status'>): Promise<CourtGridBooking | { error: string }> => {
@@ -181,7 +218,7 @@ export const getMockStudents = async (): Promise<User[]> => {
 }
 
 
-export const addTimeSlot = async (slotData: Omit<TimeSlot, 'id'>): Promise<TimeSlot | { error: string }> => {
+export const addTimeSlot = async (slotData: Omit<TimeSlot, 'id' | 'instructorName' | 'status' | 'bookedPlayers' | 'endTime'>): Promise<TimeSlot | { error: string }> => {
   // Simulate API delay
   await new Promise(res => setTimeout(res, 500));
 
@@ -204,7 +241,7 @@ export const addTimeSlot = async (slotData: Omit<TimeSlot, 'id'>): Promise<TimeS
     id: uuidv4(),
     ...slotData,
     instructorName: instructor?.name || 'Unknown',
-    status: 'pre_registration',
+    status: 'forming',
     bookedPlayers: [],
     endTime: newSlotEnd,
   };
@@ -212,40 +249,26 @@ export const addTimeSlot = async (slotData: Omit<TimeSlot, 'id'>): Promise<TimeS
   return newTimeSlot;
 };
 
-export const addMatch = async (matchData: Omit<Match, 'id' | 'endTime'>): Promise<Match | { error: string }> => {
+export const addMatch = async (matchData: Omit<Match, 'id' | 'status' | 'durationMinutes'>): Promise<Match | { error: string }> => {
   await new Promise(res => setTimeout(res, 500));
   
-  const endTime = addMinutes(matchData.startTime, matchData.durationMinutes);
+  const durationMinutes = 90;
+  const endTime = addMinutes(matchData.startTime, durationMinutes);
   
   const newMatch: Match = {
       id: uuidv4(),
       ...matchData,
+      durationMinutes,
       endTime,
-      status: 'forming', // Default status
+      status: (matchData.bookedPlayers?.length || 0) === 4 ? 'confirmed' : 'forming',
   };
   matches.push(newMatch);
-  
-  // Also create a corresponding court booking
-  const newBooking: CourtGridBooking = {
-      id: uuidv4(),
-      clubId: newMatch.clubId,
-      courtNumber: newMatch.courtNumber,
-      startTime: newMatch.startTime,
-      endTime: newMatch.endTime,
-      title: `Partida Nivel ${newMatch.level}`,
-      type: 'partida',
-      status: 'proceso_inscripcion',
-      activityStatus: newMatch.status,
-      participants: newMatch.bookedPlayers?.length || 0,
-      maxParticipants: 4,
-  };
-  courtBookings.push(newBooking);
 
   return newMatch;
 };
 
 
-export const addInstructor = async (instructorData: Omit<Instructor, 'id' | 'isAvailable' | 'assignedClubId' | 'assignedCourtNumber' | 'profilePictureUrl'>): Promise<Instructor | { error: string }> => {
+export const addInstructor = async (instructorData: Omit<Instructor, 'id' | 'isAvailable' | 'isBlocked' | 'assignedClubId' | 'assignedCourtNumber' | 'profilePictureUrl' | 'defaultRatePerHour' | 'rateTiers' | 'email'> & { email?: string }): Promise<Instructor | { error: string }> => {
   await new Promise(res => setTimeout(res, 500));
 
   const existingInstructor = instructors.find(inst => inst.name.toLowerCase() === instructorData.name.toLowerCase());
@@ -256,9 +279,12 @@ export const addInstructor = async (instructorData: Omit<Instructor, 'id' | 'isA
   const newId = uuidv4();
   const newInstructor: Instructor = {
     id: newId,
-    ...instructorData,
+    name: instructorData.name,
+    email: instructorData.email,
     isAvailable: true, // Default value
     profilePictureUrl: `https://i.pravatar.cc/150?u=${newId}`,
+    isBlocked: false,
+    assignedClubId: 'all',
   };
   instructors.push(newInstructor);
   return newInstructor;
@@ -303,12 +329,10 @@ export const updateClubAdminPassword = async (clubId: string, currentPassword: s
 
 // Initial mock data
 const today = startOfDay(new Date());
+
+const initialTimeSlot = addTimeSlot({ clubId: 'club-1', startTime: addHours(today, 10), durationMinutes: 60, instructorId: 'inst-2', maxPlayers: 4, courtNumber: 1, level: 'abierto', category: 'abierta'});
+const initialMatch = addMatch({ clubId: 'club-1', startTime: addHours(today, 11), courtNumber: 2, level: '3.0', category: 'abierta', bookedPlayers: [{userId: 'user-1', name: 'Alex García'}, {userId: 'user-2', name: 'Beatriz Reyes'}]});
+
 courtBookings.push(
-    { id: 'booking-1', clubId: 'club-1', courtNumber: 1, startTime: addHours(today, 10), endTime: addHours(today, 11), title: "Clase Ana García", type: 'clase', status: 'proceso_inscripcion', activityStatus: 'forming' },
-    { id: 'booking-2', clubId: 'club-1', courtNumber: 2, startTime: addHours(today, 11), endTime: addHours(today, 12.5), title: "Partida Nivel 3.0", type: 'partida', status: 'reservada', activityStatus: 'confirmed' },
     { id: 'booking-3', clubId: 'club-1', courtNumber: 1, startTime: addHours(today, 18), endTime: addHours(today, 19), title: "Bloqueo Pista", type: 'reserva_manual', status: 'reservada' },
 );
-
-// Add some initial time slots and matches for calendar
-addTimeSlot({ clubId: 'club-1', startTime: addHours(today, 10), durationMinutes: 60, instructorId: 'inst-2', maxPlayers: 4, courtNumber: 1, level: 'abierto', category: 'abierta'});
-addMatch({ clubId: 'club-1', startTime: addHours(today, 11), durationMinutes: 90, courtNumber: 2, level: '3.0', category: 'abierta', bookedPlayers: [{userId: 'user-1'}, {userId: 'user-2'}]});
