@@ -1,97 +1,174 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Filters } from './components/Filters';
+import { Button } from '@/components/ui/button';
 import { ClassCard } from './components/ClassCard';
-import { MatchCard } from './components/MatchCard';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, ChevronLeft, ChevronRight, X } from 'lucide-react';
 
 const sampleClasses = [
   {
     instructor: {
-      name: 'Carlos Moya',
+      name: 'Sofía Martín',
       avatar: 'https://placehold.co/40x40.png',
+      rating: 4.6,
     },
-    time: '09:00 - 10:00',
-    level: 2.5,
-    slots: { '1': 20, '2': 18, '3': 15, '4': 12 },
-    availableSlots: 4,
+    date: 'SÁBADO 11:00H - 12:00H',
+    duration: 60,
+    tags: ['Categoría', 'Pista', 'Nivel'],
+    slots: [
+      { type: 'user', price: 60.0, available: 1 },
+      { type: 'user', price: 30.0, available: 2 },
+      { type: 'user', price: 20.0, available: 3 },
+      { type: 'instructor', price: 15.0, available: 0 },
+    ],
+    availableCourts: 8,
   },
   {
     instructor: {
-      name: 'Sofia Kenin',
+      name: 'Sofía Martín',
       avatar: 'https://placehold.co/40x40.png',
+      rating: 4.3,
     },
-    time: '10:00 - 11:00',
-    level: 4.0,
-    slots: { '1': 25, '2': 22, '3': 20, '4': 18 },
-    availableSlots: 2,
+    date: 'SÁBADO 11:30H - 12:30H',
+    duration: 60,
+    tags: ['Chicos', 'Pista', '4.5-7.0'],
+    slots: [
+        { type: 'user', price: 60.0, available: 1 },
+        { type: 'user', price: 30.0, available: 2 },
+        { type: 'user', price: 20.0, available: 3 },
+        { type: 'instructor', price: 15.0, available: 4 },
+    ],
+    availableCourts: 8,
   },
   {
     instructor: {
-      name: 'Rafa Nadal',
+      name: 'Sofía Martín',
       avatar: 'https://placehold.co/40x40.png',
+      rating: 4.5,
     },
-    time: '18:00 - 19:00',
-    level: 6.0,
-    slots: { '1': 30, '2': 28, '3': 25, '4': 22 },
-    availableSlots: 1,
+    date: 'SÁBADO 12:00H - 13:00H',
+    duration: 60,
+    tags: ['Categoría', 'Pista', 'Nivel'],
+    slots: [
+        { type: 'user', price: 60.0, available: 1 },
+        { type: 'user', price: 30.0, available: 2 },
+        { type: 'user', price: 20.0, available: 3 },
+        { type: 'user', price: 15.0, available: 4 },
+    ],
+    availableCourts: 8,
+  },
+    {
+    instructor: {
+      name: 'Sofía Martín',
+      avatar: 'https://placehold.co/40x40.png',
+      rating: 4.8,
+    },
+    date: 'SÁBADO 12:30H - 13:30H',
+    duration: 60,
+    tags: ['Categoría', 'Pista', 'Nivel'],
+    slots: [
+        { type: 'user', price: 60.0, available: 1 },
+        { type: 'user', price: 30.0, available: 0 },
+        { type: 'user', price: 20.0, available: 0 },
+        { type: 'user', price: 15.0, available: 0 },
+    ],
+    availableCourts: 8,
+  },
+    {
+    instructor: {
+      name: 'Sofía Martín',
+      avatar: 'https://placehold.co/40x40.png',
+      rating: 4.4,
+    },
+    date: 'SÁBADO 13:00H - 14:00H',
+    duration: 60,
+    tags: ['Categoría', 'Pista', 'Nivel'],
+    slots: [
+      { type: 'user', price: 60.0, available: 1 },
+      { type: 'user', price: 30.0, available: 2 },
+      { type: 'user', price: 20.0, available: 3 },
+      { type: 'user', price: 15.0, available: 4 },
+    ],
+    availableCourts: 8,
+  },
+    {
+    instructor: {
+      name: 'Sofía Martín',
+      avatar: 'https://placehold.co/40x40.png',
+      rating: 4.7,
+    },
+    date: 'SÁBADO 13:30H - 14:30H',
+    duration: 60,
+    tags: ['Categoría', 'Pista', 'Nivel'],
+    slots: [
+      { type: 'user', price: 60.0, available: 1 },
+      { type: 'user', price: 30.0, available: 0 },
+      { type: 'user', price: 20.0, available: 0 },
+      { type: 'user', price: 15.0, available: 0 },
+    ],
+    availableCourts: 8,
   },
 ];
 
-const sampleMatches = [
-  {
-    level: '2.5 - 3.0',
-    time: '17:00 - 18:30',
-    players: [
-      { name: 'Alice', avatar: 'https://placehold.co/40x40.png' },
-      { name: 'Bob', avatar: 'https://placehold.co/40x40.png' },
-    ],
-  },
-  {
-    level: '4.0 - 4.5',
-    time: '19:00 - 20:30',
-    players: [
-      { name: 'Charlie', avatar: 'https://placehold.co/40x40.png' },
-      { name: 'David', avatar: 'https://placehold.co/40x40.png' },
-      { name: 'Eve', avatar: 'https://placehold.co/40x40.png' },
-    ],
-  },
-  {
-    level: '1.5 - 2.0',
-    time: '20:00 - 21:30',
-    players: [{ name: 'Frank', avatar: 'https://placehold.co/40x40.png' }],
-  },
+const days = [
+  { day: 'SÁB', date: 2, month: 'Ago', current: true },
+  { day: 'DOM', date: 3, month: 'Ago' },
+  { day: 'LUN', date: 4, month: 'Ago' },
+  { day: 'MAR', date: 5, month: 'Ago' },
+  { day: 'MIÉ', date: 6, month: 'Ago' },
+  { day: 'JUE', date: 7, month: 'Ago' },
+  { day: 'VIE', date: 8, month: 'Ago' },
+  { day: 'SÁB', date: 9, month: 'Ago' },
+  { day: 'DOM', date: 10, month: 'Ago' },
+  { day: 'LUN', date: 11, month: 'Ago' },
+  { day: 'MAR', date: 12, month: 'Ago' },
+  { day: 'MIÉ', date: 13, month: 'Ago' },
+  { day: 'JUE', date: 14, month: 'Ago' },
+  { day: 'VIE', date: 15, month: 'Ago' },
+  { day: 'SÁB', date: 16, month: 'Ago' },
 ];
 
 export default function ActivitiesPage() {
   return (
-    <div className="flex h-full">
-      <Filters />
-      <main className="flex-1 overflow-y-auto p-4 md:p-6">
-        <header className="mb-6">
-          <h1 className="font-headline text-3xl font-semibold">Activities</h1>
-          <p className="text-muted-foreground">
-            Book classes and join matches. First to fill is confirmed!
-          </p>
-        </header>
-        <Tabs defaultValue="classes" className="w-full">
-          <TabsList className="mb-4">
-            <TabsTrigger value="classes">Classes</TabsTrigger>
-            <TabsTrigger value="matches">Matches</TabsTrigger>
-          </TabsList>
-          <TabsContent value="classes">
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {sampleClasses.map((classInfo, index) => (
-                <ClassCard key={index} {...classInfo} />
-              ))}
-            </div>
-          </TabsContent>
-          <TabsContent value="matches">
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {sampleMatches.map((matchInfo, index) => (
-                <MatchCard key={index} {...matchInfo} />
-              ))}
-            </div>
-          </TabsContent>
-        </Tabs>
+    <div className="flex h-full flex-col">
+      <header className="p-4 md:p-6">
+        <div className="mb-4 flex flex-wrap items-center gap-2">
+          <Button variant="outline">
+            <Calendar className="mr-2 h-4 w-4" /> Clases
+          </Button>
+          <Button variant="secondary">Nivel 4.5</Button>
+          <Button variant="ghost" className="text-muted-foreground">
+            <X className="mr-2 h-4 w-4" /> Limpiar
+          </Button>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <Button variant="ghost" size="icon">
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <div className="flex flex-1 items-center justify-center gap-2 overflow-x-auto">
+            {days.map((d, i) => (
+              <div
+                key={i}
+                className={`flex w-12 flex-shrink-0 cursor-pointer flex-col items-center rounded-lg p-2 ${
+                  d.current ? 'bg-primary text-primary-foreground' : 'bg-card'
+                }`}
+              >
+                <div className="text-xs">{d.day}</div>
+                <div className="text-lg font-bold">{d.date}</div>
+                <div className="text-xs">{d.month}</div>
+              </div>
+            ))}
+          </div>
+          <Button variant="ghost" size="icon">
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+        </div>
+      </header>
+      <main className="flex-1 overflow-y-auto bg-muted/40 p-4 md:p-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {sampleClasses.map((classInfo, index) => (
+            <ClassCard key={index} {...classInfo} />
+          ))}
+        </div>
       </main>
     </div>
   );
