@@ -44,6 +44,12 @@ export interface PointSettings {
     pointsCostForCourt?: number;
 }
 
+export interface ClubLevelRange {
+    name: string;
+    min: NumericMatchPadelLevel;
+    max: NumericMatchPadelLevel;
+}
+
 export interface Club {
     id: string;
     name: string;
@@ -51,6 +57,7 @@ export interface Club {
     showMatchesTabOnFrontend?: boolean;
     isMatchDayEnabled?: boolean;
     pointSettings?: PointSettings;
+    levelRanges?: ClubLevelRange[];
     // other club properties
 }
 
@@ -119,11 +126,6 @@ export interface User {
     name: string;
     loyaltyPoints?: number;
     level?: NumericMatchPadelLevel;
-}
-
-export interface ClubLevelRange {
-    min: number;
-    max: number;
 }
 
 export interface MatchDayEvent {

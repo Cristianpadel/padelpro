@@ -1,10 +1,20 @@
 // lib/mockData.ts
-import type { TimeSlot, Club, Instructor, PadelCourt, CourtGridBooking, PointTransaction, User, Match } from '@/types';
+import type { TimeSlot, Club, Instructor, PadelCourt, CourtGridBooking, PointTransaction, User, Match, ClubLevelRange } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { startOfDay, addHours } from 'date-fns';
 
 export let clubs: Club[] = [
-    { id: 'club-1', name: 'Padel Club Madrid Centro', pointSettings: { cancellationPointPerEuro: 1, inviteFriend: 5, firstToJoinClass: 2, firstToJoinMatch: 2, pointsCostForCourt: 20 } },
+    { 
+        id: 'club-1', 
+        name: 'Padel Club Madrid Centro', 
+        pointSettings: { cancellationPointPerEuro: 1, inviteFriend: 5, firstToJoinClass: 2, firstToJoinMatch: 2, pointsCostForCourt: 20 },
+        levelRanges: [
+            { name: "Iniciación", min: '1.0', max: '2.0' },
+            { name: "Intermedio", min: '2.5', max: '3.5' },
+            { name: "Avanzado", min: '4.0', max: '5.5' },
+            { name: "Competición", min: '6.0', max: '7.0' },
+        ]
+    },
     { id: 'club-2', name: 'Padel Club Pozuelo' },
 ];
 
