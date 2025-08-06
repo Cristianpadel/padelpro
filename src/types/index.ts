@@ -301,12 +301,27 @@ export interface MatchDayEvent {
     clubId: string;
     eventDate: Date;
     eventEndTime?: Date;
+    drawTime?: Date;
     courtIds: string[];
     maxPlayers: number;
     reservePlayers?: number;
     price?: number;
     inscriptions?: string[]; // Array of user IDs
     matchesGenerated?: boolean;
+    cancelledInscriptions?: MatchDayInscription[];
+}
+
+export interface MatchDayInscription {
+  id: string;
+  eventId: string;
+  userId: string;
+  userName: string;
+  userLevel: MatchPadelLevel | 'abierto';
+  userProfilePictureUrl?: string;
+  status: 'main' | 'reserve' | 'cancelled';
+  inscriptionTime: Date;
+  preferredPartnerId?: string;
+  amountBlocked?: number;
 }
 
 
