@@ -77,6 +77,7 @@ export const updateTimeSlotInState = (slotId: string, updatedSlot: TimeSlot) => 
     }
 };
 export const addUserBookingToState = (booking: Booking) => { userBookings.push(booking); };
+export const addUserMatchBookingToState = (booking: MatchBooking) => { userMatchBookings.push(booking); };
 export const removeUserBookingFromState = (bookingId: string) => { userBookings = userBookings.filter(b => b.id !== bookingId); };
 export const removeUserBookingsBySlotIdFromState = (slotId: string) => { userBookings = userBookings.filter(b => b.activityId !== slotId); };
 export const removeBookingFromTimeSlotInState = (slotId: string, userId: string, groupSize: 1 | 2 | 3 | 4) => {
@@ -120,8 +121,18 @@ export const removePadelCourtFromState = (courtId: string): boolean => {
     return padelCourts.length < initialLength;
 };
 export const addMatchToState = (match: Match) => { matches.push(match); };
+export const removeMatchFromState = (matchId: string) => { matches = matches.filter(m => m.id !== matchId); };
+export const updateMatchInState = (matchId: string, updatedMatch: Match) => {
+    const index = matches.findIndex(m => m.id === matchId);
+    if (index !== -1) {
+        matches[index] = updatedMatch;
+    }
+};
 export const removeUserMatchBookingFromStateByMatch = (matchId: string) => {
     userMatchBookings = userMatchBookings.filter(b => b.activityId !== matchId);
+};
+export const removeUserMatchBookingFromStateByMatchAndUser = (matchId: string, userId: string) => {
+    userMatchBookings = userMatchBookings.filter(b => !(b.activityId === matchId && b.userId === userId));
 };
 export const addProductToState = (product: Product) => { products.push(product); };
 export const updateProductInState = (productId: string, updates: Partial<Product>): Product | null => {
@@ -137,3 +148,5 @@ export const removeProductFromState = (productId: string): boolean => {
     products = products.filter(p => p.id !== productId);
     return products.length < initialLength;
 };
+
+    
