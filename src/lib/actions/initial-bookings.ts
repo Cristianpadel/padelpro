@@ -1,93 +1,120 @@
 "use client";
 
 import type { User, TimeSlot, Match, Booking, MatchBooking, PointTransaction } from '@/types';
-import { _classifyLevelAndCategoryForSlot } from './classProposals';
-import { getMockClubs } from './clubs';
-import { isUserLevelCompatibleWithActivity } from '../utils';
+import { calculatePricePerPerson } from '@/lib/utils';
+import { isSlotEffectivelyCompleted } from './utils';
 
-// This function simulates some initial class bookings for demonstration purposes.
+// This file contains the logic to create the initial state of bookings for the mock data.
+// It simulates users having already booked some classes and matches.
+
 export const processInitialBookings = (students: User[], timeSlots: TimeSlot[]): { bookings: Booking[], transactions: any[], pointTransactions: PointTransaction[] } => {
     const bookings: Booking[] = [];
+    const transactions: any[] = [];
     const pointTransactions: PointTransaction[] = [];
-    const club = getMockClubs()[0]; // Assume all bookings are for the first club for simplicity
 
-    if (!timeSlots || timeSlots.length === 0 || !students || students.length === 0) {
-        return { bookings, transactions: [], pointTransactions };
-    }
-
-    // Example 1: Elena Garcia books a spot in an early class
-    const elena = students.find(s => s.id === 'student-2');
-    const firstClass = timeSlots.find(ts => new Date(ts.startTime).getHours() < 12 && ts.bookedPlayers.length === 0 && !ts.isPointsOnlyBooking);
-    if (elena && firstClass && club) {
-        const { newLevel, newCategory } = _classifyLevelAndCategoryForSlot(firstClass, elena, club);
-        firstClass.level = newLevel;
-        firstClass.category = newCategory;
-
-        if (isUserLevelCompatibleWithActivity(firstClass.level, elena.level)) {
-            const newBooking: Booking = {
-                id: `booking-init-1-${elena.id}`,
-                userId: elena.id,
-                activityId: firstClass.id,
-                activityType: 'class',
-                groupSize: 2,
-                spotIndex: 0,
-                status: 'pending',
-                bookedAt: new Date(),
-            };
-            firstClass.bookedPlayers.push({ userId: elena.id, groupSize: 2 });
-            bookings.push(newBooking);
+    const studentCristian = students.find(s => s.id === 'user-current');
+    const studentElena = students.find(s => s.id === 'student-2');
+    
+    // Scenario 1: A confirmed class to show court occupation
+    const classToConfirm = timeSlots.find(s => s.instructorName === 'Javier Gómez' && new Date(s.startTime).getHours() === 10 && !isSlotEffectivelyCompleted(s).completed);
+    if (classToConfirm) {
+        const otherStudents = students.filter(s => s.id !== 'user-current' && s.id !== 'student-2');
+        if (otherStudents.length >= 4) {
+            for (let i = 0; i < 4; i++) {
+                const student = otherStudents[i];
+                const price = calculatePricePerPerson(classToConfirm.totalPrice || 0, 4);
+                bookings.push({
+                    id: `booking-init-${i + 1}`,
+                    userId: student.id,
+                    activityId: classToConfirm.id,
+                    activityType: 'class',
+                    groupSize: 4,
+                    spotIndex: i,
+                    status: 'confirmed',
+                    bookedAt: new Date(),
+                });
+                classToConfirm.bookedPlayers.push({ userId: student.id, groupSize: 4 });
+                 transactions.push({
+                    id: `txn-init-${i + 1}`,
+                    userId: student.id,
+                    date: new Date(),
+                    type: 'Reserva Clase',
+                    amount: -price,
+                    description: `Clase con ${classToConfirm.instructorName}`,
+                });
+            }
+            // Now the class is full, update its status
+            classToConfirm.status = 'confirmed';
+            classToConfirm.courtNumber = 2; // Assign a specific court for testing
         }
     }
-
-    // Example 2: David Martinez books a spot in a different class
-    const david = students.find(s => s.id === 'student-3');
-    const secondClass = timeSlots.find(ts => ts.id !== firstClass?.id && ts.bookedPlayers.length === 0 && !ts.isPointsOnlyBooking);
-    if (david && secondClass && club) {
-         const { newLevel, newCategory } = _classifyLevelAndCategoryForSlot(secondClass, david, club);
-        secondClass.level = newLevel;
-        secondClass.category = newCategory;
-        if (isUserLevelCompatibleWithActivity(secondClass.level, david.level)) {
-            const newBooking: Booking = {
-                id: `booking-init-2-${david.id}`,
-                userId: david.id,
-                activityId: secondClass.id,
-                activityType: 'class',
-                groupSize: 4,
-                spotIndex: 0,
-                status: 'pending',
-                bookedAt: new Date(),
-            };
-            secondClass.bookedPlayers.push({ userId: david.id, groupSize: 4 });
-            bookings.push(newBooking);
-        }
+    
+    // Scenario 2: Cristian books a different class
+    const classForCristian = timeSlots.find(s => s.instructorName === 'Sofía Martín' && new Date(s.startTime).getHours() === 11 && !isSlotEffectivelyCompleted(s).completed);
+     if (classForCristian && studentCristian) {
+        const price = calculatePricePerPerson(classForCristian.totalPrice || 0, 4);
+        bookings.push({
+            id: `booking-init-cristian`,
+            userId: studentCristian.id,
+            activityId: classForCristian.id,
+            activityType: 'class',
+            groupSize: 4,
+            spotIndex: 0,
+            status: 'pending',
+            bookedAt: new Date(),
+        });
+        classForCristian.bookedPlayers.push({ userId: studentCristian.id, groupSize: 4 });
+        transactions.push({
+            id: `txn-init-cristian`,
+            userId: studentCristian.id,
+            date: new Date(),
+            type: 'Reserva Clase',
+            amount: -price,
+            description: `Clase con ${classForCristian.instructorName}`,
+        });
     }
 
-    return { bookings, transactions: [], pointTransactions };
+
+    return { bookings, transactions, pointTransactions };
 };
 
-// This function simulates some initial match bookings.
+
 export const processInitialMatchBookings = (students: User[], matches: Match[]): { bookings: MatchBooking[], transactions: any[], pointTransactions: PointTransaction[] } => {
     const bookings: MatchBooking[] = [];
+    const transactions: any[] = [];
     const pointTransactions: PointTransaction[] = [];
-
-    if (!matches || matches.length === 0 || !students || students.length === 0) {
-        return { bookings, transactions: [], pointTransactions };
-    }
     
-    const alex = students.find(s => s.id === 'user-current');
-    const david = students.find(s => s.id === 'student-3');
+    // Find a placeholder match to populate at 10:00
+    const matchToPopulate = matches.find(m => m.isPlaceholder && m.status === 'forming' && new Date(m.startTime).getHours() === 10);
     
-    const firstMatch = matches.find(m => !m.isPlaceholder && m.bookedPlayers.length === 0);
-
-    if (alex && firstMatch && isUserLevelCompatibleWithActivity(firstMatch.level, alex.level)) {
-        firstMatch.bookedPlayers.push({ userId: alex.id, name: alex.name });
-        bookings.push({ id: `matchbooking-init-1-${alex.id}`, userId: alex.id, activityId: firstMatch.id, activityType: 'match' });
+    if (matchToPopulate) {
+        const playersToJoin = students.slice(0, 4); // Get first 4 students to confirm it
+        
+        for (const player of playersToJoin) {
+            const price = calculatePricePerPerson(matchToPopulate.totalCourtFee || 0, 4);
+            matchToPopulate.bookedPlayers.push({ userId: player.id, name: player.name });
+            bookings.push({
+                id: `matchbooking-init-${player.id}`,
+                userId: player.id,
+                activityId: matchToPopulate.id,
+                activityType: 'match',
+            });
+             transactions.push({
+                id: `matchtxn-init-${player.id}`,
+                userId: player.id,
+                date: new Date(),
+                type: 'Reserva Partida',
+                amount: -price,
+                description: `Partida Nivel ${matchToPopulate.level}`,
+            });
+        }
+        // Update the placeholder match to be a real, confirmed match
+        matchToPopulate.isPlaceholder = false;
+        matchToPopulate.status = 'confirmed';
+        matchToPopulate.courtNumber = 3; // Assign a court
+        if(students[0].level) matchToPopulate.level = students[0].level;
     }
-    
-    if (david && firstMatch && isUserLevelCompatibleWithActivity(firstMatch.level, david.level)) {
-       firstMatch.bookedPlayers.push({ userId: david.id, name: david.name });
-       bookings.push({ id: `matchbooking-init-2-${david.id}`, userId: david.id, activityId: firstMatch.id, activityType: 'match' });
-    }
 
-    return { bookings, transactions: [], pointTransactions };
+
+    return { bookings, transactions, pointTransactions };
 };
