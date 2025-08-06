@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from '@/components/ui/button';
-import type { TimeSlot, User, Booking, ClassPadelLevel, MatchPadelLevel, Club, PadelCourt } from '@/types';
+import type { TimeSlot, User, Booking, ClassPadelLevel, MatchPadelLevel, Club, PadelCourt, Instructor } from '@/types';
 import { displayClassLevel, displayClassCategory } from '@/types'; 
 import BookingSpotDisplay from './BookingSpotDisplay'; 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'; 
@@ -88,6 +88,7 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
     const [spotIndexToBook, setSpotIndexToBook] = useState<number | undefined>(undefined);
     const [groupSizeToBook, setGroupSizeToBook] = useState<1|2|3|4>(4);
     const [currentSlot, setCurrentSlot] = useState<TimeSlot>(initialSlot);
+    const [instructor, setInstructor] = useState<Instructor | null>(null);
     const [instructorRating, setInstructorRating] = useState<number>(4.5);
     const [isConfirmPrivateDialogOpen, setIsConfirmPrivateDialogOpen] = useState(false);
     const [privateClassSizeToConfirm, setPrivateClassSizeToConfirm] = useState<1 | 2 | 3 | 4>(4);
@@ -97,7 +98,13 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
     const [infoDialog, setInfoDialog] = useState<{ open: boolean, title: string, description: string, icon: React.ElementType }>({ open: false, title: '', description: '', icon: Lightbulb });
     const [courtAvailability, setCourtAvailability] = useState<{ available: PadelCourt[], occupied: PadelCourt[], total: number }>({ available: [], occupied: [], total: 0 });
 
-    const instructor = useMemo(() => getMockInstructors().find(i => i.id === initialSlot.instructorId), [initialSlot.instructorId]);
+    useEffect(() => {
+        const fetchInstructor = () => {
+            const instructorData = getMockInstructors().find(i => i.id === initialSlot.instructorId);
+            setInstructor(instructorData || null);
+        };
+        fetchInstructor();
+    }, [initialSlot.instructorId]);
     
     const fetchCourtAvailability = useCallback(async () => {
         if (!initialSlot.clubId || !initialSlot.startTime || !initialSlot.endTime) return;
@@ -410,7 +417,7 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
         }
     };
     
-    if (!currentSlot || !currentUser || !clubInfo) {
+    if (!currentSlot || !currentUser || !clubInfo || !instructor) {
         return <Card className="p-4"><Skeleton className="h-96 w-full" /></Card>;
     }
     
