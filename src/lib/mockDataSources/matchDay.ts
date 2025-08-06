@@ -3,7 +3,7 @@
 import type { MatchDayEvent, User, MatchDayInscription, PadelCourt, Match } from '@/types';
 import * as state from './state';
 import { v4 as uuidv4 } from 'uuid';
-import { addMinutes, setHours, setMinutes } from 'date-fns';
+import { addMinutes, setHours, setMinutes, isSameDay } from 'date-fns';
 import { deductCredit } from './users';
 import { addMatch } from './matches';
 
@@ -190,4 +190,14 @@ export const manuallyTriggerMatchDayDraw = async (eventId: string): Promise<{ su
     state.updateMatchDayEventInState(eventId, { ...event, matchesGenerated: true });
     
     return { success: true, matchesCreated: matchesCreatedCount };
+};
+
+export const fetchMatchDayEventsForDate = async (date: Date, clubId?: string): Promise<MatchDayEvent[]> => {
+    const events = state.getMockMatchDayEvents().filter(event =>
+        isSameDay(new Date(event.eventDate), date)
+    );
+    if(clubId){
+        return events.filter(e => e.id === clubId)
+    }
+    return events;
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import type { User, Booking, PointTransactionType, TimeSlot, Match, Product, Instructor, UserDB, MatchPadelLevel, UserGenderCategory, DayOfWeek, TimeRange, InstructorRateTier, MatchBooking } from '@/types';
-import * as state from './state'; 
+import * as state from './index'; 
 import * as config from '../config';
 import { areIntervalsOverlapping, parse, getDay, format, differenceInDays } from 'date-fns';
 import { calculatePricePerPerson } from '@/lib/utils';
@@ -738,4 +738,11 @@ export const fetchPointTransactions = async (clubId?: string, userId?: string): 
         transactions = transactions.filter(t => t.userId === userId);
     }
     return JSON.parse(JSON.stringify(transactions));
+};
+
+
+export const countUserReservedProducts = async (userId: string): Promise<number> => {
+    await new Promise(resolve => setTimeout(resolve, 50));
+    const userTransactions = state.getMockTransactions().filter(t => t.userId === userId && t.type === 'Compra Producto');
+    return userTransactions.length;
 };

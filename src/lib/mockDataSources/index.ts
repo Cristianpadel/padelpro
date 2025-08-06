@@ -6,7 +6,7 @@ export * from './utils';
 export * from './users';
 export * from './classActions';
 export * from './classProposals';
+export * from './matches';
 export * from './matchDay';
 export * from './system';
 export * from './clubs';
-export * from './matches';

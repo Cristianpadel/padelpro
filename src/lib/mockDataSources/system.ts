@@ -2,7 +2,7 @@
 
 import { isSameDay, format, addDays } from 'date-fns';
 import type { User, Booking, MatchBooking, TimeSlot, Match } from '@/types';
-import * as state from '../state';
+import * as state from './index';
 import * as config from '../config';
 import { calculatePricePerPerson } from '@/lib/utils';
 import { cancelBooking, bookClass } from './classActions';
@@ -121,7 +121,7 @@ export const simulateBookings = async (options: {
             let result;
             if (activityType === 'clases') {
                 const groupSize = [1,2,3,4][Math.floor(Math.random()*4)] as 1|2|3|4;
-                result = await bookClass(student.id, activity.id, groupSize, undefined);
+                result = await bookClass(student.id, activity.id, groupSize, 0); // spotIndex needs to be valid
             } else {
                 result = await bookMatch(student.id, activity.id);
             }
@@ -195,3 +195,6 @@ export const generateDynamicMatches = (): Match[] => {
         for (const club of clubs) {
             matches = [...matches, ...createMatchesForDay(club, date)];
         }
+    }
+    return matches;
+};

@@ -1,6 +1,6 @@
 "use client";
 
-import { addHours, setHours, setMinutes, startOfDay, format, isSameDay, addDays, addMinutes, areIntervalsOverlapping } from 'date-fns';
+import { addHours, setHours, setMinutes, startOfDay, format, isSameDay, addDays, addMinutes, areIntervalsOverlapping, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { TimeSlot, Booking, User, Instructor, ClassPadelLevel, PadelCategoryForSlot } from '@/types';
 import * as state from './index';
@@ -269,4 +269,118 @@ export const makeClassPublic = async (userId: string, slotId: string): Promise<{
     
     state.updateTimeSlotInState(slot.id, slot);
     return { success: true, updatedSlot: slot };
+};
+
+export const confirmClassAsPrivate = async (
+    organizerUserId: string,
+    slotId: string,
+    confirmedSize: 1 | 2 | 3 | 4
+): Promise<{ updatedSlot: TimeSlot; shareLink: string } | { error: string }> => {
+    await new Promise(resolve => setTimeout(resolve, config.MINIMAL_DELAY));
+    const organizerUser = state.getMockUserDatabase().find(u => u.id === organizerUserId);
+    if (!organizerUser) return { error: "Usuario organizador no encontrado." };
+
+    const slotIndex = state.getMockTimeSlots().findIndex(s => s.id === slotId);
+    if (slotIndex === -1) return { error: "Clase no encontrada." };
+
+    let slot = { ...state.getMockTimeSlots()[slotIndex] };
+
+    if (slot.status !== 'pre_registration' || (slot.bookedPlayers && slot.bookedPlayers.length > 0)) {
+        return { error: "Solo se pueden confirmar como privadas las clases nuevas sin alumnos." };
+    }
+    
+    if (slot.totalPrice === undefined || slot.totalPrice === null) {
+        return { error: "No se pudo determinar el precio de la clase." };
+    }
+
+    if ((organizerUser.credit ?? 0) < slot.totalPrice) {
+        return { error: `Saldo insuficiente. Necesitas ${slot.totalPrice.toFixed(2)}€ y tienes ${(organizerUser.credit ?? 0).toFixed(2)}€.` };
+    }
+
+    const availableCourt = findAvailableCourt(slot.clubId, new Date(slot.startTime), new Date(slot.endTime));
+    if (!availableCourt) {
+        return { error: "No hay pistas disponibles en este momento para confirmar la clase." };
+    }
+
+    // Deduct credit, update status, and assign court
+    deductCredit(organizerUserId, slot.totalPrice, slot, 'Clase');
+
+    const privateShareCode = `privclass-${slotId.slice(-6)}-${Date.now().toString().slice(-6)}`;
+
+    slot.status = 'confirmed_private';
+    slot.organizerId = organizerUserId;
+    slot.privateShareCode = privateShareCode;
+    slot.confirmedPrivateSize = confirmedSize;
+    slot.courtNumber = availableCourt.courtNumber;
+    slot.bookedPlayers.push({ userId: organizerUserId, groupSize: confirmedSize, name: organizerUser.name });
+    
+    state.updateTimeSlotInState(slot.id, slot);
+
+    // Create the organizer's booking record
+    const newOrganizerBooking: Booking = {
+        id: `privbooking-${slotId}-${organizerUserId}-${Date.now()}`,
+        userId: organizerUserId,
+        activityId: slotId,
+        activityType: 'class',
+        groupSize: confirmedSize,
+        spotIndex: 0,
+        status: 'confirmed',
+        isOrganizerBooking: true,
+        bookedAt: new Date()
+    };
+    state.addUserBookingToState(newOrganizerBooking);
+
+    _annulConflictingActivities(slot);
+    await recalculateAndSetBlockedBalances(organizerUserId);
+
+    const shareLink = `/?view=clases&code=${privateShareCode}`;
+    return { updatedSlot: slot, shareLink };
+};
+
+export const joinPrivateClass = async (
+    inviteeUserId: string,
+    slotId: string,
+    shareCode: string
+): Promise<{ newBooking: Booking; updatedSlot: TimeSlot; organizerRefundAmount: number } | { error: string }> => {
+    await new Promise(resolve => setTimeout(resolve, config.MINIMAL_DELAY));
+    const inviteeUser = state.getMockUserDatabase().find(u => u.id === inviteeUserId);
+    if (!inviteeUser) return { error: "Usuario no encontrado." };
+
+    const slotIndex = state.getMockTimeSlots().findIndex(s => s.id === slotId && s.privateShareCode === shareCode);
+    if (slotIndex === -1) return { error: "Clase privada no encontrada o código incorrecto." };
+
+    let slot = { ...state.getMockTimeSlots()[slotIndex] };
+    if (slot.status !== 'confirmed_private' || !slot.confirmedPrivateSize) return { error: "Esta clase no es privada." };
+    if ((slot.bookedPlayers || []).length >= slot.confirmedPrivateSize) return { error: "Esta clase privada ya está completa." };
+    if ((slot.bookedPlayers || []).some(p => p.userId === inviteeUserId)) return { error: "Ya estás en esta clase." };
+
+    const pricePerPerson = calculatePricePerPerson(slot.totalPrice, slot.confirmedPrivateSize);
+    
+    if ((inviteeUser.credit ?? 0) < pricePerPerson) {
+        return { error: `Saldo insuficiente. Necesitas ${pricePerPerson.toFixed(2)}€.` };
+    }
+
+    deductCredit(inviteeUserId, pricePerPerson, slot, 'Clase');
+    
+    if (slot.organizerId) {
+        state.addCreditToStudent(slot.organizerId, pricePerPerson, `Reembolso por invitado: ${inviteeUser.name}`);
+    }
+
+    slot.bookedPlayers.push({ userId: inviteeUserId, groupSize: slot.confirmedPrivateSize, name: inviteeUser.name });
+    state.updateTimeSlotInState(slotId, slot);
+
+    const newBooking: Booking = {
+        id: `booking-${slotId}-${inviteeUserId}-${Date.now()}`,
+        userId: inviteeUserId,
+        activityId: slotId,
+        activityType: 'class',
+        groupSize: slot.confirmedPrivateSize,
+        spotIndex: slot.bookedPlayers.length - 1,
+        status: 'confirmed',
+        amountPaidByInvitee: pricePerPerson,
+        bookedAt: new Date()
+    };
+    state.addUserBookingToState(newBooking);
+    
+    return { newBooking, updatedSlot: slot, organizerRefundAmount: pricePerPerson };
 };
