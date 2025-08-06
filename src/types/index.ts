@@ -261,6 +261,7 @@ export interface User {
     isPro?: boolean;
     currentClubId?: string;
     genderCategory?: UserGenderCategory;
+    preferredGameType?: 'clases' | 'partidas';
 }
 
 export interface MatchDayEvent {

@@ -77,8 +77,8 @@ let pointTransactions: PointTransaction[] = [
     { id: 'txn-3', clubId: 'club-1', userId: 'user-1', points: 2, type: 'primero_en_clase', description: "Primero en unirse a clase", date: subDays(new Date(), 2) },
 ];
 let students: User[] = [
-    { id: 'user-1', name: 'Alex García', loyaltyPoints: 1250, level: '3.5', credit: 100, blockedCredit: 0, profilePictureUrl: 'https://i.pravatar.cc/150?u=user-1', favoriteInstructorIds: ['inst-2'], email: 'alex.garcia@email.com', genderCategory: 'masculino' },
-    { id: 'user-2', name: 'Beatriz Reyes', loyaltyPoints: 800, level: '4.0', credit: 50, blockedCredit: 0, profilePictureUrl: 'https://i.pravatar.cc/150?u=user-2', email: 'beatriz.reyes@email.com', genderCategory: 'femenino' },
+    { id: 'user-1', name: 'Alex García', loyaltyPoints: 1250, level: '3.5', credit: 100, blockedCredit: 0, profilePictureUrl: 'https://i.pravatar.cc/150?u=user-1', favoriteInstructorIds: ['inst-2'], email: 'alex.garcia@email.com', genderCategory: 'masculino', preferredGameType: 'clases' },
+    { id: 'user-2', name: 'Beatriz Reyes', loyaltyPoints: 800, level: '4.0', credit: 50, blockedCredit: 0, profilePictureUrl: 'https://i.pravatar.cc/150?u=user-2', email: 'beatriz.reyes@email.com', genderCategory: 'femenino', preferredGameType: 'partidas' },
     { id: 'user-3', name: 'Carlos Sainz', loyaltyPoints: 2400, level: '5.0', credit: 200, blockedCredit: 0, profilePictureUrl: 'https://i.pravatar.cc/150?u=user-3', email: 'carlos.sainz@email.com', genderCategory: 'masculino' },
     { id: 'user-4', name: 'Daniela Vega', loyaltyPoints: 300, level: '2.5', credit: 20, blockedCredit: 0, profilePictureUrl: 'https://i.pravatar.cc/150?u=user-4', email: 'daniela.vega@email.com', genderCategory: 'femenino' },
     { id: 'user-5', name: 'Esteban Ocon', loyaltyPoints: 950, level: '4.5', credit: 75, blockedCredit: 0, profilePictureUrl: 'https://i.pravatar.cc/150?u=user-5', email: 'esteban.ocon@email.com', genderCategory: 'masculino' },
@@ -466,9 +466,9 @@ export const getMockMatches = async (): Promise<Match[]> => {
 }
 
 
-export const fetchMatchDayEventsForDate = async (date: Date, clubId: string): Promise<MatchDayEvent[]> => {
+export const fetchMatchDayEventsForDate = async (date: Date, clubId?: string): Promise<MatchDayEvent[]> => {
     await new Promise(res => setTimeout(res, 250));
-    return matchDayEvents.filter(e => e.clubId === clubId && isSameDay(new Date(e.eventDate), date));
+    return matchDayEvents.filter(e => (!clubId || e.clubId === clubId) && isSameDay(new Date(e.eventDate), date));
 }
 
 export const getMockInstructors = (): (Instructor & User)[] => {
@@ -830,27 +830,32 @@ export const findAvailableCourt = (clubId: string, date: Date): number | null =>
     return 1;
 }
 
-export const getUserActivityStatusForDay = (userId: string, day: Date, allTimeSlots: TimeSlot[], allMatches: Match[]): UserActivityStatusForDay => {
-    const today = startOfDay(new Date());
-    const anticipationPoints = differenceInDays(day, today);
+export const getUserActivityStatusForDay = async (userId: string, day: Date): Promise<{ activityStatus: 'confirmed' | 'inscribed' | 'none' }> => {
+    const userClassBookings = await getMockUserBookings(userId);
+    const userMatchBookings = await getMockUserMatchBookings(userId);
 
-    const userActivitiesToday = [
-        ...allTimeSlots.filter(ts => ts.bookedPlayers.some(p => p.userId === userId) && isSameDay(new Date(ts.startTime), day)),
-        ...allMatches.filter(m => m.bookedPlayers.some(p => p.userId === userId) && isSameDay(new Date(m.startTime), day))
+    const activitiesForDay = [
+        ...userClassBookings.filter(b => b.activityId && isSameDay(new Date(timeSlots.find(ts => ts.id === b.activityId)?.startTime || 0), day)),
+        ...userMatchBookings.filter(b => b.activityId && isSameDay(new Date(matches.find(m => m.id === b.activityId)?.startTime || 0), day))
     ];
+    
+    if (activitiesForDay.length === 0) return { activityStatus: 'none' };
+    
+    const isAnyConfirmed = activitiesForDay.some(b => {
+        if(b.activityType === 'class') {
+            const slot = timeSlots.find(ts => ts.id === b.activityId);
+            return slot ? isSlotEffectivelyCompleted(slot).completed : false;
+        }
+        if(b.activityType === 'match') {
+            const match = matches.find(m => m.id === b.activityId);
+            return match ? isSlotEffectivelyCompleted(match).completed : false;
+        }
+        return false;
+    });
 
-    if (userActivitiesToday.length === 0) {
-        return { activityStatus: 'none', hasEvent: false, anticipationPoints: Math.max(0, anticipationPoints) };
-    }
-    
-    const isConfirmed = userActivitiesToday.some(act => isSlotEffectivelyCompleted(act).completed);
-    
-    return {
-        activityStatus: isConfirmed ? 'confirmed' : 'inscribed',
-        hasEvent: false, // Placeholder for match-day events
-        anticipationPoints: Math.max(0, anticipationPoints)
-    };
+    return { activityStatus: isAnyConfirmed ? 'confirmed' : 'inscribed' };
 };
+
 
 export const cancelTimeSlot = async (slotId: string): Promise<{ success: boolean } | { error: string }> => {
   const index = timeSlots.findIndex(s => s.id === slotId);
@@ -933,6 +938,13 @@ export const updateUserPassword = async (userId: string, current: string, newPas
     console.log(`Password for ${userId} updated to ${newPass}`);
     return { success: true };
 };
+
+export const updateUserFavoriteInstructors = async (userId: string, favoriteInstructorIds: string[]): Promise<User | { error: string }> => {
+    const userIndex = students.findIndex(u => u.id === userId);
+    if (userIndex === -1) return { error: "Usuario no encontrado." };
+    students[userIndex].favoriteInstructorIds = favoriteInstructorIds;
+    return students[userIndex];
+}
 
 
 

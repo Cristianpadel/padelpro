@@ -1,0 +1,190 @@
+"use client";
+
+import { useState, useEffect, useCallback, useTransition, useMemo } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { startOfDay, format, isSameDay, addDays, differenceInDays } from 'date-fns';
+import type { User, MatchPadelLevel, TimeOfDayFilterType, MatchDayEvent, UserActivityStatusForDay } from '@/types';
+import { updateUserFavoriteInstructors, getUserActivityStatusForDay, fetchMatchDayEventsForDate } from '@/lib/mockData';
+
+export function useActivityFilters(
+  currentUser: User | null,
+  onCurrentUserUpdate: (newFavoriteIds: string[]) => void
+) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [refreshKey, setRefreshKey] = useState(0); // Internal refresh trigger
+
+  // --- Filter State (driven by URL params) ---
+  const timeSlotFilter = (searchParams.get('time') as TimeOfDayFilterType) || 'all';
+  const selectedLevel = (searchParams.get('level') as MatchPadelLevel | 'all') || 'all';
+  const filterByFavorites = searchParams.get('favorites') === 'true';
+  const viewPreference = (searchParams.get('viewPref') as 'normal' | 'myInscriptions' | 'myConfirmed') || 'normal';
+  const matchShareCode = searchParams.get('code');
+  const matchIdFilter = searchParams.get('matchId');
+  const filterByGratisOnly = searchParams.get('filter') === 'gratis';
+  const filterByLiberadasOnly = searchParams.get('filter') === 'liberadas';
+  const filterByPuntosOnly = searchParams.get('filter') === 'puntos';
+  const showPointsBonus = searchParams.get('showPoints') === 'true';
+
+
+  // --- Local State ---
+  const [activeView, setActiveView] = useState<'clases' | 'partidas'>('clases');
+  const [selectedDate, setSelectedDate] = useState<Date | null>(startOfDay(new Date()));
+  const [isUpdatingFavorites, startFavoritesTransition] = useTransition();
+
+  // --- NEW: Centralized state for date strip indicators ---
+  const [dateStripIndicators, setDateStripIndicators] = useState<Record<string, UserActivityStatusForDay>>({});
+  const dateStripDates = useMemo(() => Array.from({ length: 15 }, (_, i) => addDays(startOfDay(new Date()), i)), []);
+  
+  const triggerRefresh = useCallback(() => {
+    setRefreshKey(prev => prev + 1);
+  }, []);
+
+  useEffect(() => {
+    const fetchIndicators = async () => {
+      if (!currentUser) return;
+      const newIndicators: Record<string, UserActivityStatusForDay> = {};
+      const clubIdFromParams = searchParams.get('clubId');
+      const today = startOfDay(new Date());
+
+      for (const date of dateStripDates) {
+        const dateKey = format(date, 'yyyy-MM-dd');
+        const [statusResult, events] = await Promise.all([
+          getUserActivityStatusForDay(currentUser.id, date),
+          fetchMatchDayEventsForDate(date, clubIdFromParams || undefined)
+        ]);
+        const anticipationPoints = differenceInDays(date, today);
+
+        newIndicators[dateKey] = {
+          activityStatus: statusResult.activityStatus,
+          hasEvent: events.length > 0,
+          eventId: events.length > 0 ? events[0].id : undefined,
+          anticipationPoints: Math.max(0, anticipationPoints)
+        };
+      }
+      setDateStripIndicators(newIndicators);
+    };
+
+    fetchIndicators();
+  }, [currentUser, dateStripDates, searchParams, refreshKey]);
+
+
+  // --- URL Update Logic ---
+  const updateUrlFilter = useCallback((key: string, value: string | boolean | null) => {
+    const newSearchParams = new URLSearchParams(searchParams.toString());
+    if (value && value !== 'all' && value !== false && value !== 'normal') {
+      newSearchParams.set(key, String(value));
+    } else {
+      newSearchParams.delete(key);
+    }
+    router.replace(`${pathname}?${newSearchParams.toString()}`, { scroll: false });
+  }, [searchParams, router, pathname]);
+
+  const clearAllFilters = useCallback(() => {
+    const newSearchParams = new URLSearchParams();
+    newSearchParams.set('view', activeView); // Keep the current view
+    router.replace(`${pathname}?${newSearchParams.toString()}`, { scroll: false });
+  }, [router, pathname, activeView]);
+
+  // --- Event Handlers ---
+  const handleTimeFilterChange = (value: TimeOfDayFilterType) => updateUrlFilter('time', value);
+  const handleLevelChange = (value: MatchPadelLevel | 'all') => updateUrlFilter('level', value);
+  const handleDateChange = useCallback((date: Date) => setSelectedDate(startOfDay(date)), []);
+  
+  const handleTogglePointsBonus = () => updateUrlFilter('showPoints', !showPointsBonus);
+
+  const handleApplyFavorites = (newFavoriteIds: string[]) => {
+    if (currentUser) {
+      startFavoritesTransition(async () => {
+        await updateUserFavoriteInstructors(currentUser.id, newFavoriteIds);
+        onCurrentUserUpdate(newFavoriteIds); // Notify parent to update its state
+        updateUrlFilter('favorites', newFavoriteIds.length > 0);
+      });
+    }
+  };
+  
+  const handleFavoritesClick = (openManagementDialog: () => void) => {
+    if (filterByFavorites) {
+        updateUrlFilter('favorites', false);
+    } else {
+        openManagementDialog();
+    }
+  };
+  
+  const handleViewPrefChange = (pref: 'normal' | 'myInscriptions' | 'myConfirmed') => {
+      updateUrlFilter('viewPref', pref);
+  };
+
+
+  // --- Effects to Sync State with URL/User ---
+  useEffect(() => {
+    if (!currentUser?.level || searchParams.has('level')) return;
+    updateUrlFilter('level', currentUser.level);
+  }, [currentUser?.level, searchParams, updateUrlFilter]);
+
+  useEffect(() => {
+    const queryViewParam = searchParams.get('view');
+    const filterParam = searchParams.get('filter');
+
+    // Force specific views based on special filters
+    if (filterParam === 'liberadas') {
+        setActiveView(queryViewParam === 'partidas' ? 'partidas' : 'clases');
+        return;
+    }
+    
+    if (filterParam === 'puntos') {
+      setActiveView('partidas');
+      return;
+    }
+
+    const userPreferredView = currentUser?.preferredGameType === 'partidas' ? 'partidas' : 'clases';
+    const newView = (queryViewParam === 'clases' || queryViewParam === 'partidas') ? queryViewParam : userPreferredView;
+    
+    if (activeView !== newView) {
+      setActiveView(newView);
+    }
+  }, [currentUser, searchParams, activeView]);
+
+  useEffect(() => {
+    if (filterByGratisOnly || filterByLiberadasOnly || filterByPuntosOnly || matchIdFilter || matchShareCode) {
+      setSelectedDate(null);
+    } else {
+      if (!selectedDate) {
+        setSelectedDate(startOfDay(new Date()));
+      }
+    }
+  }, [filterByGratisOnly, filterByLiberadasOnly, filterByPuntosOnly, matchIdFilter, matchShareCode, selectedDate]);
+
+  return {
+    activeView,
+    setActiveView,
+    selectedDate,
+    setSelectedDate,
+    timeSlotFilter,
+    selectedLevel,
+    filterByFavorites,
+    viewPreference,
+    proposalView: 'join', 
+    matchShareCode,
+    matchIdFilter,
+    filterByGratisOnly,
+    filterByLiberadasOnly,
+    filterByPuntosOnly, 
+    isUpdatingFavorites,
+    dateStripIndicators, 
+    dateStripDates,      
+    refreshKey,
+    showPointsBonus, // Expose new state
+    handleTimeFilterChange,
+    handleLevelChange,
+    handleFavoritesClick,
+    handleApplyFavorites,
+    handleDateChange,
+    handleViewPrefChange,
+    clearAllFilters,
+    triggerRefresh,
+    handleTogglePointsBonus, // Expose new handler
+    updateUrlFilter, // Expose the raw update function
+  };
+}
