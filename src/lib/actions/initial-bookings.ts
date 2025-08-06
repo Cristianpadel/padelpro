@@ -2,7 +2,7 @@
 
 import type { User, TimeSlot, Match, Booking, MatchBooking, PointTransaction } from '@/types';
 import { calculatePricePerPerson } from '@/lib/utils';
-import { isSlotEffectivelyCompleted } from './utils';
+import { isSlotEffectivelyCompleted } from '../utils';
 
 // This file contains the logic to create the initial state of bookings for the mock data.
 // It simulates users having already booked some classes and matches.
@@ -98,6 +98,7 @@ export const processInitialMatchBookings = (students: User[], matches: Match[]):
                 userId: player.id,
                 activityId: matchToPopulate.id,
                 activityType: 'match',
+                bookedAt: new Date(),
             });
              transactions.push({
                 id: `matchtxn-init-${player.id}`,

@@ -392,6 +392,34 @@ export interface MatchBookingMatchDetails {
     eventId?: string;
 }
 
+export interface DealOfTheDaySettings {
+    enabled: boolean;
+    productIds: string[];
+    discountPercentage: number;
+    currentDealProductId?: string;
+    currentDealSetAt?: string; // ISO string date
+}
+
+export interface Review {
+    id: string;
+    activityId: string;
+    activityType: 'class' | 'match';
+    userId: string;
+    rating: number;
+    comment?: string;
+    createdAt: Date;
+}
+
+export type Transaction = {
+    id: string;
+    userId: string;
+    date: Date;
+    type: 'Recarga' | 'Reserva Clase' | 'Reserva Partida' | 'Reembolso Clase' | 'Reembolso Partida' | 'Penalización Cancelación' | 'Compra Producto';
+    amount: number;
+    description: string;
+};
+
+
 // --- Display Helpers ---
 export const displayClassLevel = (level: ClassPadelLevel | MatchPadelLevel, short = false): string => {
     if (level === 'abierto') return short ? 'Abre' : 'Abierto';
@@ -425,5 +453,3 @@ export const displayActivityStatusWithDetails = (
         default: return activity.status || 'Desconocido';
     }
 };
-
-    

@@ -10,6 +10,7 @@ export const generateInitialStudents = (): User[] => [
         id: 'user-current',
         name: 'Cristian Parra',
         email: 'cristian.parra@ejemplo.com',
+        password: 'password123',
         level: '4.5',
         credit: 150.50,
         loyaltyPoints: 125,
@@ -17,12 +18,13 @@ export const generateInitialStudents = (): User[] => [
         preferredGameType: 'partidas',
         favoriteInstructorIds: ['instructor-javier-gomez'],
         profilePictureUrl: 'https://randomuser.me/api/portraits/men/32.jpg',
-        genderCategory: 'chico'
+        genderCategory: 'masculino'
     },
     {
         id: 'student-2',
         name: 'Elena García',
         email: 'elena.garcia@ejemplo.com',
+        password: 'password123',
         level: '3.0',
         credit: 75,
         loyaltyPoints: 40,
@@ -30,12 +32,13 @@ export const generateInitialStudents = (): User[] => [
         preferredGameType: 'clases',
         favoriteInstructorIds: ['instructor-sofia-martin', 'instructor-javier-gomez'],
         profilePictureUrl: 'https://randomuser.me/api/portraits/women/44.jpg',
-        genderCategory: 'chica'
+        genderCategory: 'femenino'
     },
     {
         id: 'student-3',
         name: 'David Martínez',
         email: 'david.martinez@ejemplo.com',
+        password: 'password123',
         level: '4.0',
         credit: 200,
         loyaltyPoints: 250,
@@ -43,12 +46,13 @@ export const generateInitialStudents = (): User[] => [
         preferredGameType: 'ambas',
         favoriteInstructorIds: [],
         profilePictureUrl: 'https://randomuser.me/api/portraits/men/46.jpg',
-        genderCategory: 'chico'
+        genderCategory: 'masculino'
     },
      {
         id: 'student-4',
         name: 'Laura Fernández',
         email: 'laura.fernandez@ejemplo.com',
+        password: 'password123',
         level: '2.5',
         credit: 50,
         loyaltyPoints: 10,
@@ -56,7 +60,7 @@ export const generateInitialStudents = (): User[] => [
         preferredGameType: 'clases',
         favoriteInstructorIds: ['instructor-sofia-martin'],
         profilePictureUrl: 'https://randomuser.me/api/portraits/women/50.jpg',
-        genderCategory: 'chica'
+        genderCategory: 'femenino'
     },
 ];
 
@@ -146,11 +150,6 @@ export const generateInitialClubs = (): Club[] => [
         pointBookingSlots: {
             saturday: [{ start: '10:00', end: '12:00' }],
             sunday: [{ start: '10:00', end: '12:00' }]
-        },
-        dealOfTheDay: {
-            enabled: true,
-            productIds: ['prod-bullpadel-vertex-04', 'prod-nox-at10-18k', 'prod-head-motion-pro'],
-            discountPercentage: 20,
         },
         shopReservationFee: 1.5,
         cardShadowEffect: {

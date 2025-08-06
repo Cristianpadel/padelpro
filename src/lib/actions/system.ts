@@ -1,7 +1,7 @@
 "use client";
 
 import { initializeMockStudents, initializeMockInstructors, initializeMockClubs, initializeMockPadelCourts, initializeMockShopProducts, initializeMockUserDatabase, initializeMockTimeSlots, initializeMockMatches, initializeMockUserBookings, initializeMockUserMatchBookings, initializeMockPointTransactions, initializeMockMatchDayEvents, initializeMockMatchDayInscriptions, initializeMockMatchDayCancelledInscriptions, initializeMockCurrentUser } from '../state';
-import { generateInitialStudents, generateInitialInstructors, generateInitialClubs, generateInitialPadelCourts, generateInitialShopProducts } from './init-data';
+import { generateInitialStudents, generateInitialInstructors, generateInitialClubs, generateInitialPadelCourts, generateInitialShopProducts } from './init';
 import { generateDynamicTimeSlots, generateDynamicMatches } from './system';
 import { processInitialBookings, processInitialMatchBookings } from './initial-bookings';
 import type { MatchDayEvent, MatchDayInscription, PadelCourt } from '@/types';
@@ -69,6 +69,7 @@ export const performInitialization = () => {
 
     // 5. Initialize logs and other states
     initializeMockPointTransactions([...classPointTransactions, ...matchPointTransactions]);
+    initializeMockReviews([]);
 
     // --- NEW: Create a populated Match-Day Event ---
     const today = new Date();

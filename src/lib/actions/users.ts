@@ -26,7 +26,7 @@ export const addUserPointsAndAddTransaction = async (userId: string, points: num
     const userIndex = userDb.findIndex(u => u.id === userId);
     if (userIndex !== -1) {
         userDb[userIndex].loyaltyPoints = (userDb[userIndex].loyaltyPoints ?? 0) + points;
-        state.addPointTransaction({
+        state.addPointTransactionToState({
             id: `txn-${Date.now()}`,
             userId,
             clubId,
@@ -81,10 +81,10 @@ export const convertEurosToPoints = async (
     currentUser.credit = (currentUser.credit ?? 0) - eurosToConvert;
     currentUser.loyaltyPoints = (currentUser.loyaltyPoints ?? 0) + pointsToAdd;
     
-    state.addPointTransaction({
+    state.addPointTransactionToState({
         id: `txn-convert-${Date.now()}`,
         userId: userId,
-        clubId: currentUser.currentClubId || 'club-1',
+        clubId: (currentUser as any).currentClubId || 'club-1',
         points: pointsToAdd,
         type: 'conversion_saldo',
         description: `Conversión de ${eurosToConvert.toFixed(2)}€ a puntos.`,
