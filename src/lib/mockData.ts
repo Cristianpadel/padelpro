@@ -696,5 +696,3 @@ const initialMatch = addMatch({ clubId: 'club-1', startTime: addHours(today, 11)
 courtBookings.push(
     { id: 'booking-3', clubId: 'club-1', courtNumber: 1, startTime: addHours(today, 18), endTime: addHours(today, 19), title: "Bloqueo Pista", type: 'reserva_manual', status: 'reservada' },
 );
-
-
