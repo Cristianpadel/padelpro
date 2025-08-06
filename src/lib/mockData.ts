@@ -50,10 +50,10 @@ export let clubs: Club[] = [
     { id: 'club-2', name: 'Padel Club Pozuelo' },
 ];
 
-export let instructors: Instructor[] = [
-    { id: 'inst-1', name: 'Carlos López', isAvailable: true, assignedClubId: 'club-1', assignedCourtNumber: 1, email: 'carlos.lopez@example.com', profilePictureUrl: 'https://i.pravatar.cc/150?u=inst-1', defaultRatePerHour: 30 },
-    { id: 'inst-2', name: 'Ana García', isAvailable: true, assignedClubId: 'club-1', email: 'ana.garcia@example.com', profilePictureUrl: 'https://i.pravatar.cc/150?u=inst-2', defaultRatePerHour: 35 },
-    { id: 'inst-3', name: 'Javier Fernández', isAvailable: false, assignedClubId: 'club-2', email: 'javier.fernandez@example.com', profilePictureUrl: 'https://i.pravatar.cc/150?u=inst-3', defaultRatePerHour: 28 },
+export let instructors: (Instructor & User)[] = [
+    { id: 'inst-1', name: 'Carlos López', isAvailable: true, assignedClubId: 'club-1', assignedCourtNumber: 1, email: 'carlos.lopez@example.com', profilePictureUrl: 'https://i.pravatar.cc/150?u=inst-1', defaultRatePerHour: 30, loyaltyPoints: 0, credit: 0 },
+    { id: 'inst-2', name: 'Ana García', isAvailable: true, assignedClubId: 'club-1', email: 'ana.garcia@example.com', profilePictureUrl: 'https://i.pravatar.cc/150?u=inst-2', defaultRatePerHour: 35, loyaltyPoints: 0, credit: 0 },
+    { id: 'inst-3', name: 'Javier Fernández', isAvailable: false, assignedClubId: 'club-2', email: 'javier.fernandez@example.com', profilePictureUrl: 'https://i.pravatar.cc/150?u=inst-3', defaultRatePerHour: 28, loyaltyPoints: 0, credit: 0 },
 ];
 
 export let padelCourts: PadelCourt[] = [
@@ -240,6 +240,22 @@ export const getMockStudents = async (): Promise<User[]> => {
     await new Promise(res => setTimeout(res, 200));
     return students;
 }
+export const fetchStudents = async (): Promise<User[]> => {
+    await new Promise(res => setTimeout(res, 200));
+    return students;
+};
+
+export const addCreditToStudent = async (studentId: string, amount: number): Promise<{ newBalance: number } | { error: string }> => {
+    await new Promise(res => setTimeout(res, 400));
+    const studentIndex = students.findIndex(s => s.id === studentId);
+    if (studentIndex === -1) {
+        return { error: "Alumno no encontrado." };
+    }
+    const currentCredit = students[studentIndex].credit ?? 0;
+    const newBalance = currentCredit + amount;
+    students[studentIndex].credit = newBalance;
+    return { newBalance };
+};
 
 
 export const addTimeSlot = async (slotData: Omit<TimeSlot, 'id' | 'instructorName' | 'status' | 'bookedPlayers' | 'endTime'>): Promise<TimeSlot | { error: string }> => {
@@ -556,7 +572,7 @@ export const bookClass = async (userId: string, slotId: string, groupSize: 1 | 2
     }
     
     const newBooking: Booking = { id: uuidv4(), userId, activityId: slotId, activityType: 'class', groupSize, spotIndex, status: 'pending' };
-    timeSlots[slotIndex].bookedPlayers.push({ userId, groupSize });
+    timeSlots[slotIndex].bookedPlayers.push({ userId, groupSize: groupSize, name: students.find(s => s.id === userId)?.name || 'Unknown' });
 
     return { booking: newBooking, updatedSlot: timeSlots[slotIndex] };
 }
@@ -675,3 +691,4 @@ const initialMatch = addMatch({ clubId: 'club-1', startTime: addHours(today, 11)
 courtBookings.push(
     { id: 'booking-3', clubId: 'club-1', courtNumber: 1, startTime: addHours(today, 18), endTime: addHours(today, 19), title: "Bloqueo Pista", type: 'reserva_manual', status: 'reservada' },
 );
+
