@@ -393,6 +393,37 @@ export const fetchCourtBookingsForDay = async (clubId: string, date: Date): Prom
     return uniqueBookings.sort((a, b) => a.startTime.getTime() - b.startTime.getTime() || a.courtNumber - b.courtNumber);
 };
 
+export const getCourtAvailabilityForInterval = async (
+    clubId: string,
+    startTime: Date,
+    endTime: Date
+): Promise<{ available: PadelCourt[]; occupied: PadelCourt[]; total: number }> => {
+    await new Promise(resolve => setTimeout(resolve, config.MINIMAL_DELAY));
+    const allClubCourts = state.getMockPadelCourts().filter(c => c.clubId === clubId && c.isActive);
+    const available: PadelCourt[] = [];
+    const occupied: PadelCourt[] = [];
+
+    const bookingsForDay = await fetchCourtBookingsForDay(clubId, startTime);
+
+    for (const court of allClubCourts) {
+        const isCourtOccupied = bookingsForDay.some(booking =>
+            booking.courtNumber === court.courtNumber &&
+            areIntervalsOverlapping(
+                { start: startTime, end: endTime },
+                { start: new Date(booking.startTime), end: new Date(booking.endTime) },
+                { inclusive: false }
+            )
+        );
+        if (isCourtOccupied) {
+            occupied.push(court);
+        } else {
+            available.push(court);
+        }
+    }
+
+    return { available, occupied, total: allClubCourts.length };
+};
+
 
 export const addManualCourtBooking = async (
     clubId: string,
@@ -582,8 +613,8 @@ export const countSpecialOfferItems = async (clubId?: string | null): Promise<nu
 
 export const countUserReservedProducts = async (userId: string): Promise<number> => {
     await new Promise(resolve => setTimeout(resolve, config.MINIMAL_DELAY));
-    const transactions = state.getMockPointTransactions();
+    const transactions = state.getMockTransactions();
     // In a real app, this would be a database query on a 'reservations' table.
     // Here, we simulate it by looking at the transaction log.
-    return transactions.filter(t => t.userId === userId && t.type === 'compra_tienda' && t.points < 0).length;
+    return transactions.filter(t => t.userId === userId && t.type === 'Compra Producto' && t.amount < 0).length;
 };

@@ -22,7 +22,7 @@ export const processInitialBookings = (students: User[], timeSlots: TimeSlot[]):
         if (otherStudents.length >= 4) {
             for (let i = 0; i < 4; i++) {
                 const student = otherStudents[i];
-                const price = calculatePricePerPerson(classToConfirm.totalPrice || 0, 4);
+                const price = calculatePricePerPerson(classToConfirm.totalPrice, 4);
                 bookings.push({
                     id: `booking-init-${i + 1}`,
                     userId: student.id,
@@ -52,7 +52,7 @@ export const processInitialBookings = (students: User[], timeSlots: TimeSlot[]):
     // Scenario 2: Cristian books a different class
     const classForCristian = timeSlots.find(s => s.instructorName === 'Sofía Martín' && new Date(s.startTime).getHours() === 11 && !isSlotEffectivelyCompleted(s).completed);
      if (classForCristian && studentCristian) {
-        const price = calculatePricePerPerson(classForCristian.totalPrice || 0, 4);
+        const price = calculatePricePerPerson(classForCristian.totalPrice, 4);
         bookings.push({
             id: `booking-init-cristian`,
             userId: studentCristian.id,
@@ -91,7 +91,7 @@ export const processInitialMatchBookings = (students: User[], matches: Match[]):
         const playersToJoin = students.slice(0, 4); // Get first 4 students to confirm it
         
         for (const player of playersToJoin) {
-            const price = calculatePricePerPerson(matchToPopulate.totalCourtFee || 0, 4);
+            const price = calculatePricePerPerson(matchToPopulate.totalCourtFee, 4);
             matchToPopulate.bookedPlayers.push({ userId: player.id, name: player.name });
             bookings.push({
                 id: `matchbooking-init-${player.id}`,

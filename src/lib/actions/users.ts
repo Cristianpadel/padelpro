@@ -1,9 +1,9 @@
 "use client";
 
-import type { User, Booking, PointTransactionType, TimeSlot, Match, UserDB, MatchPadelLevel, UserGenderCategory, Instructor } from '@/types';
+import type { User, Booking, PointTransactionType, TimeSlot, Match, UserDB, MatchPadelLevel, UserGenderCategory, Instructor, MatchBooking, Review } from '@/types';
 import * as state from '../state';
 import * as config from '../config';
-import { format } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import { calculatePricePerPerson } from '@/lib/utils';
 import { cancelBooking } from './classActions';
 
@@ -100,27 +100,54 @@ export const recalculateAndSetBlockedBalances = async (userId: string) => {
     if (!user) return;
 
     let totalBlockedCredit = 0;
-    
+    let totalBlockedPoints = 0;
+    let maxPendingBonusPoints = 0;
+
     const classBookings = state.getMockUserBookings().filter(b => b.userId === userId);
     const matchBookings = state.getMockUserMatchBookings().filter(b => b.userId === userId);
+    const clubSettings = state.getMockClubs()[0]?.pointSettings; // Assuming single club for now for simplicity
 
-    // Blocked credit from class bookings
+    // Blocked credit and pending points from class bookings
     classBookings.forEach(booking => {
         const slot = state.getMockTimeSlots().find(s => s.id === booking.activityId);
         if (slot && slot.status === 'pre_registration') {
-            if (!booking.bookedWithPoints) {
-                 totalBlockedCredit += calculatePricePerPerson(slot.totalPrice || 0, booking.groupSize);
+            if (booking.bookedWithPoints) {
+                totalBlockedPoints += calculatePricePerPerson(slot.totalPrice, 1);
+            } else {
+                totalBlockedCredit += calculatePricePerPerson(slot.totalPrice, booking.groupSize);
+                
+                // Calculate potential bonus points
+                const pointsBaseValues: { [key in 1 | 2 | 3 | 4]: number[] } = {
+                    1: [10], 2: [8, 7], 3: [5, 4, 3], 4: [3, 2, 1, 0]
+                };
+                const basePoints = (pointsBaseValues[booking.groupSize] || [])[booking.spotIndex] ?? 0;
+                const daysInAdvance = differenceInDays(new Date(slot.startTime), new Date());
+                const anticipationPoints = Math.max(0, daysInAdvance);
+                const potentialBonus = basePoints + anticipationPoints;
+                if (potentialBonus > maxPendingBonusPoints) {
+                    maxPendingBonusPoints = potentialBonus;
+                }
             }
         }
     });
 
-    // Blocked credit from match bookings
+    // Blocked credit and pending points from match bookings
     matchBookings.forEach(booking => {
         const match = state.getMockMatches().find(m => m.id === booking.activityId);
         if (match && match.status === 'forming') {
-             if (!booking.bookedWithPoints) {
-                totalBlockedCredit += calculatePricePerPerson(match.totalCourtFee || 0, 4);
-             }
+             if (booking.bookedWithPoints) {
+                totalBlockedPoints += calculatePricePerPerson(match.totalCourtFee, 4);
+             } else {
+                totalBlockedCredit += calculatePricePerPerson(match.totalCourtFee, 4);
+
+                // Calculate potential bonus points for matches
+                const firstToJoinBonus = clubSettings?.firstToJoinMatch || 0;
+                if (match.bookedPlayers.length === 1 && match.bookedPlayers[0].userId === userId) {
+                     if (firstToJoinBonus > maxPendingBonusPoints) {
+                        maxPendingBonusPoints = firstToJoinBonus;
+                    }
+                }
+            }
         }
     });
         
@@ -136,13 +163,15 @@ export const recalculateAndSetBlockedBalances = async (userId: string) => {
 
 
     state.updateUserInUserDatabaseState(userId, { 
-        blockedCredit: totalBlockedCredit,
+        blockedCredit: totalBlockedCredit, 
+        blockedLoyaltyPoints: totalBlockedPoints,
+        pendingBonusPoints: maxPendingBonusPoints,
     });
     
     if (state.getMockCurrentUser()?.id === userId) {
         const currentUser = state.getMockCurrentUser();
         if (currentUser) {
-            state.initializeMockCurrentUser({ ...currentUser, blockedCredit: totalBlockedCredit });
+            state.initializeMockCurrentUser({ ...currentUser, blockedCredit: totalBlockedCredit, blockedLoyaltyPoints: totalBlockedPoints, pendingBonusPoints: maxPendingBonusPoints });
         }
     }
 };
@@ -220,6 +249,7 @@ export const addUserToDB = async (userData: Partial<Omit<UserDB, 'id' | 'created
         blockedCredit: 0,
         loyaltyPoints: userData.loyaltyPoints ?? 0,
         pendingBonusPoints: 0,
+        blockedLoyaltyPoints: 0,
         preferredGameType: userData.preferredGameType ?? 'clases',
         isBlocked: userData.isBlocked ?? false,
         favoriteInstructorIds: userData.favoriteInstructorIds ?? [],
@@ -244,6 +274,7 @@ export const addUserToDB = async (userData: Partial<Omit<UserDB, 'id' | 'created
             blockedCredit: newUser.blockedCredit,
             loyaltyPoints: newUser.loyaltyPoints,
             pendingBonusPoints: newUser.pendingBonusPoints,
+            blockedLoyaltyPoints: newUser.blockedLoyaltyPoints,
             preferredGameType: newUser.preferredGameType,
             favoriteInstructorIds: newUser.favoriteInstructorIds,
             profilePictureUrl: newUser.profilePictureUrl,
@@ -275,6 +306,8 @@ export const registerStudent = async (
         credit: 0,    // Start with 0 credit
         blockedCredit: 0,
         loyaltyPoints: 0,
+        pendingBonusPoints: 0,
+        blockedLoyaltyPoints: 0,
         preferredGameType: 'clases',
         isBlocked: false,
         favoriteInstructorIds: [],
@@ -292,6 +325,8 @@ export const registerStudent = async (
         credit: newUserDbEntry.credit,
         blockedCredit: newUserDbEntry.blockedCredit,
         loyaltyPoints: newUserDbEntry.loyaltyPoints,
+        pendingBonusPoints: newUserDbEntry.pendingBonusPoints,
+        blockedLoyaltyPoints: newUserDbEntry.blockedLoyaltyPoints,
         preferredGameType: newUserDbEntry.preferredGameType,
         favoriteInstructorIds: newUserDbEntry.favoriteInstructorIds,
         profilePictureUrl: newUserDbEntry.profilePictureUrl,
@@ -328,6 +363,8 @@ export const fetchStudents = async (): Promise<User[]> => {
             credit: user.credit,
             blockedCredit: user.blockedCredit,
             loyaltyPoints: user.loyaltyPoints,
+            pendingBonusPoints: user.pendingBonusPoints,
+            blockedLoyaltyPoints: user.blockedLoyaltyPoints,
             preferredGameType: user.preferredGameType,
             favoriteInstructorIds: user.favoriteInstructorIds ?? [],
             profilePictureUrl: user.profilePictureUrl,
@@ -478,6 +515,7 @@ export const addInstructor = async (instructorData: Partial<Omit<Instructor, 'id
         isBlocked: instructorData.isBlocked || false,
         profilePictureUrl: `https://picsum.photos/seed/${newId}/96/96`,
         level: '5.0', 
+        genderCategory: 'abierta',
         assignedClubId: instructorData.assignedClubId,
         assignedCourtNumber: instructorData.assignedCourtNumber,
         isAvailable: instructorData.isAvailable ?? true,
@@ -493,6 +531,7 @@ export const addInstructor = async (instructorData: Partial<Omit<Instructor, 'id
         isBlocked: newInstructor.isBlocked,
         profilePictureUrl: newInstructor.profilePictureUrl,
         level: newInstructor.level as MatchPadelLevel,
+        genderCategory: newInstructor.genderCategory,
         assignedClubId: newInstructor.assignedClubId,
         assignedCourtNumber: newInstructor.assignedCourtNumber,
         isAvailable: newInstructor.isAvailable,
@@ -515,6 +554,7 @@ export const fetchInstructors = async (): Promise<Instructor[]> => {
                 email: userDb.email,
                 level: userDb.level,
                 profilePictureUrl: userDb.profilePictureUrl,
+                genderCategory: userDb.genderCategory,
                 isBlocked: userDb.isBlocked,
                 assignedClubId: userDb.assignedClubId,
                 assignedCourtNumber: userDb.assignedCourtNumber,
