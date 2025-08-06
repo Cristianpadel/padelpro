@@ -39,7 +39,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
-import CourtAvailabilityIndicator from '@/app/(app)/activities/components/CourtAvailabilityIndicator';
+import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface MatchCardProps {
@@ -616,4 +616,3 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
 });
 MatchCard.displayName = 'MatchCard';
 export default MatchCard;
-```
