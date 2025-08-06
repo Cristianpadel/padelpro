@@ -2,13 +2,41 @@
 
 import { initializeMockStudents, initializeMockInstructors, initializeMockClubs, initializeMockPadelCourts, initializeMockShopProducts, initializeMockUserDatabase, initializeMockTimeSlots, initializeMockMatches, initializeMockUserBookings, initializeMockUserMatchBookings, initializeMockPointTransactions, initializeMockMatchDayEvents, initializeMockMatchDayInscriptions, initializeMockMatchDayCancelledInscriptions, initializeMockCurrentUser } from '../state';
 import { generateInitialStudents, generateInitialInstructors, generateInitialClubs, generateInitialPadelCourts, generateInitialShopProducts } from './init';
-import { generateDynamicTimeSlots, generateDynamicMatches } from './system';
 import { processInitialBookings, processInitialMatchBookings } from './initial-bookings';
-import type { MatchDayEvent, MatchDayInscription, PadelCourt } from '@/types';
+import type { MatchDayEvent, MatchDayInscription, PadelCourt, TimeSlot, Match } from '@/types';
 import { addDays, startOfDay } from 'date-fns';
+import * as state from '../state';
+import { createProposedClassesForDay } from './classProposals';
+import { createMatchesForDay } from './matches';
 
 
 let isInitialized = false;
+
+// --- Dynamic Data Generation ---
+
+export const generateDynamicTimeSlots = (): TimeSlot[] => {
+    let slots: TimeSlot[] = [];
+    const clubs = state.getMockClubs();
+    for (let i = 0; i < 7; i++) { // Generate for the next 7 days
+        const date = addDays(new Date(), i);
+        for (const club of clubs) {
+            slots = [...slots, ...createProposedClassesForDay(club, date)];
+        }
+    }
+    return slots;
+};
+
+export const generateDynamicMatches = (): Match[] => {
+    let matches: Match[] = [];
+    const clubs = state.getMockClubs();
+    for (let i = 0; i < 7; i++) { // Generate for the next 7 days
+        const date = addDays(new Date(), i);
+        for (const club of clubs) {
+            matches = [...matches, ...createMatchesForDay(club, date)];
+        }
+    }
+    return matches;
+};
 
 export const performInitialization = () => {
     if (isInitialized) {

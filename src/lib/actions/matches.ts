@@ -1,6 +1,6 @@
 "use client";
 
-import { addHours, setHours, setMinutes, startOfDay, format, isSameDay, addDays, addMinutes, areIntervalsOverlapping, getDay, parse, differenceInHours, differenceInDays } from 'date-fns';
+import { addHours, setHours, setMinutes, startOfDay, format, isSameDay, addDays, addMinutes, areIntervalsOverlapping, getDay, parse, differenceInHours, differenceInMinutes } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { Match, MatchPadelLevel, PadelCategoryForSlot, MatchBooking, User, Club, DayOfWeek, TimeRange, Instructor, TimeSlot } from '@/types'; // Changed PadelCategory to PadelCategoryForSlot
 import { matchPadelLevels, padelCategoryForSlotOptions, daysOfWeek as dayOfWeekArray } from '@/types'; // Use padelCategoryForSlotOptions
@@ -132,7 +132,7 @@ export const bookMatch = async (
 };
 
 
-export const addMatch = async (matchData: Omit<Match, 'id' | 'status' | 'confirmedPrivateSize' | 'organizerId' | 'privateShareCode'> & { creatorId?: string }): Promise<Match | { error: string }> => {
+export const addMatch = async (matchData: Omit<Match, 'id' | 'status' | 'confirmedPrivateSize' | 'organizerId' | 'privateShareCode' | 'durationMinutes'> & { creatorId?: string, durationMinutes?: number }): Promise<Match | { error: string }> => {
     await new Promise(resolve => setTimeout(resolve, config.MINIMAL_DELAY));
     if (!matchData.clubId) return { error: "Se requiere el ID del club." };
     if (!matchData.startTime || !matchData.endTime || new Date(matchData.startTime) >= new Date(matchData.endTime)) {
@@ -223,7 +223,7 @@ export const addMatch = async (matchData: Omit<Match, 'id' | 'status' | 'confirm
                 activityId: newMatch.id,
                 activityType: 'match',
                 bookedAt: new Date(),
-                matchDetails: { ...newMatch, clubId: newMatch.clubId, startTime: new Date(newMatch.startTime), endTime: new Date(newMatch.endTime), bookedPlayers: newMatch.bookedPlayers.map(p => ({ userId: p.userId, name: p.name || (p.userId === player.userId ? student?.name : undefined) })) }
+                matchDetails: { ...newMatch, id: newMatch.id, clubId: newMatch.clubId, startTime: new Date(newMatch.startTime), endTime: new Date(newMatch.endTime), bookedPlayers: newMatch.bookedPlayers.map(p => ({ userId: p.userId, name: p.name || (p.userId === player.userId ? student?.name : undefined) })) }
             });
         });
     }
@@ -680,6 +680,7 @@ export const joinPrivateMatch = async (
         activityId: matchId,
         activityType: 'match',
         bookedAt: new Date(),
+        amountPaidByInvitee: pricePerPerson,
         matchDetails: { ...match }
     };
     state.addUserMatchBookingToState(newBooking);
@@ -823,5 +824,3 @@ export const fetchUserMatchBookings = async (userId: string): Promise<MatchBooki
 export const countConfirmedLiberadasSpots = async (clubId?: string): Promise<{ classes: number; matches: number; }> => {
     return { classes: 0, matches: 0 };
 };
-
-    
