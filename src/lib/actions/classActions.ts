@@ -115,7 +115,7 @@ export const bookClass = async (
 
         for (const player of confirmedSlot.bookedPlayers) {
             if (player.groupSize !== finalConfirmedSize) {
-                const bookingToRemove = state.getMockUserBookings().find(b => b.userId === player.userId && b.slotId === slotId && b.groupSize !== finalConfirmedSize);
+                const bookingToRemove = state.getMockUserBookings().find(b => b.userId === player.userId && b.activityId === slotId && b.groupSize !== finalConfirmedSize);
                 if (bookingToRemove) {
                     await cancelBooking(player.userId, bookingToRemove.id);
                 }
@@ -221,7 +221,7 @@ export const cancelBooking = async (
 
 
 export const addTimeSlot = async (
-    slotData: Omit<TimeSlot, 'id' | 'bookedPlayers' | 'promotionEndTime' | 'designatedGratisSpotPlaceholderIndexForOption' | 'startTime' | 'endTime' | 'status' | 'instructorName'> & { instructorId: string, clubId: string; level: ClassPadelLevel, startTime: Date, courtNumber?: number, category?: PadelCategoryForSlot, durationMinutes?: number }
+    slotData: Omit<TimeSlot, 'id' | 'bookedPlayers' | 'promotionEndTime' | 'designatedGratisSpotPlaceholderIndexForOption' | 'startTime' | 'endTime' | 'status' | 'instructorName' | 'durationMinutes'> & { instructorId: string, clubId: string; level: ClassPadelLevel, startTime: Date, courtNumber?: number, category?: PadelCategoryForSlot, durationMinutes?: number }
 ): Promise<(TimeSlot | { error: string })[]> => {
     await new Promise(resolve => setTimeout(resolve, config.MINIMAL_DELAY));
     const addedSlots: TimeSlot[] = [];
@@ -484,4 +484,7 @@ export const joinPrivateClass = async (
 export const makeClassPublic = async (
     organizerUserId: string,
     slotId: string
-): Promise<{ success: true, updatedSlot: TimeSlot }
+): Promise<{ success: true, updatedSlot: TimeSlot } | { error: string }> => {
+    // This function is also complex.
+    return { error: "La funcionalidad para hacer una clase pública está en desarrollo." };
+};

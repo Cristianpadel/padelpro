@@ -1,5 +1,5 @@
 // lib/mockDataSources/classProposals.ts
-import type { TimeSlot, User, Club, ClassPadelLevel, PadelCategoryForSlot } from '@/types';
+import type { TimeSlot, User, Club, ClassPadelLevel, PadelCategoryForSlot, MatchPadelLevel } from '@/types';
 import { matchPadelLevels, numericMatchPadelLevels } from '@/types';
 import { isUserLevelCompatibleWithActivity } from '../utils';
 
@@ -64,4 +64,5 @@ export const _classifyLevelAndCategoryForSlot = (
  * @returns True if the slot is a proposal slot, false otherwise.
  */
 export const isProposalSlot = (slot: TimeSlot): boolean => {
-    return slot.status === 'forming' && (!slot.bookedPlayers ||
+    return slot.status === 'forming' && (!slot.bookedPlayers || slot.bookedPlayers.length === 0);
+};
