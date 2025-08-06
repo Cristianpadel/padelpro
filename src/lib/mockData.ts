@@ -1,5 +1,5 @@
 // lib/mockData.ts
-import type { TimeSlot, Club, Instructor, PadelCourt, CourtGridBooking, PointTransaction, User, Match, ClubLevelRange, MatchDayEvent, CourtRateTier, DynamicPricingTier, PenaltyTier, DayOfWeek, Product, CardShadowEffectSettings, UserActivityStatusForDay, Booking } from '@/types';
+import type { TimeSlot, Club, Instructor, PadelCourt, CourtGridBooking, PointTransaction, User, Match, ClubLevelRange, MatchDayEvent, CourtRateTier, DynamicPricingTier, PenaltyTier, DayOfWeek, Product, CardShadowEffectSettings, UserActivityStatusForDay, Booking, MatchBooking } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { startOfDay, addHours, addMinutes, subDays, getDay, isSameDay, differenceInDays, addDays, format } from 'date-fns';
 import { daysOfWeek as daysOfWeekArray } from '@/types';
@@ -16,6 +16,7 @@ export let clubs: Club[] = [
             firstToJoinClass: 2, 
             firstToJoinMatch: 2, 
             pointsCostForCourt: 20,
+            unconfirmedCancelPenaltyPoints: 1,
             cancellationPenaltyTiers: [
                 { hoursBefore: 2, penaltyPercentage: 100 },
                 { hoursBefore: 6, penaltyPercentage: 50 },
@@ -71,9 +72,9 @@ let timeSlots: TimeSlot[] = [];
 let matches: Match[] = [];
 let courtBookings: CourtGridBooking[] = [];
 let pointTransactions: PointTransaction[] = [
-    { id: 'txn-1', clubId: 'club-1', userId: 'user-1', points: 5, description: "Invitación de amigo", date: new Date() },
-    { id: 'txn-2', clubId: 'club-1', userId: 'user-2', points: -20, description: "Reserva de pista", date: subDays(new Date(), 1) },
-    { id: 'txn-3', clubId: 'club-1', userId: 'user-1', points: 2, description: "Primero en unirse a clase", date: subDays(new Date(), 2) },
+    { id: 'txn-1', clubId: 'club-1', userId: 'user-1', points: 5, type: 'invitar_amigo', description: "Invitación de amigo", date: new Date() },
+    { id: 'txn-2', clubId: 'club-1', userId: 'user-2', points: -20, type: 'reserva_pista_puntos', description: "Reserva de pista", date: subDays(new Date(), 1) },
+    { id: 'txn-3', clubId: 'club-1', userId: 'user-1', points: 2, type: 'primero_en_clase', description: "Primero en unirse a clase", date: subDays(new Date(), 2) },
 ];
 let students: User[] = [
     { id: 'user-1', name: 'Alex García', loyaltyPoints: 1250, level: '3.5', credit: 100, blockedCredit: 0, profilePictureUrl: 'https://i.pravatar.cc/150?u=user-1', favoriteInstructorIds: ['inst-2'] },
@@ -91,7 +92,7 @@ let products: Product[] = [
 let globalCurrentUser: User | null = null;
 let hasNewGratisSpot = false;
 let userBookings: Booking[] = [];
-let userMatchBookings: Booking[] = [];
+let userMatchBookings: MatchBooking[] = [];
 let userReservedProducts: { userId: string, productId: string }[] = [];
 
 // --- Instructors ---
@@ -258,9 +259,16 @@ export const isSlotEffectivelyCompleted = (slot: TimeSlot | Match): { completed:
 
 
 // --- Points & Students ---
-export const fetchPointTransactions = async (clubId: string): Promise<PointTransaction[]> => {
+export const fetchPointTransactions = async (clubId?: string, userId?: string): Promise<PointTransaction[]> => {
      await new Promise(res => setTimeout(res, 600));
-    return pointTransactions.filter(t => t.clubId === clubId);
+    let results = pointTransactions;
+    if (clubId) {
+        results = results.filter(t => t.clubId === clubId);
+    }
+    if (userId) {
+        results = results.filter(t => t.userId === userId);
+    }
+    return results.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
 export const getMockStudents = async (): Promise<User[]> => {
     await new Promise(res => setTimeout(res, 200));
@@ -299,6 +307,7 @@ export const simulateInviteFriend = async (userId: string, clubId: string): Prom
         clubId: clubId,
         userId: userId,
         points: pointsToAdd,
+        type: 'invitar_amigo',
         description: "Invitación de amigo",
         date: new Date(),
     });
@@ -329,6 +338,7 @@ export const convertEurosToPoints = async (userId: string, euros: number, points
         clubId: student.currentClubId || 'club-1',
         userId: userId,
         points: pointsToAdd,
+        type: 'conversion_saldo',
         description: `Conversión de ${euros.toFixed(2)}€ a puntos`,
         date: new Date(),
     });
@@ -650,9 +660,13 @@ export const getMockUserBookings = async (userId: string): Promise<Booking[]> =>
   return userBookings.filter(b => b.userId === userId);
 };
 
-export const getMockUserMatchBookings = async (userId: string): Promise<Booking[]> => {
-    return userMatchBookings.filter(b => b.userId === userId);
-}
+export const getMockUserMatchBookings = async (userId: string): Promise<MatchBooking[]> => {
+    const userMatchBookingsData = userMatchBookings.filter(b => b.userId === userId);
+    return userMatchBookingsData.map(booking => {
+        const matchDetails = matches.find(m => m.id === booking.activityId);
+        return { ...booking, matchDetails };
+    });
+};
 
 export const getHasNewGratisSpotNotification = (): boolean => {
     return hasNewGratisSpot;

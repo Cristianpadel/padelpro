@@ -47,6 +47,8 @@ export interface PointSettings {
     firstToJoinClass?: number;
     firstToJoinMatch?: number;
     pointsCostForCourt?: number;
+    unconfirmedCancelPenaltyPoints?: number;
+    unconfirmedCancelPenaltyEuros?: number;
     cancellationPenaltyTiers?: PenaltyTier[];
 }
 
@@ -160,6 +162,7 @@ export interface Booking {
     groupSize: 1 | 2 | 3 | 4;
     spotIndex: number;
     status: 'pending' | 'confirmed' | 'cancelled';
+    bookedWithPoints?: boolean;
 }
 
 export interface TimeSlot {
@@ -201,13 +204,39 @@ export interface Match {
     provisionalExpiresAt?: Date;
     totalCourtFee?: number;
     creatorId?: string;
+    gratisSpotAvailable?: boolean;
+    isPointsOnlyBooking?: boolean;
+    organizerId?: string;
+    privateShareCode?: string;
+    isRecurring?: boolean;
+    nextRecurringMatchId?: string;
+    eventId?: string;
 }
+
+export type PointTransactionType = 
+    | 'cancelacion_clase' 
+    | 'cancelacion_clase_confirmada' 
+    | 'cancelacion_partida' 
+    | 'invitar_amigo' 
+    | 'primero_en_clase' 
+    | 'primero_en_partida'
+    | 'canje_plaza_gratis'
+    | 'reserva_pista_puntos'
+    | 'penalizacion_cancelacion_no_confirmada'
+    | 'penalizacion_cancelacion_confirmada'
+    | 'ajuste_manual'
+    | 'reembolso_error_reserva'
+    | 'devolucion_cancelacion_anticipada'
+    | 'bonificacion_preinscripcion'
+    | 'compra_tienda'
+    | 'conversion_saldo';
 
 export interface PointTransaction {
     id: string;
     clubId: string;
     userId: string;
     points: number;
+    type: PointTransactionType;
     description: string;
     date: Date;
 }
@@ -286,9 +315,35 @@ export interface UserActivityStatusForDay {
     anticipationPoints: number;
 }
 
+export interface MatchBooking {
+    id: string;
+    userId: string;
+    activityId: string;
+    activityType: 'match';
+    bookedWithPoints?: boolean;
+    matchDetails?: MatchBookingMatchDetails;
+}
+
+export interface MatchBookingMatchDetails {
+    id: string;
+    startTime: Date;
+    endTime: Date;
+    courtNumber: number;
+    level: MatchPadelLevel;
+    category: PadelCategoryForSlot;
+    bookedPlayers: { userId: string, name?: string }[];
+    totalCourtFee?: number;
+    clubId: string;
+    status: Match['status'];
+    organizerId?: string;
+    privateShareCode?: string;
+    isRecurring?: boolean;
+    nextRecurringMatchId?: string;
+    eventId?: string;
+}
 
 // --- Display Helpers ---
-export const displayClassLevel = (level: ClassPadelLevel, short = false): string => {
+export const displayClassLevel = (level: ClassPadelLevel | MatchPadelLevel, short = false): string => {
     if (level === 'abierto') return short ? 'Abre' : 'Abierto';
     if (typeof level === 'object' && 'min' in level && 'max' in level) {
       return `${level.min}-${level.max}`;
