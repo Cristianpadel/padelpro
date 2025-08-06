@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input'; // Import Input for dialog
 import Link from 'next/link';
 import { Progress } from '@/components/ui/progress';
 import { useRouter } from 'next/navigation';
-import CourtAvailabilityIndicator from './CourtAvailabilityIndicator';
+import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
     getMockUserBookings,
@@ -88,7 +88,6 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
     const [spotIndexToBook, setSpotIndexToBook] = useState<number | undefined>(undefined);
     const [groupSizeToBook, setGroupSizeToBook] = useState<1|2|3|4>(4);
     const [currentSlot, setCurrentSlot] = useState<TimeSlot>(initialSlot);
-    const [instructor, setInstructor] = useState<Instructor | null>(null);
     const [instructorRating, setInstructorRating] = useState<number>(4.5);
     const [isConfirmPrivateDialogOpen, setIsConfirmPrivateDialogOpen] = useState(false);
     const [privateClassSizeToConfirm, setPrivateClassSizeToConfirm] = useState<1 | 2 | 3 | 4>(4);
@@ -98,13 +97,7 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
     const [infoDialog, setInfoDialog] = useState<{ open: boolean, title: string, description: string, icon: React.ElementType }>({ open: false, title: '', description: '', icon: Lightbulb });
     const [courtAvailability, setCourtAvailability] = useState<{ available: PadelCourt[], occupied: PadelCourt[], total: number }>({ available: [], occupied: [], total: 0 });
 
-    useEffect(() => {
-        const fetchInstructor = () => {
-            const instructorData = getMockInstructors().find(i => i.id === initialSlot.instructorId);
-            setInstructor(instructorData || null);
-        };
-        fetchInstructor();
-    }, [initialSlot.instructorId]);
+    const instructor = useMemo(() => getMockInstructors().find(i => i.id === initialSlot.instructorId), [initialSlot.instructorId]);
     
     const fetchCourtAvailability = useCallback(async () => {
         if (!initialSlot.clubId || !initialSlot.startTime || !initialSlot.endTime) return;
@@ -140,7 +133,10 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
             level: initialSlot.level || 'abierto', 
             category: initialSlot.category || 'abierta', 
             designatedGratisSpotPlaceholderIndexForOption: initialSlot.designatedGratisSpotPlaceholderIndexForOption || {},
-            status: initialSlot.status as any || 'forming',
+            status: initialSlot.status || 'pre_registration',
+            organizerId: initialSlot.organizerId,
+            privateShareCode: initialSlot.privateShareCode,
+            confirmedPrivateSize: initialSlot.confirmedPrivateSize,
         });
 
         if (initialSlot.instructorName && initialSlot.id) {
@@ -194,7 +190,7 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
 
     const handleInfoClick = (type: 'level' | 'court' | 'category') => {
         let dialogContent;
-        const levelDisplay = displayClassLevel(currentSlot.level as ClassPadelLevel);
+        const levelDisplay = displayClassLevel(currentSlot.level, true);
         
         switch (type) {
             case 'level':
@@ -210,7 +206,7 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
             case 'category':
                 dialogContent = currentSlot.category === 'abierta'
                     ? { title: 'Categoría', description: `La categoría (chicos/chicas) la sugiere el primer jugador que se apunta.\nNo es una regla estricta, solo una guía para los demás.`, icon: Users }
-                    : { title: `Categoría: ${displayClassCategory(currentSlot.category)}`, description: `Esta categoría se ha definido como sugerencia para la clase, basándose en el primer jugador que se inscribió.`, icon: (currentSlot.category === 'chica' ? Venus : Mars) };
+                    : { title: `Categoría: ${displayClassCategory(currentSlot.category, true)}`, description: `Esta categoría se ha definido como sugerencia para la clase, basándose en el primer jugador que se inscribió.`, icon: (currentSlot.category === 'chica' ? Venus : Mars) };
                 break;
         }
         setInfoDialog({ open: true, ...dialogContent });
@@ -260,12 +256,12 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
         const classLevel = currentSlot.level;
         const userLevel = currentUser.level;
         let levelCompatible = false;
-        if (classLevel === 'abierto' || !userLevel) {
+        if (classLevel === 'abierto' || !userLevel || userLevel === 'abierto') {
             levelCompatible = true;
-        } else if (typeof classLevel === 'object' && 'min' in classLevel && 'max' in classLevel && userLevel) {
+        } else if (typeof classLevel === 'object' && 'min' in classLevel && 'max' in classLevel && userLevel && userLevel !== 'abierto') {
             const classMin = parseFloat(classLevel.min as string);
             const classMax = parseFloat(classLevel.max as string);
-            const playerLvlNum = parseFloat(userLevel as string);
+            const playerLvlNum = parseFloat(userLevel);
             if (!isNaN(playerLvlNum) && !isNaN(classMin) && !isNaN(classMax)) {
                 if (playerLvlNum >= classMin && playerLvlNum <= classMax) {
                     levelCompatible = true;
@@ -273,7 +269,7 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
             }
         }
         if (!levelCompatible) {
-            const classLevelDisplay = displayClassLevel(classLevel as ClassPadelLevel);
+            const classLevelDisplay = displayClassLevel(classLevel);
             toast({ title: "Nivel Incompatible", description: `Tu nivel (${userLevel || 'No definido'}) no es compatible con el de la clase (${classLevelDisplay}).`, variant: "destructive", duration: 7000 });
             return;
         }
@@ -373,7 +369,7 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
         setIsProcessingPrivateAction(false);
     };
 
-    const canConfirmAsPrivate = currentUser && (currentSlot.status as any) === 'forming' &&
+    const canConfirmAsPrivate = currentUser && currentSlot.status === 'pre_registration' &&
         !userHasConfirmedActivityToday &&
         ((currentSlot.bookedPlayers || []).length === 0 ||
         (((currentSlot.bookedPlayers || []).length === 1 && (currentSlot.bookedPlayers || []).length === 1 && (currentSlot.bookedPlayers || [])[0].userId === currentUser.id)));
@@ -417,7 +413,7 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
         }
     };
     
-    if (!currentSlot || !currentUser || !clubInfo || !instructor) {
+    if (!currentSlot || !currentUser || !clubInfo) {
         return <Card className="p-4"><Skeleton className="h-96 w-full" /></Card>;
     }
     
@@ -440,8 +436,8 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
     const isSharedPrivateView = currentSlot.status === 'confirmed_private' && shareCode && shareCode === currentSlot.privateShareCode;
 
     const shadowEffect = clubInfo.cardShadowEffect;
-    const shadowStyle = shadowEffect?.enabled && shadowEffect.color
-      ? { boxShadow: `0 0 25px ${shadowEffect.color}${Math.round((shadowEffect.intensity ?? 0.5) * 255).toString(16).padStart(2, '0')}` } 
+    const shadowStyle = shadowEffect?.enabled 
+      ? { boxShadow: `0 0 25px ${shadowEffect.color}${Math.round(shadowEffect.intensity * 255).toString(16).padStart(2, '0')}` } 
       : {};
 
     const privateClassBonusPoints = 10 + anticipationPoints;
@@ -457,8 +453,8 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
 
     const badges = [
         { type: 'category', value: displayClassCategory(currentSlot.category), icon: CategoryIcon },
-        { type: 'court', value: displayClassLevel(currentSlot.courtNumber ? `Pista ${currentSlot.courtNumber}` : 'Pista' as any), icon: Hash },
-        { type: 'level', value: displayClassLevel(currentSlot.level as ClassPadelLevel), icon: BarChartHorizontal }
+        { type: 'court', value: displayClassLevel(currentSlot.courtNumber ? `Pista ${currentSlot.courtNumber}` : 'Pista'), icon: Hash },
+        { type: 'level', value: displayClassLevel(currentSlot.level), icon: BarChartHorizontal }
     ];
 
     return (
