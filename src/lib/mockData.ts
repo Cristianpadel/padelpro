@@ -1,5 +1,5 @@
 // lib/mockData.ts
-import type { TimeSlot, Club, Instructor, PadelCourt, CourtGridBooking, PointTransaction, User, Match, ClubLevelRange, MatchDayEvent, CourtRateTier, DynamicPricingTier, PenaltyTier, DayOfWeek, Product, CardShadowEffectSettings, UserActivityStatusForDay, Booking, MatchBooking, UserGenderCategory } from '@/types';
+import type { TimeSlot, Club, Instructor, PadelCourt, CourtGridBooking, PointTransaction, User, Match, ClubLevelRange, MatchDayEvent, CourtRateTier, DynamicPricingTier, PenaltyTier, DayOfWeek, Product, CardShadowEffectSettings, UserActivityStatusForDay, Booking, MatchBooking, UserGenderCategory, MatchPadelLevel } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { startOfDay, addHours, addMinutes, subDays, getDay, isSameDay, differenceInDays, addDays, format } from 'date-fns';
 import { daysOfWeek as daysOfWeekArray } from '@/types';
@@ -945,6 +945,21 @@ export const updateUserFavoriteInstructors = async (userId: string, favoriteInst
     students[userIndex].favoriteInstructorIds = favoriteInstructorIds;
     return students[userIndex];
 }
+
+export const updateUserLevel = async (userId: string, level: MatchPadelLevel): Promise<User | {error: string}> => {
+    const userIndex = students.findIndex(u => u.id === userId);
+    if (userIndex === -1) return { error: "Usuario no encontrado." };
+    students[userIndex].level = level;
+    return students[userIndex];
+};
+
+export const updateUserGenderCategory = async (userId: string, genderCategory: UserGenderCategory): Promise<User | {error: string}> => {
+    const userIndex = students.findIndex(u => u.id === userId);
+    if (userIndex === -1) return { error: "Usuario no encontrado." };
+    students[userIndex].genderCategory = genderCategory;
+    return students[userIndex];
+};
+
 
 
 
