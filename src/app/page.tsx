@@ -25,8 +25,8 @@ export default function LoginPage() {
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
         // In a real app, you would have login logic here.
-        // For now, we just navigate to the schedule page.
-        router.push('/schedule');
+        // For now, we just navigate to the dashboard page.
+        router.push('/dashboard');
     };
 
   return (
