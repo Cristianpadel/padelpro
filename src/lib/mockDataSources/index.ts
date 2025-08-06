@@ -5,7 +5,7 @@ export * from './state';
 export * from '../config';
 export * from './utils';
 export * from './users'; 
-export * from './classes';
+export * from './classActions';
 export * from './classProposals';
 export * from './match-day';
 export * from './system';

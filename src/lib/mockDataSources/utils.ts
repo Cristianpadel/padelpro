@@ -130,6 +130,7 @@ export const getUserActivityStatusForDay = (userId: string, date: Date): UserAct
 
     let hasConfirmed = false;
     let hasInscribed = false;
+    let eventIdForDay: string | undefined = undefined;
     
     // Check match day events first
     const eventsToday = state.getMockMatchDayEvents().filter(e => isSameDay(new Date(e.eventDate), todayStart));
@@ -137,6 +138,7 @@ export const getUserActivityStatusForDay = (userId: string, date: Date): UserAct
 
     if (userEventInscription) {
         hasInscribed = true; // For now, event inscription counts as 'inscribed'
+        eventIdForDay = userEventInscription.eventId;
     }
 
     // Check class bookings
@@ -152,7 +154,7 @@ export const getUserActivityStatusForDay = (userId: string, date: Date): UserAct
             }
         }
     }
-    if (hasConfirmed) return { activityStatus: 'confirmed', hasEvent: !!userEventInscription, eventId: userEventInscription?.eventId, anticipationPoints: Math.max(0, differenceInDays(date, now)) };
+    if (hasConfirmed) return { activityStatus: 'confirmed', hasEvent: !!userEventInscription, eventId: eventIdForDay, anticipationPoints: Math.max(0, differenceInDays(date, now)) };
 
     // Check match bookings
     for (const booking of state.getMockUserMatchBookings()) {
@@ -167,11 +169,11 @@ export const getUserActivityStatusForDay = (userId: string, date: Date): UserAct
             }
         }
     }
-     if (hasConfirmed) return { activityStatus: 'confirmed', hasEvent: !!userEventInscription, eventId: userEventInscription?.eventId, anticipationPoints: Math.max(0, differenceInDays(date, now)) };
+     if (hasConfirmed) return { activityStatus: 'confirmed', hasEvent: !!userEventInscription, eventId: eventIdForDay, anticipationPoints: Math.max(0, differenceInDays(date, now)) };
 
-    if (hasInscribed) return { activityStatus: 'inscribed', hasEvent: !!userEventInscription, eventId: userEventInscription?.eventId, anticipationPoints: Math.max(0, differenceInDays(date, now)) };
+    if (hasInscribed) return { activityStatus: 'inscribed', hasEvent: !!userEventInscription, eventId: eventIdForDay, anticipationPoints: Math.max(0, differenceInDays(date, now)) };
 
-    return { activityStatus: 'none', hasEvent: !!userEventInscription, eventId: userEventInscription?.eventId, anticipationPoints: Math.max(0, differenceInDays(date, now)) };
+    return { activityStatus: 'none', hasEvent: !!userEventInscription, eventId: eventIdForDay, anticipationPoints: Math.max(0, differenceInDays(date, now)) };
 };
 
 
@@ -480,6 +482,3 @@ export const countConfirmedLiberadasSpots = (clubId?: string | null): { classes:
         match.gratisSpotAvailable &&
         (match.bookedPlayers || []).length === 3
     ).length;
-
-    return { classes: gratisConfirmedClasses, matches: gratisConfirmedRegularMatches, matchDay: gratisMatchDayMatches };
-};

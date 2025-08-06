@@ -1,49 +1,70 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
-import type { ClassPadelLevel, MatchPadelLevel } from '@/types';
+import type { ClassPadelLevel, MatchPadelLevel, PadelCourt, TimeSlot, Match } from '@/types';
+import { getMockPadelCourts } from "./mockData";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export const getInitials = (name: string) => {
-    if (!name) return '??';
-    const names = name.split(' ');
-    if (names.length > 1) {
-        return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
-    }
-    return name.substring(0, 2).toUpperCase();
-}
-
-export const getPlaceholderUserName = (userId: string, currentUserId?: string, currentUserName?: string) => {
-    if (userId === currentUserId) return currentUserName || "Tú";
-    return `Jugador ${userId.substring(0,4)}`;
-}
-
-export const calculatePricePerPerson = (totalPrice: number, groupSize: number): number => {
-    if (groupSize <= 0) return totalPrice;
-    return totalPrice / groupSize;
+export const getInitials = (name: string): string => {
+  if (!name) return '';
+  const words = name.split(' ').filter(Boolean);
+  if (words.length === 0) return '';
+  if (words.length === 1) return words[0].substring(0, 2).toUpperCase();
+  return (words[0][0] + (words[words.length - 1][0] || '')).toUpperCase();
 };
 
-export const isUserLevelCompatibleWithActivity = (activityLevel: ClassPadelLevel | MatchPadelLevel, userLevel: MatchPadelLevel | undefined, isPlaceholder?: boolean): boolean => {
-    if (!userLevel || userLevel === 'abierto' || activityLevel === 'abierto' || isPlaceholder) {
-        return true;
-    }
+export const getPlaceholderUserName = (userId: string | undefined, currentUserId: string | undefined, currentUserName?: string): string => {
+  if (!userId) return 'Desconocido';
+  if (userId === currentUserId) {
+    return `${currentUserName || 'Usuario'} (Tú)`;
+  }
+  // In a real app, you'd fetch this from mockStudents or similar data source if needed.
+  // For simplicity, we'll just use a generic placeholder if not the current user.
+  return `Jugador ${userId.substring(userId.length - 4)}`;
+};
 
-    if (typeof activityLevel === 'object' && 'min' in activityLevel) { // It's a ClassPadelLevel range
-        const classMin = parseFloat(activityLevel.min);
-        const classMax = parseFloat(activityLevel.max);
-        const playerLvlNum = parseFloat(userLevel);
-        if (!isNaN(playerLvlNum) && !isNaN(classMin) && !isNaN(classMax)) {
-            return playerLvlNum >= classMin && playerLvlNum <= classMax;
-        }
-    } else if (typeof activityLevel === 'string') { // It's a MatchPadelLevel
-        return userLevel === activityLevel;
-    }
-    
-    return false; // Default to not compatible
-}
+export const calculatePricePerPerson = (totalPrice: number | undefined, groupSize: number): number => {
+    if (totalPrice === undefined || totalPrice === null || groupSize <= 0) return 0;
+    const validGroupSize = [1, 2, 3, 4].includes(groupSize) ? groupSize : 4;
+    return totalPrice / validGroupSize;
+};
 
+export const isUserLevelCompatibleWithActivity = (
+  activityLevel: ClassPadelLevel | MatchPadelLevel | undefined,
+  userLevel: MatchPadelLevel | undefined,
+  isPlaceholder?: boolean
+): boolean => {
+  // If user has no level or activity is open to all, it's compatible
+  if (!userLevel || userLevel === 'abierto' || !activityLevel || activityLevel === 'abierto' || isPlaceholder) {
+    return true;
+  }
+
+  const userNumeric = parseFloat(userLevel);
+  if (isNaN(userNumeric)) return true; // User with invalid level string is allowed anywhere
+
+  // Case 1: Activity level is a range object (like some classes)
+  if (typeof activityLevel === 'object' && 'min' in activityLevel && 'max' in activityLevel) {
+    const min = parseFloat(activityLevel.min);
+    const max = parseFloat(activityLevel.max);
+    if (isNaN(min) || isNaN(max)) return true; // Invalid range, allow user in
+    return userNumeric >= min && userNumeric <= max;
+  }
+
+  // Case 2: Activity level is a single string (like matches or some classes)
+  if (typeof activityLevel === 'string') {
+    const activityNumeric = parseFloat(activityLevel);
+    if (isNaN(activityNumeric)) return true; // Invalid activity level string, allow user in
+
+    // For single-level activities, allow a +/- 0.5 range
+    const minAllowed = Math.max(0.5, activityNumeric - 0.5);
+    const maxAllowed = activityNumeric + 0.5;
+    return userNumeric >= minAllowed && userNumeric <= maxAllowed;
+  }
+
+  return true; // Default to compatible if type is unexpected
+};
 
 export const hasAnyConfirmedActivityForDay = (userId: string, date: Date, excludingId?: string, type?: 'class' | 'match'): boolean => {
     // This is a placeholder for a more complex check against the user's full schedule.
