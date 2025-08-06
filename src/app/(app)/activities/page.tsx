@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import ClassDisplay from './components/ClassDisplay';
-import { fetchTimeSlots, getMockCurrentUser, getUserActivityStatusForDay } from '@/lib/mockData';
+import { getMockTimeSlots, getMockCurrentUser, getUserActivityStatusForDay } from '@/lib/mockData';
 import type { TimeSlot, User, MatchPadelLevel, SortOption, UserActivityStatusForDay } from '@/types';
 import { startOfDay, addDays, isSameDay, format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -12,6 +12,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { SlidersHorizontal, Star, Zap, User as UserIcon, Check } from 'lucide-react';
 import ActivityFilterSheet from './components/ActivityFilterSheet';
+import PageSkeleton from '@/components/ui/PageSkeleton';
 
 const dateStripDates = Array.from({ length: 22 }, (_, i) => addDays(startOfDay(new Date()), i));
 
@@ -54,7 +55,7 @@ export default function ActivitiesPage() {
             setIsLoading(true);
             try {
                 const [slots, user] = await Promise.all([
-                    fetchTimeSlots(),
+                    getMockTimeSlots('club-1'),
                     getMockCurrentUser()
                 ]);
                 setAllTimeSlots(slots);
@@ -83,6 +84,8 @@ export default function ActivitiesPage() {
         setSelectedDate(date);
         const current = new URLSearchParams(Array.from(searchParams.entries()));
         current.set('date', format(date, 'yyyy-MM-dd'));
+        current.set('viewPref', 'normal'); // Reset view preference on date change
+        setViewPreference('normal');
         router.replace(`${pathname}?${current.toString()}`, { scroll: false });
     };
     
