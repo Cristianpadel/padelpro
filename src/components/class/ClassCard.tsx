@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from '@/components/ui/button';
 import type { TimeSlot, User, Booking, ClassPadelLevel, MatchPadelLevel, Club, PadelCourt, Instructor } from '@/types';
 import { displayClassLevel, displayClassCategory } from '@/types'; 
-import BookingSpotDisplay from './BookingSpotDisplay'; 
+import BookingSpotDisplay from '@/components/class/BookingSpotDisplay'; 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'; 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input'; // Import Input for dialog
