@@ -19,6 +19,7 @@ import {
   PlusCircle,
   Shield,
   WalletCards,
+  UserCog,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -47,6 +48,7 @@ const navItems = [
 
 const adminItems = [
     { href: '/add-class', icon: PlusCircle, label: 'Añadir Clase' },
+    { href: '/instructor/preferences', icon: UserCog, label: 'Preferencias' },
     { href: '/add-instructor', icon: UserPlus, label: 'Añadir Instructor'},
     { href: '/add-credit', icon: WalletCards, label: 'Añadir Crédito' },
     { href: '/admin', icon: Shield, label: 'Panel de Admin' }

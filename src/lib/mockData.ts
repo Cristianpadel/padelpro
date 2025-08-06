@@ -52,7 +52,7 @@ export let clubs: Club[] = [
 
 export let instructors: (Instructor & User)[] = [
     { id: 'inst-1', name: 'Carlos López', isAvailable: true, assignedClubId: 'club-1', assignedCourtNumber: 1, email: 'carlos.lopez@example.com', profilePictureUrl: 'https://i.pravatar.cc/150?u=inst-1', defaultRatePerHour: 30, loyaltyPoints: 0, credit: 0 },
-    { id: 'inst-2', name: 'Ana García', isAvailable: true, assignedClubId: 'club-1', email: 'ana.garcia@example.com', profilePictureUrl: 'https://i.pravatar.cc/150?u=inst-2', defaultRatePerHour: 35, loyaltyPoints: 0, credit: 0 },
+    { id: 'inst-2', name: 'Ana García', isAvailable: true, assignedClubId: 'club-1', email: 'ana.garcia@example.com', profilePictureUrl: 'https://i.pravatar.cc/150?u=inst-2', defaultRatePerHour: 35, loyaltyPoints: 0, credit: 0, unavailableHours: { 'Sábado': [{ start: '08:00', end: '14:00' }], 'Domingo': [{ start: '08:00', end: '14:00' }] } },
     { id: 'inst-3', name: 'Javier Fernández', isAvailable: false, assignedClubId: 'club-2', email: 'javier.fernandez@example.com', profilePictureUrl: 'https://i.pravatar.cc/150?u=inst-3', defaultRatePerHour: 28, loyaltyPoints: 0, credit: 0 },
 ];
 
@@ -313,7 +313,7 @@ export const addMatch = async (matchData: Omit<Match, 'id' | 'status'>): Promise
 };
 
 
-export const addInstructor = async (instructorData: Omit<Instructor, 'id' | 'isAvailable' | 'isBlocked' | 'assignedClubId' | 'assignedCourtNumber' | 'profilePictureUrl' | 'defaultRatePerHour' | 'rateTiers' | 'email'> & { email?: string }): Promise<Instructor | { error: string }> => {
+export const addInstructor = async (instructorData: Omit<Instructor, 'id' | 'isAvailable' | 'isBlocked' | 'assignedClubId' | 'assignedCourtNumber' | 'profilePictureUrl' | 'defaultRatePerHour' | 'rateTiers' | 'email' | 'unavailableHours'> & { email?: string }): Promise<Instructor | { error: string }> => {
   await new Promise(res => setTimeout(res, 500));
 
   const existingInstructor = instructors.find(inst => inst.name.toLowerCase() === instructorData.name.toLowerCase());

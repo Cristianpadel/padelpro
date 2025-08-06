@@ -138,6 +138,7 @@ export interface Instructor {
     assignedCourtNumber?: number;
     defaultRatePerHour?: number;
     rateTiers?: InstructorRateTier[];
+    unavailableHours?: Partial<Record<DayOfWeek, TimeRange[]>>;
 }
 
 export interface PadelCourt {
