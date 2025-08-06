@@ -25,8 +25,8 @@ export const calculatePricePerPerson = (totalPrice: number, groupSize: number): 
     return totalPrice / groupSize;
 };
 
-export const isUserLevelCompatibleWithActivity = (activityLevel: ClassPadelLevel | MatchPadelLevel, userLevel: MatchPadelLevel | undefined): boolean => {
-    if (!userLevel || userLevel === 'abierto' || activityLevel === 'abierto') {
+export const isUserLevelCompatibleWithActivity = (activityLevel: ClassPadelLevel | MatchPadelLevel, userLevel: MatchPadelLevel | undefined, isPlaceholder?: boolean): boolean => {
+    if (!userLevel || userLevel === 'abierto' || activityLevel === 'abierto' || isPlaceholder) {
         return true;
     }
 
@@ -42,4 +42,42 @@ export const isUserLevelCompatibleWithActivity = (activityLevel: ClassPadelLevel
     }
     
     return false; // Default to not compatible
+}
+
+
+export const hasAnyConfirmedActivityForDay = (userId: string, date: Date, excludingId?: string, type?: 'class' | 'match'): boolean => {
+    // This is a placeholder for a more complex check against the user's full schedule.
+    // For now, it returns false to allow booking.
+    return false;
+};
+
+export const findAvailableCourt = (clubId: string, startTime: Date, endTime: Date): PadelCourt | null => {
+    // This is a placeholder. A real implementation would check for court availability.
+    const courts = getMockPadelCourts().filter(c => c.clubId === clubId && c.isActive);
+    return courts.length > 0 ? courts[0] : null;
+};
+
+export const isSlotGratisAndAvailable = (slot: TimeSlot): boolean => {
+    if (!slot.designatedGratisSpotPlaceholderIndexForOption) return false;
+    for (const [size, index] of Object.entries(slot.designatedGratisSpotPlaceholderIndexForOption)) {
+        if (index !== null && index !== undefined) {
+             const bookingInSpot = (slot.bookedPlayers || []).find((p, idx) => p.groupSize === parseInt(size) && idx === index);
+             if (!bookingInSpot) return true;
+        }
+    }
+    return false;
+};
+
+// Annul conflicting pre-registrations
+export const _annulConflictingActivities = (confirmedActivity: TimeSlot | Match) => {
+    // Placeholder for a more complex logic
+};
+
+export const removeUserPreInscriptionsForDay = async (userId: string, date: Date, excludingId: string, type: 'class' | 'match') => {
+    // Placeholder
+};
+
+export const findConflictingConfirmedActivity = (activity: TimeSlot, allTimeSlots: TimeSlot[], allMatches: Match[]): TimeSlot | Match | null => {
+    // Placeholder
+    return null;
 }

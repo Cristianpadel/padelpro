@@ -413,7 +413,7 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
         }
     };
     
-    if (!currentSlot || !currentUser || !clubInfo) {
+    if (!currentSlot || !currentUser || !clubInfo || !instructor) {
         return <Card className="p-4"><Skeleton className="h-96 w-full" /></Card>;
     }
     
@@ -453,7 +453,7 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
 
     const badges = [
         { type: 'category', value: displayClassCategory(currentSlot.category), icon: CategoryIcon },
-        { type: 'court', value: displayClassLevel(currentSlot.courtNumber ? `Pista ${currentSlot.courtNumber}` : 'Pista'), icon: Hash },
+        { type: 'court', value: displayClassLevel(currentSlot.courtNumber ? `Pista ${currentSlot.courtNumber}` : 'Pista' as any), icon: Hash },
         { type: 'level', value: displayClassLevel(currentSlot.level), icon: BarChartHorizontal }
     ];
 

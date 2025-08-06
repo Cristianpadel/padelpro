@@ -167,6 +167,10 @@ export interface Booking {
     spotIndex: number;
     status: 'pending' | 'confirmed' | 'cancelled';
     bookedWithPoints?: boolean;
+    amountBlocked?: number;
+    isOrganizerBooking?: boolean;
+    slotDetails?: any;
+    bookedAt?: Date;
 }
 
 export interface TimeSlot {
@@ -263,6 +267,9 @@ export interface User {
     genderCategory?: UserGenderCategory;
     preferredGameType?: 'clases' | 'partidas';
 }
+
+export type UserDB = User & Partial<Instructor>;
+
 
 export interface MatchDayEvent {
     id: string;
@@ -377,7 +384,4 @@ export const displayActivityStatusWithDetails = (
         case 'pre_registration': return 'Pre-inscripción';
         case 'confirmed': return 'Confirmada';
         case 'confirmed_private': return 'Privada';
-        case 'cancelled': return 'Cancelada';
-        default: return 'Desconocido';
-    }
-}
+        case 'cancelled':
