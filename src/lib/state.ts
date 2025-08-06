@@ -1,5 +1,5 @@
 // lib/state.ts
-import type { TimeSlot, Club, Instructor, PadelCourt, CourtGridBooking, PointTransaction, User, Match, MatchDayEvent, Product, Booking, MatchBooking } from '@/types';
+import type { TimeSlot, Club, Instructor, PadelCourt, CourtGridBooking, PointTransaction, User, Match, MatchDayEvent, Product, Booking, MatchBooking, DealOfTheDaySettings } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { startOfDay, addHours, addMinutes, subDays } from 'date-fns';
 
@@ -48,6 +48,11 @@ export let clubs: Club[] = [
             enabled: true,
             color: '#a855f7',
             intensity: 0.5,
+        },
+        dealOfTheDay: {
+            enabled: true,
+            productIds: ['prod-1', 'prod-2'],
+            discountPercentage: 20
         }
     },
     { id: 'club-2', name: 'Padel Club Pozuelo' },

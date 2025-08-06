@@ -54,6 +54,7 @@ export interface PointSettings {
     unconfirmedCancelPenaltyPoints?: number;
     unconfirmedCancelPenaltyEuros?: number;
     cancellationPenaltyTiers?: PenaltyTier[];
+    inscriptionBonusPoints?: number;
 }
 
 export interface ClubLevelRange {
@@ -87,6 +88,14 @@ export interface DynamicPricingTier {
   maxPrice: number;
 }
 
+export interface DealOfTheDaySettings {
+    enabled: boolean;
+    productIds: string[];
+    discountPercentage: number;
+    currentDealProductId?: string;
+    currentDealSetAt?: string; // ISO Date String
+}
+
 export type ProductCategory = 'pala' | 'pelotas' | 'ropa' | 'accesorios';
 
 export const productCategories: { value: ProductCategory, label: string }[] = [
@@ -107,6 +116,7 @@ export interface Product {
     images: string[];
     aiHint: string;
     isDealOfTheDay?: boolean;
+    discountPercentage?: number;
 }
 
 export interface CardShadowEffectSettings {
@@ -132,7 +142,21 @@ export interface Club {
     courtRateTiers?: CourtRateTier[];
     dynamicPricingTiers?: DynamicPricingTier[];
     shopReservationFee?: number;
+    dealOfTheDay?: DealOfTheDaySettings;
     cardShadowEffect?: CardShadowEffectSettings;
+    adminEmail?: string;
+    adminPassword?: string;
+}
+
+export interface ClubFormData {
+  name: string;
+  location: string;
+  logoUrl?: string;
+  adminEmail: string;
+  adminPassword?: string; // Optional on form, required on creation
+  showClassesTabOnFrontend: boolean;
+  showMatchesTabOnFrontend: boolean;
+  unavailableMatchHours: Partial<Record<DayOfWeek, TimeRange[]>>;
 }
 
 export interface Instructor {
@@ -182,7 +206,7 @@ export interface TimeSlot {
     instructorId: string;
     instructorName: string;
     maxPlayers: number;
-    courtNumber: number;
+    courtNumber?: number;
     level: ClassPadelLevel;
     category: PadelCategoryForSlot;
     status: 'pre_registration' | 'forming' | 'confirmed' | 'confirmed_private' | 'cancelled';
@@ -201,7 +225,7 @@ export interface Match {
     startTime: Date;
     endTime: Date;
     durationMinutes: number;
-    courtNumber: number;
+    courtNumber?: number;
     level: MatchPadelLevel;
     category: PadelCategoryForSlot;
     status: 'forming' | 'confirmed' | 'confirmed_private' | 'cancelled';

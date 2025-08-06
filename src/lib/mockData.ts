@@ -348,7 +348,7 @@ export const countUserConfirmedMatchesForDay = (userId: string, date: Date): num
     let count = 0;
     for (const booking of userMatches) {
         const match = state.getMockMatches().find(m => m.id === booking.activityId);
-        if (match && isSameDay(new Date(match.startTime), date) && (match.bookedPlayers?.length || 0) === 4) {
+        if (match && isSameDay(new Date(match.startTime), date) && (match.bookedPlayers?.length || 0) >= 4) {
             count++;
         }
     }
@@ -509,6 +509,13 @@ export const getUserActivityStatusForDay = async (userId: string, date: Date): P
     return { activityStatus: 'none', hasEvent: false, anticipationPoints: 0 };
 };
 
+export const updateUserFavoriteInstructors = async (userId: string, favoriteIds: string[]): Promise<User | {error: string}> => {
+    const userIndex = state.getMockStudents().findIndex(u => u.id === userId);
+    if (userIndex === -1) return { error: "Usuario no encontrado." };
+    state.getMockStudents()[userIndex].favoriteInstructorIds = favoriteIds;
+    return state.getMockStudents()[userIndex];
+}
+
 // Also re-export functions from modules
 export {
     addTimeSlot,
@@ -572,6 +579,6 @@ const preinscribedSlot: TimeSlot = {
     status: 'pre_registration',
     bookedPlayers: [],
     promotionEndTime: addDays(new Date(), 1),
-    totalPrice: 40
+    totalPrice: 40,
 };
 state.addTimeSlotToState(preinscribedSlot);
