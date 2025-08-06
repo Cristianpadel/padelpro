@@ -103,6 +103,12 @@ export interface Product {
     isDealOfTheDay?: boolean;
 }
 
+export interface CardShadowEffectSettings {
+    enabled: boolean;
+    color: string;
+    intensity: number; // Stored as 0 to 1
+}
+
 
 export interface Club {
     id: string;
@@ -118,6 +124,7 @@ export interface Club {
     courtRateTiers?: CourtRateTier[];
     dynamicPricingTiers?: DynamicPricingTier[];
     shopReservationFee?: number;
+    cardShadowEffect?: CardShadowEffectSettings;
 }
 
 export interface Instructor {
@@ -257,5 +264,3 @@ export const displayActivityStatusWithDetails = (
         default: return 'Desconocido';
     }
 }
-
-    
