@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import ClassDisplay from './components/ClassDisplay';
+import ClassDisplay from '@/components/classfinder/ClassDisplay';
 import { getMockTimeSlots, getMockCurrentUser, getUserActivityStatusForDay } from '@/lib/mockData';
 import type { TimeSlot, User, MatchPadelLevel, SortOption, UserActivityStatusForDay } from '@/types';
 import { startOfDay, addDays, isSameDay, format, parseISO } from 'date-fns';
