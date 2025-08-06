@@ -482,3 +482,6 @@ export const countConfirmedLiberadasSpots = (clubId?: string | null): { classes:
         match.gratisSpotAvailable &&
         (match.bookedPlayers || []).length === 3
     ).length;
+
+    return { classes: gratisConfirmedClasses, matches: gratisConfirmedRegularMatches, matchDay: gratisMatchDayMatches };
+};

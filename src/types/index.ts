@@ -6,10 +6,11 @@ export const numericMatchPadelLevels = [
     "1.0", "1.5", "2.0", "2.5", "3.0", "3.5", "4.0", "4.5", "5.0", "5.5", "6.0", "6.5", "7.0"
 ] as const;
 
+export type NumericMatchPadelLevel = typeof numericMatchPadelLevels[number];
 export const matchPadelLevels: NumericMatchPadelLevel[] = [...numericMatchPadelLevels];
 
-export type NumericMatchPadelLevel = typeof numericMatchPadelLevels[number];
 export type MatchPadelLevel = 'abierto' | NumericMatchPadelLevel;
+
 
 export const userGenderCategories: UserGenderCategory[] = ['femenino', 'masculino', 'otro', 'no_especificado'];
 export type UserGenderCategory = 'femenino' | 'masculino' | 'otro' | 'no_especificado';
@@ -170,7 +171,7 @@ export interface DynamicPricingTier {
   id: string;
   days: DayOfWeek[];
   startTime: string; // "HH:mm"
-  endTime: string; // "HH:mm"
+  endTime: string;   // "HH:mm"
   minPrice: number;
   startPrice: number;
   maxPrice: number;
@@ -255,6 +256,7 @@ export interface Booking {
     bookedWithPoints?: boolean;
     amountBlocked?: number;
     isOrganizerBooking?: boolean;
+    amountPaidByInvitee?: number;
     slotDetails?: TimeSlot;
     bookedAt?: Date;
     isSimulated?: boolean;
@@ -313,7 +315,7 @@ export interface MatchBooking {
     bookedAt: Date;
     bookedWithPoints?: boolean;
     isOrganizerBooking?: boolean;
-    amountPaidByInvitee?: number;
+    amountPaidByInvitee?: number; // For private matches
     matchDetails?: MatchBookingMatchDetails;
     amountBlocked?: number;
     isSimulated?: boolean;

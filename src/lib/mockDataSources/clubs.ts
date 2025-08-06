@@ -1,0 +1,37 @@
+"use client";
+import type { Club, DayOfWeek, TimeRange, CourtRateTier, Instructor } from '@/types';
+import * as state from './index';
+import { daysOfWeek } from '@/types';
+import { getDay, parse, format } from 'date-fns';
+
+export const calculateActivityPrice = (club: Club, startTime: Date): number => {
+    if (club.dynamicPricingEnabled) {
+        // Dynamic pricing logic would go here
+        // For now, let's use a simplified version of the fixed tiers
+        const dayOfWeek = daysOfWeek[getDay(startTime)];
+        const time = format(startTime, 'HH:mm');
+        const matchingTier = club.dynamicPricingTiers?.find(tier =>
+            tier.days.includes(dayOfWeek) && time >= tier.startTime && time < tier.endTime
+        );
+        return matchingTier ? matchingTier.startPrice : 20; // Default to 20 if no tier matches
+    }
+
+    const dayOfWeek = daysOfWeek[getDay(startTime)];
+    const time = format(startTime, 'HH:mm');
+    const matchingTier = club.courtRateTiers?.find(tier =>
+        tier.days.includes(dayOfWeek) && time >= tier.startTime && time < tier.endTime
+    );
+    return matchingTier ? matchingTier.rate : 20; // Default to 20 if no tier matches
+};
+
+export const getInstructorRate = (instructor: Instructor, startTime: Date): number => {
+    if (!instructor.rateTiers || instructor.rateTiers.length === 0) {
+        return instructor.defaultRatePerHour || 0;
+    }
+    const dayOfWeek = daysOfWeek[getDay(startTime)];
+    const time = format(startTime, 'HH:mm');
+    const matchingTier = instructor.rateTiers.find(tier =>
+        tier.days.includes(dayOfWeek) && time >= tier.startTime && time < tier.endTime
+    );
+    return matchingTier ? matchingTier.rate : (instructor.defaultRatePerHour || 0);
+};

@@ -4,7 +4,7 @@ import { addHours, setHours, setMinutes, startOfDay, format, isSameDay, addDays,
 import { es } from 'date-fns/locale';
 import type { Match, MatchPadelLevel, PadelCategoryForSlot, MatchBooking, User, Club, DayOfWeek, TimeRange, Instructor, TimeSlot } from '@/types'; // Changed PadelCategory to PadelCategoryForSlot
 import { matchPadelLevels, padelCategoryForSlotOptions, daysOfWeek as dayOfWeekArray } from '@/types'; // Use padelCategoryForSlotOptions
-import * as state from './state';
+import * as state from './index';
 import * as config from '../config';
 import * as mockUtils from './utils';
 import { getPlaceholderUserName } from './utils';
@@ -820,4 +820,4 @@ export const fetchUserMatchBookings = async (userId: string): Promise<MatchBooki
     };
   });
 };
-```
+

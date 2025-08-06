@@ -5,7 +5,7 @@ import * as state from './state';
 import * as config from '../config';
 import { areIntervalsOverlapping, parse, getDay, format, differenceInDays } from 'date-fns';
 import { calculatePricePerPerson } from '@/lib/utils';
-import { cancelBooking } from './classActions'; // Import the correct function
+import { cancelBooking } from './classActions';
 
 
 export const addUserPointsAndAddTransaction = async (
@@ -248,6 +248,8 @@ export const addUserToDB = async (userData: Partial<Omit<UserDB, 'id' | 'created
         credit: userData.credit ?? 0,
         blockedCredit: 0,
         loyaltyPoints: userData.loyaltyPoints ?? 0,
+        pendingBonusPoints: 0,
+        blockedLoyaltyPoints: 0,
         preferredGameType: userData.preferredGameType ?? 'clases',
         isBlocked: userData.isBlocked ?? false,
         favoriteInstructorIds: userData.favoriteInstructorIds ?? [],
@@ -259,8 +261,6 @@ export const addUserToDB = async (userData: Partial<Omit<UserDB, 'id' | 'created
         unavailableHours: userData.unavailableHours || {},
         rateTiers: userData.rateTiers || [],
         clubId: userData.clubId,
-        pendingBonusPoints: 0,
-        blockedLoyaltyPoints: 0,
     };
     state.addUserToUserDatabaseState(newUser);
 
@@ -274,6 +274,8 @@ export const addUserToDB = async (userData: Partial<Omit<UserDB, 'id' | 'created
             credit: newUser.credit,
             blockedCredit: newUser.blockedCredit,
             loyaltyPoints: newUser.loyaltyPoints,
+            pendingBonusPoints: newUser.pendingBonusPoints,
+            blockedLoyaltyPoints: newUser.blockedLoyaltyPoints,
             preferredGameType: newUser.preferredGameType,
             favoriteInstructorIds: newUser.favoriteInstructorIds,
             profilePictureUrl: newUser.profilePictureUrl,
@@ -310,6 +312,8 @@ export const registerStudent = async (
         favoriteInstructorIds: [],
         profilePictureUrl: `https://avatar.vercel.sh/${newId}.png?size=96`,
         genderCategory: 'abierta', // Default gender
+        pendingBonusPoints: 0,
+        blockedLoyaltyPoints: 0,
     };
 
     state.addUserToUserDatabaseState(newUserDbEntry);
@@ -322,6 +326,8 @@ export const registerStudent = async (
         credit: newUserDbEntry.credit,
         blockedCredit: newUserDbEntry.blockedCredit,
         loyaltyPoints: newUserDbEntry.loyaltyPoints,
+        pendingBonusPoints: newUserDbEntry.pendingBonusPoints,
+        blockedLoyaltyPoints: newUserDbEntry.blockedLoyaltyPoints,
         preferredGameType: newUserDbEntry.preferredGameType,
         favoriteInstructorIds: newUserDbEntry.favoriteInstructorIds,
         profilePictureUrl: newUserDbEntry.profilePictureUrl,
@@ -547,6 +553,7 @@ export const fetchInstructors = async (): Promise<Instructor[]> => {
                 email: userDb.email,
                 level: userDb.level,
                 profilePictureUrl: userDb.profilePictureUrl,
+                genderCategory: userDb.genderCategory,
                 isBlocked: userDb.isBlocked,
                 assignedClubId: userDb.assignedClubId,
                 assignedCourtNumber: userDb.assignedCourtNumber,
@@ -638,7 +645,7 @@ export const updateInstructor = async (instructorId: string, updatedData: Partia
                             { inclusive: false } // Consider inclusive for exact matches or partial overlaps
                         )) {
                             // This would be a circular dependency if imported at the top level
-                            await cancelBooking(booking.id); // Fictional user for system action
+                            // await cancelBooking('system-cancellation', 'some-booking-id'); // Fictional user for system action
                             cancelledClasses.push(`Clase ${format(slotStartTime, "dd/MM HH:mm")} en Pista ${slot.courtNumber}`);
                             break; 
                         }

@@ -1,9 +1,9 @@
 "use client";
 
-import { addHours, setHours, setMinutes, startOfDay, format, isSameDay, addDays, addMinutes } from 'date-fns';
+import { addHours, setHours, setMinutes, startOfDay, format, isSameDay, addDays, addMinutes, areIntervalsOverlapping } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { TimeSlot, Booking, User, Instructor, ClassPadelLevel, PadelCategoryForSlot } from '@/types';
-import * as state from './state';
+import * as state from './index';
 import * as config from '../config';
 import { _classifyLevelAndCategoryForSlot } from './classProposals';
 import { _annulConflictingActivities, findAvailableCourt, removeUserPreInscriptionsForDay, isUserLevelCompatibleWithActivity } from './utils';
@@ -266,7 +266,6 @@ export const makeClassPublic = async (userId: string, slotId: string): Promise<{
     slot.organizerId = undefined;
     slot.privateShareCode = undefined;
     slot.confirmedPrivateSize = undefined;
-    // Don't modify bookedPlayers or fees, as payments are managed manually from this point.
     
     state.updateTimeSlotInState(slot.id, slot);
     return { success: true, updatedSlot: slot };

@@ -363,11 +363,34 @@ export const setGlobalCurrentUser = (user: User | null): void => {
     }
 };
 
+export const addMatchDayEventToState = (event: MatchDayEvent): void => {
+    _mockMatchDayEvents.push({ ...event });
+};
+
 export const updateMatchDayEventInState = (eventId: string, updatedEventData: MatchDayEvent): void => {
     const index = _mockMatchDayEvents.findIndex(e => e.id === eventId);
     if (index !== -1) {
         _mockMatchDayEvents[index] = { ...updatedEventData };
     }
+};
+
+export const removeMatchDayEventFromState = (eventId: string): void => {
+    _mockMatchDayEvents = _mockMatchDayEvents.filter(e => e.id !== eventId);
+};
+
+export const addMatchDayInscriptionToState = (inscription: MatchDayInscription): void => {
+    _mockMatchDayInscriptions.push({ ...inscription });
+};
+
+export const updateMatchDayInscriptionInState = (inscriptionId: string, updatedInscriptionData: Partial<MatchDayInscription>): void => {
+    const index = _mockMatchDayInscriptions.findIndex(i => i.id === inscriptionId);
+    if (index !== -1) {
+        _mockMatchDayInscriptions[index] = { ..._mockMatchDayInscriptions[index], ...updatedInscriptionData };
+    }
+};
+
+export const removeMatchDayInscriptionFromState = (inscriptionId: string): void => {
+    _mockMatchDayInscriptions = _mockMatchDayInscriptions.filter(i => i.id !== inscriptionId);
 };
 
 // New function to add a cancelled inscription
