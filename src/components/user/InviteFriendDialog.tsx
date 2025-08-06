@@ -1,42 +1,28 @@
 "use client";
 
-import React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Button } from '@/components/ui/button';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
 } from '@/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Loader2, Send, Mail } from 'lucide-react';
-import type { User } from '@/types';
+import { Label } from '@/components/ui/label';
+import { Mail, Send, UserPlus, Gift } from 'lucide-react';
+import type { User as UserType } from '@/types';
+import { useToast } from '@/hooks/use-toast';
 
 interface InviteFriendDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  currentUser: User;
-  onInviteSent: (friendEmail: string) => Promise<void>;
+  currentUser: UserType;
+  onInviteSent: (friendEmail: string) => void;
 }
-
-const formSchema = z.object({
-  friendEmail: z.string().email("Debe ser un correo electrónico válido."),
-});
-
-type FormData = z.infer<typeof formSchema>;
 
 const InviteFriendDialog: React.FC<InviteFriendDialogProps> = ({
   isOpen,
@@ -44,67 +30,75 @@ const InviteFriendDialog: React.FC<InviteFriendDialogProps> = ({
   currentUser,
   onInviteSent,
 }) => {
-  const [isPending, startTransition] = React.useTransition();
+  const [friendEmail, setFriendEmail] = useState('');
+  const { toast } = useToast();
 
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      friendEmail: "",
-    },
-  });
-
-  const onSubmit = (values: FormData) => {
-    startTransition(async () => {
-      await onInviteSent(values.friendEmail);
-      form.reset();
-    });
+  const handleSubmit = () => {
+    if (!friendEmail.trim()) {
+      toast({
+        title: "Campo Requerido",
+        description: "Por favor, introduce el correo electrónico de tu amigo.",
+        variant: "destructive",
+      });
+      return;
+    }
+    // Basic email validation (not exhaustive)
+    if (!/\S+@\S+\.\S+/.test(friendEmail)) {
+      toast({
+        title: "Correo Inválido",
+        description: "Por favor, introduce un correo electrónico válido.",
+        variant: "destructive",
+      });
+      return;
+    }
+    onInviteSent(friendEmail);
+    setFriendEmail(''); // Reset after sending
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) setFriendEmail(''); // Reset email if dialog is closed
+      onOpenChange(open);
+    }}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center">
-            <Send className="mr-2 h-5 w-5 text-primary" />
-            Invita a un Amigo
+            <Gift className="mr-2 h-5 w-5 text-primary" />
+            Invitar a un Amigo
           </DialogTitle>
           <DialogDescription>
-            Introduce el email de tu amigo para invitarle. ¡Recibirás puntos cuando se una y juegue su primera partida!
+            Introduce el correo de tu amigo para invitarlo. Ganarás <strong>10 puntos</strong> si se registra y reserva su primera actividad. (Simulación)
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="friendEmail"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email del Amigo</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                       <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                       <Input type="email" placeholder="amigo@ejemplo.com" className="pl-8" {...field} />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+
+        <div className="py-4 space-y-3">
+          <div>
+            <Label htmlFor="friend-email" className="text-sm font-medium text-foreground flex items-center">
+              <Mail className="mr-2 h-4 w-4 text-muted-foreground" />
+              Correo Electrónico del Amigo
+            </Label>
+            <Input
+              id="friend-email"
+              type="email"
+              placeholder="amigo@ejemplo.com"
+              value={friendEmail}
+              onChange={(e) => setFriendEmail(e.target.value)}
+              className="mt-1"
             />
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isPending}>
-                {isPending ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="mr-2 h-4 w-4" />
-                )}
-                Enviar Invitación
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="outline">
+              Cancelar
+            </Button>
+          </DialogClose>
+          <Button type="button" onClick={handleSubmit}>
+            <Send className="mr-2 h-4 w-4" />
+            Enviar Invitación (Simulado)
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
