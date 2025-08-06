@@ -1,15 +1,61 @@
-// This file re-exports all necessary functions and state variables
-// from the individual modules within the mockDataSources directory.
+"use client";
 
-export * from './state';
-export * from './config';
-export * from './utils';
-export * from './actions/users'; 
-export * from './actions/classActions';
-export * from './actions/classProposals';
-export * from './actions/match-day';
-export * from './actions/system';
-export * from './actions/init';
-export * from './actions/clubs';
-export * from './actions/matches';
-export * from './actions/initial-bookings';
+import type { TimeSlot, Booking, User, Instructor, Club, ClassPadelLevel, MatchPadelLevel, BookingSlotDetails, ClubFormData, UserDB, Match, MatchBooking, PadelGameType, SortOption, PadelCourt, CourtGridBooking, PadelCourtStatus, Review, CreateMatchFormData, PointTransaction, PointTransactionType, Transaction } from '../types';
+import { classPadelLevels, matchPadelLevels, padelCategories } from '../types';
+import { addHours, setHours, setMinutes, startOfDay, format, isSameDay, addDays, addMinutes, eachMinuteOfInterval, isEqual, areIntervalsOverlapping, parseISO, differenceInHours, differenceInMinutes } from 'date-fns';
+import { es } from 'date-fns/locale';
+import * as state from './mockDataSources';
+import { performInitialization as initializeMockData } from './mockDataSources';
+import { calculatePricePerPerson } from './mockDataSources/utils';
+
+initializeMockData();
+
+// Re-export all functions from the index
+export * from './mockDataSources';
+
+
+export const getCourtAvailabilityForInterval = async (clubId: string, startTime: Date, endTime: Date): Promise<{ available: PadelCourt[], occupied: PadelCourt[], total: number }> => {
+    const allClubCourts = await state.fetchPadelCourtsByClub(clubId);
+    const activeCourts = allClubCourts.filter(c => c.isActive);
+    
+    if (activeCourts.length === 0) {
+        return { available: [], occupied: [], total: 0 };
+    }
+
+    const confirmedActivities = [
+        ...state.getMockTimeSlots().filter(s => s.clubId === clubId && (s.status === 'confirmed' || s.status === 'confirmed_private')),
+        ...state.getMockMatches().filter(m => m.clubId === clubId && (m.status === 'confirmed' || m.status === 'confirmed_private')),
+        ...state.getMockMatchDayEvents().filter(e => e.clubId === clubId)
+    ];
+
+    const occupiedCourtNumbers = new Set<number>();
+
+    confirmedActivities.forEach(activity => {
+        const activityStart = new Date('eventDate' in activity ? activity.eventDate : activity.startTime);
+        const activityEnd = new Date('eventEndTime' in activity && activity.eventEndTime ? activity.eventEndTime : ('endTime' in activity ? activity.endTime : addMinutes(new Date('eventDate' in activity ? activity.eventDate : activity.startTime), 90)));
+        
+        if (areIntervalsOverlapping({ start: startTime, end: endTime }, { start: activityStart, end: activityEnd }, { inclusive: false })) {
+            if ('courtNumber' in activity && activity.courtNumber) {
+                occupiedCourtNumbers.add(activity.courtNumber);
+            } else if ('courtIds' in activity && Array.isArray(activity.courtIds)) {
+                activity.courtIds.forEach(courtId => {
+                    const court = allClubCourts.find(c => c.id === courtId);
+                    if (court) occupiedCourtNumbers.add(court.courtNumber);
+                });
+            }
+        }
+    });
+
+    const available: PadelCourt[] = [];
+    const occupied: PadelCourt[] = [];
+
+    activeCourts.forEach(court => {
+        if (occupiedCourtNumbers.has(court.courtNumber)) {
+            occupied.push(court);
+        } else {
+            available.push(court);
+        }
+    });
+
+    return { available, occupied, total: activeCourts.length };
+};
