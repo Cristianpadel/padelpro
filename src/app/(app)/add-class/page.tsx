@@ -6,6 +6,8 @@ import AddClassForm from './components/AddClassForm';
 import { getMockInstructors } from '@/lib/mockData';
 import type { TimeSlot, Instructor } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import CourtAvailabilityView from '../admin/components/CourtAvailabilityView';
+import { Separator } from '@/components/ui/separator';
 
 
 export default function AddClassPage() {
@@ -58,12 +60,15 @@ export default function AddClassPage() {
                     Rellena el formulario para crear un nuevo hueco de clase disponible para los alumnos.
                 </p>
             </header>
-            <main className="flex-1">
-                <div className="mx-auto max-w-2xl">
+            <main className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-1">
                     <AddClassForm 
                         instructor={instructor}
                         onClassAdded={handleClassAdded}
                     />
+                </div>
+                <div className="lg:col-span-2">
+                     <CourtAvailabilityView instructor={instructor} />
                 </div>
             </main>
         </div>

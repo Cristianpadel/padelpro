@@ -172,36 +172,41 @@ export const deletePadelCourt = async (id: string): Promise<{ success: true } | 
 // --- Bookings & TimeSlots ---
 export const fetchCourtBookingsForDay = async (clubId: string, date: Date): Promise<CourtGridBooking[]> => {
     await new Promise(res => setTimeout(res, 500));
-    const dayBookings = courtBookings.filter(b => b.clubId === clubId && b.startTime.toDateString() === date.toDateString());
-    const dayTimeSlots = timeSlots.filter(ts => ts.clubId === clubId && ts.startTime.toDateString() === date.toDateString() && ts.status === 'confirmed');
-    const dayMatches = matches.filter(m => m.clubId === clubId && m.startTime.toDateString() === date.toDateString() && m.status === 'confirmed');
+    const dayBookings = courtBookings.filter(b => b.clubId === clubId && isSameDay(new Date(b.startTime), date));
+    
+    const dayTimeSlots = timeSlots.filter(ts => ts.clubId === clubId && isSameDay(new Date(ts.startTime), date));
+    const dayMatches = matches.filter(m => m.clubId === clubId && isSameDay(new Date(m.startTime), date));
 
     const activityBookings: CourtGridBooking[] = [
-        ...dayTimeSlots.map(ts => ({
-            id: `ts-booking-${ts.id}`,
-            clubId: ts.clubId,
-            courtNumber: ts.courtNumber,
-            startTime: ts.startTime,
-            endTime: ts.endTime,
-            title: `Clase con ${ts.instructorName}`,
-            type: 'clase' as const,
-            status: 'reservada' as const,
-            activityStatus: ts.status,
-            participants: ts.bookedPlayers.length,
-            maxParticipants: ts.maxPlayers
+        ...dayTimeSlots
+            .filter(ts => ts.status === 'confirmed' || ts.status === 'confirmed_private')
+            .map(ts => ({
+                id: `ts-booking-${ts.id}`,
+                clubId: ts.clubId,
+                courtNumber: ts.courtNumber,
+                startTime: new Date(ts.startTime),
+                endTime: new Date(ts.endTime),
+                title: `Clase con ${ts.instructorName}`,
+                type: 'clase' as const,
+                status: 'reservada' as const,
+                activityStatus: ts.status,
+                participants: ts.bookedPlayers.length,
+                maxParticipants: ts.maxPlayers
         })),
-        ...dayMatches.map(m => ({
-            id: `match-booking-${m.id}`,
-            clubId: m.clubId,
-            courtNumber: m.courtNumber,
-            startTime: m.startTime,
-            endTime: m.endTime,
-            title: `Partida Nivel ${m.level}`,
-            type: 'partida' as const,
-            status: 'reservada' as const,
-            activityStatus: m.status,
-            participants: m.bookedPlayers?.length,
-            maxParticipants: 4
+        ...dayMatches
+            .filter(m => m.status === 'confirmed' || m.status === 'confirmed_private')
+            .map(m => ({
+                id: `match-booking-${m.id}`,
+                clubId: m.clubId,
+                courtNumber: m.courtNumber,
+                startTime: new Date(m.startTime),
+                endTime: new Date(m.endTime),
+                title: `Partida Nivel ${m.level}`,
+                type: 'partida' as const,
+                status: 'reservada' as const,
+                activityStatus: m.status,
+                participants: m.bookedPlayers?.length,
+                maxParticipants: 4
         }))
     ];
     
@@ -369,7 +374,7 @@ export const fetchMatches = async (clubId: string): Promise<Match[]> => {
 
 export const fetchMatchDayEventsForDate = async (date: Date, clubId: string): Promise<MatchDayEvent[]> => {
     await new Promise(res => setTimeout(res, 250));
-    return matchDayEvents.filter(e => e.clubId === clubId && e.eventDate.toDateString() === date.toDateString());
+    return matchDayEvents.filter(e => e.clubId === clubId && isSameDay(new Date(e.eventDate), date));
 }
 
 export const getMockInstructors = async (): Promise<Instructor[]> => {
@@ -691,4 +696,5 @@ const initialMatch = addMatch({ clubId: 'club-1', startTime: addHours(today, 11)
 courtBookings.push(
     { id: 'booking-3', clubId: 'club-1', courtNumber: 1, startTime: addHours(today, 18), endTime: addHours(today, 19), title: "Bloqueo Pista", type: 'reserva_manual', status: 'reservada' },
 );
+
 
