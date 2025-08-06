@@ -233,6 +233,21 @@ export const isSlotEffectivelyCompleted = (slot: TimeSlot | Match): { completed:
             return { completed: true, size: bookedCount };
         }
     }
+    
+    // Check individual group sizes for classes
+    if ('maxPlayers' in slot && slot.bookedPlayers) {
+        const groups: Record<number, number> = {};
+        slot.bookedPlayers.forEach(p => {
+            groups[p.groupSize] = (groups[p.groupSize] || 0) + 1;
+        });
+        for(const sizeStr in groups) {
+            const size = parseInt(sizeStr);
+            if(groups[size] === size) {
+                return { completed: true, size: size };
+            }
+        }
+    }
+
     return { completed: false, size: null };
 };
 
@@ -287,9 +302,10 @@ export const addTimeSlot = async (slotData: Omit<TimeSlot, 'id' | 'instructorNam
     id: uuidv4(),
     ...slotData,
     instructorName: instructor?.name || 'Unknown',
-    status: 'pre_registration',
+    status: 'forming',
     bookedPlayers: [],
     endTime: newSlotEnd,
+    totalPrice: ('totalPrice' in slotData ? slotData.totalPrice : calculateActivityPrice(clubs.find(c => c.id === slotData.clubId)!, slotData.startTime) + getInstructorRate(instructor!, slotData.startTime)),
   };
   timeSlots.push(newTimeSlot);
   return newTimeSlot;
@@ -363,9 +379,12 @@ export const removePlayerFromMatch = async (matchId: string, playerId: string): 
 }
 
 // --- Calendar Specific Data Fetchers ---
-export const getMockTimeSlots = async (clubId: string): Promise<TimeSlot[]> => {
+export const getMockTimeSlots = async (clubId?: string): Promise<TimeSlot[]> => {
     await new Promise(res => setTimeout(res, 250));
-    return timeSlots.filter(ts => ts.clubId === clubId);
+    if (clubId) {
+      return timeSlots.filter(ts => ts.clubId === clubId);
+    }
+    return timeSlots;
 };
 
 export const fetchMatches = async (clubId: string): Promise<Match[]> => {
@@ -737,7 +756,31 @@ export const removePlayerFromClass = async (slotId: string, userId: string, grou
     slot.bookedPlayers.splice(playerIndex, 1);
     timeSlots[index] = slot;
     return slot;
-}
+};
+
+export const cancelClassByInstructor = async (slotId: string): Promise<{ message: string } | { error: string }> => {
+    const index = timeSlots.findIndex(s => s.id === slotId);
+    if (index === -1) return { error: "Clase no encontrada." };
+    timeSlots.splice(index, 1);
+    // In a real app, you would also handle refunds and notifications here.
+    return { message: "La clase ha sido cancelada con éxito." };
+};
+
+export const updateTimeSlotInState = async (slotId: string, updateData: Partial<TimeSlot>): Promise<TimeSlot | { error: string }> => {
+    const index = timeSlots.findIndex(s => s.id === slotId);
+    if (index === -1) return { error: "Clase no encontrada." };
+    timeSlots[index] = { ...timeSlots[index], ...updateData };
+    return timeSlots[index];
+};
+
+export const removeBookingFromTimeSlotInState = async (slotId: string, userId: string, groupSize: 1 | 2 | 3 | 4): Promise<TimeSlot | { error: string }> => {
+    const slotIndex = timeSlots.findIndex(s => s.id === slotId);
+    if (slotIndex === -1) return { error: "Clase no encontrada." };
+    const playerIndex = timeSlots[slotIndex].bookedPlayers.findIndex(p => p.userId === userId && p.groupSize === groupSize);
+    if (playerIndex === -1) return { error: "Jugador no encontrado en la clase." };
+    timeSlots[slotIndex].bookedPlayers.splice(playerIndex, 1);
+    return timeSlots[slotIndex];
+};
 
 
 // Initial mock data
@@ -749,3 +792,25 @@ const initialMatch = addMatch({ clubId: 'club-1', startTime: addHours(today, 11)
 courtBookings.push(
     { id: 'booking-3', clubId: 'club-1', courtNumber: 1, startTime: addHours(today, 18), endTime: addHours(today, 19), title: "Bloqueo Pista", type: 'reserva_manual', status: 'reservada' },
 );
+
+// Add a confirmed class for testing
+const confirmedSlot: TimeSlot = {
+    id: uuidv4(),
+    clubId: 'club-1',
+    startTime: addHours(today, 15),
+    endTime: addHours(today, 16),
+    durationMinutes: 60,
+    instructorId: 'inst-1',
+    instructorName: 'Carlos López',
+    maxPlayers: 2,
+    courtNumber: 3,
+    level: {min: '3.0', max: '4.0'},
+    category: 'abierta',
+    status: 'confirmed',
+    bookedPlayers: [
+        { userId: 'user-1', name: 'Alex García', groupSize: 2 },
+        { userId: 'user-2', name: 'Beatriz Reyes', groupSize: 2 },
+    ],
+    totalPrice: 48,
+};
+timeSlots.push(confirmedSlot);
