@@ -34,7 +34,7 @@ import {
 } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from '@/components/ui/input';
-import { MatchSpotDisplay } from './MatchSpotDisplay';
+import { MatchSpotDisplay } from '@/components/match/MatchSpotDisplay';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Progress } from '@/components/ui/progress';
