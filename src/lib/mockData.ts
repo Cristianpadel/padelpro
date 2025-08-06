@@ -306,6 +306,36 @@ export const simulateInviteFriend = async (userId: string, clubId: string): Prom
     return { pointsAwarded: pointsToAdd };
 }
 
+export const convertEurosToPoints = async (userId: string, euros: number, pointsPerEuro: number): Promise<{ newCreditBalance: number; newLoyaltyPoints: number; } | { error: string }> => {
+    await new Promise(res => setTimeout(res, 500));
+    const userIndex = students.findIndex(s => s.id === userId);
+    if (userIndex === -1) {
+        return { error: "Usuario no encontrado." };
+    }
+    const student = students[userIndex];
+    if ((student.credit ?? 0) < euros) {
+        return { error: "Saldo insuficiente." };
+    }
+    
+    const pointsToAdd = Math.floor(euros * pointsPerEuro);
+    
+    student.credit = (student.credit ?? 0) - euros;
+    student.loyaltyPoints = (student.loyaltyPoints ?? 0) + pointsToAdd;
+
+    students[userIndex] = student;
+    
+    pointTransactions.unshift({
+        id: uuidv4(),
+        clubId: student.currentClubId || 'club-1',
+        userId: userId,
+        points: pointsToAdd,
+        description: `Conversión de ${euros.toFixed(2)}€ a puntos`,
+        date: new Date(),
+    });
+
+    return { newCreditBalance: student.credit, newLoyaltyPoints: student.loyaltyPoints };
+};
+
 
 export const addTimeSlot = async (slotData: Omit<TimeSlot, 'id' | 'instructorName' | 'status' | 'bookedPlayers' | 'endTime'>): Promise<TimeSlot | { error: string }> => {
   // Simulate API delay
