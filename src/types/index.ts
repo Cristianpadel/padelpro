@@ -179,6 +179,7 @@ export interface TimeSlot {
     privateShareCode?: string;
     confirmedPrivateSize?: 1 | 2 | 3 | 4;
     totalPrice?: number;
+    promotionEndTime?: Date;
 }
 
 export interface Match {
@@ -222,6 +223,8 @@ export interface User {
     assignedClubId?: string;
     assignedCourtNumber?: number;
     isAvailable?: boolean;
+    isPro?: boolean;
+    currentClubId?: string;
 }
 
 export interface MatchDayEvent {
@@ -269,9 +272,9 @@ export type SortOption = 'time' | 'occupancy' | 'level';
 export type TimeOfDayFilterType = 'all' | 'morning' | 'midday' | 'evening';
 export const timeSlotFilterOptions: { value: TimeOfDayFilterType, label: string }[] = [
     { value: 'all', label: 'Todos' },
-    { value: 'morning', label: 'Mañanas' },
-    { value: 'midday', label: 'Mediodía' },
-    { value: 'evening', label: 'Tardes' },
+    { value: 'morning', label: 'Mañanas (8-13h)' },
+    { value: 'midday', label: 'Mediodía (13-18h)' },
+    { value: 'evening', label: 'Tardes (18-22h)' },
 ];
 
 export interface UserActivityStatusForDay {

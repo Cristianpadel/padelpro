@@ -87,7 +87,10 @@ let products: Product[] = [
     { id: 'prod-2', clubId: 'club-1', name: 'Head Pro S Balls (3-pack)', category: 'pelotas', status: 'in-stock', officialPrice: 6, offerPrice: 5, images: ['https://placehold.co/600x400.png'], aiHint: 'padel balls' },
 ];
 let globalCurrentUser: User | null = null;
-
+let hasNewGratisSpot = false;
+let userBookings: Booking[] = [];
+let userMatchBookings: Booking[] = [];
+let userReservedProducts: { userId: string, productId: string }[] = [];
 
 // --- Instructors ---
 export const fetchInstructors = async (): Promise<Instructor[]> => {
@@ -392,6 +395,11 @@ export const fetchMatches = async (clubId: string): Promise<Match[]> => {
     return matches.filter(m => m.clubId === clubId);
 };
 
+export const getMockMatches = async (): Promise<Match[]> => {
+    return matches;
+}
+
+
 export const fetchMatchDayEventsForDate = async (date: Date, clubId: string): Promise<MatchDayEvent[]> => {
     await new Promise(res => setTimeout(res, 250));
     return matchDayEvents.filter(e => e.clubId === clubId && isSameDay(new Date(e.eventDate), date));
@@ -584,9 +592,31 @@ export const deleteProduct = async (productId: string): Promise<{ success: true 
 };
 
 export const getMockUserBookings = async (userId: string): Promise<Booking[]> => {
-  console.log("Fetching bookings for:", userId);
-  return [];
+  return userBookings.filter(b => b.userId === userId);
 };
+
+export const getMockUserMatchBookings = async (userId: string): Promise<Booking[]> => {
+    return userMatchBookings.filter(b => b.userId === userId);
+}
+
+export const getHasNewGratisSpotNotification = (): boolean => {
+    return hasNewGratisSpot;
+}
+
+export const setHasNewGratisSpotNotificationState = (state: boolean) => {
+    hasNewGratisSpot = state;
+}
+
+export const countConfirmedLiberadasSpots = async (): Promise<number> => {
+    let count = 0;
+    // a real implementation would query the db
+    return count;
+}
+
+export const countUserReservedProducts = async (userId: string): Promise<number> => {
+    return userReservedProducts.filter(r => r.userId === userId).length;
+}
+
 
 
 export const bookClass = async (userId: string, slotId: string, groupSize: 1 | 2 | 3 | 4, spotIndex: number): Promise<{ booking: Booking; updatedSlot: TimeSlot; } | { error: string; }> => {
@@ -647,13 +677,14 @@ export const getCourtAvailabilityForInterval = async (clubId: string, startTime:
     return { available: allClubCourts, occupied: [], total: allClubCourts.length }; // Simplified
 }
 
-export const getMockCurrentUser = async (): Promise<User | null> => {
-    if (globalCurrentUser) return globalCurrentUser;
-    const defaultUser = students.find(s => s.id === 'user-1') as User;
-    // Simulate fetching instructor data and merging it for a complete user object
-    const instructorData = instructors.find(i => i.id === defaultUser.id);
-    return { ...defaultUser, ...instructorData };
+export async function getMockCurrentUser(): Promise<User | null> {
+    if (globalCurrentUser) {
+      return globalCurrentUser;
+    }
+    // Return a default user if no user is set
+    return students.find(s => s.id === 'user-1') || null;
 }
+
 
 export const setGlobalCurrentUser = (user: User | null) => {
     globalCurrentUser = user;

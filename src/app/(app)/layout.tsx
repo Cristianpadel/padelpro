@@ -35,7 +35,7 @@ import {
   SidebarInset,
   SidebarSeparator,
 } from '@/components/ui/sidebar';
-import { AiHelpButton } from '@/components/AiHelpButton';
+import { BottomNavigationBar } from '@/components/layout/BottomNavigationBar';
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Agenda' },
@@ -211,7 +211,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </Sidebar>
       <SidebarInset>
         {children}
-        <AiHelpButton />
+        <BottomNavigationBar />
       </SidebarInset>
     </SidebarProvider>
   );
