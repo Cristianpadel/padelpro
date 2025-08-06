@@ -84,7 +84,7 @@ const EditInstructorDialog: React.FC<EditInstructorDialogProps> = ({ instructor,
       isAvailable: instructor.isAvailable ?? true,
       assignedClubId: instructor.assignedClubId || null,
       assignedCourtNumber: instructor.assignedCourtNumber || null,
-      defaultRatePerHour: instructor.defaultRatePerHour || 0,
+      defaultRatePerHour: instructor.defaultRatePerHour || 28,
       rateTiers: instructor.rateTiers || [],
     },
   });
@@ -109,7 +109,7 @@ const EditInstructorDialog: React.FC<EditInstructorDialogProps> = ({ instructor,
           isAvailable: instructor.isAvailable ?? true,
           assignedClubId: instructor.assignedClubId || null,
           assignedCourtNumber: instructor.assignedCourtNumber || null,
-          defaultRatePerHour: instructor.defaultRatePerHour || 0,
+          defaultRatePerHour: instructor.defaultRatePerHour || 28,
           rateTiers: instructor.rateTiers || [],
         });
         if (instructor.assignedClubId) {

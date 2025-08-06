@@ -134,7 +134,7 @@ export interface Instructor {
     profilePictureUrl?: string;
     isAvailable: boolean;
     isBlocked?: boolean;
-    assignedClubId: string | 'all';
+    assignedClubId: string;
     assignedCourtNumber?: number;
     defaultRatePerHour?: number;
     rateTiers?: InstructorRateTier[];
@@ -211,11 +211,12 @@ export interface User {
     id: string;
     name: string;
     loyaltyPoints?: number;
-    level?: NumericMatchPadelLevel;
+    level?: MatchPadelLevel;
     profilePictureUrl?: string;
     credit?: number;
     blockedCredit?: number;
     favoriteInstructorIds?: string[];
+    email?: string;
 }
 
 export interface MatchDayEvent {
@@ -279,7 +280,10 @@ export interface UserActivityStatusForDay {
 // --- Display Helpers ---
 export const displayClassLevel = (level: ClassPadelLevel, short = false): string => {
     if (level === 'abierto') return short ? 'Abre' : 'Abierto';
-    return `${level.min}-${level.max}`;
+    if (typeof level === 'object' && 'min' in level && 'max' in level) {
+      return `${level.min}-${level.max}`;
+    }
+    return String(level);
 }
 
 export const displayClassCategory = (category: PadelCategoryForSlot, short = false): string => {
