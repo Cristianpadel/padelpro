@@ -2,12 +2,11 @@
 
 import * as React from 'react';
 import { usePathname } from 'next/navigation';
-import {
-  DesktopSidebar,
-} from '@/components/layout/DesktopSidebar';
+import DesktopSidebar from '@/components/layout/DesktopSidebar';
 import { BottomNavigationBar } from '@/components/layout/BottomNavigationBar';
 import { getMockCurrentUser, getMockClubs } from '@/lib/mockData';
 import type { User, Club } from '@/types';
+import Footer from '@/components/layout/Footer';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -45,22 +44,25 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
 
   return (
-    <div className="flex min-h-screen">
-      <div className="hidden md:block">
-        {!isLoading && (
-            <DesktopSidebar
-                currentUser={currentUser}
-                clubInfo={clubInfo}
-                currentPage={currentPage}
-                showFilters={pathname.startsWith('/activities')}
-                onProfessionalAccessClick={handleProfessionalAccessClick}
-                onLogoutClick={handleLogoutClick}
-            />
-        )}
+    <div className="flex min-h-screen flex-col">
+      <div className='flex flex-1'>
+        <div className="hidden md:block">
+          {!isLoading && (
+              <DesktopSidebar
+                  currentUser={currentUser}
+                  clubInfo={clubInfo}
+                  currentPage={currentPage}
+                  showFilters={pathname.startsWith('/activities')}
+                  onProfessionalAccessClick={handleProfessionalAccessClick}
+                  onLogoutClick={handleLogoutClick}
+              />
+          )}
+        </div>
+        <main className="flex-1">
+          {children}
+        </main>
       </div>
-      <main className="flex-1">
-        {children}
-      </main>
+      <Footer />
       <BottomNavigationBar />
     </div>
   );

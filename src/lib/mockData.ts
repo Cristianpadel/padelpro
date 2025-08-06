@@ -283,6 +283,29 @@ export const addCreditToStudent = async (studentId: string, amount: number): Pro
     return { newBalance };
 };
 
+export const simulateInviteFriend = async (userId: string, clubId: string): Promise<{ pointsAwarded: number } | { error: string }> => {
+    const club = clubs.find(c => c.id === clubId);
+    if (!club) return { error: "Club no encontrado." };
+    
+    const pointsToAdd = club.pointSettings?.inviteFriend || 5;
+    
+    const userIndex = students.findIndex(s => s.id === userId);
+    if (userIndex === -1) return { error: "Usuario no encontrado." };
+
+    students[userIndex].loyaltyPoints = (students[userIndex].loyaltyPoints || 0) + pointsToAdd;
+    
+    pointTransactions.push({
+        id: uuidv4(),
+        clubId: clubId,
+        userId: userId,
+        points: pointsToAdd,
+        description: "Invitación de amigo",
+        date: new Date(),
+    });
+
+    return { pointsAwarded: pointsToAdd };
+}
+
 
 export const addTimeSlot = async (slotData: Omit<TimeSlot, 'id' | 'instructorName' | 'status' | 'bookedPlayers' | 'endTime'>): Promise<TimeSlot | { error: string }> => {
   // Simulate API delay
@@ -704,7 +727,7 @@ export const getCourtAvailabilityForInterval = async (clubId: string, startTime:
     return { available: allClubCourts, occupied: [], total: allClubCourts.length }; // Simplified
 }
 
-export async function getMockCurrentUser(): Promise<User | null> {
+export function getMockCurrentUser(): User | null {
     if (globalCurrentUser) {
       return globalCurrentUser;
     }
