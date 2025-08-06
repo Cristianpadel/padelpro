@@ -12,7 +12,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { SlidersHorizontal, Star, Zap, User as UserIcon, Check } from 'lucide-react';
 import ActivityFilterSheet from './components/ActivityFilterSheet';
-import PageSkeleton from '@/components/ui/PageSkeleton';
+import PageSkeleton from '@/components/layout/PageSkeleton';
 
 const dateStripDates = Array.from({ length: 22 }, (_, i) => addDays(startOfDay(new Date()), i));
 
