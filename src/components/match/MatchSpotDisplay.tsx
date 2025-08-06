@@ -241,9 +241,4 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
                 </div>
             </TooltipTrigger>
             <TooltipContent side="bottom" className="text-xs p-1.5">{spotTooltipText}</TooltipContent>
-        </Tooltip>
-        </TooltipProvider>
-    );
-};
-
-export const MatchSpotDisplay = React.memo(MatchSpotDisplayComponent);
+        </Tooltip

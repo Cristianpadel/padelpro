@@ -34,7 +34,7 @@ import {
 } from '@/components/ui/dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from '@/components/ui/input';
-import { MatchSpotDisplay } from '@/components/match/MatchSpotDisplay';
+import { MatchSpotDisplay } from './MatchSpotDisplay';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Progress } from '@/components/ui/progress';
@@ -450,7 +450,7 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
                     onJoinPrivate={() => setIsJoinPrivateDialogOpen(true)}
                     isPending={isPending && joiningSpotIndex === index}
                     userHasOtherConfirmedActivityToday={userHasOtherConfirmedActivityToday}
-                    isUserLevelCompatible={isUserLevelCompatibleWithActivity(matchLevelToDisplay, currentUser.level)}
+                    isUserLevelCompatible={isUserLevelCompatibleWithActivity(matchLevelToDisplay, currentUser.level, isPlaceholderMatch)}
                     canJoinThisPrivateMatch={canJoinThisPrivateMatch}
                     isOrganizer={isOrganizer}
                     canBookWithPoints={isBookableWithPointsBySchedule}
