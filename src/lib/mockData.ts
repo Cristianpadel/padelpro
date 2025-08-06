@@ -1,7 +1,7 @@
 // lib/mockData.ts
 import type { TimeSlot, Club, Instructor, PadelCourt, CourtGridBooking, PointTransaction, User, Match, ClubLevelRange, MatchDayEvent, CourtRateTier, DynamicPricingTier, PenaltyTier, DayOfWeek, Product, CardShadowEffectSettings, UserActivityStatusForDay, Booking } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
-import { startOfDay, addHours, addMinutes, subDays, getDay, isSameDay, differenceInDays, addDays } from 'date-fns';
+import { startOfDay, addHours, addMinutes, subDays, getDay, isSameDay, differenceInDays, addDays, format } from 'date-fns';
 import { daysOfWeek as daysOfWeekArray } from '@/types';
 
 export let clubs: Club[] = [
@@ -431,8 +431,7 @@ export const fetchMatchDayEventsForDate = async (date: Date, clubId: string): Pr
     return matchDayEvents.filter(e => e.clubId === clubId && isSameDay(new Date(e.eventDate), date));
 }
 
-export const getMockInstructors = async (): Promise<(Instructor & User)[]> => {
-    await new Promise(res => setTimeout(res, 100));
+export const getMockInstructors = (): (Instructor & User)[] => {
     return instructors;
 }
 
@@ -633,7 +632,7 @@ export const setHasNewGratisSpotNotificationState = (state: boolean) => {
     hasNewGratisSpot = state;
 }
 
-export const countConfirmedLiberadasSpots = async (clubId?: string): Promise<{ classes: number; matches: number; total: number }> => {
+export const countConfirmedLiberadasSpots = (clubId?: string): { classes: number; matches: number; total: number } => {
     let classesCount = 0;
     let matchesCount = 0;
 
