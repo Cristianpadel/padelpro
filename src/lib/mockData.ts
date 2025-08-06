@@ -51,9 +51,9 @@ export let clubs: Club[] = [
 ];
 
 export let instructors: Instructor[] = [
-    { id: 'inst-1', name: 'Carlos López', isAvailable: true, assignedClubId: 'club-1', assignedCourtNumber: 1, email: 'carlos.lopez@example.com', profilePictureUrl: 'https://i.pravatar.cc/150?u=inst-1' },
-    { id: 'inst-2', name: 'Ana García', isAvailable: true, assignedClubId: 'club-1', email: 'ana.garcia@example.com', profilePictureUrl: 'https://i.pravatar.cc/150?u=inst-2' },
-    { id: 'inst-3', name: 'Javier Fernández', isAvailable: false, assignedClubId: 'club-2', email: 'javier.fernandez@example.com', profilePictureUrl: 'https://i.pravatar.cc/150?u=inst-3' },
+    { id: 'inst-1', name: 'Carlos López', isAvailable: true, assignedClubId: 'club-1', assignedCourtNumber: 1, email: 'carlos.lopez@example.com', profilePictureUrl: 'https://i.pravatar.cc/150?u=inst-1', defaultRatePerHour: 30 },
+    { id: 'inst-2', name: 'Ana García', isAvailable: true, assignedClubId: 'club-1', email: 'ana.garcia@example.com', profilePictureUrl: 'https://i.pravatar.cc/150?u=inst-2', defaultRatePerHour: 35 },
+    { id: 'inst-3', name: 'Javier Fernández', isAvailable: false, assignedClubId: 'club-2', email: 'javier.fernandez@example.com', profilePictureUrl: 'https://i.pravatar.cc/150?u=inst-3', defaultRatePerHour: 28 },
 ];
 
 export let padelCourts: PadelCourt[] = [
@@ -230,14 +230,6 @@ export const isSlotEffectivelyCompleted = (slot: TimeSlot | Match): { completed:
     return { completed: false, size: null };
 };
 
-export const calculateActivityPrice = (club: Club, startTime: Date): number => {
-    // This is a placeholder. A real implementation would check club-specific rate tiers.
-    const hour = startTime.getHours();
-    if (hour >= 18) {
-        return 28; // Peak time
-    }
-    return 20; // Off-peak
-}
 
 // --- Points & Students ---
 export const fetchPointTransactions = async (clubId: string): Promise<PointTransaction[]> => {
@@ -273,7 +265,7 @@ export const addTimeSlot = async (slotData: Omit<TimeSlot, 'id' | 'instructorNam
     id: uuidv4(),
     ...slotData,
     instructorName: instructor?.name || 'Unknown',
-    status: 'forming',
+    status: 'pre_registration',
     bookedPlayers: [],
     endTime: newSlotEnd,
   };
@@ -581,8 +573,19 @@ export const makeClassPublic = async (slotId: string): Promise<TimeSlot | { erro
 }
 
 export const getInstructorRate = (instructor: Instructor, date: Date): number => {
-    return 30; // Simplified
+    // A real implementation would check instructor.rateTiers
+    return instructor.defaultRatePerHour || 30; // Simplified
 }
+
+export const calculateActivityPrice = (club: Club, startTime: Date): number => {
+    // A real implementation would check club.courtRateTiers
+    const hour = startTime.getHours();
+    if (hour >= 18) {
+        return 28; // Peak time
+    }
+    return 20; // Off-peak
+}
+
 
 export const getCourtAvailabilityForInterval = async (clubId: string, startTime: Date, endTime: Date): Promise<{available: PadelCourt[], occupied: PadelCourt[], total: number}> => {
     const allClubCourts = padelCourts.filter(c => c.clubId === clubId && c.isActive);
