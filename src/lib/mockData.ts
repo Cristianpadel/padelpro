@@ -86,6 +86,7 @@ let products: Product[] = [
     { id: 'prod-1', clubId: 'club-1', name: 'Bullpadel Vertex 04', category: 'pala', status: 'in-stock', officialPrice: 280, offerPrice: 250, images: ['https://placehold.co/600x400.png'], aiHint: 'padel racket', isDealOfTheDay: true },
     { id: 'prod-2', clubId: 'club-1', name: 'Head Pro S Balls (3-pack)', category: 'pelotas', status: 'in-stock', officialPrice: 6, offerPrice: 5, images: ['https://placehold.co/600x400.png'], aiHint: 'padel balls' },
 ];
+let globalCurrentUser: User | null = null;
 
 
 // --- Instructors ---
@@ -377,7 +378,7 @@ export const fetchMatchDayEventsForDate = async (date: Date, clubId: string): Pr
     return matchDayEvents.filter(e => e.clubId === clubId && isSameDay(new Date(e.eventDate), date));
 }
 
-export const getMockInstructors = async (): Promise<Instructor[]> => {
+export const getMockInstructors = async (): Promise<(Instructor & User)[]> => {
     await new Promise(res => setTimeout(res, 100));
     return instructors;
 }
@@ -614,8 +615,17 @@ export const getCourtAvailabilityForInterval = async (clubId: string, startTime:
 }
 
 export const getMockCurrentUser = async (): Promise<User> => {
-    return students[0];
+    if (globalCurrentUser) return globalCurrentUser;
+    const defaultUser = students.find(s => s.id === 'user-1') as User;
+    // Simulate fetching instructor data and merging it for a complete user object
+    const instructorData = instructors.find(i => i.id === defaultUser.id);
+    return { ...defaultUser, ...instructorData };
 }
+
+export const setGlobalCurrentUser = (user: User | null) => {
+    globalCurrentUser = user;
+}
+
 
 export const isSlotGratisAndAvailable = (slot: TimeSlot): boolean => {
     if (!slot.designatedGratisSpotPlaceholderIndexForOption) return false;
@@ -685,6 +695,49 @@ export const getUserActivityStatusForDay = (userId: string, day: Date, allTimeSl
     };
 };
 
+export const cancelTimeSlot = async (slotId: string): Promise<{ success: boolean } | { error: string }> => {
+  const index = timeSlots.findIndex(s => s.id === slotId);
+  if (index === -1) return { error: "Clase no encontrada." };
+  timeSlots.splice(index, 1);
+  return { success: true };
+};
+
+export const toggleGratisSpot = async (slotId: string, optionSize: 1 | 2 | 3 | 4, spotIndex: number): Promise<TimeSlot | { error: string }> => {
+  const index = timeSlots.findIndex(s => s.id === slotId);
+  if (index === -1) return { error: "Clase no encontrada." };
+
+  const slot = timeSlots[index];
+  if (!slot.designatedGratisSpotPlaceholderIndexForOption) {
+    slot.designatedGratisSpotPlaceholderIndexForOption = {};
+  }
+
+  const currentGratisIndex = slot.designatedGratisSpotPlaceholderIndexForOption[optionSize];
+
+  if (currentGratisIndex === spotIndex) {
+    // If clicking the same spot, toggle it off
+    delete slot.designatedGratisSpotPlaceholderIndexForOption[optionSize];
+  } else {
+    // Otherwise, set it to the new spot
+    slot.designatedGratisSpotPlaceholderIndexForOption[optionSize] = spotIndex;
+  }
+  
+  timeSlots[index] = slot;
+  return slot;
+};
+
+export const removePlayerFromClass = async (slotId: string, userId: string, groupSize: 1|2|3|4): Promise<TimeSlot | { error: string }> => {
+    const index = timeSlots.findIndex(s => s.id === slotId);
+    if (index === -1) return { error: "Clase no encontrada." };
+
+    const slot = timeSlots[index];
+    const playerIndex = slot.bookedPlayers.findIndex(p => p.userId === userId && p.groupSize === groupSize);
+
+    if (playerIndex === -1) return { error: "Jugador no encontrado en esta opción de clase." };
+    
+    slot.bookedPlayers.splice(playerIndex, 1);
+    timeSlots[index] = slot;
+    return slot;
+}
 
 
 // Initial mock data

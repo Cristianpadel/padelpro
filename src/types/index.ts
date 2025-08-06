@@ -191,7 +191,7 @@ export interface Match {
     level: MatchPadelLevel;
     category: PadelCategoryForSlot;
     status: 'forming' | 'confirmed' | 'confirmed_private' | 'cancelled';
-    bookedPlayers: { userId: string, name?: string, isSimulated?: boolean }[];
+    bookedPlayers: { userId: string, name?: string, isSimulated?: boolean, groupSize?: number }[];
     isPlaceholder?: boolean;
     isProvisional?: boolean;
     provisionalForUserId?: string;
@@ -218,6 +218,9 @@ export interface User {
     blockedCredit?: number;
     favoriteInstructorIds?: string[];
     email?: string;
+    assignedClubId?: string;
+    assignedCourtNumber?: number;
+    isAvailable?: boolean;
 }
 
 export interface MatchDayEvent {
