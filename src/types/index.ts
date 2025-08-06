@@ -149,6 +149,16 @@ export interface PadelCourt {
     // other court properties
 }
 
+export interface Booking {
+    id: string;
+    userId: string;
+    activityId: string;
+    activityType: 'class' | 'match';
+    groupSize: 1 | 2 | 3 | 4;
+    spotIndex: number;
+    status: 'pending' | 'confirmed' | 'cancelled';
+}
+
 export interface TimeSlot {
     id: string;
     clubId: string;
@@ -161,9 +171,13 @@ export interface TimeSlot {
     courtNumber: number;
     level: ClassPadelLevel;
     category: PadelCategoryForSlot;
-    status: 'forming' | 'confirmed' | 'confirmed_private' | 'cancelled';
-    bookedPlayers: { userId: string, name?: string, isSimulated?: boolean }[];
+    status: 'pre_registration' | 'forming' | 'confirmed' | 'confirmed_private' | 'cancelled';
+    bookedPlayers: { userId: string, name?: string, isSimulated?: boolean, groupSize: 1|2|3|4 }[];
     designatedGratisSpotPlaceholderIndexForOption?: { [key in 1 | 2 | 3 | 4]?: number };
+    organizerId?: string;
+    privateShareCode?: string;
+    confirmedPrivateSize?: 1 | 2 | 3 | 4;
+    totalPrice?: number;
 }
 
 export interface Match {
@@ -200,6 +214,8 @@ export interface User {
     level?: NumericMatchPadelLevel;
     profilePictureUrl?: string;
     credit?: number;
+    blockedCredit?: number;
+    favoriteInstructorIds?: string[];
 }
 
 export interface MatchDayEvent {
@@ -242,16 +258,31 @@ export interface InstructorRateTier {
   rate: number;
 }
 
+export type SortOption = 'time' | 'occupancy' | 'level';
+
+export interface UserActivityStatusForDay {
+    activityStatus: 'confirmed' | 'inscribed' | 'none';
+    hasEvent: boolean;
+    eventId?: string;
+    anticipationPoints: number;
+}
+
 
 // --- Display Helpers ---
-export const displayClassLevel = (level: ClassPadelLevel): string => {
-    if (level === 'abierto') return "Abierto";
+export const displayClassLevel = (level: ClassPadelLevel, short = false): string => {
+    if (level === 'abierto') return short ? 'Abre' : 'Abierto';
     return `${level.min}-${level.max}`;
 }
 
-export const displayClassCategory = (category: PadelCategoryForSlot): string => {
+export const displayClassCategory = (category: PadelCategoryForSlot, short = false): string => {
     const option = padelCategoryForSlotOptions.find(o => o.value === category);
-    return option ? option.label : category;
+    if (!option) return category;
+    if (short) {
+        if (option.value === 'abierta') return 'Mixto';
+        if (option.value === 'chica') return 'Chicas';
+        if (option.value === 'chico') return 'Chicos';
+    }
+    return option.label;
 }
 
 export const displayActivityStatusWithDetails = (
@@ -260,6 +291,7 @@ export const displayActivityStatusWithDetails = (
 ): string => {
     switch(activity.status) {
         case 'forming': return 'Formándose';
+        case 'pre_registration': return 'Pre-inscripción';
         case 'confirmed': return 'Confirmada';
         case 'confirmed_private': return 'Privada';
         case 'cancelled': return 'Cancelada';

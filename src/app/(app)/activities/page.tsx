@@ -1,146 +1,169 @@
+"use client";
+
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import ClassDisplay from './components/ClassDisplay';
+import { fetchTimeSlots, getMockCurrentUser, getUserActivityStatusForDay } from '@/lib/mockData';
+import type { TimeSlot, User, MatchPadelLevel, SortOption, UserActivityStatusForDay } from '@/types';
+import { startOfDay, addDays, isSameDay, format, parseISO } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { ClassCard } from './components/ClassCard';
-import { Badge } from '@/components/ui/badge';
-import { Calendar, ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { TimeSlot } from '@/types';
-import { addHours, startOfDay } from 'date-fns';
+import { SlidersHorizontal, Star, Zap, User as UserIcon, Check } from 'lucide-react';
+import ActivityFilterSheet from './components/ActivityFilterSheet';
 
-const today = startOfDay(new Date());
-
-const sampleClasses: {classInfo: TimeSlot, instructor: any, availableCourts: number}[] = [
-  {
-    instructor: {
-      name: 'Sofía Martín',
-      avatar: 'https://placehold.co/40x40.png',
-      rating: 4.6,
-    },
-    classInfo: {
-        id: 'slot-1',
-        clubId: 'club-1',
-        startTime: addHours(today, 10),
-        endTime: addHours(today, 11),
-        durationMinutes: 60,
-        instructorId: 'inst-1',
-        instructorName: 'Sofía Martín',
-        maxPlayers: 4,
-        courtNumber: 2,
-        level: 'abierto',
-        category: 'abierta',
-        status: 'forming',
-        bookedPlayers: [{userId: 'user-2', name: 'Beatriz Reyes'}]
-    },
-    availableCourts: 8,
-  },
-  {
-    instructor: {
-      name: 'Carlos López',
-      avatar: 'https://placehold.co/40x40.png',
-      rating: 4.8,
-    },
-    classInfo: {
-        id: 'slot-2',
-        clubId: 'club-1',
-        startTime: addHours(today, 11),
-        endTime: addHours(today, 12),
-        durationMinutes: 60,
-        instructorId: 'inst-2',
-        instructorName: 'Carlos López',
-        maxPlayers: 4,
-        courtNumber: 3,
-        level: {min: '2.5', max: '3.5'},
-        category: 'chico',
-        status: 'forming',
-        bookedPlayers: []
-    },
-    availableCourts: 8,
-  },
-   {
-    instructor: {
-      name: 'Ana García',
-      avatar: 'https://placehold.co/40x40.png',
-      rating: 4.9,
-    },
-    classInfo: {
-        id: 'slot-3',
-        clubId: 'club-1',
-        startTime: addHours(today, 12),
-        endTime: addHours(today, 13),
-        durationMinutes: 60,
-        instructorId: 'inst-3',
-        instructorName: 'Ana García',
-        maxPlayers: 4,
-        courtNumber: 4,
-        level: 'abierto',
-        category: 'chica',
-        status: 'forming',
-        bookedPlayers: [{userId: 'user-3', name: 'Carlos Sainz'}, {userId: 'user-4', name: 'Daniela Vega'}]
-    },
-    availableCourts: 8,
-  },
-];
-
-const days = [
-  { day: 'SÁB', date: 2, month: 'Ago', current: true },
-  { day: 'DOM', date: 3, month: 'Ago' },
-  { day: 'LUN', date: 4, month: 'Ago' },
-  { day: 'MAR', date: 5, month: 'Ago' },
-  { day: 'MIÉ', date: 6, month: 'Ago' },
-  { day: 'JUE', date: 7, month: 'Ago' },
-  { day: 'VIE', date: 8, month: 'Ago' },
-  { day: 'SÁB', date: 9, month: 'Ago' },
-  { day: 'DOM', date: 10, month: 'Ago' },
-  { day: 'LUN', date: 11, month: 'Ago' },
-  { day: 'MAR', date: 12, month: 'Ago' },
-  { day: 'MIÉ', date: 13, month: 'Ago' },
-  { day: 'JUE', date: 14, month: 'Ago' },
-  { day: 'VIE', date: 15, month: 'Ago' },
-  { day: 'SÁB', date: 16, month: 'Ago' },
-];
+const dateStripDates = Array.from({ length: 22 }, (_, i) => addDays(startOfDay(new Date()), i));
 
 export default function ActivitiesPage() {
-  return (
-    <div className="flex h-full flex-col">
-      <header className="p-4 md:p-6">
-        <div className="mb-4 flex flex-wrap items-center gap-2">
-          <Button variant="outline">
-            <Calendar className="mr-2 h-4 w-4" /> Clases
-          </Button>
-          <Button variant="secondary">Nivel 4.5</Button>
-          <Button variant="ghost" className="text-muted-foreground">
-            <X className="mr-2 h-4 w-4" /> Limpiar
-          </Button>
-        </div>
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
 
-        <div className="flex items-center justify-between">
-          <Button variant="ghost" size="icon">
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex flex-1 items-center justify-center gap-2 overflow-x-auto">
-            {days.map((d, i) => (
-              <div
-                key={i}
-                className={`flex w-12 flex-shrink-0 cursor-pointer flex-col items-center rounded-lg p-2 ${
-                  d.current ? 'bg-primary text-primary-foreground' : 'bg-card'
-                }`}
-              >
-                <div className="text-xs">{d.day}</div>
-                <div className="text-lg font-bold">{d.date}</div>
-                <div className="text-xs">{d.month}</div>
-              </div>
-            ))}
-          </div>
-          <Button variant="ghost" size="icon">
-            <ChevronRight className="h-5 w-5" />
-          </Button>
+    const [allTimeSlots, setAllTimeSlots] = useState<TimeSlot[]>([]);
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [refreshKey, setRefreshKey] = useState(0);
+    const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+    
+    // Filter states
+    const [selectedDate, setSelectedDate] = useState<Date | null>(() => {
+        const dateParam = searchParams.get('date');
+        return dateParam ? startOfDay(parseISO(dateParam)) : startOfDay(new Date());
+    });
+    const [timeSlotFilter, setTimeSlotFilter] = useState(() => searchParams.get('time') || 'all');
+    const [selectedLevels, setSelectedLevels] = useState<MatchPadelLevel[]>([]);
+    const [sortBy, setSortBy] = useState<SortOption>(() => (searchParams.get('sort') as SortOption) || 'time');
+    const [filterAlsoConfirmed, setFilterAlsoConfirmed] = useState(false);
+    const [filterByFavorite, setFilterByFavorite] = useState(false);
+    const [showPointsBonus, setShowPointsBonus] = useState(true);
+    const [viewPreference, setViewPreference] = useState<'normal' | 'myInscriptions' | 'myConfirmed'>(
+        () => (searchParams.get('viewPref') as 'normal' | 'myInscriptions' | 'myConfirmed') || 'normal'
+    );
+     const [proposalView, setProposalView] = useState<'join' | 'propose'>('join');
+
+
+    const [dateStripIndicators, setDateStripIndicators] = useState<Record<string, UserActivityStatusForDay>>({});
+
+    const handleBookingSuccess = useCallback(() => {
+        setRefreshKey(prev => prev + 1);
+    }, []);
+
+    useEffect(() => {
+        const loadInitialData = async () => {
+            setIsLoading(true);
+            try {
+                const [slots, user] = await Promise.all([
+                    fetchTimeSlots(),
+                    getMockCurrentUser()
+                ]);
+                setAllTimeSlots(slots);
+                setCurrentUser(user);
+            } catch (error) {
+                console.error("Error fetching initial data", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        loadInitialData();
+    }, [refreshKey]);
+
+     useEffect(() => {
+        if (currentUser && allTimeSlots.length > 0) {
+            const indicators: Record<string, UserActivityStatusForDay> = {};
+            dateStripDates.forEach(day => {
+                const dateKey = format(day, 'yyyy-MM-dd');
+                indicators[dateKey] = getUserActivityStatusForDay(currentUser.id, day, allTimeSlots, []);
+            });
+            setDateStripIndicators(indicators);
+        }
+    }, [currentUser, allTimeSlots, dateStripDates]);
+
+    const handleDateChange = (date: Date) => {
+        setSelectedDate(date);
+        const current = new URLSearchParams(Array.from(searchParams.entries()));
+        current.set('date', format(date, 'yyyy-MM-dd'));
+        router.replace(`${pathname}?${current.toString()}`, { scroll: false });
+    };
+    
+    const onViewPrefChange = (date: Date, pref: 'myInscriptions' | 'myConfirmed') => {
+        setSelectedDate(date);
+        setViewPreference(pref);
+        const current = new URLSearchParams(Array.from(searchParams.entries()));
+        current.set('date', format(date, 'yyyy-MM-dd'));
+        current.set('viewPref', pref);
+        router.replace(`${pathname}?${current.toString()}`, { scroll: false });
+    };
+
+    return (
+        <div className="flex h-full flex-col">
+            <header className="p-4 md:px-6 md:pt-6 md:pb-4 space-y-3">
+                 <div className="flex justify-between items-center">
+                    <h1 className="font-headline text-2xl md:text-3xl font-semibold">Clases Disponibles</h1>
+                    <Button onClick={() => setIsFilterSheetOpen(true)} variant="outline" size="sm">
+                        <SlidersHorizontal className="mr-2 h-4 w-4" />
+                        Filtros
+                    </Button>
+                </div>
+
+                <Tabs value={timeSlotFilter} onValueChange={setTimeSlotFilter} className="w-full">
+                    <TabsList className="grid w-full grid-cols-4 h-auto">
+                        <TabsTrigger value="all" className="text-xs sm:text-sm">Todos</TabsTrigger>
+                        <TabsTrigger value="morning" className="text-xs sm:text-sm">Mañanas</TabsTrigger>
+                        <TabsTrigger value="midday" className="text-xs sm:text-sm">Mediodía</TabsTrigger>
+                        <TabsTrigger value="evening" className="text-xs sm:text-sm">Tardes</TabsTrigger>
+                    </TabsList>
+                </Tabs>
+                
+                 <div className="flex gap-2 items-center justify-center">
+                    <Button size="sm" variant="ghost" className="text-amber-600 hover:bg-amber-100 hover:text-amber-700">
+                        <Star className="mr-2 h-4 w-4" />Gratis
+                    </Button>
+                     <Button size="sm" variant="ghost" className="text-green-600 hover:bg-green-100 hover:text-green-700">
+                        <Zap className="mr-2 h-4 w-4" />Liberadas
+                    </Button>
+                 </div>
+            </header>
+            <main className="flex-1 overflow-y-auto bg-background px-4 md:px-6 pb-6">
+                {isLoading ? (
+                    <PageSkeleton />
+                ) : (
+                    <ClassDisplay
+                        currentUser={currentUser}
+                        onBookingSuccess={handleBookingSuccess}
+                        selectedDate={selectedDate}
+                        onDateChange={handleDateChange}
+                        timeSlotFilter={timeSlotFilter}
+                        selectedLevelsSheet={selectedLevels}
+                        sortBy={sortBy}
+                        filterAlsoConfirmedClasses={filterAlsoConfirmed}
+                        filterByFavoriteInstructors={filterByFavorite}
+                        viewPreference={viewPreference}
+                        proposalView={proposalView}
+                        refreshKey={refreshKey}
+                        allClasses={allTimeSlots}
+                        isLoading={isLoading}
+                        dateStripIndicators={dateStripIndicators}
+                        dateStripDates={dateStripDates}
+                        onViewPrefChange={onViewPrefChange}
+                        showPointsBonus={showPointsBonus}
+                    />
+                )}
+            </main>
+             <ActivityFilterSheet
+                isOpen={isFilterSheetOpen}
+                onOpenChange={setIsFilterSheetOpen}
+                selectedLevels={selectedLevels}
+                setSelectedLevels={setSelectedLevels}
+                sortBy={sortBy}
+                setSortBy={setSortBy}
+                filterAlsoConfirmed={filterAlsoConfirmed}
+                setFilterAlsoConfirmed={setFilterAlsoConfirmed}
+                filterByFavorite={filterByFavorite}
+                setFilterByFavorite={setFilterByFavorite}
+                showPointsBonus={showPointsBonus}
+                setShowPointsBonus={setShowPointsBonus}
+             />
         </div>
-      </header>
-      <main className="flex-1 overflow-y-auto bg-muted/40 p-4 md:p-6">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {sampleClasses.map((classData, index) => (
-            <ClassCard key={index} {...classData} />
-          ))}
-        </div>
-      </main>
-    </div>
-  );
+    );
 }

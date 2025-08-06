@@ -1,7 +1,7 @@
 // lib/mockData.ts
-import type { TimeSlot, Club, Instructor, PadelCourt, CourtGridBooking, PointTransaction, User, Match, ClubLevelRange, MatchDayEvent, CourtRateTier, DynamicPricingTier, PenaltyTier, DayOfWeek, Product, CardShadowEffectSettings } from '@/types';
+import type { TimeSlot, Club, Instructor, PadelCourt, CourtGridBooking, PointTransaction, User, Match, ClubLevelRange, MatchDayEvent, CourtRateTier, DynamicPricingTier, PenaltyTier, DayOfWeek, Product, CardShadowEffectSettings, UserActivityStatusForDay, Booking } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
-import { startOfDay, addHours, addMinutes, subDays, getDay } from 'date-fns';
+import { startOfDay, addHours, addMinutes, subDays, getDay, isSameDay, differenceInDays } from 'date-fns';
 import { daysOfWeek as daysOfWeekArray } from '@/types';
 
 export let clubs: Club[] = [
@@ -74,12 +74,12 @@ let pointTransactions: PointTransaction[] = [
     { id: 'txn-3', clubId: 'club-1', userId: 'user-1', points: 2, description: "Primero en unirse a clase", date: subDays(new Date(), 2) },
 ];
 let students: User[] = [
-    { id: 'user-1', name: 'Alex García', loyaltyPoints: 1250, level: '3.5', profilePictureUrl: 'https://i.pravatar.cc/150?u=user-1' },
-    { id: 'user-2', name: 'Beatriz Reyes', loyaltyPoints: 800, level: '4.0', profilePictureUrl: 'https://i.pravatar.cc/150?u=user-2' },
-    { id: 'user-3', name: 'Carlos Sainz', loyaltyPoints: 2400, level: '5.0', profilePictureUrl: 'https://i.pravatar.cc/150?u=user-3' },
-    { id: 'user-4', name: 'Daniela Vega', loyaltyPoints: 300, level: '2.5', profilePictureUrl: 'https://i.pravatar.cc/150?u=user-4' },
-    { id: 'user-5', name: 'Esteban Ocon', loyaltyPoints: 950, level: '4.5', profilePictureUrl: 'https://i.pravatar.cc/150?u=user-5' },
-    { id: 'user-6', name: 'Fernanda Alonso', loyaltyPoints: 1100, level: '6.0', profilePictureUrl: 'https://i.pravatar.cc/150?u=user-6' },
+    { id: 'user-1', name: 'Alex García', loyaltyPoints: 1250, level: '3.5', credit: 100, blockedCredit: 0, profilePictureUrl: 'https://i.pravatar.cc/150?u=user-1', favoriteInstructorIds: ['inst-2'] },
+    { id: 'user-2', name: 'Beatriz Reyes', loyaltyPoints: 800, level: '4.0', credit: 50, blockedCredit: 0, profilePictureUrl: 'https://i.pravatar.cc/150?u=user-2' },
+    { id: 'user-3', name: 'Carlos Sainz', loyaltyPoints: 2400, level: '5.0', credit: 200, blockedCredit: 0, profilePictureUrl: 'https://i.pravatar.cc/150?u=user-3' },
+    { id: 'user-4', name: 'Daniela Vega', loyaltyPoints: 300, level: '2.5', credit: 20, blockedCredit: 0, profilePictureUrl: 'https://i.pravatar.cc/150?u=user-4' },
+    { id: 'user-5', name: 'Esteban Ocon', loyaltyPoints: 950, level: '4.5', credit: 75, blockedCredit: 0, profilePictureUrl: 'https://i.pravatar.cc/150?u=user-5' },
+    { id: 'user-6', name: 'Fernanda Alonso', loyaltyPoints: 1100, level: '6.0', credit: 150, blockedCredit: 0, profilePictureUrl: 'https://i.pravatar.cc/150?u=user-6' },
 ];
 let matchDayEvents: MatchDayEvent[] = [];
 let products: Product[] = [
@@ -491,7 +491,7 @@ export const simulateBookings = async (options: {
                 const playersToAdd = shuffledStudents.slice(0, playersToAddCount);
 
                 for (const player of playersToAdd) {
-                    activity.bookedPlayers.push({ userId: player.id, name: player.name, isSimulated: true });
+                    activity.bookedPlayers.push({ userId: player.id, name: player.name, isSimulated: true, groupSize: 4 });
                     inscriptionsMade++;
                 }
             }
@@ -550,13 +550,124 @@ export const deleteProduct = async (productId: string): Promise<{ success: true 
     return { success: true };
 };
 
+export const getMockUserBookings = async (userId: string): Promise<Booking[]> => {
+  console.log("Fetching bookings for:", userId);
+  return [];
+};
+
+
+export const bookClass = async (userId: string, slotId: string, groupSize: 1 | 2 | 3 | 4, spotIndex: number): Promise<{ booking: Booking; updatedSlot: TimeSlot; } | { error: string; }> => {
+    console.log(`Booking request for user ${userId} in slot ${slotId} for group ${groupSize}`);
+    const slotIndex = timeSlots.findIndex(s => s.id === slotId);
+    if (slotIndex === -1) {
+        return { error: 'Class slot not found.' };
+    }
+    
+    const newBooking: Booking = { id: uuidv4(), userId, activityId: slotId, activityType: 'class', groupSize, spotIndex, status: 'pending' };
+    timeSlots[slotIndex].bookedPlayers.push({ userId, groupSize });
+
+    return { booking: newBooking, updatedSlot: timeSlots[slotIndex] };
+}
+
+export const hasAnyConfirmedActivityForDay = (userId: string, date: Date, excludingSlotId?: string, activityType?: 'class' | 'match'): boolean => {
+    return false; // Simplified
+}
+
+export const makeClassPublic = async (slotId: string): Promise<TimeSlot | { error: string }> => {
+    const slotIndex = timeSlots.findIndex(s => s.id === slotId);
+    if (slotIndex === -1) return { error: 'Slot not found' };
+    // Logic to make class public
+    return timeSlots[slotIndex];
+}
+
+export const getInstructorRate = (instructor: Instructor, date: Date): number => {
+    return 30; // Simplified
+}
+
+export const getCourtAvailabilityForInterval = async (clubId: string, startTime: Date, endTime: Date): Promise<{available: PadelCourt[], occupied: PadelCourt[], total: number}> => {
+    const allClubCourts = padelCourts.filter(c => c.clubId === clubId && c.isActive);
+    return { available: allClubCourts, occupied: [], total: allClubCourts.length }; // Simplified
+}
+
+export const getMockCurrentUser = async (): Promise<User> => {
+    return students[0];
+}
+
+export const isSlotGratisAndAvailable = (slot: TimeSlot): boolean => {
+    if (!slot.designatedGratisSpotPlaceholderIndexForOption) return false;
+    for (const [size, index] of Object.entries(slot.designatedGratisSpotPlaceholderIndexForOption)) {
+        if (index !== null && index !== undefined) {
+             const bookingInSpot = (slot.bookedPlayers || []).find((p, idx) => p.groupSize === parseInt(size) && idx === index);
+             if (!bookingInSpot) return true;
+        }
+    }
+    return false;
+}
+
+export const confirmClassAsPrivate = async (userId: string, slotId: string, size: 1|2|3|4): Promise<{updatedSlot: TimeSlot, shareLink: string} | {error: string}> => {
+    const slotIndex = timeSlots.findIndex(s => s.id === slotId);
+    if (slotIndex === -1) return { error: 'Slot not found' };
+    timeSlots[slotIndex].status = 'confirmed_private';
+    timeSlots[slotIndex].organizerId = userId;
+    timeSlots[slotIndex].confirmedPrivateSize = size;
+    const shareCode = uuidv4().slice(0, 8);
+    timeSlots[slotIndex].privateShareCode = shareCode;
+    
+    return {
+        updatedSlot: timeSlots[slotIndex],
+        shareLink: `https://example.com/clases/${slotId}?code=${shareCode}`
+    }
+}
+
+export const joinPrivateClass = async (userId: string, slotId: string, shareCode: string): Promise<{ organizerRefundAmount: number } | { error: string }> => {
+    const slot = timeSlots.find(s => s.id === slotId);
+    if (!slot || slot.status !== 'confirmed_private' || slot.privateShareCode !== shareCode) {
+        return { error: 'Invalid private class link' };
+    }
+    if ((slot.bookedPlayers || []).length >= (slot.confirmedPrivateSize || 4)) {
+        return { error: 'This private class is already full.' };
+    }
+    slot.bookedPlayers.push({ userId, groupSize: slot.confirmedPrivateSize as (1|2|3|4) });
+    return { organizerRefundAmount: (slot.totalPrice || 60) / (slot.confirmedPrivateSize || 4) };
+}
+
+export const isProposalSlot = (slot: TimeSlot) => {
+    return slot.status === 'forming' && slot.bookedPlayers.length === 0;
+};
+
+export const findAvailableCourt = (clubId: string, date: Date): number | null => {
+    return 1;
+}
+
+export const getUserActivityStatusForDay = (userId: string, day: Date, allTimeSlots: TimeSlot[], allMatches: Match[]): UserActivityStatusForDay => {
+    const today = startOfDay(new Date());
+    const anticipationPoints = differenceInDays(day, today);
+
+    const userActivitiesToday = [
+        ...allTimeSlots.filter(ts => ts.bookedPlayers.some(p => p.userId === userId) && isSameDay(new Date(ts.startTime), day)),
+        ...allMatches.filter(m => m.bookedPlayers.some(p => p.userId === userId) && isSameDay(new Date(m.startTime), day))
+    ];
+
+    if (userActivitiesToday.length === 0) {
+        return { activityStatus: 'none', hasEvent: false, anticipationPoints: Math.max(0, anticipationPoints) };
+    }
+    
+    const isConfirmed = userActivitiesToday.some(act => isSlotEffectivelyCompleted(act).completed);
+    
+    return {
+        activityStatus: isConfirmed ? 'confirmed' : 'inscribed',
+        hasEvent: false, // Placeholder for match-day events
+        anticipationPoints: Math.max(0, anticipationPoints)
+    };
+};
+
 
 
 // Initial mock data
 const today = startOfDay(new Date());
 
 const initialTimeSlot = addTimeSlot({ clubId: 'club-1', startTime: addHours(today, 10), durationMinutes: 60, instructorId: 'inst-2', maxPlayers: 4, courtNumber: 1, level: 'abierto', category: 'abierta'});
-const initialMatch = addMatch({ clubId: 'club-1', startTime: addHours(today, 11), endTime: addMinutes(addHours(today, 11), 90), durationMinutes: 90, courtNumber: 2, level: '3.0', category: 'abierta', bookedPlayers: [{userId: 'user-1', name: 'Alex García'}, {userId: 'user-2', name: 'Beatriz Reyes'}]});
+const initialMatch = addMatch({ clubId: 'club-1', startTime: addHours(today, 11), endTime: addMinutes(addHours(today, 11), 90), durationMinutes: 90, courtNumber: 2, level: '3.0', category: 'abierta', bookedPlayers: [{userId: 'user-1', name: 'Alex García', groupSize: 4}, {userId: 'user-2', name: 'Beatriz Reyes', groupSize: 4}]});
 
 courtBookings.push(
     { id: 'booking-3', clubId: 'club-1', courtNumber: 1, startTime: addHours(today, 18), endTime: addHours(today, 19), title: "Bloqueo Pista", type: 'reserva_manual', status: 'reservada' },
