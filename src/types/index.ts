@@ -1,6 +1,10 @@
 // types/index.ts
 
 export type PadelCategoryForSlot = 'abierta' | 'chica' | 'chico';
+export type UserGenderCategory = 'femenino' | 'masculino' | 'otro' | 'no_especificado';
+
+export const userGenderCategories: UserGenderCategory[] = ['femenino', 'masculino', 'otro', 'no_especificado'];
+
 
 export const padelCategoryForSlotOptions: { value: PadelCategoryForSlot, label: string }[] = [
     { value: 'abierta', label: 'Abierta (Mixto)' },
@@ -256,6 +260,7 @@ export interface User {
     isAvailable?: boolean;
     isPro?: boolean;
     currentClubId?: string;
+    genderCategory?: UserGenderCategory;
 }
 
 export interface MatchDayEvent {

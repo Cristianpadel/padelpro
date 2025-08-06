@@ -1,5 +1,5 @@
 // lib/mockData.ts
-import type { TimeSlot, Club, Instructor, PadelCourt, CourtGridBooking, PointTransaction, User, Match, ClubLevelRange, MatchDayEvent, CourtRateTier, DynamicPricingTier, PenaltyTier, DayOfWeek, Product, CardShadowEffectSettings, UserActivityStatusForDay, Booking, MatchBooking } from '@/types';
+import type { TimeSlot, Club, Instructor, PadelCourt, CourtGridBooking, PointTransaction, User, Match, ClubLevelRange, MatchDayEvent, CourtRateTier, DynamicPricingTier, PenaltyTier, DayOfWeek, Product, CardShadowEffectSettings, UserActivityStatusForDay, Booking, MatchBooking, UserGenderCategory } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { startOfDay, addHours, addMinutes, subDays, getDay, isSameDay, differenceInDays, addDays, format } from 'date-fns';
 import { daysOfWeek as daysOfWeekArray } from '@/types';
@@ -77,12 +77,12 @@ let pointTransactions: PointTransaction[] = [
     { id: 'txn-3', clubId: 'club-1', userId: 'user-1', points: 2, type: 'primero_en_clase', description: "Primero en unirse a clase", date: subDays(new Date(), 2) },
 ];
 let students: User[] = [
-    { id: 'user-1', name: 'Alex García', loyaltyPoints: 1250, level: '3.5', credit: 100, blockedCredit: 0, profilePictureUrl: 'https://i.pravatar.cc/150?u=user-1', favoriteInstructorIds: ['inst-2'] },
-    { id: 'user-2', name: 'Beatriz Reyes', loyaltyPoints: 800, level: '4.0', credit: 50, blockedCredit: 0, profilePictureUrl: 'https://i.pravatar.cc/150?u=user-2' },
-    { id: 'user-3', name: 'Carlos Sainz', loyaltyPoints: 2400, level: '5.0', credit: 200, blockedCredit: 0, profilePictureUrl: 'https://i.pravatar.cc/150?u=user-3' },
-    { id: 'user-4', name: 'Daniela Vega', loyaltyPoints: 300, level: '2.5', credit: 20, blockedCredit: 0, profilePictureUrl: 'https://i.pravatar.cc/150?u=user-4' },
-    { id: 'user-5', name: 'Esteban Ocon', loyaltyPoints: 950, level: '4.5', credit: 75, blockedCredit: 0, profilePictureUrl: 'https://i.pravatar.cc/150?u=user-5' },
-    { id: 'user-6', name: 'Fernanda Alonso', loyaltyPoints: 1100, level: '6.0', credit: 150, blockedCredit: 0, profilePictureUrl: 'https://i.pravatar.cc/150?u=user-6' },
+    { id: 'user-1', name: 'Alex García', loyaltyPoints: 1250, level: '3.5', credit: 100, blockedCredit: 0, profilePictureUrl: 'https://i.pravatar.cc/150?u=user-1', favoriteInstructorIds: ['inst-2'], email: 'alex.garcia@email.com', genderCategory: 'masculino' },
+    { id: 'user-2', name: 'Beatriz Reyes', loyaltyPoints: 800, level: '4.0', credit: 50, blockedCredit: 0, profilePictureUrl: 'https://i.pravatar.cc/150?u=user-2', email: 'beatriz.reyes@email.com', genderCategory: 'femenino' },
+    { id: 'user-3', name: 'Carlos Sainz', loyaltyPoints: 2400, level: '5.0', credit: 200, blockedCredit: 0, profilePictureUrl: 'https://i.pravatar.cc/150?u=user-3', email: 'carlos.sainz@email.com', genderCategory: 'masculino' },
+    { id: 'user-4', name: 'Daniela Vega', loyaltyPoints: 300, level: '2.5', credit: 20, blockedCredit: 0, profilePictureUrl: 'https://i.pravatar.cc/150?u=user-4', email: 'daniela.vega@email.com', genderCategory: 'femenino' },
+    { id: 'user-5', name: 'Esteban Ocon', loyaltyPoints: 950, level: '4.5', credit: 75, blockedCredit: 0, profilePictureUrl: 'https://i.pravatar.cc/150?u=user-5', email: 'esteban.ocon@email.com', genderCategory: 'masculino' },
+    { id: 'user-6', name: 'Fernanda Alonso', loyaltyPoints: 1100, level: '6.0', credit: 150, blockedCredit: 0, profilePictureUrl: 'https://i.pravatar.cc/150?u=user-6', email: 'fernanda.alonso@email.com', genderCategory: 'femenino' },
 ];
 let matchDayEvents: MatchDayEvent[] = [];
 let products: Product[] = [
@@ -919,6 +919,21 @@ export const removeBookingFromTimeSlotInState = async (slotId: string, userId: s
     timeSlots[slotIndex].bookedPlayers.splice(playerIndex, 1);
     return timeSlots[slotIndex];
 };
+
+export const updateUserProfile = async (userId: string, updates: Partial<User>): Promise<User | { error: string }> => {
+    const userIndex = students.findIndex(u => u.id === userId);
+    if (userIndex === -1) return { error: "Usuario no encontrado." };
+    students[userIndex] = { ...students[userIndex], ...updates };
+    return students[userIndex];
+};
+
+export const updateUserPassword = async (userId: string, current: string, newPass: string): Promise<{ success: boolean } | { error: string }> => {
+    // This is a mock. In a real app, you'd hash and check the password.
+    if (current !== 'password123') return { error: "La contraseña actual es incorrecta." };
+    console.log(`Password for ${userId} updated to ${newPass}`);
+    return { success: true };
+};
+
 
 
 // Initial mock data
