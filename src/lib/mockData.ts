@@ -647,7 +647,7 @@ export const getCourtAvailabilityForInterval = async (clubId: string, startTime:
     return { available: allClubCourts, occupied: [], total: allClubCourts.length }; // Simplified
 }
 
-export const getMockCurrentUser = async (): Promise<User> => {
+export const getMockCurrentUser = async (): Promise<User | null> => {
     if (globalCurrentUser) return globalCurrentUser;
     const defaultUser = students.find(s => s.id === 'user-1') as User;
     // Simulate fetching instructor data and merging it for a complete user object
@@ -829,3 +829,21 @@ const confirmedSlot: TimeSlot = {
 };
 timeSlots.push(confirmedSlot);
 
+const preinscribedSlot: TimeSlot = {
+    id: uuidv4(),
+    clubId: 'club-1',
+    startTime: addHours(today, 17),
+    endTime: addHours(today, 18),
+    durationMinutes: 60,
+    instructorId: 'inst-2',
+    instructorName: 'Ana García',
+    maxPlayers: 4,
+    courtNumber: 4,
+    level: 'abierto',
+    category: 'abierta',
+    status: 'pre_registration',
+    bookedPlayers: [],
+    promotionEndTime: addDays(new Date(), 1),
+    totalPrice: 50,
+};
+timeSlots.push(preinscribedSlot);
