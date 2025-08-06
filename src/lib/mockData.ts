@@ -8,6 +8,8 @@ export let clubs: Club[] = [
     { 
         id: 'club-1', 
         name: 'Padel Club Madrid Centro', 
+        logoUrl: 'https://placehold.co/100x100.png',
+        location: 'Calle Ficticia 123, Madrid',
         pointSettings: { 
             cancellationPointPerEuro: 1, 
             inviteFriend: 5, 
@@ -314,13 +316,14 @@ export const addTimeSlot = async (slotData: Omit<TimeSlot, 'id' | 'instructorNam
   return newTimeSlot;
 };
 
-export const addMatch = async (matchData: Omit<Match, 'id' | 'status'>): Promise<Match | { error: string }> => {
+export const addMatch = async (matchData: Omit<Match, 'id' | 'status' | 'durationMinutes'>): Promise<Match | { error: string }> => {
   await new Promise(res => setTimeout(res, 500));
   
   const newMatch: Match = {
       id: uuidv4(),
       ...matchData,
       status: (matchData.bookedPlayers?.length || 0) === 4 ? 'confirmed' : 'forming',
+      durationMinutes: 90,
   };
   matches.push(newMatch);
 
@@ -607,11 +610,35 @@ export const setHasNewGratisSpotNotificationState = (state: boolean) => {
     hasNewGratisSpot = state;
 }
 
-export const countConfirmedLiberadasSpots = async (): Promise<number> => {
-    let count = 0;
-    // a real implementation would query the db
-    return count;
-}
+export const countConfirmedLiberadasSpots = async (clubId?: string): Promise<{ classes: number; matches: number; total: number }> => {
+    let classesCount = 0;
+    let matchesCount = 0;
+
+    const now = new Date();
+    
+    // Count "liberadas" from classes
+    timeSlots.forEach(slot => {
+        if ((!clubId || slot.clubId === clubId) && new Date(slot.startTime) > now && isSlotGratisAndAvailable(slot)) {
+            classesCount++;
+        }
+    });
+
+    // In a real app, you would also count "liberadas" from matches if that's a feature.
+    // For now, we'll assume it's only for classes.
+    // matchesCount = ...
+
+    return {
+        classes: classesCount,
+        matches: matchesCount,
+        total: classesCount + matchesCount,
+    };
+};
+
+export const getHasNewSpecialOfferNotification = async (): Promise<boolean> => {
+    // In a real app, you'd check for new, unread offers for the user
+    return products.some(p => p.isDealOfTheDay);
+};
+
 
 export const countUserReservedProducts = async (userId: string): Promise<number> => {
     return userReservedProducts.filter(r => r.userId === userId).length;
@@ -832,7 +859,7 @@ export const removeBookingFromTimeSlotInState = async (slotId: string, userId: s
 const today = startOfDay(new Date());
 
 const initialTimeSlot = addTimeSlot({ clubId: 'club-1', startTime: addHours(today, 10), durationMinutes: 60, instructorId: 'inst-2', maxPlayers: 4, courtNumber: 1, level: 'abierto', category: 'abierta'});
-const initialMatch = addMatch({ clubId: 'club-1', startTime: addHours(today, 11), endTime: addMinutes(addHours(today, 11), 90), durationMinutes: 90, courtNumber: 2, level: '3.0', category: 'abierta', bookedPlayers: [{userId: 'user-1', name: 'Alex García', groupSize: 4}, {userId: 'user-2', name: 'Beatriz Reyes', groupSize: 4}]});
+const initialMatch = addMatch({ clubId: 'club-1', startTime: addHours(today, 11), endTime: addMinutes(addHours(today, 11), 90), totalCourtFee: 28, courtNumber: 2, level: '3.0', category: 'abierta', bookedPlayers: [{userId: 'user-1', name: 'Alex García', groupSize: 4}, {userId: 'user-2', name: 'Beatriz Reyes', groupSize: 4}]});
 
 courtBookings.push(
     { id: 'booking-3', clubId: 'club-1', courtNumber: 1, startTime: addHours(today, 18), endTime: addHours(today, 19), title: "Bloqueo Pista", type: 'reserva_manual', status: 'reservada' },
@@ -878,3 +905,4 @@ const preinscribedSlot: TimeSlot = {
     totalPrice: 50,
 };
 timeSlots.push(preinscribedSlot);
+

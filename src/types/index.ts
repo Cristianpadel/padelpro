@@ -113,6 +113,8 @@ export interface CardShadowEffectSettings {
 export interface Club {
     id: string;
     name: string;
+    logoUrl?: string;
+    location?: string;
     showClassesTabOnFrontend?: boolean;
     showMatchesTabOnFrontend?: boolean;
     isMatchDayEnabled?: boolean;
