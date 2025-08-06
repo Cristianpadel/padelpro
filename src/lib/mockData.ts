@@ -1,7 +1,7 @@
 // lib/mockData.ts
 import type { TimeSlot, Club, Instructor, PadelCourt, CourtGridBooking, PointTransaction, User, Match, ClubLevelRange, MatchDayEvent, CourtRateTier, DynamicPricingTier, PenaltyTier, DayOfWeek, Product, CardShadowEffectSettings, UserActivityStatusForDay, Booking } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
-import { startOfDay, addHours, addMinutes, subDays, getDay, isSameDay, differenceInDays } from 'date-fns';
+import { startOfDay, addHours, addMinutes, subDays, getDay, isSameDay, differenceInDays, addDays } from 'date-fns';
 import { daysOfWeek as daysOfWeekArray } from '@/types';
 
 export let clubs: Club[] = [
@@ -317,7 +317,7 @@ export const addTimeSlot = async (slotData: Omit<TimeSlot, 'id' | 'instructorNam
     slot.courtNumber === slotData.courtNumber &&
     slot.clubId === slotData.clubId &&
     slot.startTime < newSlotEnd &&
-    new Date(slot.startTime.getTime() + slot.durationMinutes * 60000) > slotData.startTime
+    new Date(slot.startTime.getTime() + slot.durationMinutes * 60000) > slot.startTime
   );
 
   if (conflict) {
@@ -928,4 +928,3 @@ const preinscribedSlot: TimeSlot = {
     totalPrice: 50,
 };
 timeSlots.push(preinscribedSlot);
-
