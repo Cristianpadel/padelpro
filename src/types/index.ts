@@ -163,6 +163,7 @@ export interface TimeSlot {
     category: PadelCategoryForSlot;
     status: 'forming' | 'confirmed' | 'confirmed_private' | 'cancelled';
     bookedPlayers: { userId: string, name?: string, isSimulated?: boolean }[];
+    designatedGratisSpotPlaceholderIndexForOption?: { [key in 1 | 2 | 3 | 4]?: number };
 }
 
 export interface Match {
@@ -198,6 +199,7 @@ export interface User {
     loyaltyPoints?: number;
     level?: NumericMatchPadelLevel;
     profilePictureUrl?: string;
+    credit?: number;
 }
 
 export interface MatchDayEvent {

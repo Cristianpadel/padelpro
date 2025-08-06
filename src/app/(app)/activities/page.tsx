@@ -2,108 +2,79 @@ import { Button } from '@/components/ui/button';
 import { ClassCard } from './components/ClassCard';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { TimeSlot } from '@/types';
+import { addHours, startOfDay } from 'date-fns';
 
-const sampleClasses = [
+const today = startOfDay(new Date());
+
+const sampleClasses: {classInfo: TimeSlot, instructor: any, availableCourts: number}[] = [
   {
     instructor: {
       name: 'Sofía Martín',
       avatar: 'https://placehold.co/40x40.png',
       rating: 4.6,
     },
-    date: 'SÁBADO 11:00H - 12:00H',
-    duration: 60,
-    tags: ['Categoría', 'Pista', 'Nivel'],
-    slots: [
-      { type: 'user', price: 60.0, available: 1 },
-      { type: 'user', price: 30.0, available: 2 },
-      { type: 'user', price: 20.0, available: 3 },
-      { type: 'instructor', price: 15.0, available: 0 },
-    ],
+    classInfo: {
+        id: 'slot-1',
+        clubId: 'club-1',
+        startTime: addHours(today, 10),
+        endTime: addHours(today, 11),
+        durationMinutes: 60,
+        instructorId: 'inst-1',
+        instructorName: 'Sofía Martín',
+        maxPlayers: 4,
+        courtNumber: 2,
+        level: 'abierto',
+        category: 'abierta',
+        status: 'forming',
+        bookedPlayers: [{userId: 'user-2', name: 'Beatriz Reyes'}]
+    },
     availableCourts: 8,
   },
   {
     instructor: {
-      name: 'Sofía Martín',
-      avatar: 'https://placehold.co/40x40.png',
-      rating: 4.3,
-    },
-    date: 'SÁBADO 11:30H - 12:30H',
-    duration: 60,
-    tags: ['Chicos', 'Pista', '4.5-7.0'],
-    slots: [
-        { type: 'user', price: 60.0, available: 1 },
-        { type: 'user', price: 30.0, available: 2 },
-        { type: 'user', price: 20.0, available: 3 },
-        { type: 'instructor', price: 15.0, available: 4 },
-    ],
-    availableCourts: 8,
-  },
-  {
-    instructor: {
-      name: 'Sofía Martín',
-      avatar: 'https://placehold.co/40x40.png',
-      rating: 4.5,
-    },
-    date: 'SÁBADO 12:00H - 13:00H',
-    duration: 60,
-    tags: ['Categoría', 'Pista', 'Nivel'],
-    slots: [
-        { type: 'user', price: 60.0, available: 1 },
-        { type: 'user', price: 30.0, available: 2 },
-        { type: 'user', price: 20.0, available: 3 },
-        { type: 'user', price: 15.0, available: 4 },
-    ],
-    availableCourts: 8,
-  },
-    {
-    instructor: {
-      name: 'Sofía Martín',
+      name: 'Carlos López',
       avatar: 'https://placehold.co/40x40.png',
       rating: 4.8,
     },
-    date: 'SÁBADO 12:30H - 13:30H',
-    duration: 60,
-    tags: ['Categoría', 'Pista', 'Nivel'],
-    slots: [
-        { type: 'user', price: 60.0, available: 1 },
-        { type: 'user', price: 30.0, available: 0 },
-        { type: 'user', price: 20.0, available: 0 },
-        { type: 'user', price: 15.0, available: 0 },
-    ],
+    classInfo: {
+        id: 'slot-2',
+        clubId: 'club-1',
+        startTime: addHours(today, 11),
+        endTime: addHours(today, 12),
+        durationMinutes: 60,
+        instructorId: 'inst-2',
+        instructorName: 'Carlos López',
+        maxPlayers: 4,
+        courtNumber: 3,
+        level: {min: '2.5', max: '3.5'},
+        category: 'chico',
+        status: 'forming',
+        bookedPlayers: []
+    },
     availableCourts: 8,
   },
-    {
+   {
     instructor: {
-      name: 'Sofía Martín',
+      name: 'Ana García',
       avatar: 'https://placehold.co/40x40.png',
-      rating: 4.4,
+      rating: 4.9,
     },
-    date: 'SÁBADO 13:00H - 14:00H',
-    duration: 60,
-    tags: ['Categoría', 'Pista', 'Nivel'],
-    slots: [
-      { type: 'user', price: 60.0, available: 1 },
-      { type: 'user', price: 30.0, available: 2 },
-      { type: 'user', price: 20.0, available: 3 },
-      { type: 'user', price: 15.0, available: 4 },
-    ],
-    availableCourts: 8,
-  },
-    {
-    instructor: {
-      name: 'Sofía Martín',
-      avatar: 'https://placehold.co/40x40.png',
-      rating: 4.7,
+    classInfo: {
+        id: 'slot-3',
+        clubId: 'club-1',
+        startTime: addHours(today, 12),
+        endTime: addHours(today, 13),
+        durationMinutes: 60,
+        instructorId: 'inst-3',
+        instructorName: 'Ana García',
+        maxPlayers: 4,
+        courtNumber: 4,
+        level: 'abierto',
+        category: 'chica',
+        status: 'forming',
+        bookedPlayers: [{userId: 'user-3', name: 'Carlos Sainz'}, {userId: 'user-4', name: 'Daniela Vega'}]
     },
-    date: 'SÁBADO 13:30H - 14:30H',
-    duration: 60,
-    tags: ['Categoría', 'Pista', 'Nivel'],
-    slots: [
-      { type: 'user', price: 60.0, available: 1 },
-      { type: 'user', price: 30.0, available: 0 },
-      { type: 'user', price: 20.0, available: 0 },
-      { type: 'user', price: 15.0, available: 0 },
-    ],
     availableCourts: 8,
   },
 ];
@@ -165,8 +136,8 @@ export default function ActivitiesPage() {
       </header>
       <main className="flex-1 overflow-y-auto bg-muted/40 p-4 md:p-6">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {sampleClasses.map((classInfo, index) => (
-            <ClassCard key={index} {...classInfo} />
+          {sampleClasses.map((classData, index) => (
+            <ClassCard key={index} {...classData} />
           ))}
         </div>
       </main>
