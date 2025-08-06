@@ -112,6 +112,7 @@ export const getHasNewGratisSpotNotification = () => hasNewGratisSpot;
 export const getMockUserBookings = () => userBookings;
 export const getMockUserMatchBookings = () => userMatchBookings;
 export const getMockUserReservedProducts = () => userReservedProducts;
+export const getMockShopProducts = () => products;
 
 
 // Setters / Updaters for mock data
@@ -140,3 +141,44 @@ export const removeBookingFromTimeSlotInState = (slotId: string, userId: string,
     return null;
 }
 export const addPointTransaction = (transaction: PointTransaction) => { pointTransactions.unshift(transaction); };
+export const addClubToState = (club: Club) => { clubs.push(club); };
+export const updateClubInState = (updatedClub: Club) => {
+    const index = clubs.findIndex(c => c.id === updatedClub.id);
+    if (index !== -1) {
+        clubs[index] = updatedClub;
+    }
+};
+export const removeClubFromState = (clubId: string) => {
+    clubs = clubs.filter(c => c.id !== clubId);
+};
+export const addPadelCourtToState = (court: PadelCourt) => { padelCourts.push(court); };
+export const updatePadelCourtInState = (courtId: string, updatedCourt: PadelCourt) => {
+    const index = padelCourts.findIndex(c => c.id === courtId);
+    if (index !== -1) {
+        padelCourts[index] = updatedCourt;
+    }
+};
+export const removePadelCourtFromState = (courtId: string): boolean => {
+    const initialLength = padelCourts.length;
+    padelCourts = padelCourts.filter(c => c.id !== courtId);
+    return padelCourts.length < initialLength;
+};
+export const addMatchToState = (match: Match) => { matches.push(match); };
+export const initializeMockMatches = (newMatches: Match[]) => { matches = newMatches; };
+export const removeUserMatchBookingFromStateByMatch = (matchId: string) => {
+    userMatchBookings = userMatchBookings.filter(b => b.activityId !== matchId);
+};
+export const addProductToState = (product: Product) => { products.push(product); };
+export const updateProductInState = (productId: string, updates: Partial<Product>): Product | null => {
+    const index = products.findIndex(p => p.id === productId);
+    if (index !== -1) {
+        products[index] = { ...products[index], ...updates };
+        return products[index];
+    }
+    return null;
+};
+export const removeProductFromState = (productId: string): boolean => {
+    const initialLength = products.length;
+    products = products.filter(p => p.id !== productId);
+    return products.length < initialLength;
+};

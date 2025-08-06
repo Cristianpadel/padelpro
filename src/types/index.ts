@@ -384,4 +384,7 @@ export const displayActivityStatusWithDetails = (
         case 'pre_registration': return 'Pre-inscripción';
         case 'confirmed': return 'Confirmada';
         case 'confirmed_private': return 'Privada';
-        case 'cancelled':
+        case 'cancelled': return 'Cancelada';
+        default: return activity.status || 'Desconocido';
+    }
+};

@@ -8,6 +8,7 @@ import * as state from './state';
 import * as mockUtils from './utils';
 import { calculatePricePerPerson } from './utils';
 import { addTimeSlot, bookClass, cancelBooking, cancelClassByInstructor, confirmClassAsPrivate, countAvailableGratisSpots, fetchUserBookings, joinPrivateClass, makeClassPublic } from './actions/classActions';
+import { fetchClubs, addClub, registerNewClub, updateClub, deleteClub, updateClubAdminPassword, fetchAdminClubDetails, fetchPadelCourtsByClub, addPadelCourt, updatePadelCourt, deletePadelCourt, fetchCourtBookingsForDay, addManualCourtBooking, updateDealOfTheDay, fetchProductsByClub, addProduct, updateProduct, deleteProduct, countSpecialOfferItems, countUserReservedProducts } from './actions/clubs';
 import { addCreditToStudent, addUserPointsAndAddTransaction, convertEurosToPoints, deductCredit, recalculateAndSetBlockedBalances } from './actions/users';
 import { calculateActivityPrice, getInstructorRate } from './actions/clubs';
 
@@ -41,118 +42,8 @@ export const getMockClubs = (): Club[] => {
     return state.getMockClubs();
 }
 
-export const updateClub = async (id: string, data: Partial<Club>): Promise<Club | {error: string}> => {
-     await new Promise(res => setTimeout(res, 400));
-    const clubs = state.getMockClubs();
-    const index = clubs.findIndex(c => c.id === id);
-    if(index === -1) return {error: 'Club no encontrado'};
-    clubs[index] = { ...clubs[index], ...data };
-    return clubs[index];
-}
-
-
-// --- Courts ---
-export const fetchPadelCourtsByClub = async (clubId: string): Promise<PadelCourt[]> => {
-     await new Promise(res => setTimeout(res, 300));
-    return state.getMockPadelCourts().filter(c => c.clubId === clubId);
-}
-
-export const getMockPadelCourts = (): PadelCourt[] => {
-    return state.getMockPadelCourts();
-}
-
-export const addPadelCourt = async (courtData: Omit<PadelCourt, 'id' | 'isActive'>): Promise<PadelCourt | { error: string }> => {
-    await new Promise(res => setTimeout(res, 500));
-    const padelCourts = state.getMockPadelCourts();
-    const existing = padelCourts.find(c => c.clubId === courtData.clubId && c.courtNumber === courtData.courtNumber);
-    if(existing) return { error: `Ya existe una pista con el número ${courtData.courtNumber} en este club.`};
-    const newCourt: PadelCourt = { ...courtData, id: uuidv4(), isActive: true };
-    padelCourts.push(newCourt);
-    return newCourt;
-};
-
-export const updatePadelCourt = async (id: string, data: Partial<Omit<PadelCourt, 'id' | 'clubId'>>): Promise<PadelCourt | { error: string }> => {
-    await new Promise(res => setTimeout(res, 400));
-    const padelCourts = state.getMockPadelCourts();
-    const index = padelCourts.findIndex(c => c.id === id);
-    if(index === -1) return { error: 'Pista no encontrada' };
-    const originalCourt = padelCourts[index];
-
-    // Check for court number conflict if it's being changed
-    if(data.courtNumber && data.courtNumber !== originalCourt.courtNumber) {
-        const existing = padelCourts.find(c => c.clubId === originalCourt.clubId && c.courtNumber === data.courtNumber);
-        if(existing) return { error: `Ya existe una pista con el número ${data.courtNumber} en este club.`};
-    }
-
-    padelCourts[index] = { ...originalCourt, ...data };
-    return padelCourts[index];
-};
-
-export const deletePadelCourt = async (id: string): Promise<{ success: true } | { error: string }> => {
-    await new Promise(res => setTimeout(res, 600));
-    const padelCourts = state.getMockPadelCourts();
-    const index = padelCourts.findIndex(c => c.id === id);
-    if(index === -1) return { error: 'Pista no encontrada' };
-    padelCourts.splice(index, 1);
-    return { success: true };
-}
-
 
 // --- Bookings & TimeSlots ---
-export const fetchCourtBookingsForDay = async (clubId: string, date: Date): Promise<CourtGridBooking[]> => {
-    await new Promise(res => setTimeout(res, 500));
-    const dayBookings = state.getMockCourtBookings().filter(b => b.clubId === clubId && isSameDay(new Date(b.startTime), date));
-    
-    const dayTimeSlots = state.getMockTimeSlots().filter(ts => ts.clubId === clubId && isSameDay(new Date(ts.startTime), date));
-    const dayMatches = state.getMockMatches().filter(m => m.clubId === clubId && isSameDay(new Date(m.startTime), date));
-
-    const activityBookings: CourtGridBooking[] = [
-        ...dayTimeSlots
-            .filter(ts => ts.status === 'confirmed' || ts.status === 'confirmed_private')
-            .map(ts => ({
-                id: `ts-booking-${ts.id}`,
-                clubId: ts.clubId,
-                courtNumber: ts.courtNumber,
-                startTime: new Date(ts.startTime),
-                endTime: new Date(ts.endTime),
-                title: `Clase con ${ts.instructorName}`,
-                type: 'clase' as const,
-                status: 'reservada' as const,
-                activityStatus: ts.status,
-                participants: ts.bookedPlayers.length,
-                maxParticipants: ts.maxPlayers
-        })),
-        ...dayMatches
-            .filter(m => m.status === 'confirmed' || m.status === 'confirmed_private')
-            .map(m => ({
-                id: `match-booking-${m.id}`,
-                clubId: m.clubId,
-                courtNumber: m.courtNumber,
-                startTime: new Date(m.startTime),
-                endTime: new Date(m.endTime),
-                title: `Partida Nivel ${m.level}`,
-                type: 'partida' as const,
-                status: 'reservada' as const,
-                activityStatus: m.status,
-                participants: m.bookedPlayers?.length,
-                maxParticipants: 4
-        }))
-    ];
-    
-    return [...dayBookings, ...activityBookings];
-}
-
-export const addManualCourtBooking = async (clubId: string, bookingData: Omit<CourtGridBooking, 'id' | 'status'>): Promise<CourtGridBooking | { error: string }> => {
-    await new Promise(res => setTimeout(res, 500));
-     const newBooking: CourtGridBooking = {
-        id: uuidv4(),
-        ...bookingData,
-        status: 'reservada'
-    };
-    state.getMockCourtBookings().push(newBooking);
-    return newBooking;
-}
-
 export const isSlotEffectivelyCompleted = (slot: TimeSlot | Match): { completed: boolean, size: number | null } => {
     if (slot.status === 'confirmed' || slot.status === 'confirmed_private') {
         const bookedCount = slot.bookedPlayers?.length || 0;
@@ -304,20 +195,6 @@ export const getMockInstructors = (): (Instructor & User)[] => {
     return state.getMockInstructors();
 }
 
-export const updateClubAdminPassword = async (clubId: string, currentPassword: string, newPassword: string): Promise<{ success: true } | { error: string }> => {
-    await new Promise(res => setTimeout(res, 500));
-    // In a real app, you'd verify the clubId and currentPassword against a secure database.
-    // For this mock, we'll just pretend the current password is 'password123' for any club.
-    if (currentPassword !== 'password123') {
-        return { error: 'La contraseña actual es incorrecta.' };
-    }
-    if (newPassword.length < 6) {
-        return { error: 'La nueva contraseña es demasiado corta.' };
-    }
-    console.log(`Password for club ${clubId} changed to ${newPassword}`);
-    return { success: true };
-};
-
 // --- Match-Day Specific Mock Functions ---
 
 export const createMatchDayEvent = async (eventData: Omit<MatchDayEvent, 'id'>): Promise<MatchDayEvent | { error: string }> => {
@@ -458,37 +335,6 @@ export const clearSimulatedBookings = async (clubId: string): Promise<{ message:
     return { message: `Limpieza completada. Se eliminaron ${playersRemoved} inscripciones simuladas.` };
 };
 
-// --- Shop Functions ---
-export const fetchProductsByClub = async (clubId: string): Promise<Product[]> => {
-    await new Promise(res => setTimeout(res, 400));
-    return state.getMockProducts().filter(p => p.clubId === clubId);
-};
-
-export const addProduct = async (productData: Omit<Product, 'id'>): Promise<Product | { error: string }> => {
-    await new Promise(res => setTimeout(res, 500));
-    const newProduct: Product = { ...productData, id: uuidv4() };
-    state.getMockProducts().push(newProduct);
-    return newProduct;
-};
-
-export const updateProduct = async (productId: string, updateData: Partial<Product>): Promise<Product | { error: string }> => {
-    await new Promise(res => setTimeout(res, 500));
-    const products = state.getMockProducts();
-    const index = products.findIndex(p => p.id === productId);
-    if (index === -1) return { error: "Producto no encontrado." };
-    products[index] = { ...products[index], ...updateData };
-    return products[index];
-};
-
-export const deleteProduct = async (productId: string): Promise<{ success: true } | { error: string }> => {
-    await new Promise(res => setTimeout(res, 500));
-    const products = state.getMockProducts();
-    const index = products.findIndex(p => p.id === productId);
-    if (index === -1) return { error: "Producto no encontrado." };
-    products.splice(index, 1);
-    return { success: true };
-};
-
 export const getMockUserMatchBookings = async (userId: string): Promise<MatchBooking[]> => {
     const userMatchBookingsData = state.getMockUserMatchBookings().filter(b => b.userId === userId);
     return userMatchBookingsData.map(booking => {
@@ -538,14 +384,8 @@ export const getHasNewSpecialOfferNotification = async (): Promise<boolean> => {
     return state.getMockProducts().some(p => p.isDealOfTheDay);
 };
 
-
-export const countUserReservedProducts = async (userId: string): Promise<number> => {
-    return state.getMockUserReservedProducts().filter(r => r.userId === userId).length;
-}
-
-
-export const hasAnyConfirmedActivityForDay = (userId: string, date: Date, excludingId?: string, activityType?: 'class' | 'match'): boolean => {
-    return mockUtils.hasAnyConfirmedActivityForDay(userId, date, excludingId, activityType);
+export const hasAnyConfirmedActivityForDay = (userId: string, date: Date, excludingId?: string, type?: 'class' | 'match'): boolean => {
+    return mockUtils.hasAnyConfirmedActivityForDay(userId, date, excludingId, type);
 }
 
 export const makeMatchPublic = async (organizerUserId: string, matchId: string): Promise<{ success: true, updatedMatch: Match } | { error: string }> => {
@@ -627,6 +467,49 @@ export const updateUserGenderCategory = async (userId: string, genderCategory: U
     return state.getMockStudents()[userIndex];
 };
 
+export const getMockTimeSlots = (): TimeSlot[] => {
+    return state.getMockTimeSlots();
+}
+
+export const getMockUserBookings = async (userId: string): Promise<Booking[]> => {
+    return state.getMockUserBookings().filter(b => b.userId === userId);
+}
+
+export const getUserActivityStatusForDay = async (userId: string, date: Date): Promise<UserActivityStatusForDay> => {
+    const userBookings = await fetchUserBookings(userId);
+    const userMatchBookings = await getMockUserMatchBookings(userId);
+    const now = new Date();
+
+    const hasConfirmedClass = userBookings.some(b => {
+        const slot = state.getMockTimeSlots().find(s => s.id === b.activityId);
+        return slot && new Date(slot.startTime) > now && isSameDay(new Date(slot.startTime), date) && isSlotEffectivelyCompleted(slot).completed;
+    });
+
+    const hasConfirmedMatch = userMatchBookings.some(b => {
+        const match = state.getMockMatches().find(m => m.id === b.activityId);
+        return match && new Date(match.startTime) > now && isSameDay(new Date(match.startTime), date) && (match.bookedPlayers?.length || 0) >= 4;
+    });
+
+    if (hasConfirmedClass || hasConfirmedMatch) {
+        return { activityStatus: 'confirmed', hasEvent: false, anticipationPoints: 0 };
+    }
+
+    const hasInscription = userBookings.some(b => {
+        const slot = state.getMockTimeSlots().find(s => s.id === b.activityId);
+        return slot && new Date(slot.startTime) > now && isSameDay(new Date(slot.startTime), date);
+    }) || userMatchBookings.some(b => {
+        const match = state.getMockMatches().find(m => m.id === b.activityId);
+        return match && new Date(match.startTime) > now && isSameDay(new Date(match.startTime), date);
+    });
+
+    if (hasInscription) {
+        return { activityStatus: 'inscribed', hasEvent: false, anticipationPoints: 0 };
+    }
+
+    return { activityStatus: 'none', hasEvent: false, anticipationPoints: 0 };
+};
+
+// Also re-export functions from modules
 export {
     addTimeSlot,
     bookClass,
@@ -634,7 +517,6 @@ export {
     cancelClassByInstructor,
     confirmClassAsPrivate,
     countAvailableGratisSpots,
-    fetchUserBookings,
     joinPrivateClass,
     makeClassPublic,
     addCreditToStudent,
@@ -647,7 +529,7 @@ export {
 const today = startOfDay(new Date());
 addTimeSlot({ clubId: 'club-1', startTime: addHours(today, 10), durationMinutes: 60, instructorId: 'inst-2', maxPlayers: 4, courtNumber: 1, level: 'abierto', category: 'abierta'});
 const initialMatch = { id: uuidv4(), clubId: 'club-1', startTime: addHours(today, 11), endTime: addMinutes(addHours(today, 11), 90), totalCourtFee: 28, courtNumber: 2, level: '3.0', category: 'abierta', bookedPlayers: [{userId: 'user-1', name: 'Alex García', groupSize: 4}, {userId: 'user-2', name: 'Beatriz Reyes', groupSize: 4}], status: 'forming' as const, durationMinutes: 90 };
-state.getMockMatches().push(initialMatch);
+state.addMatchToState(initialMatch);
 
 state.getMockCourtBookings().push(
     { id: 'booking-3', clubId: 'club-1', courtNumber: 1, startTime: addHours(today, 18), endTime: addHours(today, 19), title: "Bloqueo Pista", type: 'reserva_manual', status: 'reservada' },
@@ -673,7 +555,7 @@ const confirmedSlot: TimeSlot = {
     ],
     totalPrice: 48,
 };
-state.getMockTimeSlots().push(confirmedSlot);
+state.addTimeSlotToState(confirmedSlot);
 
 const preinscribedSlot: TimeSlot = {
     id: uuidv4(),
@@ -690,6 +572,6 @@ const preinscribedSlot: TimeSlot = {
     status: 'pre_registration',
     bookedPlayers: [],
     promotionEndTime: addDays(new Date(), 1),
-    totalPrice: 40,
+    totalPrice: 40
 };
-state.getMockTimeSlots().push(preinscribedSlot);
+state.addTimeSlotToState(preinscribedSlot);
