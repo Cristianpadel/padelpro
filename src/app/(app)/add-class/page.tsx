@@ -6,7 +6,7 @@ import AddClassForm from './components/AddClassForm';
 import { getMockInstructors } from '@/lib/mockData';
 import type { TimeSlot, Instructor } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import CourtAvailabilityView from '../admin/components/CourtAvailabilityView';
+import CourtAvailabilityView from '@/components/admin/CourtAvailabilityView';
 import { Separator } from '@/components/ui/separator';
 
 
@@ -70,7 +70,4 @@ export default function AddClassPage() {
                 <div className="lg:col-span-2">
                      <CourtAvailabilityView instructor={instructor} />
                 </div>
-            </main>
-        </div>
-    );
-}
+            

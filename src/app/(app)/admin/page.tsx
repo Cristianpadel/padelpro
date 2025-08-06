@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import AdminPanel from './components/AdminPanel';
+import AdminPanel from '@/components/admin/AdminPanel';
 import { clubs } from '@/lib/mockData';
 import type { Club } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
