@@ -260,6 +260,14 @@ export interface InstructorRateTier {
 
 export type SortOption = 'time' | 'occupancy' | 'level';
 
+export type TimeOfDayFilterType = 'all' | 'morning' | 'midday' | 'evening';
+export const timeSlotFilterOptions: { value: TimeOfDayFilterType, label: string }[] = [
+    { value: 'all', label: 'Todos' },
+    { value: 'morning', label: 'Mañanas' },
+    { value: 'midday', label: 'Mediodía' },
+    { value: 'evening', label: 'Tardes' },
+];
+
 export interface UserActivityStatusForDay {
     activityStatus: 'confirmed' | 'inscribed' | 'none';
     hasEvent: boolean;
