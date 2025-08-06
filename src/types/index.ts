@@ -174,7 +174,7 @@ export interface TimeSlot {
     category: PadelCategoryForSlot;
     status: 'pre_registration' | 'forming' | 'confirmed' | 'confirmed_private' | 'cancelled';
     bookedPlayers: { userId: string, name?: string, isSimulated?: boolean, groupSize: 1|2|3|4 }[];
-    designatedGratisSpotPlaceholderIndexForOption?: { [key in 1 | 2 | 3 | 4]?: number };
+    designatedGratisSpotPlaceholderIndexForOption?: { [key in 1 | 2 | 3 | 4]?: number | null };
     organizerId?: string;
     privateShareCode?: string;
     confirmedPrivateSize?: 1 | 2 | 3 | 4;
@@ -197,6 +197,7 @@ export interface Match {
     provisionalForUserId?: string;
     provisionalExpiresAt?: Date;
     totalCourtFee?: number;
+    creatorId?: string;
 }
 
 export interface PointTransaction {

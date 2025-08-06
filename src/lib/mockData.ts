@@ -619,7 +619,21 @@ export const getInstructorRate = (instructor: Instructor, date: Date): number =>
 }
 
 export const calculateActivityPrice = (club: Club, startTime: Date): number => {
-    // A real implementation would check club.courtRateTiers
+    if (club.courtRateTiers) {
+        const dayIndex = getDay(startTime);
+        const dayOfWeek = daysOfWeekArray[dayIndex === 0 ? 6 : dayIndex - 1]; // Adjust for locale (Sunday is 0)
+        const time = format(startTime, 'HH:mm');
+
+        const matchingTier = club.courtRateTiers.find(tier =>
+            tier.days.includes(dayOfWeek) &&
+            time >= tier.startTime &&
+            time < tier.endTime
+        );
+        if (matchingTier) {
+            return matchingTier.rate;
+        }
+    }
+    // Fallback price
     const hour = startTime.getHours();
     if (hour >= 18) {
         return 28; // Peak time
@@ -814,3 +828,4 @@ const confirmedSlot: TimeSlot = {
     totalPrice: 48,
 };
 timeSlots.push(confirmedSlot);
+
