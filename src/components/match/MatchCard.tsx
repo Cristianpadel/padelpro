@@ -555,12 +555,12 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
                         Se deducirá de tu saldo y se reembolsará al organizador.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
-                 {!isUserLevelCompatibleWithActivity(currentMatch.level, currentUser.level) && (
+                 {!isUserLevelCompatibleWithActivity(currentMatch.level, currentUser.level, false) && (
                     <p className="text-sm text-destructive flex items-center"><AlertTriangle className="mr-2 h-4 w-4"/> Tu nivel ({currentUser.level || 'N/A'}) podría no ser compatible con el de esta partida ({currentMatch.level}).</p>
                 )}
                 <AlertDialogFooter>
                     <AlertDialogCancel onClick={() => setIsJoinPrivateDialogOpen(false)} disabled={isProcessingPrivateAction}>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleJoinPrivateMatchAction} disabled={isProcessingPrivateAction || !isUserLevelCompatibleWithActivity(currentMatch.level, currentUser.level) || (currentUser.credit ?? 0) < pricePerPlayerEuro}>
+                    <AlertDialogAction onClick={handleJoinPrivateMatchAction} disabled={isProcessingPrivateAction || !isUserLevelCompatibleWithActivity(currentMatch.level, currentUser.level, false) || (currentUser.credit ?? 0) < pricePerPlayerEuro}>
                         {isProcessingPrivateAction && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Unirme y Pagar
                     </AlertDialogAction>
