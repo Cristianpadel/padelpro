@@ -1,3 +1,4 @@
+// lib/actions/init.ts
 "use client";
 
 import type { User, Instructor, Club, PadelCourt, Product, DayOfWeek, CourtRateTier } from '@/types';
@@ -9,7 +10,6 @@ export const generateInitialStudents = (): User[] => [
         id: 'user-current',
         name: 'Cristian Parra',
         email: 'cristian.parra@ejemplo.com',
-        password: 'password123',
         level: '4.5',
         credit: 150.50,
         loyaltyPoints: 125,
@@ -23,7 +23,6 @@ export const generateInitialStudents = (): User[] => [
         id: 'student-2',
         name: 'Elena García',
         email: 'elena.garcia@ejemplo.com',
-        password: 'password123',
         level: '3.0',
         credit: 75,
         loyaltyPoints: 40,
@@ -37,7 +36,6 @@ export const generateInitialStudents = (): User[] => [
         id: 'student-3',
         name: 'David Martínez',
         email: 'david.martinez@ejemplo.com',
-        password: 'password123',
         level: '4.0',
         credit: 200,
         loyaltyPoints: 250,
@@ -51,7 +49,6 @@ export const generateInitialStudents = (): User[] => [
         id: 'student-4',
         name: 'Laura Fernández',
         email: 'laura.fernandez@ejemplo.com',
-        password: 'password123',
         level: '2.5',
         credit: 50,
         loyaltyPoints: 10,
@@ -68,7 +65,6 @@ export const generateInitialInstructors = (): Instructor[] => [
         id: 'instructor-javier-gomez',
         name: 'Javier Gómez',
         email: 'javier.gomez@ejemplo.com',
-        password: 'password123',
         level: '6.5',
         isBlocked: false,
         profilePictureUrl: `https://randomuser.me/api/portraits/men/68.jpg`,
@@ -91,7 +87,6 @@ export const generateInitialInstructors = (): Instructor[] => [
         id: 'instructor-sofia-martin',
         name: 'Sofía Martín',
         email: 'sofia.martin@ejemplo.com',
-        password: 'password123',
         level: '5.5',
         isBlocked: false,
         profilePictureUrl: `https://randomuser.me/api/portraits/women/68.jpg`,
