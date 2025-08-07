@@ -3,7 +3,7 @@ import type { TimeSlot, User, Club, ClassPadelLevel, PadelCategoryForSlot, Match
 import { matchPadelLevels, numericMatchPadelLevels, daysOfWeek } from '@/types';
 import { isUserLevelCompatibleWithActivity } from './utils';
 import * as state from './index';
-import { addMinutes, areIntervalsOverlapping, getDay, setHours, setMinutes, parse } from 'date-fns';
+import { addMinutes, areIntervalsOverlapping, getDay, setHours, setMinutes, parse, format } from 'date-fns';
 import { calculateActivityPrice, getInstructorRate } from './clubs';
 
 
@@ -79,14 +79,18 @@ export const createProposedClassesForDay = (club: Club, date: Date): TimeSlot[] 
     const startHour = 8;
     const endHour = 22;
     const slotDuration = 60; // minutes
+    const timeSlotIntervalMinutes = 30; // Check every 30 minutes
 
-    for (let hour = startHour; hour < endHour; hour++) {
+    let currentTimeSlotStart = setMinutes(setHours(date, startHour), 0);
+    const endOfDayOperations = setHours(date, endHour);
+
+    while (currentTimeSlotStart < endOfDayOperations) {
         for (const instructor of clubInstructors) {
-            const startTime = setMinutes(setHours(date, hour), 0);
+            const startTime = new Date(currentTimeSlotStart);
             const endTime = addMinutes(startTime, slotDuration);
             const dayOfWeek = daysOfWeek[getDay(startTime)];
 
-            // Check if instructor is available at this time
+            // Check if instructor is available at this time (based on their personal settings)
             const isUnavailable = instructor.unavailableHours?.[dayOfWeek]?.some(range =>
                 areIntervalsOverlapping(
                     { start: startTime, end: endTime },
@@ -99,13 +103,37 @@ export const createProposedClassesForDay = (club: Club, date: Date): TimeSlot[] 
                 continue;
             }
 
+            // Check for conflict with an existing CONFIRMED class for the same instructor
+            const instructorHasConfirmedConflict = state.getMockTimeSlots().find(
+                existingSlot => existingSlot.instructorId === instructor.id &&
+                                (existingSlot.status === 'confirmed' || existingSlot.status === 'confirmed_private') &&
+                                areIntervalsOverlapping(
+                                    { start: startTime, end: endTime },
+                                    { start: new Date(existingSlot.startTime), end: new Date(existingSlot.endTime) },
+                                    { inclusive: false }
+                                )
+            );
+
+            if (instructorHasConfirmedConflict) {
+                continue; // Skip this slot for this instructor if they are already booked
+            }
+
+             // Check if this exact proposal already exists to avoid duplicates
+            const proposalExists = slotsForDay.some(
+                s => s.instructorId === instructor.id && new Date(s.startTime).getTime() === startTime.getTime()
+            );
+
+            if (proposalExists) {
+                continue;
+            }
+
             // Calculate price based on court and instructor rates
             const courtPrice = calculateActivityPrice(club, startTime);
             const instructorRate = getInstructorRate(instructor, startTime);
             const totalPrice = courtPrice + instructorRate;
 
             const newProposal: TimeSlot = {
-                id: `ts-proposal-${club.id}-${instructor.id}-${date.toISOString().slice(0, 10)}-${hour}`,
+                id: `ts-proposal-${club.id}-${instructor.id}-${format(startTime, 'yyyyMMddHHmm')}`,
                 clubId: club.id,
                 startTime: startTime,
                 endTime: endTime,
@@ -122,6 +150,7 @@ export const createProposedClassesForDay = (club: Club, date: Date): TimeSlot[] 
             };
             slotsForDay.push(newProposal);
         }
+        currentTimeSlotStart = addMinutes(currentTimeSlotStart, timeSlotIntervalMinutes);
     }
     return slotsForDay;
 };
