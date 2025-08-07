@@ -4,9 +4,10 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import type { TimeSlot, User, PadelCourt } from '@/types';
 import BookingSpotDisplay from '@/components/class/BookingSpotDisplay';
-import CourtAvailabilityIndicator from '@/app/(app)/activities/components/CourtAvailabilityIndicator';
+import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
 import { Button } from '@/components/ui/button';
 import { calculatePricePerPerson } from '@/lib/utils';
+import { isSlotEffectivelyCompleted } from '@/lib/mockData';
 
 interface ClassCardContentProps {
   currentUser: User;
