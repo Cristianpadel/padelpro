@@ -6,7 +6,7 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 
 import ClassDisplay from '@/components/classfinder/ClassDisplay';
 import MatchDisplay from '@/components/classfinder/MatchDisplay'; // Import MatchDisplay
-import { getMockTimeSlots, getMockCurrentUser, getUserActivityStatusForDay, fetchMatches, fetchMatchDayEventsForDate } from '@/lib/mockData';
+import { getMockTimeSlots, getMockCurrentUser, getUserActivityStatusForDay, fetchMatches, fetchMatchDayEventsForDate, createMatchesForDay, getMockClubs } from '@/lib/mockData';
 import type { TimeSlot, User, MatchPadelLevel, SortOption, UserActivityStatusForDay, Match, MatchDayEvent, TimeOfDayFilterType } from '@/types';
 import { startOfDay, addDays, isSameDay, format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -80,14 +80,28 @@ export default function ActivitiesPage() {
         const loadInitialData = async () => {
             setIsLoading(true);
             try {
-                const [user, slots, matches] = await Promise.all([
+                const [user, slots, existingMatches, clubs] = await Promise.all([
                     getMockCurrentUser(),
                     getMockTimeSlots('club-1'),
                     fetchMatches('club-1'),
+                    getMockClubs(),
                 ]);
                 setCurrentUser(user);
                 setAllTimeSlots(slots);
-                setAllMatches(matches);
+                
+                // Generate placeholder matches for the next 7 days and combine with existing ones
+                const club = clubs[0];
+                let generatedMatches: Match[] = [];
+                if (club) {
+                    for (let i = 0; i < 7; i++) {
+                        const date = addDays(new Date(), i);
+                        generatedMatches.push(...createMatchesForDay(club, date));
+                    }
+                }
+                const combined = [...existingMatches, ...generatedMatches];
+                const uniqueMatches = Array.from(new Map(combined.map(item => [item['id'], item])).values());
+                setAllMatches(uniqueMatches);
+
 
                 if (selectedDate) {
                     const events = await fetchMatchDayEventsForDate(selectedDate, 'club-1');
