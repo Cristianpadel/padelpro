@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
@@ -385,7 +384,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                     Prueba a cambiar las fechas o ajusta los filtros.
                 </p>
                 <Button onClick={handleNextAvailableClick} className="mt-4">
-                    Ver el próximo día con partidas disponibles <ArrowRight className="ml-2 h-4 w-4" />
+                    Próximo día con partidas disponibles <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
             </div>
         )}
