@@ -27,7 +27,7 @@ import LogoutConfirmationDialog from '@/components/layout/LogoutConfirmationDial
 import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import EditLevelDialog from '@/components/user/profile/EditLevelDialog';
+import EditLevelDialog from '@/components/user/EditLevelDialog';
 import { displayClassLevel } from '@/types';
 
 function SchedulePageContent() {
@@ -382,3 +382,5 @@ export default function SchedulePage() {
         </Suspense>
     );
 }
+
+    
