@@ -1,3 +1,4 @@
+// src/app/(app)/schedule/page.tsx
 "use client";
 
 import React, { Suspense, useEffect, useState, useCallback } from 'react';
@@ -296,12 +297,20 @@ function SchedulePageContent() {
                         )}
                     </CardContent>
                 </Card>
-
-                    <PersonalSchedule 
+                <PersonalMatches 
+                    currentUser={currentUser} 
+                    newMatchBooking={null} 
+                    onBookingActionSuccess={handleDataChange} 
+                />
+                <PersonalSchedule 
                     currentUser={currentUser} 
                     onBookingActionSuccess={handleDataChange} 
                     refreshKey={refreshKey}
-                    />
+                />
+                <PersonalMatchDay 
+                    currentUser={currentUser} 
+                    onBookingActionSuccess={handleDataChange} 
+                />
             </main>
 
             <Toaster />

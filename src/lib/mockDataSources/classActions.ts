@@ -160,9 +160,10 @@ export const bookClass = async (
       
       _annulConflictingActivities(slot);
        await removeUserPreInscriptionsForDay(userId, new Date(slot.startTime), slot.id, 'class');
-  } else {
-      await recalculateAndSetBlockedBalances(userId);
-  }
+  } 
+  // Always recalculate blocked balances after a booking action
+  await recalculateAndSetBlockedBalances(userId);
+
 
   const newBooking: Booking = {
     id: `booking-${slotId}-${userId}-${Date.now()}`,
