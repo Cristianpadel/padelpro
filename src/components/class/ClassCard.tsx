@@ -22,6 +22,7 @@ import {
 } from '@/lib/mockData';
 import { Lightbulb, ShieldQuestion, Hash, Users2, Venus, Mars, Euro } from 'lucide-react';
 import { calculatePricePerPerson } from '@/lib/utils';
+import { displayClassCategory } from '@/types';
 
 interface ClassCardProps {
     classData: TimeSlot;
@@ -207,7 +208,7 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
                     durationMinutes={durationMinutes}
                     isSlotEffectivelyFull={isSlotEffectivelyFull}
                     handleShareClass={handleShareClass}
-                    handleInfoClick={() => {}}
+                    onInfoClick={(type) => handleInfoClick(type)}
                     onReservarPrivadaClick={() => setIsConfirmPrivateDialogOpen(true)}
                     isProcessingPrivateAction={isProcessingPrivateAction}
                     bookings={bookingsByGroupSize}
@@ -225,10 +226,7 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
                     handlePriceInfoClick={(optionSize) => handleInfoClick({ type: 'price', optionSize })}
                 />
                  <ClassCardFooter
-                    currentSlot={currentSlot}
-                    isSlotEffectivelyFull={isSlotEffectivelyFull}
                     courtAvailability={courtAvailability}
-                    onInfoClick={(type) => handleInfoClick(type)}
                 />
             </Card>
 

@@ -1,3 +1,4 @@
+// src/components/class/ClassCard/ClassCardHeader.tsx
 "use client";
 
 import React from 'react';
@@ -10,7 +11,9 @@ import { Badge } from '@/components/ui/badge';
 import { getInitials } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import type { TimeSlot, Instructor } from '@/types';
-import { Clock, Share2, Star, Plus } from 'lucide-react';
+import { Clock, Share2, Star, Plus, Lightbulb, Hash, Users2, Venus, Mars } from 'lucide-react';
+import { displayClassLevel, displayClassCategory } from '@/types';
+
 
 interface ClassCardHeaderProps {
   currentSlot: TimeSlot;
@@ -19,7 +22,7 @@ interface ClassCardHeaderProps {
   durationMinutes: number;
   isSlotEffectivelyFull: boolean;
   handleShareClass: () => void;
-  handleInfoClick: (type: 'level' | 'court' | 'category') => void;
+  onInfoClick: (type: 'level' | 'court' | 'category') => void;
   onReservarPrivadaClick: () => void;
   isProcessingPrivateAction: boolean;
   bookings: Record<number, { userId: string; groupSize: 1 | 2 | 3 | 4; }[]>;
@@ -33,6 +36,15 @@ const renderStarsDisplay = (rating: number) => {
   return <div className="flex items-center">{stars} <span className="ml-1.5 text-sm text-gray-600 font-medium">({rating.toFixed(1)})</span></div>;
 };
 
+const InfoButton = ({ icon: Icon, text, onClick, className }: { icon: React.ElementType, text: string, onClick: () => void, className?: string }) => (
+    <button onClick={onClick} className="flex-1">
+        <Badge variant="outline" className={cn("w-full justify-center text-xs py-1.5 rounded-full capitalize shadow-inner bg-slate-50 border-slate-200 hover:border-slate-300 transition-colors", className)}>
+            <Icon className="mr-1.5 h-3 w-3" /> {text}
+        </Badge>
+    </button>
+);
+
+
 export const ClassCardHeader: React.FC<ClassCardHeaderProps> = ({
   currentSlot,
   instructor,
@@ -40,13 +52,19 @@ export const ClassCardHeader: React.FC<ClassCardHeaderProps> = ({
   durationMinutes,
   isSlotEffectivelyFull,
   handleShareClass,
-  handleInfoClick,
+  onInfoClick,
   onReservarPrivadaClick,
   isProcessingPrivateAction,
   bookings
 }) => {
   
   const canBookPrivate = (bookings[1] || []).length === 0 && (bookings[2] || []).length === 0 && (bookings[3] || []).length === 0 && (bookings[4] || []).length === 0;
+
+  const CategoryIcon = currentSlot.category === 'chica' ? Venus : currentSlot.category === 'chico' ? Mars : Users2;
+  const levelDisplay = currentSlot.level === 'abierto'
+        ? 'Nivel'
+        : (typeof currentSlot.level === 'object' ? `${currentSlot.level.min}-${currentSlot.level.max}` : String(currentSlot.level));
+
 
   return (
     <div className="pt-4 pb-2 px-4 space-y-3">
@@ -80,6 +98,16 @@ export const ClassCardHeader: React.FC<ClassCardHeaderProps> = ({
               <span className="text-xs font-normal">Privada</span>
             </Button>
         )}
+      </div>
+
+       {/* Info Buttons Section */}
+      <div className="flex justify-center items-center gap-1.5 pt-2">
+          <InfoButton icon={Lightbulb} text={levelDisplay} onClick={() => onInfoClick('level')} />
+          <InfoButton icon={CategoryIcon} text={displayClassCategory(currentSlot.category, true)} onClick={() => onInfoClick('category')} className={
+              currentSlot.category === 'chica' ? 'text-pink-600 border-pink-200 bg-pink-50 hover:border-pink-300' :
+              currentSlot.category === 'chico' ? 'text-blue-600 border-blue-200 bg-blue-50 hover:border-blue-300' : ''
+          } />
+          <InfoButton icon={Hash} text={currentSlot.courtNumber ? `Pista ${currentSlot.courtNumber}` : 'Pista'} onClick={() => onInfoClick('court')} />
       </div>
 
       {/* Middle section: Date, Time, Duration, and Share */}
