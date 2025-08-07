@@ -202,17 +202,17 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
                     aria-label={spotTooltipText}
                 >
                     <div className={cn(
-                        "relative inline-flex items-center justify-center h-10 w-10 rounded-full border-2 z-0 transition-all shadow-[inset_0_2px_4px_0_rgba(0,0,0,0.2)]",
+                        "relative inline-flex items-center justify-center h-12 w-12 rounded-full border-2 z-0 transition-all shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.4)]",
                         animationClass,
                         spotVariant === "solid" && "bg-slate-100 border-slate-300",
                         spotVariant === "dashed" && "border-dashed border-green-400 hover:bg-green-100",
                         spotVariant === "gratis" && "border-solid border-purple-500 bg-purple-100 hover:bg-purple-200",
-                        isCurrentUserInSpot && "border-primary border-[3px] shadow-lg",
+                        isCurrentUserInSpot && "border-4 border-primary shadow-lg",
                         isDisabled && !player && 'opacity-70 hover:bg-transparent'
                     )}>
                         {player ? (
                             <>
-                                <Avatar className="h-[calc(100%-4px)] w-[calc(100%-4px)] shadow-[inset_0_3px_5px_0_rgba(0,0,0,0.3)]">
+                                <Avatar className="h-[calc(100%-4px)] w-[calc(100%-4px)]">
                                     <AvatarImage src={fullPlayer?.profilePictureUrl} alt={`Avatar ${player.name}`} data-ai-hint="player avatar large"/>
                                     <AvatarFallback className="text-sm">{getInitials(player.name || 'P')}</AvatarFallback>
                                 </Avatar>

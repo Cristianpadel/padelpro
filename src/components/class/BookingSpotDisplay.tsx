@@ -97,7 +97,7 @@ const BookingSpotDisplay: React.FC<BookingSpotDisplayProps> = ({
         <Tooltip>
           <TooltipTrigger asChild>
             <div className="relative">
-              <Avatar className={cn("h-8 w-8 p-0 overflow-hidden shadow-[inset_0_2px_4px_0_rgba(0,0,0,0.3)]", isCurrentUserInSpot ? "ring-2 ring-offset-1 ring-primary border-primary" : "border-gray-300")}>
+              <Avatar className={cn("h-10 w-10 p-0 overflow-hidden shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.4)]", isCurrentUserInSpot ? "border-[3px] border-primary shadow-lg" : "border-gray-300")}>
                 <AvatarImage src={student?.profilePictureUrl} alt={student?.name} data-ai-hint="player avatar small" />
                 <AvatarFallback className="text-xs">{getInitials(student?.name || '')}</AvatarFallback>
               </Avatar>
@@ -117,7 +117,7 @@ const BookingSpotDisplay: React.FC<BookingSpotDisplayProps> = ({
             <Button
               variant="outline" size="icon"
               className={cn(
-                "h-8 w-8 rounded-full flex items-center justify-center border-2 border-dashed",
+                "h-10 w-10 rounded-full flex items-center justify-center border-2 border-dashed",
                 isLoading && "cursor-wait",
                 (canJoinStandard || canJoinGratis) ? (canJoinGratis ? "border-yellow-400 hover:bg-yellow-50" : "border-green-400 hover:bg-green-50") : "opacity-50 cursor-not-allowed"
               )}
