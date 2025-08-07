@@ -3,30 +3,43 @@
 
 import React, { useState, useEffect } from 'react';
 import { notFound, useParams } from 'next/navigation';
-import { getMockInstructors } from '@/lib/mockData';
-import type { Instructor } from '@/types';
+import { getMockInstructors, fetchReviewsForInstructor, getMockStudents } from '@/lib/mockData';
+import type { Instructor, Review, User } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/lib/utils';
-import { Star, Languages, ShieldCheck } from 'lucide-react';
+import { Star, Languages, ShieldCheck, MessageSquare } from 'lucide-react';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 export default function InstructorProfilePage() {
     const params = useParams();
     const id = params.id as string;
 
     const [instructor, setInstructor] = useState<Instructor | null>(null);
+    const [reviews, setReviews] = useState<Review[]>([]);
+    const [students, setStudents] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (!id) return;
 
-        const fetchInstructor = async () => {
+        const fetchInstructorData = async () => {
             setLoading(true);
             try {
-                const instructors = await getMockInstructors();
+                const [instructors, fetchedReviews, allStudents] = await Promise.all([
+                    getMockInstructors(),
+                    fetchReviewsForInstructor(id),
+                    getMockStudents(),
+                ]);
+                
                 const foundInstructor = instructors.find(i => i.id === id);
                 setInstructor(foundInstructor || null);
+                setReviews(fetchedReviews);
+                setStudents(allStudents);
+
             } catch (error) {
                 console.error("Error fetching instructor details:", error);
             } finally {
@@ -34,8 +47,18 @@ export default function InstructorProfilePage() {
             }
         };
 
-        fetchInstructor();
+        fetchInstructorData();
     }, [id]);
+    
+    const renderStars = (rating: number) => {
+        const fullStars = Math.round(rating);
+        const stars = [];
+        for (let i = 1; i <= 5; i++) {
+            stars.push(<Star key={i} className={cn("h-4 w-4", i <= fullStars ? "fill-yellow-400 text-yellow-500" : "fill-gray-300 text-gray-400")} />);
+        }
+        return <div className="flex items-center">{stars}</div>;
+    };
+
 
     if (loading) {
         return (
@@ -47,9 +70,10 @@ export default function InstructorProfilePage() {
                         <Skeleton className="h-5 w-32" />
                     </div>
                 </div>
-                <div className="mt-6 grid gap-4">
+                <div className="mt-6 grid gap-4 md:grid-cols-2">
                     <Skeleton className="h-24 w-full" />
                     <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-48 w-full md:col-span-2" />
                 </div>
             </div>
         );
@@ -99,6 +123,36 @@ export default function InstructorProfilePage() {
                                 <li key={i}>{exp}</li>
                             ))}
                         </ul>
+                    </CardContent>
+                </Card>
+                 <Card className="md:col-span-2">
+                    <CardHeader>
+                        <CardTitle className="flex items-center"><MessageSquare className="mr-2 h-5 w-5 text-indigo-500" />Valoraciones de Alumnos</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {reviews.length > 0 ? (
+                            reviews.map(review => {
+                                const student = students.find(s => s.id === review.userId);
+                                return (
+                                    <div key={review.id} className="flex items-start space-x-4 border-b pb-4 last:border-b-0 last:pb-0">
+                                        <Avatar>
+                                            <AvatarImage src={student?.profilePictureUrl} alt={student?.name} data-ai-hint="student avatar"/>
+                                            <AvatarFallback>{getInitials(student?.name || 'U')}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1">
+                                            <div className="flex justify-between items-center">
+                                                <p className="font-semibold">{student?.name || 'Alumno Anónimo'}</p>
+                                                {renderStars(review.rating)}
+                                            </div>
+                                            <p className="text-sm text-muted-foreground mt-1">{review.comment}</p>
+                                            <p className="text-xs text-muted-foreground/80 mt-2">{format(new Date(review.createdAt), "dd MMMM, yyyy", { locale: es })}</p>
+                                        </div>
+                                    </div>
+                                )
+                            })
+                        ) : (
+                            <p className="text-muted-foreground italic text-center">Este instructor aún no tiene valoraciones.</p>
+                        )}
                     </CardContent>
                 </Card>
             </div>
