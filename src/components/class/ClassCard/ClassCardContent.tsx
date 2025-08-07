@@ -6,6 +6,7 @@ import type { TimeSlot, User } from '@/types';
 import BookingSpotDisplay from '@/components/class/BookingSpotDisplay';
 import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
 import type { PadelCourt } from '@/types';
+import { Button } from '@/components/ui/button';
 
 interface ClassCardContentProps {
   currentUser: User;
