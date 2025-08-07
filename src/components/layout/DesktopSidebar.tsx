@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -55,7 +56,7 @@ const hexToRgba = (hex: string, alpha: number) => {
 
 
 const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
-    currentUser, clubInfo, currentPage, showFilters = false, onGratisClick, showGratisNotification,
+    currentUser, clubInfo, showFilters = false, onGratisClick, showGratisNotification,
     onTimeFilterClick, onLevelFilterClick, onFavoritesClick, isFavoritesActive,
     onProfessionalAccessClick, onLogoutClick,
     viewPreference = 'normal',
@@ -74,6 +75,12 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     const router = useRouter();
     const [nextMatchDayEventId, setNextMatchDayEventId] = useState<string | null>(null);
     const [qrCodeUrl, setQrCodeUrl] = useState('');
+
+    const view = searchParams.get('view');
+    const currentPage = pathname.startsWith('/schedule') ? 'agenda'
+                        : pathname.startsWith('/activities') && view === 'partidas' ? 'partidas'
+                        : pathname.startsWith('/activities') ? 'clases'
+                        : 'other';
 
     useEffect(() => {
         if (typeof window !== 'undefined') {

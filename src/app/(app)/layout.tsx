@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -46,13 +47,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     router.push('/');
   }
 
-  // Determine current page for sidebar active state
-  const currentPage = pathname.startsWith('/schedule') ? 'agenda'
-                    : pathname.startsWith('/activities') && pathname.includes('partidas') ? 'partidas'
-                    : pathname.startsWith('/activities') ? 'clases'
-                    : 'other';
-
-
   return (
     <div className="flex min-h-screen flex-col">
       <div className='flex flex-1'>
@@ -61,7 +55,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <DesktopSidebar
                   currentUser={currentUser}
                   clubInfo={clubInfo}
-                  currentPage={currentPage}
+                  currentPage='other'
                   showFilters={pathname.startsWith('/activities')}
                   onProfessionalAccessClick={() => setIsProfessionalAccessOpen(true)}
                   onLogoutClick={handleLogoutClick}
