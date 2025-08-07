@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -241,4 +242,9 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
                 </div>
             </TooltipTrigger>
             <TooltipContent side="bottom" className="text-xs p-1.5">{spotTooltipText}</TooltipContent>
-        </Tooltip
+        </Tooltip>
+        </TooltipProvider>
+    );
+};
+
+export const MatchSpotDisplay = React.memo(MatchSpotDisplayComponent);

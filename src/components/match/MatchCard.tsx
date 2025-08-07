@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useTransition, useMemo, useEffect, useCallback } from 'react';
@@ -362,7 +363,7 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
   const durationMinutes = differenceInMinutes(new Date(currentMatch.endTime), new Date(currentMatch.startTime));
 
   const badges = [
-      { type: 'category', value: displayClassCategory(matchCategoryToDisplay), icon: CategoryIconDisplay },
+      { type: 'category', value: displayClassCategory(matchCategoryToDisplay, true), icon: CategoryIconDisplay },
       { type: 'court', value: currentMatch.courtNumber ? `Pista ${currentMatch.courtNumber}` : 'Pista', icon: Hash },
       { type: 'level', value: displayClassLevel(matchLevelToDisplay), icon: BarChartHorizontal }
   ];
