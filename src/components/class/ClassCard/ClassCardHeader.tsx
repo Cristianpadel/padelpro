@@ -60,14 +60,18 @@ export const ClassCardHeader: React.FC<ClassCardHeaderProps> = ({
   
   const canBookPrivate = (bookings[1] || []).length === 0 && (bookings[2] || []).length === 0 && (bookings[3] || []).length === 0 && (bookings[4] || []).length === 0;
 
-  const CategoryIcon = currentSlot.category === 'chica' ? Venus : currentSlot.category === 'chico' ? Mars : Users2;
   const levelDisplay = currentSlot.level === 'abierto'
         ? 'Nivel'
         : (typeof currentSlot.level === 'object' ? `${currentSlot.level.min}-${currentSlot.level.max}` : String(currentSlot.level));
+  
+  const isLevelSelected = currentSlot.level !== 'abierto';
+
+
+  const CategoryIcon = currentSlot.category === 'chica' ? Venus : currentSlot.category === 'chico' ? Mars : Users2;
 
 
   return (
-    <div className="pt-3 pb-2 px-4 space-y-2">
+    <div className="pt-2 pb-1 px-3 space-y-1">
       {/* Top section: Avatar, Name, Rating, and Private Button */}
       <div className="flex justify-between items-start">
         <div className="flex items-center space-x-3">
@@ -102,7 +106,12 @@ export const ClassCardHeader: React.FC<ClassCardHeaderProps> = ({
 
        {/* Info Buttons Section */}
       <div className="flex justify-center items-center gap-1.5 pt-1">
-          <InfoButton icon={Lightbulb} text={levelDisplay} onClick={() => onInfoClick('level')} />
+          <InfoButton 
+              icon={Lightbulb} 
+              text={levelDisplay} 
+              onClick={() => onInfoClick('level')}
+              className={isLevelSelected ? 'text-blue-700 border-blue-200 bg-blue-100 hover:border-blue-300' : ''}
+          />
           <InfoButton icon={CategoryIcon} text={displayClassCategory(currentSlot.category, true)} onClick={() => onInfoClick('category')} className={
               currentSlot.category === 'chica' ? 'text-pink-600 border-pink-200 bg-pink-50 hover:border-pink-300' :
               currentSlot.category === 'chico' ? 'text-blue-600 border-blue-200 bg-blue-50 hover:border-blue-300' : ''
