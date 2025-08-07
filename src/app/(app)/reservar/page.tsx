@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import type { User, Club, PadelCourt, TimeRange, DayOfWeek } from '@/types';
-import { getMockCurrentUser, getMockClubs, getMockPadelCourts, bookCourtWithPoints } from '@/lib/mockData';
+import { getMockCurrentUser, getMockClubs, getMockPadelCourts, bookCourtForMatchWithPoints, getMockMatches } from '@/lib/mockData';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -76,7 +76,21 @@ const CourtBookingCard: React.FC<{
     const handleBooking = async () => {
         if (!selectedSlot) return;
         setIsProcessing(true);
-        const result = await bookCourtWithPoints(currentUser.id, club.id, selectedSlot);
+        // Find a placeholder match for the selected slot to book
+        const placeholderMatch = getMockMatches().find(m => 
+            m.isPlaceholder && 
+            m.clubId === club.id &&
+            new Date(m.startTime).getTime() === selectedSlot.getTime()
+        );
+        
+        if (!placeholderMatch) {
+             toast({ title: 'Error al Reservar', description: 'No se encontró una partida abierta disponible en este horario. Inténtalo de nuevo.', variant: 'destructive' });
+             setIsProcessing(false);
+             setIsConfirming(false);
+             return;
+        }
+
+        const result = await bookCourtForMatchWithPoints(currentUser.id, placeholderMatch.id);
         if ('error' in result) {
             toast({ title: 'Error al Reservar', description: result.error, variant: 'destructive' });
         } else {
@@ -241,4 +255,5 @@ export default function ReservarPage() {
         </div>
     );
 }
+
 
