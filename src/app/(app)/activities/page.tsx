@@ -119,7 +119,11 @@ export default function ActivitiesPage() {
         loadInitialData();
     }, [refreshKey, selectedDate, toast]);
     
-    const onViewPrefChange = (date: Date, pref: 'myInscriptions' | 'myConfirmed') => {
+    const onViewPrefChange = (date: Date, pref: 'myInscriptions' | 'myConfirmed', type?: 'class' | 'match') => {
+        if (type) {
+            const newView = type === 'class' ? 'clases' : 'partidas';
+            updateUrlFilter('view', newView);
+        }
         handleDateChange(date);
         handleViewPrefChange(pref);
     };
