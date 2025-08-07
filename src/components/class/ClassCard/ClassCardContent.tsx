@@ -7,6 +7,7 @@ import type { TimeSlot, User } from '@/types';
 import BookingSpotDisplay from '@/components/class/BookingSpotDisplay';
 import { Button } from '@/components/ui/button';
 import { calculatePricePerPerson } from '@/lib/utils';
+import { Euro } from 'lucide-react';
 
 interface ClassCardContentProps {
   currentUser: User;
@@ -65,10 +66,10 @@ export const ClassCardContent: React.FC<ClassCardContentProps> = ({
               )}
             </div>
              <Button variant="outline" className="text-xs flex items-center h-8 px-3 rounded-full shadow-sm bg-slate-100 hover:bg-slate-200 text-slate-700" onClick={() => handlePriceInfoClick(optionSize)}>
+               <Euro className="mr-1 h-3.5 w-3.5"/>
               <span className="font-bold text-sm">
                 {calculatePricePerPerson(totalPrice, optionSize).toFixed(2)}
               </span>
-              <span className="font-normal text-xs ml-1">€ p.p.</span>
             </Button>
           </div>
         );

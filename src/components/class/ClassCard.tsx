@@ -20,7 +20,7 @@ import {
     getMockClubs, calculateActivityPrice, getInstructorRate, getCourtAvailabilityForInterval, getMockInstructors,
     confirmClassAsPrivate
 } from '@/lib/mockData';
-import { Lightbulb, ShieldQuestion, Hash, Users2, Venus, Mars } from 'lucide-react';
+import { Lightbulb, ShieldQuestion, Hash, Users2, Venus, Mars, Euro } from 'lucide-react';
 import { calculatePricePerPerson } from '@/lib/utils';
 
 interface ClassCardProps {
@@ -139,20 +139,28 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
         }
     };
 
-    const handleInfoClick = (type: 'level' | 'court' | 'category') => {
+    const handleInfoClick = (type: 'level' | 'court' | 'category' | { type: 'price', optionSize: number }) => {
         let dialogContent;
-        const CategoryIcon = currentSlot.category === 'chica' ? Venus : currentSlot.category === 'chico' ? Mars : Users2;
-
-        switch (type) {
-            case 'level':
-                dialogContent = { title: 'Nivel de la Clase', description: 'Este es el rango de nivel para esta clase. Se ajusta según el primer jugador inscrito para asegurar que sea competitiva.', icon: Lightbulb };
-                break;
-            case 'court':
-                dialogContent = { title: 'Asignación de Pista', description: 'La pista se asigna automáticamente solo cuando la clase está completa.\nRecibirás una notificación con el número de pista cuando se confirme.', icon: Hash };
-                break;
-            case 'category':
-                dialogContent = { title: 'Categoría de la Clase', description: 'La categoría (chicos/chicas) la sugiere el primer jugador que se apunta.\nNo es una regla estricta, solo una guía para los demás jugadores.', icon: CategoryIcon };
-                break;
+        if (typeof type === 'object' && type.type === 'price') {
+            const price = calculatePricePerPerson(totalPrice, type.optionSize);
+            dialogContent = {
+                title: `Precio para Clase de ${type.optionSize}p`,
+                description: `El precio total de la clase (pista + instructor) se divide entre el número de jugadores.\nPara ${type.optionSize} jugador(es), cada uno paga ${price.toFixed(2)}€.`,
+                icon: Euro
+            };
+        } else {
+             const CategoryIcon = currentSlot.category === 'chica' ? Venus : currentSlot.category === 'chico' ? Mars : Users2;
+            switch (type) {
+                case 'level':
+                    dialogContent = { title: 'Nivel de la Clase', description: 'Este es el rango de nivel para esta clase. Se ajusta según el primer jugador inscrito para asegurar que sea competitiva.', icon: Lightbulb };
+                    break;
+                case 'court':
+                    dialogContent = { title: 'Asignación de Pista', description: 'La pista se asigna automáticamente solo cuando la clase está completa.\nRecibirás una notificación con el número de pista cuando se confirme.', icon: Hash };
+                    break;
+                case 'category':
+                    dialogContent = { title: 'Categoría de la Clase', description: 'La categoría (chicos/chicas) la sugiere el primer jugador que se apunta.\nNo es una regla estricta, solo una guía para los demás jugadores.', icon: CategoryIcon };
+                    break;
+            }
         }
         setInfoDialog({ open: true, ...dialogContent });
     };
@@ -179,14 +187,6 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
         setIsProcessingPrivateAction(false);
     };
 
-    const handlePriceInfoClick = (optionSize: number) => {
-        const price = calculatePricePerPerson(totalPrice, optionSize);
-        toast({
-            title: `Precio para Clase de ${optionSize}p`,
-            description: `Cada jugador paga ${price.toFixed(2)}€.`,
-        });
-    };
-
     if (!currentUser || !clubInfo || !instructor) {
         return <Card className="p-4"><Skeleton className="h-[500px] w-full" /></Card>;
     }
@@ -207,7 +207,7 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
                     durationMinutes={durationMinutes}
                     isSlotEffectivelyFull={isSlotEffectivelyFull}
                     handleShareClass={handleShareClass}
-                    handleInfoClick={handleInfoClick}
+                    handleInfoClick={() => {}}
                     onReservarPrivadaClick={() => setIsConfirmPrivateDialogOpen(true)}
                     isProcessingPrivateAction={isProcessingPrivateAction}
                     bookings={bookingsByGroupSize}
@@ -222,13 +222,13 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
                     isPendingMap={isPendingMap}
                     onOpenConfirmationDialog={openConfirmationDialog}
                     showPointsBonus={showPointsBonus}
-                    handlePriceInfoClick={handlePriceInfoClick}
+                    handlePriceInfoClick={(optionSize) => handleInfoClick({ type: 'price', optionSize })}
                 />
                  <ClassCardFooter
                     currentSlot={currentSlot}
                     isSlotEffectivelyFull={isSlotEffectivelyFull}
                     courtAvailability={courtAvailability}
-                    onInfoClick={handleInfoClick}
+                    onInfoClick={(type) => handleInfoClick(type)}
                 />
             </Card>
 
