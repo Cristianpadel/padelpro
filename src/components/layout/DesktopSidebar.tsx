@@ -217,7 +217,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
             )}
 
             <div className="p-1 space-y-2">
-                <Link href="/schedule" className="w-full">
+                <Link href="/dashboard" className="w-full">
                     <Button variant={currentPage === 'agenda' ? "secondary" : "ghost"} className={cn("w-full justify-start text-base h-12 items-center py-2 px-3 relative rounded-full", currentPage === 'agenda' && "scale-105 shadow-md font-bold")}>
                         <Avatar className="h-8 w-8 mr-3">
                             <AvatarImage src={currentUser.profilePictureUrl} alt={currentUser.name || 'avatar'} data-ai-hint="user profile small"/>
