@@ -10,7 +10,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ClassInfoDialog } from './ClassCard/ClassInfoDialog';
 import { ClassCardHeader } from './ClassCard/ClassCardHeader';
 import { ClassCardContent } from './ClassCard/ClassCardContent';
-import { ClassCardFooter } from './ClassCard/ClassCardFooter';
 import { BookingConfirmationDialog } from './ClassCard/BookingConfirmationDialog';
 
 import type { TimeSlot, User, Club, PadelCourt, Instructor, ClassPadelLevel } from '@/types';
@@ -20,8 +19,9 @@ import {
     getMockClubs, calculateActivityPrice, getInstructorRate, getCourtAvailabilityForInterval, getMockInstructors,
     confirmClassAsPrivate, joinPrivateClass
 } from '@/lib/mockData';
-import { Lightbulb, ShieldQuestion, Hash, Users2, Venus, Mars, Euro } from 'lucide-react';
+import { Lightbulb, ShieldQuestion, Hash, Users2, Venus, Mars, Euro, Share2, Unlock } from 'lucide-react';
 import { calculatePricePerPerson } from '@/lib/utils';
+import { Button } from '../ui/button';
 
 interface ClassCardProps {
     classData: TimeSlot;
@@ -49,7 +49,6 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
     const [dialogContent, setDialogContent] = useState({ spotIndex: 0, groupSize: 4 as (1|2|3|4) });
     const [infoDialog, setInfoDialog] = useState<{ open: boolean, title: string, description: string, icon: React.ElementType }>({ open: false, title: '', description: '', icon: Lightbulb });
     const [isConfirmPrivateDialogOpen, setIsConfirmPrivateDialogOpen] = useState(false);
-    const [privateClassSizeToConfirm, setPrivateClassSizeToConfirm] = useState<1 | 2 | 3 | 4>(4);
     const [isProcessingPrivateAction, setIsProcessingPrivateAction] = useState(false);
 
     // Data Fetching and Initialization
@@ -77,7 +76,6 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
 
     // Memos for derived state
     const isSlotEffectivelyFull = useMemo(() => isSlotEffectivelyCompleted(currentSlot).completed, [currentSlot]);
-    const confirmedGroupSize = useMemo(() => isSlotEffectivelyCompleted(currentSlot).size, [currentSlot]);
     
     const bookingsByGroupSize = useMemo(() => {
         const groups: Record<number, { userId: string; groupSize: 1 | 2 | 3 | 4; }[]> = { 1: [], 2: [], 3: [], 4: [] };
@@ -91,9 +89,6 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
         currentUser ? hasAnyConfirmedActivityForDay(currentUser.id, new Date(currentSlot.startTime), currentSlot.id, 'class') : false,
     [currentUser, currentSlot.startTime, currentSlot.id]);
 
-    const canConfirmAsPrivate = useMemo(() =>
-        currentUser && currentSlot.status === 'pre_registration' && (currentSlot.bookedPlayers || []).length === 0,
-    [currentUser, currentSlot]);
 
     // Handlers
     const handleBook = async () => {
@@ -132,7 +127,6 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
 
     const handleInfoClick = (type: 'level' | 'court' | 'category') => {
         let dialogContent;
-        const levelDisplay = displayClassLevel(currentSlot.level, true);
         const CategoryIcon = currentSlot.category === 'chica' ? Venus : currentSlot.category === 'chico' ? Mars : Users2;
 
         switch (type) {
@@ -149,19 +143,12 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
         setInfoDialog({ open: true, ...dialogContent });
     };
     
-    const handlePriceInfoClick = (optionSize: 1 | 2 | 3 | 4) => {
-         setInfoDialog({ 
-            open: true, 
-            title: 'Información del Precio', 
-            description: `El precio por persona se calcula dividiendo el coste total de la clase (${totalPrice.toFixed(2)}€) entre el número de jugadores en la opción que elijas.\nOpción de ${optionSize}p: ${totalPrice.toFixed(2)}€ / ${optionSize} = ${(totalPrice/optionSize).toFixed(2)}€ cada uno.`, 
-            icon: Euro 
-        });
-    };
-
     const handleConfirmAsPrivate = async () => {
-         if (!currentUser) return;
+        const firstEmptyGroupSize = [1, 2, 3, 4].find(size => (bookingsByGroupSize[size] || []).length === 0) as 1 | 2 | 3 | 4 | undefined;
+        if (!currentUser || !firstEmptyGroupSize) return;
+
         setIsProcessingPrivateAction(true);
-        const result = await confirmClassAsPrivate(currentUser.id, currentSlot.id, privateClassSizeToConfirm);
+        const result = await confirmClassAsPrivate(currentUser.id, currentSlot.id, firstEmptyGroupSize);
         if ('error' in result) {
             toast({ title: "Error", description: result.error, variant: "destructive" });
         } else {
@@ -177,23 +164,6 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
         setIsConfirmPrivateDialogOpen(false);
         setIsProcessingPrivateAction(false);
     };
-    
-    const handleJoinPrivateClass = async () => {
-        if (!currentUser || !shareCode) return;
-        setIsProcessingPrivateAction(true);
-        const result = await joinPrivateClass(currentUser.id, currentSlot.id, shareCode);
-        if('error' in result) {
-             toast({ title: "Error al Unirse", description: result.error, variant: "destructive" });
-        } else {
-            onBookingSuccess();
-            toast({
-                title: "¡Te has unido a la Clase Privada!",
-                description: `Se ha realizado un cargo de ${result.organizerRefundAmount.toFixed(2)}€ y se ha reembolsado al organizador.`,
-                className: 'bg-primary text-primary-foreground'
-            });
-        }
-        setIsProcessingPrivateAction(false);
-    };
 
     if (!currentUser || !clubInfo || !instructor) {
         return <Card className="p-4"><Skeleton className="h-[500px] w-full" /></Card>;
@@ -203,16 +173,18 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
 
     return (
         <>
-            <Card className="flex flex-col h-full rounded-lg overflow-hidden border">
+            <Card className="flex flex-col h-full rounded-lg overflow-hidden border bg-background shadow-lg">
                 <ClassCardHeader
                     currentSlot={currentSlot}
                     instructor={instructor}
-                    clubInfo={clubInfo}
                     instructorRating={instructorRating}
                     durationMinutes={durationMinutes}
                     isSlotEffectivelyFull={isSlotEffectivelyFull}
                     handleShareClass={handleShareClass}
                     handleInfoClick={handleInfoClick}
+                    onReservarPrivadaClick={() => setIsConfirmPrivateDialogOpen(true)}
+                    isProcessingPrivateAction={isProcessingPrivateAction}
+                    bookings={bookingsByGroupSize}
                 />
                 <ClassCardContent
                     currentUser={currentUser}
@@ -220,30 +192,19 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
                     totalPrice={totalPrice}
                     bookingsByGroupSize={bookingsByGroupSize}
                     isSlotEffectivelyFull={isSlotEffectivelyFull}
-                    confirmedGroupSize={confirmedGroupSize}
                     userHasConfirmedActivityToday={userHasConfirmedActivityToday}
                     isPendingMap={isPendingMap}
                     onOpenConfirmationDialog={openConfirmationDialog}
                     showPointsBonus={showPointsBonus}
-                    handlePriceInfoClick={handlePriceInfoClick}
                     courtAvailability={courtAvailability}
                 />
-                <ClassCardFooter
-                    currentSlot={currentSlot}
-                    currentUser={currentUser}
-                    shareCode={shareCode}
-                    isProcessingPrivateAction={isProcessingPrivateAction}
-                    canConfirmAsPrivate={!!canConfirmAsPrivate}
-                    canJoinThisPrivateMatch={!!(shareCode && currentSlot.status === 'confirmed_private')}
-                    userHasConfirmedActivityToday={userHasConfirmedActivityToday}
-                    priceForPrivateInvitee={calculatePricePerPerson(totalPrice, currentSlot.confirmedPrivateSize || 4)}
-                    handleConfirmAsPrivate={handleConfirmAsPrivate}
-                    handleJoinPrivateClass={handleJoinPrivateClass}
-                    handleShareClass={handleShareClass}
-                    onOpenChangePrivateDialog={setIsConfirmPrivateDialogOpen}
-                    isConfirmPrivateDialogOpen={isConfirmPrivateDialogOpen}
-                    privateClassSizeToConfirm={privateClassSizeToConfirm}
-                />
+                 {currentSlot.organizerId === currentUser?.id && currentSlot.status === 'confirmed_private' && (
+                     <div className="p-2 border-t">
+                        <Button variant="outline" size="sm" className="w-full">
+                           <Unlock className="mr-2 h-3.5 w-3.5" /> Hacer Pública
+                        </Button>
+                    </div>
+                )}
             </Card>
 
             <BookingConfirmationDialog
@@ -254,6 +215,17 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
                 currentUser={currentUser}
                 totalPrice={totalPrice}
                 {...dialogContent}
+            />
+            
+             <BookingConfirmationDialog
+                isOpen={isConfirmPrivateDialogOpen}
+                onOpenChange={setIsConfirmPrivateDialogOpen}
+                onConfirm={handleConfirmAsPrivate}
+                isPending={isProcessingPrivateAction}
+                currentUser={currentUser}
+                totalPrice={totalPrice}
+                groupSize={1} // Indicates private booking
+                spotIndex={0}
             />
 
             <ClassInfoDialog
