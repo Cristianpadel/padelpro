@@ -97,7 +97,7 @@ const BookingSpotDisplay: React.FC<BookingSpotDisplayProps> = ({
         <Tooltip>
           <TooltipTrigger asChild>
             <div className="relative">
-              <Avatar className={cn("h-10 w-10 p-0 overflow-hidden shadow-[inset_0_2px_4px_0_rgba(0,0,0,0.2)]", isCurrentUserInSpot ? "ring-2 ring-offset-1 ring-primary border-primary" : "border-gray-300")}>
+              <Avatar className={cn("h-10 w-10 p-0 overflow-hidden shadow-[inset_0_3px_5px_0_rgba(0,0,0,0.3)]", isCurrentUserInSpot ? "ring-2 ring-offset-1 ring-primary border-primary" : "border-gray-300")}>
                 <AvatarImage src={student?.profilePictureUrl} alt={student?.name} data-ai-hint="player avatar small" />
                 <AvatarFallback className="text-xs">{getInitials(student?.name || '')}</AvatarFallback>
               </Avatar>

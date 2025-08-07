@@ -212,7 +212,7 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
                     )}>
                         {player ? (
                             <>
-                                <Avatar className="h-[calc(100%-4px)] w-[calc(100%-4px)]">
+                                <Avatar className="h-[calc(100%-4px)] w-[calc(100%-4px)] shadow-[inset_0_3px_5px_0_rgba(0,0,0,0.3)]">
                                     <AvatarImage src={fullPlayer?.profilePictureUrl} alt={`Avatar ${player.name}`} data-ai-hint="player avatar large"/>
                                     <AvatarFallback className="text-xl">{getInitials(player.name || 'P')}</AvatarFallback>
                                 </Avatar>
