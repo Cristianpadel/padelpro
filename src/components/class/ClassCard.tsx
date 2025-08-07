@@ -1,3 +1,4 @@
+// src/components/class/ClassCard.tsx
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -10,18 +11,17 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ClassInfoDialog } from './ClassCard/ClassInfoDialog';
 import { ClassCardHeader } from './ClassCard/ClassCardHeader';
 import { ClassCardContent } from './ClassCard/ClassCardContent';
+import { ClassCardFooter } from './ClassCard/ClassCardFooter';
 import { BookingConfirmationDialog } from './ClassCard/BookingConfirmationDialog';
 
 import type { TimeSlot, User, Club, PadelCourt, Instructor, ClassPadelLevel } from '@/types';
-import { displayClassLevel } from '@/types';
 import {
-    getMockUserBookings, bookClass, isSlotEffectivelyCompleted, hasAnyConfirmedActivityForDay, makeClassPublic,
+    bookClass, isSlotEffectivelyCompleted, hasAnyConfirmedActivityForDay,
     getMockClubs, calculateActivityPrice, getInstructorRate, getCourtAvailabilityForInterval, getMockInstructors,
-    confirmClassAsPrivate, joinPrivateClass
+    confirmClassAsPrivate
 } from '@/lib/mockData';
-import { Lightbulb, ShieldQuestion, Hash, Users2, Venus, Mars, Euro, Share2, Unlock } from 'lucide-react';
+import { Lightbulb, ShieldQuestion, Hash, Users2, Venus, Mars } from 'lucide-react';
 import { calculatePricePerPerson } from '@/lib/utils';
-import { Button } from '../ui/button';
 
 interface ClassCardProps {
     classData: TimeSlot;
@@ -30,6 +30,20 @@ interface ClassCardProps {
     shareCode?: string;
     showPointsBonus: boolean;
 }
+
+const hexToRgba = (hex: string, alpha: number) => {
+    let c: any;
+    if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) {
+        c = hex.substring(1).split('');
+        if (c.length == 3) {
+            c = [c[0], c[0], c[1], c[1], c[2], c[2]];
+        }
+        c = '0x' + c.join('');
+        return `rgba(${[(c >> 16) & 255, (c >> 8) & 255, c & 255].join(',')},${alpha})`;
+    }
+    return 'rgba(0,0,0,0)';
+};
+
 
 const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot, currentUser, onBookingSuccess, shareCode, showPointsBonus }) => {
     const { toast } = useToast();
@@ -165,15 +179,27 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
         setIsProcessingPrivateAction(false);
     };
 
+    const handlePriceInfoClick = (optionSize: number) => {
+        const price = calculatePricePerPerson(totalPrice, optionSize);
+        toast({
+            title: `Precio para Clase de ${optionSize}p`,
+            description: `Cada jugador paga ${price.toFixed(2)}€.`,
+        });
+    };
+
     if (!currentUser || !clubInfo || !instructor) {
         return <Card className="p-4"><Skeleton className="h-[500px] w-full" /></Card>;
     }
     
     const durationMinutes = differenceInMinutes(new Date(currentSlot.endTime), new Date(currentSlot.startTime));
+    const shadowEffect = clubInfo?.cardShadowEffect;
+    const shadowStyle = shadowEffect?.enabled 
+        ? { boxShadow: `0 0 25px ${hexToRgba(shadowEffect.color, shadowEffect.intensity)}` } 
+        : {};
 
     return (
         <>
-            <Card className="flex flex-col h-full rounded-lg overflow-hidden border bg-background shadow-lg">
+            <Card className="flex flex-col h-full rounded-lg overflow-hidden border bg-background" style={shadowStyle}>
                 <ClassCardHeader
                     currentSlot={currentSlot}
                     instructor={instructor}
@@ -196,15 +222,14 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
                     isPendingMap={isPendingMap}
                     onOpenConfirmationDialog={openConfirmationDialog}
                     showPointsBonus={showPointsBonus}
-                    courtAvailability={courtAvailability}
+                    handlePriceInfoClick={handlePriceInfoClick}
                 />
-                 {currentSlot.organizerId === currentUser?.id && currentSlot.status === 'confirmed_private' && (
-                     <div className="p-2 border-t">
-                        <Button variant="outline" size="sm" className="w-full">
-                           <Unlock className="mr-2 h-3.5 w-3.5" /> Hacer Pública
-                        </Button>
-                    </div>
-                )}
+                 <ClassCardFooter
+                    currentSlot={currentSlot}
+                    isSlotEffectivelyFull={isSlotEffectivelyFull}
+                    courtAvailability={courtAvailability}
+                    onInfoClick={handleInfoClick}
+                />
             </Card>
 
             <BookingConfirmationDialog

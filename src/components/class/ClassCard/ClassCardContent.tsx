@@ -1,13 +1,12 @@
+// src/components/class/ClassCard/ClassCardContent.tsx
 "use client";
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import type { TimeSlot, User, PadelCourt } from '@/types';
+import type { TimeSlot, User } from '@/types';
 import BookingSpotDisplay from '@/components/class/BookingSpotDisplay';
-import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
 import { Button } from '@/components/ui/button';
 import { calculatePricePerPerson } from '@/lib/utils';
-import { isSlotEffectivelyCompleted } from '@/lib/mockData';
 
 interface ClassCardContentProps {
   currentUser: User;
@@ -19,7 +18,7 @@ interface ClassCardContentProps {
   isPendingMap: Record<string, boolean>;
   onOpenConfirmationDialog: (optionSize: 1 | 2 | 3 | 4, spotIdx: number) => void;
   showPointsBonus: boolean;
-  courtAvailability: { available: PadelCourt[], occupied: PadelCourt[], total: number };
+  handlePriceInfoClick: (optionSize: number) => void;
 }
 
 export const ClassCardContent: React.FC<ClassCardContentProps> = ({
@@ -32,13 +31,13 @@ export const ClassCardContent: React.FC<ClassCardContentProps> = ({
   isPendingMap,
   onOpenConfirmationDialog,
   showPointsBonus,
-  courtAvailability,
+  handlePriceInfoClick,
 }) => {
   return (
     <div className="flex-grow pt-2 pb-2 px-3 space-y-1">
       {([1, 2, 3, 4] as const).map(optionSize => {
         const isUserBookedInThisOption = (bookingsByGroupSize[optionSize] || []).some(p => p.userId === currentUser.id);
-        const { completed, size: confirmedGroupSize } = isSlotEffectivelyCompleted(currentSlot, optionSize);
+        const confirmedGroupSize = isSlotEffectivelyFull ? currentSlot.bookedPlayers.find(p => bookingsByGroupSize[optionSize].includes(p))?.groupSize : null;
 
         return (
           <div key={optionSize} className={cn(
@@ -65,8 +64,8 @@ export const ClassCardContent: React.FC<ClassCardContentProps> = ({
                 />
               )}
             </div>
-             <Button variant="ghost" className="text-sm flex items-center h-8 px-3 rounded-full shadow-sm bg-slate-100 hover:bg-slate-200 text-slate-700">
-              <span className="font-bold">
+             <Button variant="outline" className="text-xs flex items-center h-8 px-3 rounded-full shadow-sm bg-slate-100 hover:bg-slate-200 text-slate-700" onClick={() => handlePriceInfoClick(optionSize)}>
+              <span className="font-bold text-sm">
                 {calculatePricePerPerson(totalPrice, optionSize).toFixed(2)}
               </span>
               <span className="font-normal text-xs ml-1">€ p.p.</span>
@@ -74,13 +73,6 @@ export const ClassCardContent: React.FC<ClassCardContentProps> = ({
           </div>
         );
       })}
-      <div className="px-1.5 pt-2">
-         <CourtAvailabilityIndicator
-            availableCourts={courtAvailability.available}
-            occupiedCourts={courtAvailability.occupied}
-            totalCourts={courtAvailability.total}
-        />
-      </div>
     </div>
   );
 };
