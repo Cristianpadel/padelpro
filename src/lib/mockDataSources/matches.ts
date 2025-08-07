@@ -1,3 +1,4 @@
+// src/lib/mockDataSources/matches.ts
 "use client";
 
 import { addHours, setHours, setMinutes, startOfDay, format, isSameDay, addDays, addMinutes, areIntervalsOverlapping, getDay, parse, differenceInHours, differenceInDays } from 'date-fns';
@@ -431,9 +432,10 @@ export function createMatchesForDay(club: Club, date: Date): Match[] {
     const dayKey = dayOfWeekArray[getDay(date)];
     const clubUnavailableRanges = club.unavailableMatchHours?.[dayKey] || [];
     
-    const allActivitiesTodayForClub = [
-        ...state.getMockTimeSlots().filter(s => isSameDay(new Date(s.startTime), date) && s.clubId === club.id),
-        ...state.getMockMatches().filter(m => isSameDay(new Date(m.startTime), date) && m.clubId === club.id),
+    // Check only for confirmed activities that would block a slot
+    const confirmedActivitiesToday = [
+        ...state.getMockTimeSlots().filter(s => isSameDay(new Date(s.startTime), date) && s.clubId === club.id && s.courtNumber !== undefined && (s.status === 'confirmed' || s.status === 'confirmed_private')),
+        ...state.getMockMatches().filter(m => isSameDay(new Date(m.startTime), date) && m.clubId === club.id && m.courtNumber !== undefined && (m.status === 'confirmed' || m.status === 'confirmed_private')),
     ];
 
     let currentTimeSlotStart = setMinutes(setHours(date, startHour), 0);
@@ -441,45 +443,34 @@ export function createMatchesForDay(club: Club, date: Date): Match[] {
 
     while (currentTimeSlotStart < endOfDayOperations) {
         const matchStartTime = new Date(currentTimeSlotStart);
-        const matchEndTime = addMinutes(matchStartTime, matchDurationMinutes);
 
-        if (matchEndTime > endOfDayOperations) {
-            currentTimeSlotStart = addMinutes(currentTimeSlotStart, timeSlotIntervalMinutes);
-            continue;
-        }
-
-        const isUnavailableBlock = clubUnavailableRanges.some(range =>
-            areIntervalsOverlapping(
-                { start: matchStartTime, end: matchEndTime },
-                { start: parse(range.start, 'HH:mm', matchStartTime), end: parse(range.end, 'HH:mm', matchStartTime) },
-                { inclusive: false }
-            )
-        );
+        // Check against unavailable blocks defined in club settings
+        const isUnavailableBlock = clubUnavailableRanges.some(range => {
+            const unavailableStart = parse(range.start, 'HH:mm', matchStartTime);
+            const unavailableEnd = parse(range.end, 'HH:mm', matchStartTime);
+            return matchStartTime >= unavailableStart && matchStartTime < unavailableEnd;
+        });
 
         if (isUnavailableBlock) {
             currentTimeSlotStart = addMinutes(currentTimeSlotStart, timeSlotIntervalMinutes);
             continue;
         }
         
-        const existingActivity = allActivitiesTodayForClub.find(activity =>
-            !('isPlaceholder' in activity && activity.isPlaceholder === true) &&
-            areIntervalsOverlapping(
-                 { start: matchStartTime, end: matchEndTime },
-                 { start: new Date(activity.startTime), end: new Date('endTime' in activity ? activity.endTime : addMinutes(new Date(activity.startTime), 90)) },
-                 { inclusive: false }
-            )
+        // Check if there's already a confirmed activity at this exact start time.
+        const hasConfirmedConflict = confirmedActivitiesToday.some(activity => 
+            new Date(activity.startTime).getTime() === matchStartTime.getTime()
         );
 
-        if (existingActivity) {
-            currentTimeSlotStart = addMinutes(currentTimeSlotStart, timeSlotIntervalMinutes);
+        if (hasConfirmedConflict) {
+             currentTimeSlotStart = addMinutes(currentTimeSlotStart, timeSlotIntervalMinutes);
             continue;
         }
-        
-        const existingIdenticalMatchCard = matchesForDay.find(m =>
+
+        const existingIdenticalProposal = matchesForDay.find(m =>
             new Date(m.startTime).getTime() === matchStartTime.getTime()
         );
-        
-        if (existingIdenticalMatchCard) {
+
+        if (existingIdenticalProposal) {
             currentTimeSlotStart = addMinutes(currentTimeSlotStart, timeSlotIntervalMinutes);
             continue;
         }
@@ -488,7 +479,7 @@ export function createMatchesForDay(club: Club, date: Date): Match[] {
             id: `match-ph-${club.id}-${format(matchStartTime, 'yyyyMMddHHmm')}`,
             clubId: club.id,
             startTime: matchStartTime,
-            endTime: matchEndTime,
+            endTime: addMinutes(matchStartTime, matchDurationMinutes),
             level: 'abierto',
             category: 'abierta',
             bookedPlayers: [],
@@ -820,4 +811,5 @@ export const fetchUserMatchBookings = async (userId: string): Promise<MatchBooki
     };
   });
 };
+
 
