@@ -169,12 +169,10 @@ const ClubActivityCalendar: React.FC<ClubActivityCalendarProps> = ({ club, refre
 
       const activitiesForSelectedDate = [
           ...fetchedTimeSlots.filter(slot =>
-              new Date(slot.endTime) > now &&
               (slot.status === 'confirmed' || slot.status === 'confirmed_private' || slot.status === 'forming') &&
               isSameDay(new Date(slot.startTime), currentDate)
           ).map(s => ({...s, _activityType: 'class'} as const)),
           ...fetchedMatches.filter(match =>
-              new Date(match.endTime) > now &&
               (match.status === 'confirmed' || match.status === 'confirmed_private' || match.status === 'forming' || match.isPlaceholder) && 
               isSameDay(new Date(match.startTime), currentDate)
           ).map(m => ({...m, _activityType: 'match'} as const))
