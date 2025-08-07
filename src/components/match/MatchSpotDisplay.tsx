@@ -171,7 +171,7 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
             spotTooltipText = `Nivel incompatible (${currentUser?.level || 'N/A'}).`;
             isDisabled = true;
         } else if (hasEnoughCredit) {
-            iconToShow = <Plus className="h-5 w-5 text-green-600" />;
+            iconToShow = <Plus className="h-5 w-5 text-green-600 stroke-[3]" />;
             spotTooltipText = isPlaceholderMatch ? `Iniciar Partida (Coste: ${pricePerPlayer.toFixed(2)}€)` : `Unirse (Coste: ${pricePerPlayer.toFixed(2)}€)`;
             isDisabled = false;
             actionHandler = () => onJoin(spotIndex, false);
@@ -202,7 +202,7 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
                     aria-label={spotTooltipText}
                 >
                     <div className={cn(
-                        "relative inline-flex items-center justify-center h-12 w-12 rounded-full border-2 z-0 transition-all shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.4)]",
+                        "relative inline-flex items-center justify-center h-12 w-12 rounded-full border-[3px] z-0 transition-all shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.4)]",
                         animationClass,
                         spotVariant === "solid" && "bg-slate-100 border-slate-300",
                         spotVariant === "dashed" && "border-dashed border-green-400 hover:bg-green-100",
