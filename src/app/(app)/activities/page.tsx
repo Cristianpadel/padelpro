@@ -72,8 +72,11 @@ export default function ActivitiesPage() {
         }
     });
 
-    const handleBookingSuccess = useCallback(() => {
+    const handleBookingSuccess = useCallback(async () => {
         triggerRefresh(); // Use the hook's refresh trigger
+        // Re-fetch current user to update balance info in the sidebar
+        const updatedUser = await getMockCurrentUser();
+        setCurrentUser(updatedUser);
     }, [triggerRefresh]);
     
     useEffect(() => {
