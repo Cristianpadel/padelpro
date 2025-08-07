@@ -2,24 +2,40 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import AdminPanel from '@/components/admin/AdminPanel';
-import { clubs } from '@/lib/mockData';
+import { getMockClubs } from '@/lib/mockData';
 import type { Club } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AdminPage() {
     const [adminClub, setAdminClub] = useState<Club | null>(null);
     const [loading, setLoading] = useState(true);
+    const router = useRouter();
 
     useEffect(() => {
-        // In a real app, you'd fetch the club based on the logged-in admin
-        // For now, we'll just use the first club from our mock data.
-        const club = clubs[0];
+        let activeClubId: string | null = null;
+        if (typeof window !== 'undefined') {
+            activeClubId = localStorage.getItem('activeAdminClubId');
+        }
+
+        if (!activeClubId) {
+            router.push('/auth/login-club-admin');
+            return;
+        }
+
+        const club = getMockClubs().find(c => c.id === activeClubId);
+        
         if (club) {
             setAdminClub(club);
+        } else {
+             if (typeof window !== 'undefined') {
+                localStorage.removeItem('activeAdminClubId');
+            }
+            router.push('/auth/login-club-admin');
         }
         setLoading(false);
-    }, []);
+    }, [router]);
 
     if (loading || !adminClub) {
         return (
