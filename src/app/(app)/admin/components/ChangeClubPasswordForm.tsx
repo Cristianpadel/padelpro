@@ -26,7 +26,7 @@ interface ChangeClubPasswordFormProps {
 const passwordSchema = z.string().min(6, "La contraseña debe tener al menos 6 caracteres.");
 
 const formSchema = z.object({
-  currentPassword: passwordSchema,
+  currentPassword: z.string().min(1, "Debes introducir tu contraseña actual."),
   newPassword: passwordSchema,
   confirmNewPassword: passwordSchema,
 }).refine(data => data.newPassword === data.confirmNewPassword, {

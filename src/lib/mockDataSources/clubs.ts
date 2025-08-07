@@ -1,3 +1,4 @@
+// src/lib/mockDataSources/clubs.ts
 "use client";
 import type { Club, DayOfWeek, TimeRange, CourtRateTier, Instructor } from '@/types';
 import * as state from './index';
@@ -45,4 +46,23 @@ export const updateClub = async (clubId: string, updates: Partial<Club>): Promis
     const updatedClub = { ...state.getMockClubs()[clubIndex], ...updates };
     state.updateClubInState(updatedClub);
     return updatedClub;
+};
+
+export const updateClubAdminPassword = async (clubId: string, currentPasswordInForm: string, newPasswordInForm: string): Promise<{ success: true } | { error: string }> => {
+    await new Promise(resolve => setTimeout(resolve, 50));
+    const club = state.getMockClubs().find(c => c.id === clubId);
+    if (!club) {
+        return { error: "Club no encontrado." };
+    }
+
+    // Check if the current password is correct
+    if (club.adminPassword !== currentPasswordInForm) {
+        return { error: "La contraseña actual es incorrecta." };
+    }
+    
+    // Update to the new password
+    club.adminPassword = newPasswordInForm;
+    state.updateClubInState(club);
+    
+    return { success: true };
 };

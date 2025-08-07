@@ -18,6 +18,7 @@ export * from './shop';
 // --- New composite functions ---
 import { isSameDay, addMinutes } from 'date-fns';
 import type { CourtGridBooking } from '@/types';
+import { getMockTimeSlots, getMockMatches, getMockMatchDayEvents, getMockPadelCourts } from './state';
 
 export const fetchCourtBookingsForDay = async (clubId: string, date: Date): Promise<CourtGridBooking[]> => {
     const confirmedSlots = getMockTimeSlots().filter(s => s.clubId === clubId && (s.status === 'confirmed' || s.status === 'confirmed_private') && isSameDay(new Date(s.startTime), date));
