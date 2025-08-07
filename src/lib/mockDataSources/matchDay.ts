@@ -1,3 +1,4 @@
+// src/lib/mockDataSources/matchDay.ts
 "use client";
 
 import type { MatchDayEvent, User, MatchDayInscription, PadelCourt, Match } from '@/types';
@@ -200,4 +201,18 @@ export const fetchMatchDayEventsForDate = async (date: Date, clubId?: string): P
         return events.filter(e => e.id === clubId)
     }
     return events;
+};
+
+export const fetchUserMatchDayInscriptions = async (userId: string): Promise<(MatchDayInscription & { eventDetails?: MatchDayEvent })[]> => {
+    await new Promise(resolve => setTimeout(resolve, 50));
+    const inscriptions = state.getMockMatchDayInscriptions().filter(i => i.userId === userId);
+    const events = state.getMockMatchDayEvents();
+    
+    return inscriptions.map(inscription => {
+        const eventDetails = events.find(e => e.id === inscription.eventId);
+        return {
+            ...inscription,
+            eventDetails: eventDetails ? { ...eventDetails } : undefined,
+        };
+    }).sort((a, b) => new Date(a.eventDetails?.eventDate || 0).getTime() - new Date(b.eventDetails?.eventDate || 0).getTime());
 };
