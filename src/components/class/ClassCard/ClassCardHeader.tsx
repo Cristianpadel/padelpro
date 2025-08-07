@@ -71,7 +71,7 @@ export const ClassCardHeader: React.FC<ClassCardHeaderProps> = ({
 
 
   return (
-    <div className="pt-2 pb-1 px-3 space-y-1">
+    <div className="pt-2 pb-1 px-3 space-y-2">
       {/* Top section: Avatar, Name, Rating, and Private Button */}
       <div className="flex justify-between items-start">
         <div className="flex items-center space-x-3">

@@ -420,7 +420,7 @@ export interface UserActivityStatusForDay {
 
 // --- Display Helpers ---
 export const displayClassLevel = (level: ClassPadelLevel | undefined, short = false): string => {
-    if (level === 'abierto' || !level) return short ? 'Abre' : 'Nivel Abierto';
+    if (level === 'abierto' || !level) return short ? 'Nivel' : 'Nivel Abierto';
     if (typeof level === 'object' && 'min' in level && 'max' in level) {
       if (level.min === level.max) return `${level.min}`;
       return `${level.min}-${level.max}`;
@@ -430,13 +430,16 @@ export const displayClassLevel = (level: ClassPadelLevel | undefined, short = fa
 
 export const displayClassCategory = (category: PadelCategoryForSlot, short = false): string => {
     const option = padelCategoryForSlotOptions.find(o => o.value === category);
-    if (!option || category === 'abierta') return 'Mixto';
+    if (!option) return 'Categoría';
+    if (category === 'abierta') return short ? 'Cat.' : 'Categoría';
+
     if (short) {
         if (option.value === 'chica') return 'Chicas';
         if (option.value === 'chico') return 'Chicos';
     }
     return option.label.replace(' (Informativo)', '');
 };
+
 
 export const displayActivityStatusWithDetails = (
     activity: { rawActivity: TimeSlot | Match, status?: TimeSlot['status'] | Match['status']},
