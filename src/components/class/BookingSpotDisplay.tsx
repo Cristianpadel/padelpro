@@ -117,7 +117,7 @@ const BookingSpotDisplay: React.FC<BookingSpotDisplayProps> = ({
             <Button
               variant="outline" size="icon"
               className={cn(
-                "h-10 w-10 rounded-full flex items-center justify-center border-[3px] border-dashed",
+                "h-10 w-10 rounded-full flex items-center justify-center border-[3px] border-dashed shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.2)]",
                 isLoading && "cursor-wait",
                 (canJoinStandard || canJoinGratis) ? (canJoinGratis ? "border-yellow-400 hover:bg-yellow-50" : "border-green-400 hover:bg-green-50") : "opacity-50 cursor-not-allowed"
               )}

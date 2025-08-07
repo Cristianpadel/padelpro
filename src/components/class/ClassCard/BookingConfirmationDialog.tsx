@@ -1,3 +1,4 @@
+// src/components/class/ClassCard/BookingConfirmationDialog.tsx
 "use client";
 
 import React from 'react';
@@ -14,6 +15,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Loader2, Euro, Gift, Rocket, PiggyBank, Star, ThumbsUp, Lock, Scissors } from 'lucide-react';
 import type { User } from '@/types';
+import { calculatePricePerPerson } from '@/lib/utils';
+
 
 interface BookingConfirmationDialogProps {
   isOpen: boolean;
@@ -38,8 +41,8 @@ export const BookingConfirmationDialog: React.FC<BookingConfirmationDialogProps>
   totalPrice,
   isGratisSpot,
 }) => {
-  const pricePerPerson = totalPrice / groupSize;
-  const pointsCost = totalPrice / 1; // Assuming 1 point per euro for gratis spots
+  const pricePerPerson = calculatePricePerPerson(totalPrice, groupSize);
+  const pointsCost = calculatePricePerPerson(totalPrice, 1);
   const availableCredit = (currentUser.credit ?? 0) - (currentUser.blockedCredit ?? 0);
 
   const confirmationDialogTitle = groupSize === 1 ? '¡Confirmar Clase Privada!' : '¡Casi dentro!';
