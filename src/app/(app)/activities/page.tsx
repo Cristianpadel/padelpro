@@ -21,6 +21,7 @@ import ActiveFiltersDisplay from '@/components/layout/ActiveFiltersDisplay';
 import { MobileFiltersSheet } from '@/components/layout/MobileFiltersSheet';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 export default function ActivitiesPage() {
     const router = useRouter();
