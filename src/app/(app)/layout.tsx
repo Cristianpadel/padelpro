@@ -7,12 +7,20 @@ import { BottomNavigationBar } from '@/components/layout/BottomNavigationBar';
 import { getMockCurrentUser, getMockClubs } from '@/lib/mockData';
 import type { User, Club } from '@/types';
 import Footer from '@/components/layout/Footer';
+import ProfessionalAccessDialog from '@/components/layout/ProfessionalAccessDialog';
+import LogoutConfirmationDialog from '@/components/layout/LogoutConfirmationDialog';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { toast } = useToast();
   const [currentUser, setCurrentUser] = React.useState<User | null>(null);
   const [clubInfo, setClubInfo] = React.useState<Club | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isProfessionalAccessOpen, setIsProfessionalAccessOpen] = React.useState(false);
+  const [isLogoutConfimOpen, setIsLogoutConfirmOpen] = React.useState(false);
   
   React.useEffect(() => {
     const fetchData = async () => {
@@ -26,14 +34,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     fetchData();
   }, [pathname]); // Refetch on path change to simulate auth state changes
 
-  const handleProfessionalAccessClick = () => {
-    // Logic for professional access dialog
-    console.log("Professional Access Clicked");
-  }
-
   const handleLogoutClick = () => {
+    setIsLogoutConfirmOpen(true);
+  }
+  
+  const handleConfirmLogout = () => {
     // Logic for logout confirmation
-    console.log("Logout Clicked");
+    console.log("Logout Confirmed");
+    toast({ title: "Sesión Cerrada" });
+    setIsLogoutConfirmOpen(false);
+    router.push('/');
   }
 
   // Determine current page for sidebar active state
@@ -53,7 +63,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   clubInfo={clubInfo}
                   currentPage={currentPage}
                   showFilters={pathname.startsWith('/activities')}
-                  onProfessionalAccessClick={handleProfessionalAccessClick}
+                  onProfessionalAccessClick={() => setIsProfessionalAccessOpen(true)}
                   onLogoutClick={handleLogoutClick}
               />
           )}
@@ -64,6 +74,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
       <Footer />
       <BottomNavigationBar />
+      <ProfessionalAccessDialog 
+        isOpen={isProfessionalAccessOpen}
+        onOpenChange={setIsProfessionalAccessOpen}
+      />
+      <LogoutConfirmationDialog
+        isOpen={isLogoutConfimOpen}
+        onOpenChange={setIsLogoutConfirmOpen}
+        onConfirm={handleConfirmLogout}
+      />
     </div>
   );
 }
