@@ -1,60 +1,82 @@
 "use client";
 
 import React from 'react';
-import type { TimeSlot, User } from '@/types';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { getInitials } from '@/lib/utils';
-import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { getMockStudents } from '@/lib/mockData';
-import { Users, User as UserIcon } from 'lucide-react';
+import type { TimeSlot } from '@/types';
 import { cn } from '@/lib/utils';
+import { Users } from 'lucide-react';
+import { isSlotEffectivelyCompleted } from '@/lib/mockData';
 
 interface ClassInscriptionVisualizerProps {
-  timeSlot: TimeSlot;
+  timeSlot: TimeSlot | null;
 }
 
 const ClassInscriptionVisualizer: React.FC<ClassInscriptionVisualizerProps> = ({ timeSlot }) => {
-  const bookedPlayers = timeSlot.bookedPlayers || [];
-  const maxCapacity = timeSlot.maxPlayers || 4;
-  const isPrivate = timeSlot.status === 'confirmed_private';
-  const allStudents = getMockStudents();
+  const isProposedClass = timeSlot?.status === 'pre_registration' && (!timeSlot.bookedPlayers || timeSlot.bookedPlayers.length === 0);
 
-  const getPlayerDetails = (userId: string) => {
-    return allStudents.find(s => s.id === userId) || { id: userId, name: `ID: ${userId.slice(0, 4)}`, profilePictureUrl: '' };
-  };
-
-  if (bookedPlayers.length === 0) {
+  if (!timeSlot) {
     return (
-        <div className="h-full w-full flex flex-col items-center justify-center p-1 text-blue-800 bg-blue-50/50">
-            <UserIcon className="h-5 w-5 opacity-80" />
-            <p className="text-[9px] font-semibold text-center mt-0.5">Propuesta</p>
-        </div>
+       <div className="h-full w-full bg-gray-50" />
     );
   }
 
-  return (
-    <div className={cn("h-full w-full flex flex-col items-center justify-center p-1", isPrivate ? "bg-purple-800 text-white" : "bg-green-600 text-white")}>
-       <p className="text-[10px] font-bold text-center leading-tight mb-0.5">{isPrivate ? `Privada (${timeSlot.confirmedPrivateSize}p)` : `Clase (${bookedPlayers.length}/${maxCapacity})`}</p>
-      <div className="flex flex-wrap items-center justify-center -space-x-2">
-        {bookedPlayers.map(player => {
-          const student = getPlayerDetails(player.userId);
-          return (
-            <TooltipProvider key={player.userId} delayDuration={100}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Avatar className="h-5 w-5 border-2 border-white dark:border-gray-800">
-                    <AvatarImage src={student.profilePictureUrl} alt={student.name || 'avatar'} data-ai-hint="student avatar tiny"/>
-                    <AvatarFallback className="text-[7px]">{getInitials(student.name || '')}</AvatarFallback>
-                  </Avatar>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs p-1">
-                  <p>{student.name}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          );
-        })}
+  if (isProposedClass) {
+    return (
+      <div className="proposed-class-panel flex h-full w-full items-center justify-center p-0.5 bg-transparent rounded-sm min-w-fit flex-col gap-1">
+         <Users className="h-4 w-4 text-orange-600" />
+         <p className="text-[9px] font-semibold text-orange-700">Clase Propuesta</p>
       </div>
+    );
+  }
+
+  const bookingsByGroupSize: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0 };
+  if (timeSlot?.bookedPlayers) {
+    timeSlot.bookedPlayers.forEach(p => {
+      if (bookingsByGroupSize[p.groupSize] !== undefined) {
+        bookingsByGroupSize[p.groupSize]++;
+      }
+    });
+  }
+
+  const { completed: isCompleted } = isSlotEffectivelyCompleted(timeSlot);
+
+  return (
+    <div className="class-pyramid-panel flex flex-col items-center justify-center gap-0.5 p-0.5 bg-transparent rounded-sm w-full h-full">
+      {([1, 2, 3, 4] as const).map(optionSize => (
+        <div key={optionSize} className="flex items-center justify-center gap-px">
+          {Array.from({ length: optionSize }).map((_, spotIndex) => {
+            const isFilled = spotIndex < bookingsByGroupSize[optionSize];
+            const isGratisPlaceholder = timeSlot?.designatedGratisSpotPlaceholderIndexForOption?.[optionSize] === spotIndex && !isFilled;
+
+            let squareColorClass = 'bg-blue-200'; // Default libre (pre-registration)
+            let title = `Opción ${optionSize}p - Plaza ${spotIndex + 1}/${optionSize} Libre`;
+
+            if (isGratisPlaceholder) {
+                squareColorClass = 'bg-yellow-400'; // Gratis spot color
+                title = `Opción ${optionSize}p - Plaza ${spotIndex + 1}/${optionSize} ¡Gratis!`;
+            } else if (timeSlot?.status === 'confirmed_private') {
+                squareColorClass = isFilled ? 'bg-purple-600' : 'bg-purple-200';
+                title = `Opción ${optionSize}p - Plaza ${spotIndex + 1}/${optionSize} ${isFilled ? 'Ocupada (Privada)' : 'Libre (Privada)'}`;
+            } else if (isCompleted) {
+                squareColorClass = isFilled ? 'bg-green-600' : 'bg-green-200';
+                title = `Opción ${optionSize}p - Plaza ${spotIndex + 1}/${optionSize} ${isFilled ? 'Ocupada (Confirmada)' : 'Libre'}`;
+            } else { // pre_registration
+                 squareColorClass = isFilled ? 'bg-blue-600' : 'bg-blue-200';
+                 title = `Opción ${optionSize}p - Plaza ${spotIndex + 1}/${optionSize} ${isFilled ? 'Ocupada' : 'Libre'}`;
+            }
+            
+            return (
+              <div
+                key={`${optionSize}-${spotIndex}`}
+                title={title}
+                className={cn(
+                  "w-1.5 h-1.5 border border-gray-400",
+                  squareColorClass
+                )}
+              />
+            );
+          })}
+        </div>
+      ))}
     </div>
   );
 };
