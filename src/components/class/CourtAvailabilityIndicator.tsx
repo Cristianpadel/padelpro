@@ -43,32 +43,34 @@ const CourtAvailabilityIndicator: React.FC<CourtAvailabilityIndicatorProps> = ({
   ].sort((a,b) => a.courtNumber - b.courtNumber);
 
   return (
-    <TooltipProvider>
-        <Tooltip>
-            <TooltipTrigger className="w-full mt-2 text-left cursor-default">
-                <div className="p-2 bg-slate-50 border border-slate-200 rounded-lg shadow-inner w-full">
-                    <p className="text-xs text-center font-medium text-slate-600 mb-2">
-                        Pistas disponibles: <span className="font-bold">{availableCourts.length}/{totalCourts}</span>
-                    </p>
-                    <div className="flex items-center justify-center gap-x-1.5 flex-wrap">
-                        {allCourtsStatus.map((court) => (
-                           <CourtIcon key={court.id} isAvailable={court.isAvailable} />
-                        ))}
-                    </div>
-                </div>
-            </TooltipTrigger>
-            <TooltipContent>
-                 <p className="font-semibold">Pistas Ocupadas:</p>
-                {occupiedCourts.length > 0 ? (
-                    <ul className="list-disc list-inside text-xs">
-                    {occupiedCourts.map(court => <li key={court.id}>{court.name}</li>)}
-                    </ul>
-                ) : (
-                    <p className="text-xs">Ninguna</p>
-                )}
-            </TooltipContent>
-        </Tooltip>
-    </TooltipProvider>
+    <div className="w-full text-center mt-2">
+       <p className="text-xs font-medium text-slate-600 mb-1">
+            Pistas disponibles: <span className="font-bold">{availableCourts.length}/{totalCourts}</span>
+        </p>
+      <TooltipProvider>
+          <Tooltip>
+              <TooltipTrigger className="w-full text-left cursor-default">
+                  <div className="p-2 bg-slate-50 border border-slate-200 rounded-lg shadow-inner w-full">
+                      <div className="flex items-center justify-center gap-x-1.5 flex-wrap">
+                          {allCourtsStatus.map((court) => (
+                             <CourtIcon key={court.id} isAvailable={court.isAvailable} />
+                          ))}
+                      </div>
+                  </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                   <p className="font-semibold">Pistas Ocupadas:</p>
+                  {occupiedCourts.length > 0 ? (
+                      <ul className="list-disc list-inside text-xs">
+                      {occupiedCourts.map(court => <li key={court.id}>{court.name}</li>)}
+                      </ul>
+                  ) : (
+                      <p className="text-xs">Ninguna</p>
+                  )}
+              </TooltipContent>
+          </Tooltip>
+      </TooltipProvider>
+    </div>
   );
 };
 

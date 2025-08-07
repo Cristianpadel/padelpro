@@ -35,16 +35,16 @@ export const ClassCardFooter: React.FC<ClassCardFooterProps> = ({
     const CategoryIcon = currentSlot.category === 'chica' ? Venus : currentSlot.category === 'chico' ? Mars : Users2;
     const levelDisplay = currentSlot.level === 'abierto'
         ? 'Nivel'
-        : `${currentSlot.level.min}-${currentSlot.level.max}`;
+        : (typeof currentSlot.level === 'object' ? `${currentSlot.level.min}-${currentSlot.level.max}` : String(currentSlot.level));
 
     return (
-        <div className="border-t pt-2 pb-3 px-3 space-y-2">
+        <div className="border-t pt-2 pb-3 px-3 space-y-1">
             <div className="flex justify-center items-center gap-1.5">
                 <InfoButton icon={Lightbulb} text={levelDisplay} onClick={() => onInfoClick('level')} />
                 <InfoButton icon={CategoryIcon} text="Categoría" onClick={() => onInfoClick('category')} />
                 <InfoButton icon={Hash} text="Pista" onClick={() => onInfoClick('court')} />
             </div>
-            <div className="pt-1">
+            <div>
                 <CourtAvailabilityIndicator
                     availableCourts={courtAvailability.available}
                     occupiedCourts={courtAvailability.occupied}
