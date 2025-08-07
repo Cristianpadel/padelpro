@@ -134,12 +134,6 @@ export default function ActivitiesPage() {
                         Filtros
                     </Button>
                 </div>
-                 <Tabs value={activeView} onValueChange={(v) => updateUrlFilter('view', v)} className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 h-auto">
-                        <TabsTrigger value="clases"><ActivityIcon className="mr-2 h-4 w-4" />Clases</TabsTrigger>
-                        <TabsTrigger value="partidas"><UsersIcon className="mr-2 h-4 w-4" />Partidas</TabsTrigger>
-                    </TabsList>
-                </Tabs>
                  <div className="flex gap-2 items-center justify-center">
                     <Link href="/activities?filter=liberadas" passHref>
                          <Button size="sm" variant={filterByLiberadasOnly ? "default" : "ghost"} className={cn(filterByLiberadasOnly ? "bg-purple-600 text-white" : "text-purple-600 hover:bg-purple-100 hover:text-purple-700")}>
