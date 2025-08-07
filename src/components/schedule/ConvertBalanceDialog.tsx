@@ -75,7 +75,6 @@ const ConvertBalanceDialog: React.FC<ConvertBalanceDialogProps> = ({
         if ('error' in result) {
           toast({ title: 'Error en la Conversión', description: result.error, variant: 'destructive' });
         } else {
-          toast({ title: "Conversión Exitosa", description: `${values.eurosToConvert}€ se han convertido en ${values.eurosToConvert * POINTS_PER_EURO} puntos.`});
           onConversionSuccess(result.newCreditBalance, result.newLoyaltyPoints);
           onOpenChange(false); // Close dialog on success
           form.reset({ eurosToConvert: 10 });

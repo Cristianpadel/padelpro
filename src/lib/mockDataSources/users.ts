@@ -111,7 +111,7 @@ export const recalculateAndSetBlockedBalances = async (userId: string) => {
     // Blocked credit and pending points from class bookings
     classBookings.forEach(booking => {
         const slot = state.getMockTimeSlots().find(s => s.id === booking.activityId);
-        if (slot && slot.status === 'pre_registration') {
+        if (slot && (slot.status === 'pre_registration' || (slot.status === 'confirmed_private' && booking.isOrganizerBooking))) {
             if (booking.bookedWithPoints) {
                 totalBlockedPoints += calculatePricePerPerson(slot.totalPrice, 1);
             } else {

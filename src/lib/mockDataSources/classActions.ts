@@ -348,6 +348,7 @@ export const confirmClassAsPrivate = async (
 
     _annulConflictingActivities(slot);
     await recalculateAndSetBlockedBalances(organizerUserId);
+    await confirmAndAwardPendingPoints(organizerUserId, slot.clubId); // Award points for the private class
 
     const shareLink = `/?view=clases&code=${privateShareCode}`;
     return { updatedSlot: slot, shareLink };
