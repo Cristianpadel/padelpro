@@ -1,3 +1,4 @@
+// src/components/classfinder/MatchDisplay.tsx
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
@@ -200,12 +201,12 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
         if(!filterByGratisOnly && !filterByLiberadasOnly && !filterByPuntosOnly) {
             workingMatches = workingMatches.filter(match => {
                 if ('isEventCard' in match && match.isEventCard) return true;
-                // Placeholders (proposals) don't have an assigned court yet, so we don't check for court availability.
                 if ((match as Match).isPlaceholder) return true;
                 if ((match as Match).status === 'confirmed' || (match as Match).status === 'confirmed_private') {
                     return true;
                 }
-                return !!findAvailableCourt(match.clubId, new Date(match.startTime), new Date((match as Match).endTime));
+                const hasCourt = !!findAvailableCourt(match.clubId, new Date(match.startTime), new Date((match as Match).endTime));
+                return hasCourt;
             });
         }
 
