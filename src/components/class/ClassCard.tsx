@@ -21,6 +21,7 @@ import {
     confirmClassAsPrivate, joinPrivateClass
 } from '@/lib/mockData';
 import { Lightbulb, ShieldQuestion, Hash, Users2, Venus, Mars, Euro } from 'lucide-react';
+import { calculatePricePerPerson } from '@/lib/utils';
 
 interface ClassCardProps {
     classData: TimeSlot;
