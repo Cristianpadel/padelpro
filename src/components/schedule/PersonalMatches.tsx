@@ -1,11 +1,10 @@
-// src/components/schedule/PersonalMatches.tsx
 "use client";
 
 import React, { useState, useEffect, useTransition, useMemo } from 'react';
 import type { MatchBooking, User, Match, Club, PadelCategoryForSlot, MatchBookingMatchDetails } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { List, Clock, Users, CalendarCheck, CalendarX, Loader2, Ban, Hash, Trophy, UserCircle, Gift, Info, MessageSquare, Euro, Users2 as CategoryIcon, Venus, Mars, Share2, Unlock, Lock, Repeat, Lightbulb } from 'lucide-react';
-import { format, differenceInHours, isPast } from 'date-fns';
+import { List, Clock, Users, CalendarCheck, CalendarX, Loader2, Ban, Hash, Trophy, UserCircle, Gift, Info, MessageSquare, Euro, Users2 as CategoryIcon, Venus, Mars, Share2, Unlock, Lock, Repeat, Lightbulb } from 'lucide-react'; // Added Repeat and Lightbulb
+import { format, differenceInHours } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
 import { fetchUserMatchBookings, cancelMatchBooking, getMockClubs, makeMatchPublic, cancelPrivateMatchAndReofferWithPoints, getMockMatches, renewRecurringMatch } from '@/lib/mockData';
@@ -26,9 +25,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials, getPlaceholderUserName, calculatePricePerPerson } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import MatchChatDialog from '@/components/chat/MatchChatDialog';
 import { displayClassCategory } from '@/types';
+import { InfoCard } from '@/components/schedule/InfoCard'; // Import InfoCard
 import { useRouter } from 'next/navigation'; // Import useRouter
-import { Separator } from '@/components/ui/separator';
+import { Separator } from '../ui/separator';
 
 interface PersonalMatchesProps {
   currentUser: User;
@@ -44,6 +45,9 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
   const [currentActionInfo, setCurrentActionInfo] = useState<{ type: 'cancel' | 'cede' | 'cancelAndReoffer' | 'renew', bookingId: string, matchId?: string } | null>(null);
   const { toast } = useToast();
   const router = useRouter();
+
+  const [isChatDialogOpen, setIsChatDialogOpen] = useState(false);
+  const [selectedMatchForChat, setSelectedMatchForChat] = useState<Match | null | undefined>(null);
   const [allMatches, setAllMatches] = useState<Match[]>([]);
   const [now, setNow] = useState(new Date());
 
@@ -55,14 +59,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
         fetchUserMatchBookings(currentUser.id),
         getMockMatches(),
       ]);
-       fetchedBookings.sort((a, b) => {
-          if (!a.matchDetails?.startTime || !b.matchDetails?.startTime) return 0;
-          const aIsPast = isPast(new Date(a.matchDetails.startTime));
-          const bIsPast = isPast(new Date(b.matchDetails.startTime));
-          if (aIsPast && !bIsPast) return 1;
-          if (!aIsPast && bIsPast) return -1;
-          return new Date(b.matchDetails.startTime).getTime() - new Date(a.matchDetails.startTime).getTime();
-      });
+      fetchedBookings.sort((a, b) => (a.matchDetails?.startTime?.getTime() ?? 0) - (b.matchDetails?.startTime?.getTime() ?? 0));
       setBookings(fetchedBookings);
       setAllMatches(fetchedMatches);
       setError(null);
@@ -76,9 +73,9 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
 
   useEffect(() => {
     loadData();
-    const timer = setInterval(() => setNow(new Date()), 60000); // Update every minute
+    const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
-  }, [currentUser.id, onBookingActionSuccess]);
+  }, [currentUser.id, newMatchBooking, onBookingActionSuccess]);
 
   const handleCancellationAction = (booking: MatchBooking) => {
     if (!booking.matchDetails) {
@@ -92,7 +89,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
         toast({ title: 'Error al Cancelar', description: result.error, variant: 'destructive' });
       } else {
         toast({
-          title: result.message?.includes("Bonificada") ? "Cancelación Bonificada" : result.message?.includes("NO Bonificada") ? "Inscripción Cancelada" : "Inscripción Cancelada",
+          title: result.message?.includes("Bonificada") ? "Cancelación Bonificada" : result.message?.includes("NO Bonificada") ? "Cancelación NO Bonificada" : "Inscripción Cancelada",
           description: result.message || 'Tu inscripción ha sido cancelada.',
           className: (result.pointsAwarded && result.pointsAwarded > 0) ? 'bg-green-600 text-white' : (result.penaltyApplied) ? 'bg-yellow-500 text-white' : 'bg-accent text-accent-foreground',
           duration: 7000,
@@ -101,6 +98,27 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
       }
       setCurrentActionInfo(null);
     });
+  };
+
+  const handleOpenChatDialog = (matchDetails: MatchBookingMatchDetails | undefined | null) => {
+    if (matchDetails) {
+        const fullMatchDetails: Match = {
+            id: selectedMatchForChat?.id || matchDetails.clubId + Date.now(),
+            ...matchDetails,
+            level: matchDetails.level || 'abierto',
+            bookedPlayers: matchDetails.bookedPlayers || [],
+            isPlaceholder: false, 
+            status: (matchDetails.bookedPlayers || []).length === 4 ? 'confirmed' : 'forming',
+        };
+        setSelectedMatchForChat(fullMatchDetails);
+        setIsChatDialogOpen(true);
+    } else {
+        toast({
+            title: "Error de Chat",
+            description: "No se pudieron cargar los detalles de la partida para el chat.",
+            variant: "destructive",
+        });
+    }
   };
 
   const handleCancelAndReoffer = (matchId: string) => {
@@ -131,8 +149,8 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
     });
   };
 
-  const upcomingBookings = bookings.filter(b => b.matchDetails && !isPast(new Date(b.matchDetails.endTime)));
-  const pastBookings = bookings.filter(b => b.matchDetails && isPast(new Date(b.matchDetails.endTime)));
+  const upcomingBookings = bookings.filter(b => b.matchDetails && !b.matchDetails.eventId && new Date(b.matchDetails.endTime) > now);
+  const pastBookings = bookings.filter(b => b.matchDetails && !b.matchDetails.eventId && new Date(b.matchDetails.endTime) <= now);
 
 
   if (loading) {
@@ -156,14 +174,14 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
   
   if (!hasUpcomingBookings && !hasPastBookings) {
      return (
-        <Card className="text-center p-6 bg-secondary/30 border-dashed">
-            <Trophy className="mx-auto h-12 w-12 text-muted-foreground" />
-            <h3 className="mt-4 text-lg font-medium">¿Echamos una Partida?</h3>
-            <p className="mt-1 text-sm text-muted-foreground">Parece que no tienes partidas en tu agenda. ¡Únete a una y demuestra tu nivel!</p>
-            <Button className="mt-4" onClick={() => router.push('/activities?view=partidas')}>
-                Ver Partidas
-            </Button>
-        </Card>
+        <InfoCard
+            icon={Trophy}
+            title="¿Echamos una Partida?"
+            description="Parece que no tienes partidas en tu agenda. ¡Únete a una y demuestra tu nivel!"
+            actionText="Ver Partidas"
+            onActionClick={() => router.push('/activities?view=partidas')}
+            storageKey="dismissed_match_suggestion"
+        />
      );
   }
 
@@ -495,7 +513,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                                  variant="outline"
                                  size="sm"
                                  className="w-full sm:w-auto px-3 py-1.5 h-auto text-xs bg-blue-500 text-white border-blue-600 hover:bg-blue-600 flex items-center"
-                                 onClick={() => {}}
+                                 onClick={() => handleOpenChatDialog(booking.matchDetails)}
                                  aria-label="Abrir chat de la partida"
                              >
                                  <MessageSquare className="mr-1.5 h-3.5 w-3.5" />
@@ -519,36 +537,32 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
 
     return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center text-xl"><List className="mr-2 h-5 w-5" /> Mis Partidas</CardTitle>
-          <CardDescription>Aquí tienes un resumen de tus partidas inscritas.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {upcomingBookings.length > 0 && (
-            <div>
-              <h3 className="text-sm font-semibold text-muted-foreground mb-2">Próximas Partidas</h3>
-              <div className="space-y-4">
-                {upcomingBookings.map(b => renderBookingItem(b, true))}
+      <div className="space-y-6">
+          {hasUpcomingBookings && (
+              <div>
+                <h3 className="text-lg font-semibold mb-3 text-primary flex items-center"><Trophy className="mr-2 h-5 w-5" /> Partidas Regulares</h3>
+                  <div className="space-y-4">
+                      {upcomingBookings.map(b => renderBookingItem(b, true))}
+                  </div>
               </div>
-            </div>
           )}
-
-           {pastBookings.length > 0 && (
-            <div>
-              <h3 className="text-sm font-semibold text-muted-foreground my-4 border-t pt-4">Partidas Pasadas</h3>
-              <div className="space-y-4">
-                {pastBookings.map(b => renderBookingItem(b, false))}
+          {hasUpcomingBookings && hasPastBookings && <Separator />}
+          {hasPastBookings && (
+              <div>
+                <h3 className="text-lg font-semibold mb-3 text-muted-foreground flex items-center"><CalendarX className="mr-2 h-5 w-5" /> Partidas Pasadas</h3>
+                  <div className="space-y-4">
+                      {pastBookings.map(b => renderBookingItem(b, false))}
+                  </div>
               </div>
-            </div>
           )}
-
-          {!hasUpcomingBookings && !hasPastBookings && (
-            <p className="text-muted-foreground text-center py-4">No tienes ninguna partida en tu agenda.</p>
-          )}
-
-        </CardContent>
-      </Card>
+      </div>
+      {selectedMatchForChat && (
+          <MatchChatDialog
+              isOpen={isChatDialogOpen}
+              onOpenChange={setIsChatDialogOpen}
+              matchDetails={selectedMatchForChat}
+          />
+      )}
     </>
   );
 };
