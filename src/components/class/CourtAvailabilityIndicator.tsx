@@ -13,10 +13,13 @@ interface CourtAvailabilityIndicatorProps {
 }
 
 const CourtIcon: React.FC<{ available: boolean }> = ({ available }) => (
-  <div className={cn(
-    "w-3 h-4 rounded-sm border",
-    available ? "bg-green-500 border-green-600" : "bg-gray-300 border-gray-400"
-  )} />
+    <div className={cn(
+      "w-3 h-4 rounded-sm border p-px flex flex-col justify-between",
+      available ? "bg-green-200/50 border-green-500" : "bg-gray-200 border-gray-400"
+    )}>
+      <div className={cn("h-[calc(50%-1px)] w-full rounded-t-[1px]", available ? "bg-green-500" : "bg-gray-400")}></div>
+      <div className={cn("h-[calc(50%-1px)] w-full rounded-b-[1px]", available ? "bg-green-500" : "bg-gray-400")}></div>
+    </div>
 );
 
 const CourtAvailabilityIndicator: React.FC<CourtAvailabilityIndicatorProps> = ({
