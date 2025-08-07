@@ -1,10 +1,10 @@
+// src/components/class/CourtAvailabilityIndicator.tsx
 "use client";
 
 import React from 'react';
-import type { PadelCourt } from '@/types';
-import { Progress } from '@/components/ui/progress';
-import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import type { PadelCourt } from '@/types';
 
 interface CourtAvailabilityIndicatorProps {
   availableCourts: PadelCourt[];
@@ -12,45 +12,50 @@ interface CourtAvailabilityIndicatorProps {
   totalCourts: number;
 }
 
-const CourtAvailabilityIndicator: React.FC<CourtAvailabilityIndicatorProps> = ({ availableCourts, occupiedCourts, totalCourts }) => {
-  if (totalCourts === 0) {
-    return null; // Don't show if there are no courts
-  }
+const CourtIcon: React.FC<{ available: boolean }> = ({ available }) => (
+  <div className={cn(
+    "w-3 h-4 rounded-sm border",
+    available ? "bg-green-500 border-green-600" : "bg-gray-300 border-gray-400"
+  )} />
+);
 
-  const availableCount = availableCourts.length;
-  const percentageAvailable = totalCourts > 0 ? (availableCount / totalCourts) * 100 : 0;
+const CourtAvailabilityIndicator: React.FC<CourtAvailabilityIndicatorProps> = ({
+  availableCourts,
+  occupiedCourts,
+  totalCourts,
+}) => {
+  if (totalCourts === 0) {
+    return <p className="text-xs text-muted-foreground text-center">No hay pistas en el club.</p>;
+  }
+  
+  const allCourtsStatus = [
+      ...availableCourts.map(c => ({ ...c, isAvailable: true })),
+      ...occupiedCourts.map(c => ({ ...c, isAvailable: false }))
+  ].sort((a,b) => a.courtNumber - b.courtNumber);
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger className="w-full mt-2 text-left">
-          <div>
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-xs font-medium text-muted-foreground">Disponibilidad de Pistas</span>
-              <span className={cn(
-                "text-xs font-bold",
-                percentageAvailable > 66 && "text-green-600",
-                percentageAvailable <= 66 && percentageAvailable > 33 && "text-amber-600",
-                percentageAvailable <= 33 && "text-red-600"
-              )}>
-                {availableCount} / {totalCourts} Libres
-              </span>
+    <div className="p-2 bg-slate-50 border border-slate-200 rounded-lg shadow-inner w-full">
+        <p className="text-xs text-center font-medium text-slate-600 mb-1.5">Pistas disponibles</p>
+        <div className="flex items-center justify-center gap-x-3">
+             <div className="flex items-center justify-center h-8 w-8 rounded-full bg-white border-2 border-slate-300 font-bold text-slate-700 text-lg shadow-sm">
+                {availableCourts.length}
             </div>
-            <Progress value={percentageAvailable} className="h-2" />
-          </div>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p className="font-semibold">Pistas Ocupadas:</p>
-          {occupiedCourts.length > 0 ? (
-            <ul className="list-disc list-inside text-xs">
-              {occupiedCourts.map(court => <li key={court.id}>{court.name}</li>)}
-            </ul>
-          ) : (
-            <p className="text-xs">Ninguna</p>
-          )}
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+            <div className="flex items-center gap-1">
+                {allCourtsStatus.map(court => (
+                    <TooltipProvider key={court.id} delayDuration={100}>
+                        <Tooltip>
+                            <TooltipTrigger>
+                                <CourtIcon available={court.isAvailable} />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>{court.name} - {court.isAvailable ? 'Disponible' : 'Ocupada'}</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                ))}
+            </div>
+        </div>
+    </div>
   );
 };
 

@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { TimeSlot, PadelCourt } from '@/types';
 import { Lightbulb, Hash, Users2, Venus, Mars, HardHat } from 'lucide-react';
+import CourtAvailabilityIndicator from '../CourtAvailabilityIndicator';
 
 interface ClassCardFooterProps {
   currentSlot: TimeSlot;
@@ -43,10 +44,12 @@ export const ClassCardFooter: React.FC<ClassCardFooterProps> = ({
                 <InfoButton icon={CategoryIcon} text="Categoría" onClick={() => onInfoClick('category')} />
                 <InfoButton icon={Hash} text="Pista" onClick={() => onInfoClick('court')} />
             </div>
-             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-1">
-                <HardHat className="h-3.5 w-3.5" />
-                <span>Pistas Disponibles en el Club para esta hora: </span>
-                <span className="font-bold text-foreground">{courtAvailability.available.length}/{courtAvailability.total}</span>
+            <div className="pt-1">
+                <CourtAvailabilityIndicator
+                    availableCourts={courtAvailability.available}
+                    occupiedCourts={courtAvailability.occupied}
+                    totalCourts={courtAvailability.total}
+                />
             </div>
         </div>
     );
