@@ -451,7 +451,7 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
     const badges = [
         { type: 'category', value: displayClassCategory(currentSlot.category), icon: CategoryIcon },
         { type: 'court', value: displayClassLevel(currentSlot.courtNumber ? `Pista ${currentSlot.courtNumber}` : 'Pista' as any), icon: Hash },
-        { type: 'level', value: displayClassLevel(currentSlot.level as ClassPadelLevel), icon: BarChartHorizontal }
+        { type: 'level', value: currentSlot.level === 'abierto' ? 'Nivel' : displayClassLevel(currentSlot.level as ClassPadelLevel), icon: BarChartHorizontal }
     ];
 
     return (
@@ -505,7 +505,7 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
                             <Share2 className="h-5 w-5" />
                         </Button>
                      </div>
-                     <div className="flex justify-center items-center gap-1.5 pb-1">
+                     <div className="flex justify-center items-center gap-1.5 pb-2">
                         {badges.map(item => (
                              <button key={item.type} onClick={() => handleInfoClick(item.type as any)} className="flex-1">
                                 <Badge variant="outline" className="w-full justify-center text-xs py-1.5 rounded-full capitalize shadow-inner bg-slate-50 border-slate-200">
@@ -680,3 +680,5 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
 });
 ClassCard.displayName = 'ClassCard';
 export default ClassCard;
+
+    
