@@ -12,7 +12,7 @@ import { Calendar, Users } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { BalanceCard } from '@/components/schedule/BalanceCard';
 import { PointsCard } from '@/components/schedule/PointsCard';
-import { RecommendedClasses } from './components/RecommendedClasses';
+import { RecommendedClasses } from '@/app/(app)/dashboard/components/RecommendedClasses';
 
 export default function DashboardPage() {
     const [currentUser, setCurrentUser] = useState<User | null>(null);

@@ -27,4 +27,6 @@ export function BalanceCard() {
           Movements
         </Button>
       </CardFooter>
-    </Card
+    </Card>
+  );
+}
