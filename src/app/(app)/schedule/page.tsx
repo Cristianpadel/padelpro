@@ -21,9 +21,6 @@ import { useToast } from '@/hooks/use-toast';
 import PageSkeleton from '@/components/layout/PageSkeleton';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import UserProfileSheet from '@/components/user/UserProfileSheet';
-import DesktopSidebar from '@/components/layout/DesktopSidebar';
-import ProfessionalAccessDialog from '@/components/layout/ProfessionalAccessDialog';
-import LogoutConfirmationDialog from '@/components/layout/LogoutConfirmationDialog';
 import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -48,10 +45,6 @@ function SchedulePageContent() {
 
     const { toast } = useToast();
     const router = useRouter();
-
-    // Dialogs for sidebar
-    const [isProfessionalAccessDialogOpen, setIsProfessionalAccessDialogOpen] = useState(false);
-    const [isLogoutConfimDialogOpen, setIsLogoutConfirmDialogOpen] = useState(false);
 
 
     const fetchCurrentUser = useCallback(() => {
@@ -150,7 +143,6 @@ function SchedulePageContent() {
     const handleLogout = () => {
         setGlobalCurrentUser(null);
         toast({ title: "Sesión cerrada" });
-        setIsLogoutConfirmDialogOpen(false);
         router.push('/');
     };
 
@@ -201,144 +193,118 @@ function SchedulePageContent() {
     const hasPendingPoints = (currentUser.pendingBonusPoints ?? 0) > 0;
 
     return (
-        <div className="flex flex-col min-h-screen bg-muted/40">
-            <div className="flex-1 w-full md:pl-6 lg:pl-8 py-8">
-                <div className="grid grid-cols-1 md:grid-cols-[288px_1fr] lg:grid-cols-[288px_1fr] gap-4">
-                    <aside className="hidden md:block">
-                        <DesktopSidebar
-                            currentUser={currentUser}
-                            clubInfo={clubInfo}
-                            currentPage='agenda'
-                            showFilters={false}
-                            onProfessionalAccessClick={() => setIsProfessionalAccessDialogOpen(true)}
-                            onLogoutClick={() => setIsLogoutConfirmDialogOpen(true)}
-                            confirmedBookingsCount={confirmedBookingsCount}
-                            unconfirmedInscriptionsCount={unconfirmedInscriptionsCount}
-                        />
-                    </aside>
-
-                    <main className="w-full space-y-8 pr-4 md:pr-6 lg:pr-8">
-                         <div className="flex flex-wrap justify-between items-center gap-y-4">
-                            <div className="flex items-center gap-3">
-                                <h1 className="text-3xl font-bold text-foreground">
-                                    {`Hola, ${currentUser.name}`}
-                                </h1>
-                                {currentUser.level && (
-                                    <div className="flex items-center gap-1">
-                                        <Badge variant="outline" className="text-base font-semibold py-1 px-3 border-primary text-primary">
-                                            Nivel: {currentUser.level}
-                                        </Badge>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:text-primary/80" onClick={() => setIsEditLevelDialogOpen(true)} aria-label="Editar nivel">
-                                            <Edit className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                )}
-                            </div>
+        <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
+            <header className="flex flex-wrap justify-between items-center gap-y-4">
+                <div className="flex items-center gap-3">
+                    <h1 className="text-3xl font-bold text-foreground">
+                        {`Hola, ${currentUser.name}`}
+                    </h1>
+                    {currentUser.level && (
+                        <div className="flex items-center gap-1">
+                            <Badge variant="outline" className="text-base font-semibold py-1 px-3 border-primary text-primary">
+                                Nivel: {currentUser.level}
+                            </Badge>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:text-primary/80" onClick={() => setIsEditLevelDialogOpen(true)} aria-label="Editar nivel">
+                                <Edit className="h-4 w-4" />
+                            </Button>
                         </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <Card className="shadow-md">
-                                <CardHeader className="pb-3">
-                                    <CardTitle className="text-lg flex items-center text-green-700">
-                                        <Wallet className="mr-2.5 h-5 w-5" />
-                                        Tu Saldo
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-2">
-                                     <div className="text-4xl font-bold text-foreground">{availableCredit.toFixed(2)}€</div>
-                                      <p className="text-sm text-muted-foreground">
-                                        Total: {(currentUser.credit ?? 0).toFixed(2)}€ | Bloqueado: {(currentUser.blockedCredit ?? 0).toFixed(2)}€
-                                      </p>
-                                     <div className="flex items-center gap-2 pt-2">
-                                         <Button variant="default" size="sm" onClick={() => setIsAddCreditDialogOpen(true)} className="flex-1 bg-green-600 hover:bg-green-700">
-                                            <PlusCircle className="mr-1.5 h-4 w-4" />
-                                            Añadir
-                                        </Button>
-                                        <Button variant="outline" size="sm" onClick={() => setIsCreditMovementsDialogOpen(true)} className="flex-1">
-                                            <History className="mr-1 h-3.5 w-3.5" /> Movimientos
-                                        </Button>
-                                     </div>
-                                </CardContent>
-                            </Card>
-                             <Card className="shadow-md">
-                                <CardHeader className="pb-3">
-                                    <CardTitle className="text-lg flex items-center text-amber-600">
-                                        <Star className="mr-2.5 h-5 w-5" />
-                                        Tus Puntos
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-2">
-                                     <div className="flex justify-between items-start">
-                                        <div>
-                                            <div className="text-4xl font-bold text-foreground">{availablePoints.toFixed(2)}</div>
-                                            <p className="text-sm text-muted-foreground">
-                                                Total: {(currentUser.loyaltyPoints ?? 0).toFixed(2)} | Bloqueados: {(currentUser.blockedLoyaltyPoints ?? 0).toFixed(2)}
-                                            </p>
-                                        </div>
-                                        {hasPendingPoints && (
-                                            <div className="text-center">
-                                                <p className="text-xs text-muted-foreground">Pendientes</p>
-                                                <div className="mt-1 inline-flex items-center justify-center rounded-lg bg-amber-400 px-3 py-1 text-lg font-bold text-white shadow-md">
-                                                    +{Math.round(currentUser.pendingBonusPoints ?? 0)}
-                                                </div>
-                                            </div>
-                                        )}
-                                     </div>
-                                     <div className="flex items-center gap-2 pt-2">
-                                         <Button variant="default" size="sm" onClick={() => setIsConvertBalanceDialogOpen(true)} className="flex-1 bg-amber-500 hover:bg-amber-600">
-                                            <Repeat className="mr-1.5 h-4 w-4" />
-                                            Convertir
-                                        </Button>
-                                        <Button variant="outline" size="sm" onClick={() => setIsPointMovementsDialogOpen(true)} className="flex-1">
-                                            <History className="mr-1 h-3.5 w-3.5" /> Movimientos
-                                        </Button>
-                                     </div>
-                                </CardContent>
-                            </Card>
-                        </div>
-                        
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-xl flex items-center"><Lightbulb className="mr-2 h-5 w-5 text-yellow-500" />Sugerencias para ti</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                {loadingRecommendations ? (
-                                    <div className="text-center text-muted-foreground">Buscando recomendaciones...</div>
-                                ) : recommendations && recommendations.recommendedClasses.length > 0 ? (
-                                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {recommendations.recommendedClasses.slice(0, 3).map((rec, index) => (
-                                            <Link key={index} href={`/activities?view=clases`} passHref>
-                                                <div className="p-3 border rounded-lg hover:bg-muted transition-colors cursor-pointer">
-                                                    <p className="font-semibold text-primary">{rec}</p>
-                                                </div>
-                                            </Link>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <p className="text-center text-muted-foreground">No hay recomendaciones nuevas en este momento.</p>
-                                )}
-                            </CardContent>
-                        </Card>
-
-                         <PersonalSchedule 
-                            currentUser={currentUser} 
-                            onBookingActionSuccess={handleDataChange} 
-                            refreshKey={refreshKey}
-                         />
-                    </main>
+                    )}
                 </div>
-            </div>
-            <Footer />
+            </header>
+
+            <main className="w-full space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Card className="shadow-md">
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-lg flex items-center text-green-700">
+                                <Wallet className="mr-2.5 h-5 w-5" />
+                                Tu Saldo
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                                <div className="text-4xl font-bold text-foreground">{availableCredit.toFixed(2)}€</div>
+                                <p className="text-sm text-muted-foreground">
+                                Total: {(currentUser.credit ?? 0).toFixed(2)}€ | Bloqueado: {(currentUser.blockedCredit ?? 0).toFixed(2)}€
+                                </p>
+                                <div className="flex items-center gap-2 pt-2">
+                                    <Button variant="default" size="sm" onClick={() => setIsAddCreditDialogOpen(true)} className="flex-1 bg-green-600 hover:bg-green-700">
+                                    <PlusCircle className="mr-1.5 h-4 w-4" />
+                                    Añadir
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={() => setIsCreditMovementsDialogOpen(true)} className="flex-1">
+                                    <History className="mr-1 h-3.5 w-3.5" /> Movimientos
+                                </Button>
+                                </div>
+                        </CardContent>
+                    </Card>
+                        <Card className="shadow-md">
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-lg flex items-center text-amber-600">
+                                <Star className="mr-2.5 h-5 w-5" />
+                                Tus Puntos
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                                <div className="flex justify-between items-start">
+                                <div>
+                                    <div className="text-4xl font-bold text-foreground">{availablePoints.toFixed(2)}</div>
+                                    <p className="text-sm text-muted-foreground">
+                                        Total: {(currentUser.loyaltyPoints ?? 0).toFixed(2)} | Bloqueados: {(currentUser.blockedLoyaltyPoints ?? 0).toFixed(2)}
+                                    </p>
+                                </div>
+                                {hasPendingPoints && (
+                                    <div className="text-center">
+                                        <p className="text-xs text-muted-foreground">Pendientes</p>
+                                        <div className="mt-1 inline-flex items-center justify-center rounded-lg bg-amber-400 px-3 py-1 text-lg font-bold text-white shadow-md">
+                                            +{Math.round(currentUser.pendingBonusPoints ?? 0)}
+                                        </div>
+                                    </div>
+                                )}
+                                </div>
+                                <div className="flex items-center gap-2 pt-2">
+                                    <Button variant="default" size="sm" onClick={() => setIsConvertBalanceDialogOpen(true)} className="flex-1 bg-amber-500 hover:bg-amber-600">
+                                    <Repeat className="mr-1.5 h-4 w-4" />
+                                    Convertir
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={() => setIsPointMovementsDialogOpen(true)} className="flex-1">
+                                    <History className="mr-1 h-3.5 w-3.5" /> Movimientos
+                                </Button>
+                                </div>
+                        </CardContent>
+                    </Card>
+                </div>
+                
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-xl flex items-center"><Lightbulb className="mr-2 h-5 w-5 text-yellow-500" />Sugerencias para ti</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {loadingRecommendations ? (
+                            <div className="text-center text-muted-foreground">Buscando recomendaciones...</div>
+                        ) : recommendations && recommendations.recommendedClasses.length > 0 ? (
+                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {recommendations.recommendedClasses.slice(0, 3).map((rec, index) => (
+                                    <Link key={index} href={`/activities?view=clases`} passHref>
+                                        <div className="p-3 border rounded-lg hover:bg-muted transition-colors cursor-pointer">
+                                            <p className="font-semibold text-primary">{rec}</p>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-center text-muted-foreground">No hay recomendaciones nuevas en este momento.</p>
+                        )}
+                    </CardContent>
+                </Card>
+
+                    <PersonalSchedule 
+                    currentUser={currentUser} 
+                    onBookingActionSuccess={handleDataChange} 
+                    refreshKey={refreshKey}
+                    />
+            </main>
+
             <Toaster />
-            <ProfessionalAccessDialog
-                isOpen={isProfessionalAccessDialogOpen}
-                onOpenChange={setIsProfessionalAccessDialogOpen}
-            />
-            <LogoutConfirmationDialog
-                isOpen={isLogoutConfimDialogOpen}
-                onOpenChange={setIsLogoutConfirmDialogOpen}
-                onConfirm={handleLogout}
-            />
             {currentUser && (
                 <>
                     <CreditMovementsDialog
@@ -382,5 +348,3 @@ export default function SchedulePage() {
         </Suspense>
     );
 }
-
-    
