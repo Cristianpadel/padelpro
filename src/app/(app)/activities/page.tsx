@@ -206,11 +206,10 @@ export default function ActivitiesPage() {
                 filterAlsoConfirmed={false}
                 setFilterAlsoConfirmed={() => {}}
                 filterByFavorite={filterByFavorites}
-                setFilterByFavorite={(val) => updateUrlFilter('favorites', val)}
+                setFilterByFavorite={(val) => updateUrlFilter('favorites', val ? 'true' : 'false')}
                 showPointsBonus={showPointsBonus}
                 setShowPointsBonus={handleTogglePointsBonus}
              />
         </div>
     );
 }
-
