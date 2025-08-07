@@ -3,13 +3,16 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { getMockCurrentUser } from '@/lib/mockData';
-import type { User, TimeSlot, MatchBooking } from '@/types';
+import type { User } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import PersonalClasses from '@/components/schedule/PersonalClasses';
 import PersonalMatches from '@/components/schedule/PersonalMatches';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar, Users } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
+import { BalanceCard } from '@/components/schedule/BalanceCard';
+import { PointsCard } from '@/components/schedule/PointsCard';
+import { RecommendedClasses } from './components/RecommendedClasses';
 
 export default function DashboardPage() {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -41,9 +44,13 @@ export default function DashboardPage() {
                     <Skeleton className="h-4 w-2/3 mt-2" />
                 </header>
                 <main className="flex-1 space-y-6">
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        <Skeleton className="h-40 w-full" />
+                        <Skeleton className="h-40 w-full" />
+                        <Skeleton className="h-40 w-full lg:col-span-1" />
+                    </div>
                     <Skeleton className="h-10 w-full md:w-1/2" />
                     <Skeleton className="h-64 w-full" />
-                    <Skeleton className="h-48 w-full" />
                 </main>
             </div>
         );
@@ -57,7 +64,13 @@ export default function DashboardPage() {
                     Aquí tienes un resumen de tus próximas clases y partidas.
                 </p>
             </header>
-            <main className="flex-1">
+            <main className="flex-1 space-y-6">
+                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <BalanceCard />
+                    <PointsCard />
+                    <RecommendedClasses />
+                </div>
+
                  <Tabs defaultValue={defaultTab} className="w-full">
                     <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="classes">
