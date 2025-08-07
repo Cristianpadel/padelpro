@@ -30,7 +30,7 @@ import ManageMatchesPanel from './ManageMatchesPanel';
 import ManageCourtRatesPanel from './ManageCourtRatesPanel';
 import ManageMatchDayPanel from './ManageMatchDayPanel';
 import ManageShopPanel from './ManageShopPanel';
-import ManagePointBookingSlots from './ManagePointBookingSlots';
+import ManagePointBookingSlots from '@/app/(app)/admin/components/ManagePointBookingSlots';
 import ManageCancellationPenaltiesForm from './ManageCancellationPenaltiesForm';
 import BookingSimulator from './BookingSimulator';
 import ManageCardStylesPanel from './ManageCardStylesPanel';
