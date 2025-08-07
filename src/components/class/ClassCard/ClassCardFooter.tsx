@@ -11,7 +11,7 @@ import { Lightbulb, Hash, Users2, Venus, Mars, HardHat } from 'lucide-react';
 interface ClassCardFooterProps {
   currentSlot: TimeSlot;
   isSlotEffectivelyFull: boolean;
-  courtAvailability: { available: number, occupied: number, total: number };
+  courtAvailability: { available: PadelCourt[], occupied: PadelCourt[], total: number };
   onInfoClick: (type: 'level' | 'court' | 'category') => void;
 }
 
@@ -46,7 +46,7 @@ export const ClassCardFooter: React.FC<ClassCardFooterProps> = ({
              <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground pt-1">
                 <HardHat className="h-3.5 w-3.5" />
                 <span>Pistas Disponibles en el Club para esta hora: </span>
-                <span className="font-bold text-foreground">{courtAvailability.available}/{courtAvailability.total}</span>
+                <span className="font-bold text-foreground">{courtAvailability.available.length}/{courtAvailability.total}</span>
             </div>
         </div>
     );
