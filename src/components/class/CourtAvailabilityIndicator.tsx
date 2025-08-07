@@ -5,6 +5,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import type { PadelCourt } from '@/types';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Info } from 'lucide-react';
 
 // A new, specific icon component as described by the user.
 const CourtIcon: React.FC<{ isAvailable: boolean }> = ({ isAvailable }) => {
@@ -63,15 +64,16 @@ const CourtAvailabilityIndicator: React.FC<CourtAvailabilityIndicatorProps> = ({
                       </div>
                   </div>
               </TooltipTrigger>
-              <TooltipContent>
-                   <p className="font-semibold">Pistas Ocupadas:</p>
-                  {occupiedCourts.length > 0 ? (
-                      <ul className="list-disc list-inside text-xs">
-                      {occupiedCourts.map(court => <li key={court.id}>{court.name}</li>)}
-                      </ul>
-                  ) : (
-                      <p className="text-xs">Ninguna</p>
-                  )}
+              <TooltipContent className="max-w-xs">
+                   <div className="flex items-start">
+                        <Info className="h-4 w-4 mr-2 mt-0.5 text-blue-500"/>
+                        <div>
+                             <p className="font-semibold">Asignación de Pista</p>
+                             <p className="text-xs text-muted-foreground">
+                                Cuando una clase se completa con todos los alumnos, se le asigna automáticamente una de las pistas que ves disponibles. ¡Por eso es importante que los grupos se llenen!
+                            </p>
+                        </div>
+                   </div>
               </TooltipContent>
           </Tooltip>
       </TooltipProvider>
