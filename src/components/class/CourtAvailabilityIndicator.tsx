@@ -8,18 +8,15 @@ import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/comp
 
 // A new, specific icon component as described by the user.
 const CourtIcon: React.FC<{ isAvailable: boolean }> = ({ isAvailable }) => {
-    const colorClass = isAvailable ? "text-green-500" : "text-gray-300";
-    const fillClass = isAvailable ? "fill-green-500" : "fill-gray-300";
+    const fillColor = isAvailable ? "#4ade80" : "#d1d5db"; // green-400 or gray-300
+    const strokeColor = "#ffffff";
 
     return (
-        <svg width="24" height="14" viewBox="0 0 24 14" fill="none" xmlns="http://www.w3.org/2000/svg" className={cn("shrink-0", colorClass)}>
-            {/* Outer rectangle */}
-            <rect x="0.5" y="0.5" width="23" height="13" rx="2" stroke="currentColor"/>
-            {/* Line separator */}
-            <line x1="12" y1="1" y2="13" stroke="currentColor" strokeWidth="1"/>
-            {/* Two inner rectangles (represented by filled rects) */}
-            <rect x="4" y="4" width="5" height="6" rx="1" className={fillClass} strokeWidth="0"/>
-            <rect x="15" y="4" width="5" height="6" rx="1" className={fillClass} strokeWidth="0"/>
+        <svg width="18" height="26" viewBox="0 0 18 26" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
+            <rect width="18" height="26" rx="3" fill={fillColor}/>
+            <rect x="2" y="2" width="14" height="9" rx="2" fill={fillColor} stroke={strokeColor} strokeWidth="1.5"/>
+            <rect x="2" y="15" width="14" height="9" rx="2" fill={fillColor} stroke={strokeColor} strokeWidth="1.5"/>
+            <line x1="2" y1="12.5" x2="16" y2="12.5" stroke={strokeColor} strokeWidth="1.5"/>
         </svg>
     );
 };
