@@ -23,7 +23,7 @@ interface BookingSpotDisplayProps {
   isSlotOverallConfirmed: boolean;
   confirmedGroupSize: (1 | 2 | 3 | 4) | null;
   userHasConfirmedActivityToday: boolean;
-  isUserBookedInThisOption: boolean; 
+  isUserBookedInAnyOption: boolean; 
   onOpenConfirmationDialog: (optionSize: 1 | 2 | 3 | 4, spotIdx: number) => void;
   showPointsBonus: boolean;
 }
@@ -39,7 +39,7 @@ const BookingSpotDisplay: React.FC<BookingSpotDisplayProps> = ({
   isSlotOverallConfirmed,
   confirmedGroupSize,
   userHasConfirmedActivityToday,
-  isUserBookedInThisOption,
+  isUserBookedInAnyOption,
   onOpenConfirmationDialog,
   showPointsBonus,
 }) => {
@@ -58,16 +58,16 @@ const BookingSpotDisplay: React.FC<BookingSpotDisplayProps> = ({
   const hasEnoughCredit = (currentUser?.credit ?? 0) - (currentUser?.blockedCredit ?? 0) >= pricePerPersonForThisOption;
   const hasEnoughPointsForGratis = (currentUser?.loyaltyPoints ?? 0) >= pointsCostForGratisSpot;
 
-  const canJoinStandard = !playerInSpot && !isDesignatedGratisSpot && bookedPlayersForOption.length < optionSize && !isSlotOverallConfirmed && !userHasConfirmedActivityToday && !isUserBookedInThisOption && hasEnoughCredit;
-  const canJoinGratis = isGratisSpotEffectivelyAvailable && !userHasConfirmedActivityToday && !isUserBookedInThisOption && hasEnoughPointsForGratis;
+  const canJoinStandard = !playerInSpot && !isDesignatedGratisSpot && bookedPlayersForOption.length < optionSize && !isSlotOverallConfirmed && !userHasConfirmedActivityToday && !isUserBookedInAnyOption && hasEnoughCredit;
+  const canJoinGratis = isGratisSpotEffectivelyAvailable && !userHasConfirmedActivityToday && !isUserBookedInAnyOption && hasEnoughPointsForGratis;
 
   const getTooltipText = () => {
     if (isLoading) return "Procesando...";
     const studentName = playerInSpot ? (getMockStudents().find(u => u.id === playerInSpot.userId)?.name || getPlaceholderUserName(playerInSpot.userId, currentUser.id, currentUser.name)) : '';
     if (playerInSpot) return studentName;
+    if (isUserBookedInAnyOption) return "Ya estás inscrito en esta clase.";
     if (canJoinGratis) return `Unirse (Gratis con ${pointsCostForGratisSpot} Puntos)`;
     if (canJoinStandard) return `Unirse (Coste: ${pricePerPersonForThisOption.toFixed(2)}€)`;
-    if (isUserBookedInThisOption) return "Ya estás inscrito en esta opción.";
     if (userHasConfirmedActivityToday && !isGratisSpotEffectivelyAvailable) return "Ya tienes otra actividad confirmada hoy.";
     if (isGratisSpotEffectivelyAvailable && !hasEnoughPointsForGratis) return `Puntos insuficientes (${currentUser?.loyaltyPoints ?? 0} / ${pointsCostForGratisSpot}).`;
     if (!isDesignatedGratisSpot && !hasEnoughCredit) return `Saldo insuficiente (${((currentUser?.credit ?? 0) - (currentUser?.blockedCredit ?? 0)).toFixed(2)}€ / ${pricePerPersonForThisOption.toFixed(2)}€).`;

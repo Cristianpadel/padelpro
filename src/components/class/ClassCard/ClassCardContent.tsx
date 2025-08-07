@@ -21,6 +21,7 @@ interface ClassCardContentProps {
   onOpenConfirmationDialog: (optionSize: 1 | 2 | 3 | 4, spotIdx: number) => void;
   showPointsBonus: boolean;
   handlePriceInfoClick: (optionSize: number) => void;
+  isUserBookedInAnyOption: boolean;
 }
 
 export const ClassCardContent: React.FC<ClassCardContentProps> = ({
@@ -34,19 +35,19 @@ export const ClassCardContent: React.FC<ClassCardContentProps> = ({
   onOpenConfirmationDialog,
   showPointsBonus,
   handlePriceInfoClick,
+  isUserBookedInAnyOption,
 }) => {
     
   return (
     <div className="flex-grow pt-1 pb-2 px-3 space-y-1 flex flex-col">
         <div className="flex-grow space-y-1">
             {([1, 2, 3, 4] as const).map(optionSize => {
-                const isUserBookedInThisOption = (bookingsByGroupSize[optionSize] || []).some(p => p.userId === currentUser.id);
                 const confirmedGroupSize = isSlotEffectivelyFull ? currentSlot.bookedPlayers.find(p => bookingsByGroupSize[optionSize].includes(p))?.groupSize : null;
 
                 return (
                 <div key={optionSize} className={cn(
                     "flex items-center justify-between p-1 rounded-md transition-all border border-transparent min-h-[44px]",
-                    isUserBookedInThisOption && "bg-blue-50 border-blue-200"
+                    isUserBookedInAnyOption && (currentSlot.bookedPlayers || []).some(p => p.groupSize === optionSize) && "bg-blue-50 border-blue-200"
                 )}>
                     <div className="flex items-center gap-1 flex-grow-0 shrink-0 basis-auto justify-start">
                     {Array.from({ length: optionSize }).map((_, index) =>
@@ -62,7 +63,7 @@ export const ClassCardContent: React.FC<ClassCardContentProps> = ({
                         isSlotOverallConfirmed={isSlotEffectivelyFull}
                         confirmedGroupSize={confirmedGroupSize}
                         userHasConfirmedActivityToday={userHasConfirmedActivityToday}
-                        isUserBookedInThisOption={isUserBookedInThisOption}
+                        isUserBookedInAnyOption={isUserBookedInAnyOption}
                         onOpenConfirmationDialog={onOpenConfirmationDialog}
                         showPointsBonus={showPointsBonus}
                         />
