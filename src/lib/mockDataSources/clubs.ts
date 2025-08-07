@@ -35,3 +35,14 @@ export const getInstructorRate = (instructor: Instructor, startTime: Date): numb
     );
     return matchingTier ? matchingTier.rate : (instructor.defaultRatePerHour || 0);
 };
+
+export const updateClub = async (clubId: string, updates: Partial<Club>): Promise<Club | { error: string }> => {
+    await new Promise(resolve => setTimeout(resolve, 50));
+    const clubIndex = state.getMockClubs().findIndex(c => c.id === clubId);
+    if (clubIndex === -1) {
+        return { error: 'Club no encontrado.' };
+    }
+    const updatedClub = { ...state.getMockClubs()[clubIndex], ...updates };
+    state.updateClubInState(updatedClub);
+    return updatedClub;
+};

@@ -194,7 +194,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminClub }) => {
                 <div className="mt-6"><EditPointSettingsForm club={props.club} onSettingsUpdated={props.onClubSettingsUpdated} /></div>
             </>
         )},
-        { value: "pointBookingSlots", label: "Horarios Reserva por Puntos", icon: Star, componentFactory: (props) => <ManagePointBookingSlots club={props.club} onSettingsUpdated={props.onClubSettingsUpdated} />, contentDescription: "Configura las horas en las que los usuarios pueden reservar pistas completas usando puntos de fidelidad." },
+        { value: "pointBookingSlots", label: "Reserva por Puntos", icon: Star, componentFactory: (props) => <ManagePointBookingSlots club={props.club} onSettingsUpdated={props.onClubSettingsUpdated} />, contentDescription: "Configura las horas en las que los usuarios pueden reservar pistas completas usando puntos de fidelidad." },
         { value: "cancellationPenalties", label: "Penalizaciones", icon: AlertTriangle, componentFactory: (props) => <ManageCancellationPenaltiesForm club={props.club} onSettingsUpdated={props.onClubSettingsUpdated} />, contentDescription: "Configura las penalizaciones en puntos por cancelar con poca antelación." },
         { value: "bookingSimulator", label: "Simulador de Actividad", icon: Sparkles, contentDescription: "Genera inscripciones de alumnos ficticios para probar el comportamiento de la plataforma.", componentFactory: (props) => <BookingSimulator club={props.club} onSimulationRun={props.onDataChanged} /> },
         { value: "clubSettings", label: "Ajustes Club", icon: Settings, contentDescription: "Configura las actividades y la visibilidad de las pestañas para los usuarios.", componentFactory: (props) => (
@@ -268,5 +268,3 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminClub }) => {
 };
 
 export default AdminPanel;
-
-    
