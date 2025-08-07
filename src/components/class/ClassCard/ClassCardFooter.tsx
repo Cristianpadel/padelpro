@@ -13,7 +13,7 @@ export const ClassCardFooter: React.FC<ClassCardFooterProps> = ({
     courtAvailability
 }) => {
     return (
-        <div className="border-t pt-2 pb-3 px-3">
+        <div className="border-t pt-1 pb-2 px-3">
             <CourtAvailabilityIndicator
                 availableCourts={courtAvailability.available}
                 occupiedCourts={courtAvailability.occupied}

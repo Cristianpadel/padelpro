@@ -97,7 +97,7 @@ const BookingSpotDisplay: React.FC<BookingSpotDisplayProps> = ({
         <Tooltip>
           <TooltipTrigger asChild>
             <div className="relative">
-              <Avatar className={cn("h-10 w-10 p-0 overflow-hidden shadow-[inset_0_3px_5px_0_rgba(0,0,0,0.3)]", isCurrentUserInSpot ? "ring-2 ring-offset-1 ring-primary border-primary" : "border-gray-300")}>
+              <Avatar className={cn("h-8 w-8 p-0 overflow-hidden shadow-[inset_0_2px_4px_0_rgba(0,0,0,0.3)]", isCurrentUserInSpot ? "ring-2 ring-offset-1 ring-primary border-primary" : "border-gray-300")}>
                 <AvatarImage src={student?.profilePictureUrl} alt={student?.name} data-ai-hint="player avatar small" />
                 <AvatarFallback className="text-xs">{getInitials(student?.name || '')}</AvatarFallback>
               </Avatar>
@@ -117,16 +117,16 @@ const BookingSpotDisplay: React.FC<BookingSpotDisplayProps> = ({
             <Button
               variant="outline" size="icon"
               className={cn(
-                "h-10 w-10 rounded-full flex items-center justify-center border-2 border-dashed",
+                "h-8 w-8 rounded-full flex items-center justify-center border-2 border-dashed",
                 isLoading && "cursor-wait",
                 (canJoinStandard || canJoinGratis) ? (canJoinGratis ? "border-yellow-400 hover:bg-yellow-50" : "border-green-400 hover:bg-green-50") : "opacity-50 cursor-not-allowed"
               )}
               disabled={isLoading || !(canJoinStandard || canJoinGratis)}
             >
-              {isLoading ? <Loader2 className="h-6 w-6 animate-spin text-primary" /> : (canJoinGratis ? <Gift className="h-6 w-6 text-yellow-600" /> : <Plus className="h-6 w-6 text-green-600" />)}
+              {isLoading ? <Loader2 className="h-5 w-5 animate-spin text-primary" /> : (canJoinGratis ? <Gift className="h-5 w-5 text-yellow-600" /> : <Plus className="h-5 w-5 text-green-600" />)}
             </Button>
             {shouldShowPointsBonus && (
-              <div className="absolute -top-1.5 -right-1 z-10 flex h-auto items-center justify-center rounded-full bg-amber-400 px-1.5 py-0.5 text-white shadow-md text-xs font-bold" title={`${totalPointsToAward} puntos de bonificación`}>
+              <div className="absolute -top-1 -right-1 z-10 flex h-auto items-center justify-center rounded-full bg-amber-400 px-1 py-0 text-white shadow-md text-[10px] font-bold" title={`${totalPointsToAward} puntos de bonificación`}>
                   +{totalPointsToAward}
               </div>
             )}

@@ -35,17 +35,17 @@ export const ClassCardContent: React.FC<ClassCardContentProps> = ({
   handlePriceInfoClick,
 }) => {
   return (
-    <div className="flex-grow pt-2 pb-2 px-3 space-y-1">
+    <div className="flex-grow pt-1 pb-2 px-3 space-y-1">
       {([1, 2, 3, 4] as const).map(optionSize => {
         const isUserBookedInThisOption = (bookingsByGroupSize[optionSize] || []).some(p => p.userId === currentUser.id);
         const confirmedGroupSize = isSlotEffectivelyFull ? currentSlot.bookedPlayers.find(p => bookingsByGroupSize[optionSize].includes(p))?.groupSize : null;
 
         return (
           <div key={optionSize} className={cn(
-            "flex items-center justify-between p-1.5 rounded-md transition-all border border-transparent min-h-[48px]",
+            "flex items-center justify-between p-1 rounded-md transition-all border border-transparent min-h-[44px]",
             isUserBookedInThisOption && "bg-blue-50 border-blue-200"
           )}>
-            <div className="flex items-center gap-1.5 flex-grow-0 shrink-0 basis-auto justify-start">
+            <div className="flex items-center gap-1 flex-grow-0 shrink-0 basis-auto justify-start">
               {Array.from({ length: optionSize }).map((_, index) =>
                 <BookingSpotDisplay
                   key={`${optionSize}-${index}`}

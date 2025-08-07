@@ -54,7 +54,7 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
         : pricePerPlayer;
 
     let spotTooltipText = "";
-    let iconToShow: React.ReactNode = <UserIcon className="h-6 w-6 text-muted-foreground opacity-50" />;
+    let iconToShow: React.ReactNode = <UserIcon className="h-5 w-5 text-muted-foreground opacity-50" />;
     let spotVariant: "solid" | "dashed" | "gratis" = "dashed";
     let isDisabled = true;
     let animationClass = "";
@@ -127,38 +127,38 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
         
         if (isThisSpotTheGratisOne) {
             if (!isUserLevelCompatible) {
-                iconToShow = <Gift className="h-6 w-6 text-purple-400 opacity-60" />;
+                iconToShow = <Gift className="h-5 w-5 text-purple-400 opacity-60" />;
                 spotTooltipText = `Nivel incompatible (${currentUser?.level || 'N/A'}) para plaza gratis.`;
                 spotVariant = "gratis";
                 isDisabled = true;
             } else if (hasEnoughPoints) {
-                iconToShow = <Gift className="h-6 w-6 text-purple-600" />;
+                iconToShow = <Gift className="h-5 w-5 text-purple-600" />;
                 spotTooltipText = `Unirse (Coste: ${pointsCost} Puntos)`;
                 spotVariant = "gratis";
                 isDisabled = false;
                 actionHandler = () => onJoin(spotIndex, true);
                 animationClass = "animate-pulse-purple";
             } else {
-                iconToShow = <Gift className="h-6 w-6 text-purple-400 opacity-60" />;
+                iconToShow = <Gift className="h-5 w-5 text-purple-400 opacity-60" />;
                 spotTooltipText = `Puntos insuficientes (${currentUser?.loyaltyPoints ?? 0} / ${pointsCost}) para plaza gratis.`;
                 spotVariant = "gratis";
                 isDisabled = true;
             }
         } else if (match.isPointsOnlyBooking || (canBookWithPoints && isPlaceholderMatch)) {
             if (!isUserLevelCompatible) {
-                iconToShow = <Gift className="h-6 w-6 text-purple-400 opacity-60" />;
+                iconToShow = <Gift className="h-5 w-5 text-purple-400 opacity-60" />;
                 spotTooltipText = `Nivel incompatible (${currentUser?.level || 'N/A'}) para plaza de puntos.`;
                 spotVariant = "gratis";
                 isDisabled = true;
             } else if (hasEnoughPoints) {
-                iconToShow = <Gift className="h-6 w-6 text-purple-600" />;
+                iconToShow = <Gift className="h-5 w-5 text-purple-600" />;
                 spotTooltipText = `Reservar Plaza (Coste: ${pointsCost} Puntos)`;
                 spotVariant = "gratis";
                 isDisabled = false;
                 actionHandler = () => onJoin(spotIndex, true); 
                 animationClass = "animate-pulse-purple";
             } else {
-                iconToShow = <Gift className="h-6 w-6 text-purple-400 opacity-60" />;
+                iconToShow = <Gift className="h-5 w-5 text-purple-400 opacity-60" />;
                 spotTooltipText = `Puntos insuficientes (${currentUser?.loyaltyPoints ?? 0} / ${pointsCost}) para reservar la plaza.`;
                 spotVariant = "gratis";
                 isDisabled = true;
@@ -167,16 +167,16 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
             spotTooltipText = "Partida Completa.";
             isDisabled = true;
         } else if (!isUserLevelCompatible) {
-            iconToShow = <AlertTriangle className="h-6 w-6 text-destructive/70" />;
+            iconToShow = <AlertTriangle className="h-5 w-5 text-destructive/70" />;
             spotTooltipText = `Nivel incompatible (${currentUser?.level || 'N/A'}).`;
             isDisabled = true;
         } else if (hasEnoughCredit) {
-            iconToShow = <Plus className="h-6 w-6 text-green-600" />;
+            iconToShow = <Plus className="h-5 w-5 text-green-600" />;
             spotTooltipText = isPlaceholderMatch ? `Iniciar Partida (Coste: ${pricePerPlayer.toFixed(2)}€)` : `Unirse (Coste: ${pricePerPlayer.toFixed(2)}€)`;
             isDisabled = false;
             actionHandler = () => onJoin(spotIndex, false);
         } else {
-            iconToShow = <CreditCard className="h-6 w-6 text-destructive/70" />;
+            iconToShow = <CreditCard className="h-5 w-5 text-destructive/70" />;
             spotTooltipText = `Saldo disponible insuficiente (${availableCredit.toFixed(2)}€ / ${pricePerPlayer.toFixed(2)}€).`;
             isDisabled = true;
         }
@@ -198,11 +198,11 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
             <TooltipTrigger asChild>
                 <div
                     onClick={actionHandler}
-                    className={cn( "flex flex-col items-center group/avatar-wrapper space-y-1 relative", !isDisabled ? "cursor-pointer" : "cursor-not-allowed")}
+                    className={cn( "flex flex-col items-center group/avatar-wrapper space-y-0.5 relative", !isDisabled ? "cursor-pointer" : "cursor-not-allowed")}
                     aria-label={spotTooltipText}
                 >
                     <div className={cn(
-                        "relative inline-flex items-center justify-center h-12 w-12 rounded-full border-2 z-0 transition-all shadow-[inset_0_2px_4px_0_rgba(0,0,0,0.2)]",
+                        "relative inline-flex items-center justify-center h-10 w-10 rounded-full border-2 z-0 transition-all shadow-[inset_0_2px_4px_0_rgba(0,0,0,0.2)]",
                         animationClass,
                         spotVariant === "solid" && "bg-slate-100 border-slate-300",
                         spotVariant === "dashed" && "border-dashed border-green-400 hover:bg-green-100",
@@ -214,26 +214,26 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
                             <>
                                 <Avatar className="h-[calc(100%-4px)] w-[calc(100%-4px)] shadow-[inset_0_3px_5px_0_rgba(0,0,0,0.3)]">
                                     <AvatarImage src={fullPlayer?.profilePictureUrl} alt={`Avatar ${player.name}`} data-ai-hint="player avatar large"/>
-                                    <AvatarFallback className="text-xl">{getInitials(player.name || 'P')}</AvatarFallback>
+                                    <AvatarFallback className="text-sm">{getInitials(player.name || 'P')}</AvatarFallback>
                                 </Avatar>
                             </>
                         ) : iconToShow}
                         {player && playerLevelDisplay && (
-                            <div className="absolute -top-2 -right-2 bg-background text-foreground border border-border rounded-md px-1 py-0.5 text-xs font-bold shadow-md z-20">{playerLevelDisplay}</div>
+                            <div className="absolute -top-1.5 -right-1.5 bg-background text-foreground border border-border rounded-md px-1 py-0.5 text-[10px] font-bold shadow-md z-20">{playerLevelDisplay}</div>
                         )}
                         {isPointsBonusVisible && (
-                            <div className={cn("absolute -top-1.5 -right-1 flex h-auto items-center justify-center rounded-full bg-amber-400 px-1.5 py-0.5 text-white shadow-md text-xs font-bold")} title={`${totalPointsToAward} puntos de bonificación`}>
+                            <div className={cn("absolute -top-1 -right-1 flex h-auto items-center justify-center rounded-full bg-amber-400 px-1 py-0 text-white shadow-md text-[10px] font-bold")} title={`${totalPointsToAward} puntos de bonificación`}>
                                 +{totalPointsToAward.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                             </div>
                         )}
                          {showPlaceholderPointsBonus && (
-                             <div className="absolute -top-1.5 -right-1 flex h-auto items-center justify-center rounded-full bg-amber-400 px-1.5 py-0.5 text-white shadow-md text-xs font-bold" title={`${totalPointsToAward} puntos de bonificación`}>
+                             <div className="absolute -top-1 -right-1 flex h-auto items-center justify-center rounded-full bg-amber-400 px-1 py-0 text-white shadow-md text-[10px] font-bold" title={`${totalPointsToAward} puntos de bonificación`}>
                                 +{totalPointsToAward}
                             </div>
                         )}
                     </div>
                      <span className={cn(
-                        "text-xs font-medium truncate w-auto max-w-[60px] text-center",
+                        "text-[10px] font-medium truncate w-auto max-w-[60px] text-center",
                         player ? "text-foreground" : "text-muted-foreground",
                          (match.gratisSpotAvailable && (match.bookedPlayers || []).length === 3 && !player) && "text-purple-600 font-bold",
                          canJoinThisPrivateMatch && !player && "text-purple-600 font-bold",

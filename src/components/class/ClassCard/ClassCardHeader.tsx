@@ -67,7 +67,7 @@ export const ClassCardHeader: React.FC<ClassCardHeaderProps> = ({
 
 
   return (
-    <div className="pt-4 pb-2 px-4 space-y-3">
+    <div className="pt-3 pb-2 px-4 space-y-2">
       {/* Top section: Avatar, Name, Rating, and Private Button */}
       <div className="flex justify-between items-start">
         <div className="flex items-center space-x-3">
@@ -101,7 +101,7 @@ export const ClassCardHeader: React.FC<ClassCardHeaderProps> = ({
       </div>
 
        {/* Info Buttons Section */}
-      <div className="flex justify-center items-center gap-1.5 pt-2">
+      <div className="flex justify-center items-center gap-1.5 pt-1">
           <InfoButton icon={Lightbulb} text={levelDisplay} onClick={() => onInfoClick('level')} />
           <InfoButton icon={CategoryIcon} text={displayClassCategory(currentSlot.category, true)} onClick={() => onInfoClick('category')} className={
               currentSlot.category === 'chica' ? 'text-pink-600 border-pink-200 bg-pink-50 hover:border-pink-300' :
@@ -111,7 +111,7 @@ export const ClassCardHeader: React.FC<ClassCardHeaderProps> = ({
       </div>
 
       {/* Middle section: Date, Time, Duration, and Share */}
-      <div className="flex justify-between items-center border-t border-border pt-2">
+      <div className="flex justify-between items-center border-t border-border pt-1">
         <div className="flex items-center space-x-3">
           <div className="flex flex-col items-center justify-center font-bold">
             <span className="text-4xl leading-none -mb-1">{format(new Date(currentSlot.startTime), 'd')}</span>
