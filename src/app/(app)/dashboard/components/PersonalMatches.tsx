@@ -1,3 +1,0 @@
-// This component has been moved to /src/components/schedule/PersonalMatches.tsx
-// It's content is now there.
-export {};
