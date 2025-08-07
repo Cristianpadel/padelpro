@@ -104,8 +104,8 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 
 
     useEffect(() => {
-        const updateCounts = async () => {
-            const counts = await countConfirmedLiberadasSpots(clubInfo?.id);
+        const updateCounts = () => {
+            const counts = countConfirmedLiberadasSpots(clubInfo?.id);
             setLiberadasCount(counts.classes + counts.matches);
         };
         updateCounts();
