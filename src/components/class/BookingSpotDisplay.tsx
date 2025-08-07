@@ -1,3 +1,4 @@
+// src/components/class/BookingSpotDisplay.tsx
 "use client";
 
 import React from 'react';
@@ -8,7 +9,7 @@ import { Loader2, Plus, Gift, CreditCard, Star } from 'lucide-react';
 import { cn, getInitials, getPlaceholderUserName } from '@/lib/utils';
 import type { User, TimeSlot } from '@/types';
 import { useToast } from '@/hooks/use-toast';
-import { getMockStudents } from '@/lib/mockData';
+import { getMockStudents, calculatePricePerPerson } from '@/lib/mockData';
 import { differenceInDays, startOfDay } from 'date-fns';
 
 interface BookingSpotDisplayProps {
@@ -52,9 +53,9 @@ const BookingSpotDisplay: React.FC<BookingSpotDisplayProps> = ({
   const isDesignatedGratisSpot = currentSlot.designatedGratisSpotPlaceholderIndexForOption?.[optionSize] === spotIndex;
   const isGratisSpotEffectivelyAvailable = isDesignatedGratisSpot && !playerInSpot;
 
-  const pricePerPersonForThisOption = totalPrice / optionSize;
-  const pointsCostForGratisSpot = totalPrice / 1; // 1 point per euro of full price
-  const hasEnoughCredit = (currentUser?.credit ?? 0) >= pricePerPersonForThisOption;
+  const pricePerPersonForThisOption = calculatePricePerPerson(totalPrice, optionSize);
+  const pointsCostForGratisSpot = calculatePricePerPerson(totalPrice, 1);
+  const hasEnoughCredit = (currentUser?.credit ?? 0) - (currentUser?.blockedCredit ?? 0) >= pricePerPersonForThisOption;
   const hasEnoughPointsForGratis = (currentUser?.loyaltyPoints ?? 0) >= pointsCostForGratisSpot;
 
   const canJoinStandard = !playerInSpot && !isDesignatedGratisSpot && bookedPlayersForOption.length < optionSize && !isSlotOverallConfirmed && !userHasConfirmedActivityToday && !isUserBookedInThisOption && hasEnoughCredit;
@@ -62,13 +63,14 @@ const BookingSpotDisplay: React.FC<BookingSpotDisplayProps> = ({
 
   const getTooltipText = () => {
     if (isLoading) return "Procesando...";
-    if (playerInSpot) return playerInSpot.name || getPlaceholderUserName(playerInSpot.userId, currentUser.id, currentUser.name);
+    const studentName = playerInSpot ? (getMockStudents().find(u => u.id === playerInSpot.userId)?.name || getPlaceholderUserName(playerInSpot.userId, currentUser.id, currentUser.name)) : '';
+    if (playerInSpot) return studentName;
     if (canJoinGratis) return `Unirse (Gratis con ${pointsCostForGratisSpot} Puntos)`;
     if (canJoinStandard) return `Unirse (Coste: ${pricePerPersonForThisOption.toFixed(2)}€)`;
     if (isUserBookedInThisOption) return "Ya estás inscrito en esta opción.";
     if (userHasConfirmedActivityToday && !isGratisSpotEffectivelyAvailable) return "Ya tienes otra actividad confirmada hoy.";
     if (isGratisSpotEffectivelyAvailable && !hasEnoughPointsForGratis) return `Puntos insuficientes (${currentUser?.loyaltyPoints ?? 0} / ${pointsCostForGratisSpot}).`;
-    if (!isDesignatedGratisSpot && !hasEnoughCredit) return `Saldo insuficiente (${(currentUser?.credit ?? 0).toFixed(2)}€ / ${pricePerPersonForThisOption.toFixed(2)}€).`;
+    if (!isDesignatedGratisSpot && !hasEnoughCredit) return `Saldo insuficiente (${((currentUser?.credit ?? 0) - (currentUser?.blockedCredit ?? 0)).toFixed(2)}€ / ${pricePerPersonForThisOption.toFixed(2)}€).`;
     if (isSlotOverallConfirmed) return `Clase confirmada para ${confirmedGroupSize}p.`;
     return "No disponible.";
   };
@@ -96,8 +98,8 @@ const BookingSpotDisplay: React.FC<BookingSpotDisplayProps> = ({
           <TooltipTrigger asChild>
             <div className="relative">
               <Avatar className={cn("h-10 w-10 p-0 overflow-hidden shadow-[inset_0_2px_4px_0_rgba(0,0,0,0.2)]", isCurrentUserInSpot ? "ring-2 ring-offset-1 ring-primary border-primary" : "border-gray-300")}>
-                <AvatarImage src={student?.profilePictureUrl} alt={playerInSpot.name} data-ai-hint="player avatar small" />
-                <AvatarFallback className="text-xs">{getInitials(playerInSpot.name || '')}</AvatarFallback>
+                <AvatarImage src={student?.profilePictureUrl} alt={student?.name} data-ai-hint="player avatar small" />
+                <AvatarFallback className="text-xs">{getInitials(student?.name || '')}</AvatarFallback>
               </Avatar>
             </div>
           </TooltipTrigger>

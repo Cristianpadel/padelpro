@@ -1,4 +1,4 @@
-
+// src/components/match/MatchSpotDisplay.tsx
 "use client";
 
 import React from 'react';
@@ -7,9 +7,9 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { User as UserIcon, Plus, Loader2, Gift, CreditCard, AlertTriangle, Lock, Star } from 'lucide-react';
 import type { Match, User } from '@/types';
-import { cn, getInitials, calculatePricePerPerson } from '@/lib/utils';
+import { cn, getInitials } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { getMockStudents, getMockClubs } from '@/lib/mockData';
+import { getMockStudents, getMockClubs, calculatePricePerPerson } from '@/lib/mockData';
 import { differenceInDays, startOfDay } from 'date-fns';
 
 interface MatchSpotDisplayProps {
