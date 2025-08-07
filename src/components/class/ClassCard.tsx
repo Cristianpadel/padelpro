@@ -20,9 +20,10 @@ import {
     getMockClubs, calculateActivityPrice, getInstructorRate, getCourtAvailabilityForInterval, getMockInstructors,
     confirmClassAsPrivate
 } from '@/lib/mockData';
-import { Lightbulb, ShieldQuestion, Hash, Users2, Venus, Mars, Euro } from 'lucide-react';
+import { Lightbulb, ShieldQuestion, Hash, Users2, Venus, Mars, Euro, Info } from 'lucide-react';
 import { calculatePricePerPerson } from '@/lib/utils';
 import { displayClassCategory } from '@/types';
+import { cn } from '@/lib/utils';
 
 interface ClassCardProps {
     classData: TimeSlot;
@@ -58,6 +59,8 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
     const [totalPrice, setTotalPrice] = useState<number>(0);
     const [courtAvailability, setCourtAvailability] = useState<{ available: PadelCourt[], occupied: PadelCourt[], total: number }>({ available: [], occupied: [], total: 0 });
     const [instructorRating, setInstructorRating] = useState<number>(4.5);
+    const [statusMessage, setStatusMessage] = useState('');
+    const [showStatusMessage, setShowStatusMessage] = useState(false);
 
     // State for dialogs
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -88,6 +91,39 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
         loadInitialData();
         setCurrentSlot(initialSlot);
     }, [initialSlot]);
+    
+    // Status message effect
+    useEffect(() => {
+        const totalBookedPlayers = currentSlot.bookedPlayers.length;
+        const { completed } = isSlotEffectivelyCompleted(currentSlot);
+
+        let newStatusMessage = '';
+        if (!completed && totalBookedPlayers > 0) {
+            const currentGroupSize = currentSlot.bookedPlayers[0]?.groupSize;
+            if (currentGroupSize) {
+                const playersNeeded = currentGroupSize - totalBookedPlayers;
+                if (playersNeeded > 0) {
+                    const playerText = totalBookedPlayers === 1 ? 'un jugador apuntado' : `${totalBookedPlayers} jugadores apuntados`;
+                    const neededText = playersNeeded === 1 ? 'falta 1 más' : `faltan ${playersNeeded} más`;
+                    newStatusMessage = `Hay ${playerText}, ¡${neededText} para confirmar la clase!`;
+                }
+            }
+        }
+        
+        if (newStatusMessage && newStatusMessage !== statusMessage) {
+            setStatusMessage(newStatusMessage);
+            setShowStatusMessage(true);
+            const timer = setTimeout(() => {
+                setShowStatusMessage(false);
+            }, 5000); // Message disappears after 5 seconds
+
+            return () => clearTimeout(timer);
+        } else if (!newStatusMessage) {
+            setShowStatusMessage(false);
+        }
+
+    }, [currentSlot.bookedPlayers, statusMessage]);
+
 
     // Memos for derived state
     const isSlotEffectivelyFull = useMemo(() => isSlotEffectivelyCompleted(currentSlot).completed, [currentSlot]);
@@ -199,7 +235,7 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
         : {};
 
     return (
-        <>
+        <div className="relative">
             <Card className="flex flex-col h-full rounded-lg overflow-hidden border bg-background" style={shadowStyle}>
                 <ClassCardHeader
                     currentSlot={currentSlot}
@@ -230,6 +266,18 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
                 />
             </Card>
 
+            {showStatusMessage && (
+                 <div
+                    className={cn(
+                        "absolute -bottom-4 left-1/2 -translate-x-1/2 w-5/6 text-center text-xs text-blue-800 font-semibold bg-blue-100 p-2 rounded-lg border-2 border-white shadow-lg flex items-center justify-center transition-all duration-500 z-10",
+                        showStatusMessage ? 'data-[state=open]:animate-in data-[state=open]:fade-in data-[state=open]:slide-in-from-bottom-5' : 'data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:slide-out-to-bottom-5'
+                    )}
+                 >
+                    <Info className="h-4 w-4 mr-2 flex-shrink-0" />
+                    {statusMessage}
+                </div>
+            )}
+
             <BookingConfirmationDialog
                 isOpen={showConfirmDialog}
                 onOpenChange={setShowConfirmDialog}
@@ -258,7 +306,7 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
                 description={infoDialog.description}
                 icon={infoDialog.icon}
             />
-        </>
+        </div>
     );
 });
 ClassCard.displayName = 'ClassCard';
