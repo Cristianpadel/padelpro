@@ -365,7 +365,7 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
   const badges = [
       { type: 'category', value: displayClassCategory(matchCategoryToDisplay, true), icon: CategoryIconDisplay },
       { type: 'court', value: currentMatch.courtNumber ? `Pista ${currentMatch.courtNumber}` : 'Pista', icon: Hash },
-      { type: 'level', value: displayClassLevel(matchLevelToDisplay), icon: BarChartHorizontal }
+      { type: 'level', value: displayClassLevel(matchLevelToDisplay, true), icon: BarChartHorizontal }
   ];
 
 
