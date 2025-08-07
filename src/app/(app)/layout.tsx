@@ -37,7 +37,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   // Determine current page for sidebar active state
-  const currentPage = pathname.startsWith('/dashboard') ? 'agenda'
+  const currentPage = pathname.startsWith('/schedule') ? 'agenda'
                     : pathname.startsWith('/activities') && pathname.includes('partidas') ? 'partidas'
                     : pathname.startsWith('/activities') ? 'clases'
                     : 'other';

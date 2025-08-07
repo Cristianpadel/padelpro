@@ -185,10 +185,10 @@ export function BottomNavigationBar() {
         },
         {
             key: 'agenda',
-            href: '/dashboard',
+            href: '/schedule',
             icon: ClipboardList,
             label: 'Agenda',
-            isActive: pathname === '/dashboard',
+            isActive: pathname === '/schedule',
             hidden: !currentUser,
             badgeCount: confirmedBookingsCount,
         },
