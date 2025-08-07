@@ -1,3 +1,4 @@
+// src/lib/mockDataSources/classActions.ts
 "use client";
 
 import { addHours, setHours, setMinutes, startOfDay, format, isSameDay, addDays, addMinutes, areIntervalsOverlapping, parseISO } from 'date-fns';
@@ -10,6 +11,20 @@ import { _annulConflictingActivities, findAvailableCourt, removeUserPreInscripti
 import { addUserPointsAndAddTransaction, deductCredit, recalculateAndSetBlockedBalances, confirmAndAwardPendingPoints } from './users';
 import { calculatePricePerPerson } from '@/lib/utils';
 import { v4 as uuidv4 } from 'uuid';
+
+export const fetchTimeSlots = async (clubId?: string): Promise<TimeSlot[]> => {
+    await new Promise(resolve => setTimeout(resolve, config.MINIMAL_DELAY));
+    let slotsToReturn = JSON.parse(JSON.stringify(state.getMockTimeSlots())) as TimeSlot[];
+    if (clubId) {
+        slotsToReturn = slotsToReturn.filter(slot => slot.clubId === clubId);
+    }
+    return slotsToReturn.map(slot => ({
+        ...slot,
+        startTime: new Date(slot.startTime),
+        endTime: new Date(slot.endTime),
+        bookedPlayers: slot.bookedPlayers || [],
+    }));
+};
 
 export const addTimeSlot = async (
   slotData: Omit<TimeSlot, 'id' | 'status' | 'bookedPlayers' | 'endTime' | 'instructorName'>
