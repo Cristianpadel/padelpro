@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import type { PadelCourt } from '@/types';
-import { updatePadelCourt, deletePadelCourt } from '@/lib/mockData';
-import { fetchPadelCourtsByClub, addPadelCourt } from '@/lib/mockDataSources';
+import { addPadelCourt, updatePadelCourt, deletePadelCourt } from '@/lib/mockData';
+import { fetchPadelCourtsByClub } from '@/lib/mockDataSources';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';

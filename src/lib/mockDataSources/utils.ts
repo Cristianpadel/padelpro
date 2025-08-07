@@ -2,7 +2,7 @@
 
 import { isSameDay, areIntervalsOverlapping as dateFnsAreIntervalsOverlapping, startOfDay, format, differenceInDays } from 'date-fns';
 import type { TimeSlot, Booking, Match, MatchBooking, User, PadelCourt, PadelCategoryForSlot, MatchPadelLevel, ClassPadelLevel, UserActivityStatusForDay } from '@/types';
-import * as state from './state'; // Import state module
+import * as state from './index'; // Import state module
 import { setGlobalCurrentUser } from './state';
 import { recalculateAndSetBlockedBalances } from './users';
 
@@ -484,4 +484,8 @@ export const countConfirmedLiberadasSpots = (clubId?: string | null): { classes:
     ).length;
 
     return { classes: gratisConfirmedClasses, matches: gratisConfirmedRegularMatches, matchDay: gratisMatchDayMatches };
+};
+
+export const findPadelCourtById = async (courtId: string): Promise<PadelCourt | undefined> => {
+    return state.getMockPadelCourts().find(c => c.id === courtId);
 };
