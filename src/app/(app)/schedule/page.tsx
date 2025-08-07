@@ -4,7 +4,7 @@
 import React, { Suspense, useEffect, useState, useCallback } from 'react';
 import Footer from '@/components/layout/Footer';
 import PersonalSchedule from '@/components/schedule/PersonalSchedule';
-import PersonalMatches from '@/components/match/PersonalMatches';
+import PersonalMatches from '@/components/schedule/PersonalMatches';
 import PersonalMatchDay from '@/components/schedule/PersonalMatchDay'; 
 import { getMockCurrentUser, getMockClubs, setGlobalCurrentUser, getMockUserBookings, getMockTimeSlots, isSlotEffectivelyCompleted, getMockUserMatchBookings, getMockMatches, updateUserLevel } from '@/lib/mockData'; 
 import { recommendClasses, type RecommendClassesOutput } from '@/ai/flows/recommend-classes';
