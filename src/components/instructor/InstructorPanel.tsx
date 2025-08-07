@@ -1,0 +1,2 @@
+// This component is now located at /src/app/(app)/instructor/components/InstructorPanel.tsx
+export {};
