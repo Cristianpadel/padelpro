@@ -38,19 +38,17 @@ export const ClassCardFooter: React.FC<ClassCardFooterProps> = ({
         : (typeof currentSlot.level === 'object' ? `${currentSlot.level.min}-${currentSlot.level.max}` : String(currentSlot.level));
 
     return (
-        <div className="border-t pt-2 pb-3 px-3 space-y-1">
+        <div className="border-t pt-2 pb-3 px-3 space-y-2">
             <div className="flex justify-center items-center gap-1.5">
                 <InfoButton icon={Lightbulb} text={levelDisplay} onClick={() => onInfoClick('level')} />
                 <InfoButton icon={CategoryIcon} text="Categoría" onClick={() => onInfoClick('category')} />
                 <InfoButton icon={Hash} text="Pista" onClick={() => onInfoClick('court')} />
             </div>
-            <div>
-                <CourtAvailabilityIndicator
-                    availableCourts={courtAvailability.available}
-                    occupiedCourts={courtAvailability.occupied}
-                    totalCourts={courtAvailability.total}
-                />
-            </div>
+            <CourtAvailabilityIndicator
+                availableCourts={courtAvailability.available}
+                occupiedCourts={courtAvailability.occupied}
+                totalCourts={courtAvailability.total}
+            />
         </div>
     );
 };

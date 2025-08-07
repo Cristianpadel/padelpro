@@ -43,15 +43,20 @@ const CourtAvailabilityIndicator: React.FC<CourtAvailabilityIndicatorProps> = ({
   ].sort((a,b) => a.courtNumber - b.courtNumber);
 
   return (
-    <div className="w-full text-center mt-2">
-       <p className="text-xs font-medium text-slate-600 mb-1">
-            Pistas disponibles: <span className="font-bold">{availableCourts.length}/{totalCourts}</span>
+    <div className="w-full text-center">
+        <p className="text-xs font-medium text-slate-600 mb-1">
+            Pistas disponibles:
         </p>
       <TooltipProvider>
           <Tooltip>
               <TooltipTrigger className="w-full text-left cursor-default">
                   <div className="p-2 bg-slate-50 border border-slate-200 rounded-lg shadow-inner w-full">
-                      <div className="flex items-center justify-center gap-x-1.5 flex-wrap">
+                      <div className="flex items-center justify-center gap-x-2 flex-wrap">
+                           <div className="flex flex-col items-center mr-1">
+                                <div className="h-9 w-9 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-700 text-sm border-2 border-white shadow">
+                                    {availableCourts.length}/{totalCourts}
+                                </div>
+                            </div>
                           {allCourtsStatus.map((court) => (
                              <CourtIcon key={court.id} isAvailable={court.isAvailable} />
                           ))}
