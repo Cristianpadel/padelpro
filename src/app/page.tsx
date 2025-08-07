@@ -24,16 +24,20 @@ export default function LoginPage() {
     
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
-        // In a real app, you would have login logic here.
-        // For now, we just navigate to the dashboard page.
         router.push('/dashboard');
     };
 
   return (
     <>
-    <main className="flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4">
+    <div className="video-background-container">
+        <video autoPlay loop muted className="video-background">
+            <source src="/background-video.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+        </video>
+    </div>
+    <main className="flex min-h-screen flex-col items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-md">
-        <Card className="shadow-2xl border-border/50">
+        <Card className="shadow-2xl border-border/20 bg-card/80 backdrop-blur-sm text-card-foreground">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 flex items-center justify-center gap-2">
               <PadelRacketIcon className="h-8 w-8 text-primary" />
@@ -58,6 +62,14 @@ export default function LoginPage() {
                   <Label htmlFor="password">Contraseña</Label>
                   <Input id="password" type="password" defaultValue="password123"/>
                 </div>
+                <div className="text-right text-sm">
+                   <Link
+                        href="#"
+                        className="font-medium text-primary underline-offset-4 hover:underline"
+                    >
+                        ¿Has olvidado tu contraseña?
+                    </Link>
+                </div>
               </CardContent>
               <CardFooter className="flex flex-col gap-4">
                 <Button className="w-full" type="submit">
@@ -66,7 +78,7 @@ export default function LoginPage() {
                  <div className="text-center text-sm text-muted-foreground">
                     ¿No tienes cuenta?{' '}
                     <Link
-                        href="/auth/register"
+                        href="/register"
                         className="font-medium text-primary underline-offset-4 hover:underline"
                     >
                         Regístrate
@@ -75,16 +87,11 @@ export default function LoginPage() {
               </CardFooter>
           </form>
         </Card>
-        <Card className="mt-4 border-border/50">
-          <CardContent className="p-4 text-center">
-            <p className="mb-2 text-sm text-muted-foreground">
-              ¿Eres parte del equipo del club?
-            </p>
-             <Button variant="outline" size="sm" onClick={() => setIsProfessionalAccessOpen(true)}>
+        <div className="mt-6 text-center">
+            <Button variant="outline" size="sm" onClick={() => setIsProfessionalAccessOpen(true)} className="bg-background/80 backdrop-blur-sm">
                 Acceso Profesional
             </Button>
-          </CardContent>
-        </Card>
+        </div>
       </div>
     </main>
     <ProfessionalAccessDialog isOpen={isProfessionalAccessOpen} onOpenChange={setIsProfessionalAccessOpen} />
