@@ -1,6 +1,6 @@
 "use client";
 
-import type { User, Booking, PointTransactionType, TimeSlot, Match, Product, Instructor, UserDB, MatchPadelLevel, UserGenderCategory, DayOfWeek, TimeRange, InstructorRateTier, MatchBooking } from '@/types';
+import type { User, Booking, PointTransactionType, TimeSlot, Match, Product, Instructor, UserDB, MatchPadelLevel, UserGenderCategory, DayOfWeek, TimeRange, InstructorRateTier, MatchBooking, Review, Transaction } from '@/types';
 import * as state from './index'; 
 import * as config from '../config';
 import { areIntervalsOverlapping, parse, getDay, format, differenceInDays } from 'date-fns';
@@ -372,6 +372,40 @@ export const fetchStudents = async (): Promise<User[]> => {
     state.initializeMockStudents(studentsFromDB);
     return JSON.parse(JSON.stringify(studentsFromDB));
 };
+
+export const fetchUserBookings = async (userId: string): Promise<Booking[]> => {
+    await new Promise(resolve => setTimeout(resolve, config.MINIMAL_DELAY));
+    const userBookingsData = state.getMockUserBookings().filter(booking => booking.userId === userId);
+
+    return userBookingsData.map(booking => {
+        const slot = state.getMockTimeSlots().find(s => s.id === booking.activityId);
+        return {
+            ...booking,
+            bookedAt: new Date(booking.bookedAt!),
+            slotDetails: slot ? {
+                id: slot.id,
+                clubId: slot.clubId,
+                startTime: new Date(slot.startTime),
+                endTime: new Date(slot.endTime),
+                instructorId: slot.instructorId,
+                instructorName: slot.instructorName,
+                courtNumber: slot.courtNumber,
+                level: slot.level,
+                category: slot.category,
+                bookedPlayers: JSON.parse(JSON.stringify(slot.bookedPlayers || [])),
+                totalPrice: slot.totalPrice,
+                status: slot.status,
+                organizerId: slot.organizerId,
+                privateShareCode: slot.privateShareCode,
+                confirmedPrivateSize: slot.confirmedPrivateSize,
+                maxPlayers: slot.maxPlayers,
+                designatedGratisSpotPlaceholderIndexForOption: slot.designatedGratisSpotPlaceholderIndexForOption,
+                durationMinutes: slot.durationMinutes,
+            } : booking.slotDetails
+        };
+    });
+};
+
 
 export const fetchReviewsForInstructor = async (instructorId: string): Promise<Review[]> => {
     await new Promise(resolve => setTimeout(resolve, config.MINIMAL_DELAY));

@@ -1,10 +1,11 @@
+// src/components/schedule/PersonalMatches.tsx
 "use client";
 
 import React, { useState, useEffect, useTransition, useMemo } from 'react';
 import type { MatchBooking, User, Match, Club, PadelCategoryForSlot, MatchBookingMatchDetails } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { List, Clock, Users, CalendarCheck, CalendarX, Loader2, Ban, Hash, Trophy, UserCircle, Gift, Info, MessageSquare, Euro, Users2 as CategoryIcon, Venus, Mars, Share2, Unlock, Lock, Repeat, Lightbulb } from 'lucide-react';
-import { format, differenceInHours } from 'date-fns';
+import { format, differenceInHours, isPast } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
 import { fetchUserMatchBookings, cancelMatchBooking, getMockClubs, makeMatchPublic, cancelPrivateMatchAndReofferWithPoints, getMockMatches, renewRecurringMatch } from '@/lib/mockData';
@@ -54,7 +55,14 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
         fetchUserMatchBookings(currentUser.id),
         getMockMatches(),
       ]);
-      fetchedBookings.sort((a, b) => (a.matchDetails?.startTime?.getTime() ?? 0) - (b.matchDetails?.startTime?.getTime() ?? 0));
+       fetchedBookings.sort((a, b) => {
+          if (!a.matchDetails?.startTime || !b.matchDetails?.startTime) return 0;
+          const aIsPast = isPast(new Date(a.matchDetails.startTime));
+          const bIsPast = isPast(new Date(b.matchDetails.startTime));
+          if (aIsPast && !bIsPast) return 1;
+          if (!aIsPast && bIsPast) return -1;
+          return new Date(b.matchDetails.startTime).getTime() - new Date(a.matchDetails.startTime).getTime();
+      });
       setBookings(fetchedBookings);
       setAllMatches(fetchedMatches);
       setError(null);
@@ -68,9 +76,9 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
 
   useEffect(() => {
     loadData();
-    const timer = setInterval(() => setNow(new Date()), 1000);
+    const timer = setInterval(() => setNow(new Date()), 60000); // Update every minute
     return () => clearInterval(timer);
-  }, [currentUser.id, newMatchBooking, onBookingActionSuccess]);
+  }, [currentUser.id, onBookingActionSuccess]);
 
   const handleCancellationAction = (booking: MatchBooking) => {
     if (!booking.matchDetails) {
@@ -123,8 +131,8 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
     });
   };
 
-  const upcomingBookings = bookings.filter(b => b.matchDetails && !b.matchDetails.eventId && new Date(b.matchDetails.endTime) > now);
-  const pastBookings = bookings.filter(b => b.matchDetails && !b.matchDetails.eventId && new Date(b.matchDetails.endTime) <= now);
+  const upcomingBookings = bookings.filter(b => b.matchDetails && !isPast(new Date(b.matchDetails.endTime)));
+  const pastBookings = bookings.filter(b => b.matchDetails && isPast(new Date(b.matchDetails.endTime)));
 
 
   if (loading) {
@@ -511,25 +519,36 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
 
     return (
     <>
-      <div className="space-y-6">
-          {hasUpcomingBookings && (
-              <div>
-                <h3 className="text-lg font-semibold mb-3 text-primary flex items-center"><Trophy className="mr-2 h-5 w-5" /> Partidas Regulares</h3>
-                  <div className="space-y-4">
-                      {upcomingBookings.map(b => renderBookingItem(b, true))}
-                  </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center text-xl"><List className="mr-2 h-5 w-5" /> Mis Partidas</CardTitle>
+          <CardDescription>Aquí tienes un resumen de tus partidas inscritas.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {upcomingBookings.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-muted-foreground mb-2">Próximas Partidas</h3>
+              <div className="space-y-4">
+                {upcomingBookings.map(b => renderBookingItem(b, true))}
               </div>
+            </div>
           )}
-          {hasUpcomingBookings && hasPastBookings && <Separator />}
-          {hasPastBookings && (
-              <div>
-                <h3 className="text-lg font-semibold mb-3 text-muted-foreground flex items-center"><CalendarX className="mr-2 h-5 w-5" /> Partidas Pasadas</h3>
-                  <div className="space-y-4">
-                      {pastBookings.map(b => renderBookingItem(b, false))}
-                  </div>
+
+           {pastBookings.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-muted-foreground my-4 border-t pt-4">Partidas Pasadas</h3>
+              <div className="space-y-4">
+                {pastBookings.map(b => renderBookingItem(b, false))}
               </div>
+            </div>
           )}
-      </div>
+
+          {!hasUpcomingBookings && !hasPastBookings && (
+            <p className="text-muted-foreground text-center py-4">No tienes ninguna partida en tu agenda.</p>
+          )}
+
+        </CardContent>
+      </Card>
     </>
   );
 };
