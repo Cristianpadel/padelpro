@@ -3,7 +3,6 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { PadelCourt } from '@/types';
 
 interface CourtAvailabilityIndicatorProps {
@@ -11,27 +10,6 @@ interface CourtAvailabilityIndicatorProps {
   occupiedCourts: PadelCourt[];
   totalCourts: number;
 }
-
-const CourtIcon: React.FC<{ available: boolean }> = ({ available }) => (
-    <div className={cn(
-        "h-4 w-4 flex items-center justify-center",
-        available ? "text-green-500" : "text-gray-400"
-    )}>
-        <div className={cn(
-            "w-1.5 h-1.5 rounded-full",
-            available ? "bg-green-500" : "bg-gray-400"
-        )}></div>
-        <div className={cn(
-            "w-2 h-px",
-            available ? "bg-green-500" : "bg-gray-400"
-        )}></div>
-        <div className={cn(
-            "w-1.5 h-1.5 rounded-full",
-            available ? "bg-green-500" : "bg-gray-400"
-        )}></div>
-    </div>
-);
-
 
 const CourtAvailabilityIndicator: React.FC<CourtAvailabilityIndicatorProps> = ({
   availableCourts,
@@ -49,23 +27,28 @@ const CourtAvailabilityIndicator: React.FC<CourtAvailabilityIndicatorProps> = ({
 
   return (
     <div className="p-2 bg-slate-50 border border-slate-200 rounded-lg shadow-inner w-full">
-        <p className="text-xs text-center font-medium text-slate-600 mb-1.5">Pistas disponibles</p>
-        <div className="flex items-center justify-center gap-x-3">
-             <div className="flex items-center justify-center h-8 w-8 rounded-full bg-white border-2 border-slate-300 font-bold text-slate-700 text-lg shadow-sm">
+        <p className="text-xs text-center font-medium text-slate-600 mb-2">Pistas disponibles</p>
+        <div className="flex items-center justify-center gap-x-4">
+            <div className="flex items-center justify-center h-8 w-8 rounded-full bg-white border-2 border-slate-300 font-bold text-slate-700 text-lg shadow-sm">
                 {availableCourts.length}
             </div>
-            <div className="flex items-center gap-1">
-                {allCourtsStatus.map(court => (
-                    <TooltipProvider key={court.id} delayDuration={100}>
-                        <Tooltip>
-                            <TooltipTrigger>
-                                <CourtIcon available={court.isAvailable} />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>{court.name} - {court.isAvailable ? 'Disponible' : 'Ocupada'}</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
+            <div className="flex items-center">
+                {allCourtsStatus.map((court, index) => (
+                    <React.Fragment key={court.id}>
+                        <div
+                            className={cn(
+                                "h-2 w-2 rounded-full",
+                                court.isAvailable ? "bg-green-500" : "bg-gray-300"
+                            )}
+                            title={`${court.name} - ${court.isAvailable ? 'Disponible' : 'Ocupada'}`}
+                        />
+                        {index < allCourtsStatus.length - 1 && (
+                            <div className={cn(
+                                "h-0.5 w-2",
+                                court.isAvailable ? "bg-green-500" : "bg-gray-300"
+                            )}/>
+                        )}
+                    </React.Fragment>
                 ))}
             </div>
         </div>
