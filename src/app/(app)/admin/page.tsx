@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import AdminPanel from '@/components/admin/AdminPanel';
+import AdminPanel from '@/app/(app)/admin/components/AdminPanel';
 import { getMockClubs } from '@/lib/mockData';
 import type { Club } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';

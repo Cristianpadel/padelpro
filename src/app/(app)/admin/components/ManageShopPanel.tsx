@@ -330,5 +330,3 @@ const ManageShopPanel: React.FC<ManageShopPanelProps> = ({ club, onClubSettingsU
 };
 
 export default ManageShopPanel;
-
-    

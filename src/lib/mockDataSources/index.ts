@@ -12,3 +12,4 @@ export * from './matchDay';
 export * from './system';
 export * from './clubs';
 export * from './courts';
+export * from './shop';

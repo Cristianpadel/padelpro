@@ -1,3 +1,4 @@
+// src/lib/mockDataSources/users.ts
 "use client";
 
 import type { User, Booking, PointTransactionType, TimeSlot, Match, Product, Instructor, UserDB, MatchPadelLevel, UserGenderCategory, DayOfWeek, TimeRange, InstructorRateTier, MatchBooking, Review, Transaction } from '@/types';
@@ -779,4 +780,20 @@ export const countUserReservedProducts = async (userId: string): Promise<number>
     await new Promise(resolve => setTimeout(resolve, 50));
     const userTransactions = state.getMockTransactions().filter(t => t.userId === userId && t.type === 'Compra Producto');
     return userTransactions.length;
+};
+
+export const addProduct = async (productData: Omit<Product, 'id'>): Promise<Product | { error: string }> => {
+  await new Promise(resolve => setTimeout(resolve, 50));
+  
+  if (!productData.name || !productData.clubId) {
+    return { error: 'El nombre y el club son obligatorios.' };
+  }
+  
+  const newProduct: Product = {
+    ...productData,
+    id: `prod-${Date.now()}`,
+  };
+
+  state.addProductToState(newProduct);
+  return newProduct;
 };

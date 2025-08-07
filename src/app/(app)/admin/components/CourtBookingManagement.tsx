@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useTransition } from 'react';
 import type { PadelCourt, CourtGridBooking, Club, TimeSlot, Match } from '@/types'; // Added TimeSlot and Match
-import { fetchPadelCourtsByClub, fetchCourtBookingsForDay, addManualCourtBooking, getMockClubs, isSlotEffectivelyCompleted as isSlotConfirmed } from '@/lib/mockData'; // Added isSlotEffectivelyCompleted
+import { fetchPadelCourtsByClub, fetchCourtBookingsForDay, addMatch, getMockClubs, isSlotEffectivelyCompleted as isSlotConfirmed } from '@/lib/mockData'; // Added isSlotEffectivelyCompleted
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useForm } from 'react-hook-form';
@@ -111,10 +111,6 @@ const CourtBookingManagement: React.FC<CourtBookingManagementProps> = ({ clubId 
   };
 
   const getBookingDurationInSlots = (booking: CourtGridBooking): number => {
-    // If it's a class or match that is not confirmed, it only spans 1 slot visually for this grid.
-    // if ((booking.type === 'clase' && booking.activityStatus !== 'confirmed' && booking.activityStatus !== 'confirmed_private') || (booking.type === 'partida' && booking.activityStatus !== 'confirmed')) {
-    //   return 1;
-    // }
     const duration = differenceInMinutes(new Date(booking.endTime), new Date(booking.startTime));
     return Math.max(1, Math.ceil(duration / timeSlotsInterval));
   };
@@ -125,23 +121,28 @@ const CourtBookingManagement: React.FC<CourtBookingManagementProps> = ({ clubId 
         const bookingStartTime = setMinutes(setHours(startOfDay(currentDate), hour), minute);
         const durationMinutes = data.title === 'clases 60min' ? 60 : 90;
         const bookingEndTime = addMinutes(bookingStartTime, durationMinutes);
-        const newBookingTypeForGrid: CourtGridBooking['type'] = data.title === 'clases 60min' ? 'clase' : 'partida';
 
-        const newBookingData: Omit<CourtGridBooking, 'id' | 'status'> = {
-        courtNumber: data.courtNumber,
-        startTime: bookingStartTime,
-        endTime: bookingEndTime,
-        title: data.title,
-        type: newBookingTypeForGrid,
-        clubId: clubId, // Ensure clubId is passed
+        const newBookingData = {
+          clubId: clubId,
+          startTime: bookingStartTime,
+          endTime: bookingEndTime,
+          courtNumber: data.courtNumber,
+          level: 'abierto',
+          category: 'abierta',
+          bookedPlayers: [],
+          status: 'confirmed_private',
+          organizerId: 'admin',
+          isPlaceholder: false,
+          totalCourtFee: 0,
+          durationMinutes: durationMinutes,
         };
 
         try {
-        const result = await addManualCourtBooking(clubId, newBookingData as any);
+        const result = await addMatch(newBookingData);
         if ('error' in result) {
             toast({ title: "Error al Reservar", description: result.error, variant: "destructive" });
         } else {
-            toast({ title: "Reserva Manual Creada", description: `${result.title} en Pista ${result.courtNumber}.` });
+            toast({ title: "Reserva Manual Creada", description: `Se ha creado una reserva en Pista ${data.courtNumber}.` });
             setIsManualBookingDialogOpen(false);
             form.reset({
                 courtNumber: undefined,
