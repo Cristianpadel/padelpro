@@ -29,7 +29,7 @@ import {
   getMockMatchDayInscriptions as matchDayInscriptions,
   getMockShopProducts as shopProducts,
 } from './state';
-import { generateDynamicTimeSlots, generateDynamicMatches } from './system';
+import { generateDynamicTimeSlots, generateDynamicMatches, simulateBookings } from './system';
 import { startOfDay, addDays, setHours, setMinutes, addMinutes } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import { defaultPointSettings } from '../config';
@@ -109,7 +109,10 @@ export function performInitialization() {
       genderCategory: 'masculino',
       createdAt: new Date(),
     },
-    // ... other users in database
+     { id: 'user-2', name: 'Beatriz López', email: 'beatriz.lopez@email.com', hashedPassword: 'hashed_password123', level: '3.5', credit: 80.00, loyaltyPoints: 450, profilePictureUrl: 'https://randomuser.me/api/portraits/women/44.jpg', genderCategory: 'femenino', createdAt: new Date(), },
+     { id: 'user-3', name: 'Carlos Fernández', email: 'carlos.fernandez@email.com', hashedPassword: 'hashed_password123', level: '4.5', credit: 25.00, loyaltyPoints: 800, profilePictureUrl: 'https://randomuser.me/api/portraits/men/45.jpg', genderCategory: 'masculino', createdAt: new Date(), },
+     { id: 'user-4', name: 'Diana Martínez', email: 'diana.martinez@email.com', hashedPassword: 'hashed_password123', level: '2.5', credit: 150.00, loyaltyPoints: 120, profilePictureUrl: 'https://randomuser.me/api/portraits/women/46.jpg', genderCategory: 'femenino', createdAt: new Date(), },
+     { id: 'user-5', name: 'Eduardo Ruiz', email: 'eduardo.ruiz@email.com', hashedPassword: 'hashed_password123', level: '3.0', credit: 10.00, loyaltyPoints: 300, profilePictureUrl: 'https://randomuser.me/api/portraits/men/47.jpg', genderCategory: 'masculino', createdAt: new Date(), },
   ];
   initializeMockUserDatabase(initialUserDatabase);
   
@@ -164,4 +167,23 @@ export function performInitialization() {
   initializeMockMatchDayEvents([]);
   initializeMockMatchDayInscriptions([]);
   initializeMockShopProducts([]);
+
+  // --- Simulate some initial activity to make the app look alive ---
+  simulateBookings({
+    clubId: 'club-1',
+    activityType: 'partidas',
+    days: ['monday', 'wednesday', 'friday', 'saturday'],
+    timeRanges: ['evening'],
+    studentCount: 3,
+    density: 20, // 20% of evening matches on these days
+  });
+   simulateBookings({
+    clubId: 'club-1',
+    activityType: 'clases',
+    days: ['tuesday', 'thursday'],
+    timeRanges: ['morning', 'midday'],
+    studentCount: 2,
+    density: 15, // 15% of morning/midday classes on these days
+  });
+
 }

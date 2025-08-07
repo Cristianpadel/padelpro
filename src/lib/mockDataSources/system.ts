@@ -1,3 +1,4 @@
+// src/lib/mockDataSources/system.ts
 "use client";
 
 import { isSameDay, format, addDays } from 'date-fns';
@@ -113,7 +114,7 @@ export const simulateBookings = async (options: {
     const allStudents = state.getMockStudents().filter(s => s.id !== 'user-current');
 
     for (const activity of activitiesToBook) {
-        const studentsAlreadyBooked = 'bookedPlayers' in activity ? activity.bookedPlayers.map(p => p.userId) : [];
+        const studentsAlreadyBooked = 'bookedPlayers' in activity ? (activity.bookedPlayers || []).map(p => p.userId) : [];
         const availableStudents = allStudents.filter(s => !studentsAlreadyBooked.includes(s.id));
         const studentsToBook = availableStudents.sort(() => 0.5 - Math.random()).slice(0, studentCount);
 
@@ -126,8 +127,10 @@ export const simulateBookings = async (options: {
                 result = await bookMatch(student.id, activity.id);
             }
 
-            if ('booking' in result || 'newBooking' in result) {
-                bookingsCreated++;
+            if (result && 'error' in result) {
+                // console.log(`Simulation could not book ${student.name} in ${activity.id}: ${result.error}`);
+            } else if (result) {
+                 bookingsCreated++;
                 const bookingId = 'booking' in result ? result.booking.id : ('newBooking' in result ? result.newBooking.id : '');
                 if (!bookingId) continue;
                 // Mark as simulated
