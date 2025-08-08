@@ -1,3 +1,4 @@
+// src/app/(app)/instructor/components/InstructorAvailabilitySettings.tsx
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -98,7 +99,7 @@ const InstructorAvailabilitySettings: React.FC<InstructorAvailabilitySettingsPro
     setIsSaving(true);
     try {
       await onSaveUnavailableHours(currentUnavailableHours);
-      toast({ title: "Disponibilidad Guardada", description: "Tu horario de indisponibilidad ha sido actualizado.", className: "bg-primary text-primary-foreground" });
+      // Toast is now handled by the parent component (InstructorPanel)
     } catch (error) {
       toast({ title: "Error al Guardar", description: "No se pudo guardar la disponibilidad.", variant: "destructive" });
       console.error("Error saving unavailable hours:", error);
@@ -114,7 +115,7 @@ const InstructorAvailabilitySettings: React.FC<InstructorAvailabilitySettingsPro
     <div className="space-y-6">
       <div className="p-3 bg-blue-50 border border-blue-200 rounded-md text-blue-700 text-sm flex items-start">
           <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0 mt-0.5" />
-          <span>Define los bloques horarios en los que NO estarás disponible. El sistema NO generará clases automáticamente en estos periodos para ti.</span>
+          <span>Define los bloques horarios en los que SÍ estarás disponible. Si no defines ninguno para un día, se asumirá que estás disponible todo el día.</span>
       </div>
 
       {daysOfWeek.map((day) => (
@@ -164,7 +165,7 @@ const InstructorAvailabilitySettings: React.FC<InstructorAvailabilitySettingsPro
 
             {showNewRangeForm && showNewRangeForm.day === day && (
               <div className="mt-3 pt-3 border-t border-border">
-                <p className="text-sm font-medium mb-2 text-primary">Nuevo Rango de Indisponibilidad:</p>
+                <p className="text-sm font-medium mb-2 text-primary">Nuevo Rango de Disponibilidad:</p>
                 <div className="grid grid-cols-2 gap-3 items-end">
                   <div>
                     <label htmlFor={`start-time-${day}`} className="text-xs font-medium text-muted-foreground">Desde</label>

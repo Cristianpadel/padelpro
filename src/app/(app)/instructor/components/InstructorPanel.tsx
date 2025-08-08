@@ -1,3 +1,4 @@
+// src/app/(app)/instructor/components/InstructorPanel.tsx
 "use client";
 
 import React, { useState, useCallback, memo, useEffect, useTransition } from 'react';
@@ -156,7 +157,7 @@ const InstructorPanelComponent: React.FC<InstructorPanelProps> = ({ instructor: 
             if (currentUser && currentUser.id === instructorData.id) { // Also update global state if current user is this instructor
                 setGlobalCurrentUser({ ...currentUser, unavailableHours: result.unavailableHours || {} });
             }
-            // Toast for success is handled in InstructorAvailabilitySettings
+            toast({ title: "Disponibilidad Guardada", description: "Tu horario de disponibilidad ha sido actualizado.", className: "bg-primary text-primary-foreground" });
             handleClassAdded(); // Refresh classes to respect new availability
         }
     });
@@ -321,8 +322,8 @@ const InstructorPanelComponent: React.FC<InstructorPanelProps> = ({ instructor: 
                   <Separator />
 
                   <div>
-                     <FormLabel>Horario de Indisponibilidad</FormLabel>
-                     <FormDescription>Define los bloques horarios en los que NO estarás disponible para dar clases. El sistema evitará generar clases automáticamente en estos periodos.</FormDescription>
+                     <FormLabel>Horario de Disponibilidad</FormLabel>
+                     <FormDescription>Define los bloques horarios en los que SÍ estarás disponible para dar clases. Si no defines ninguno, se asumirá que estás disponible todo el día.</FormDescription>
                      <div className="mt-2">
                         <InstructorAvailabilitySettings instructor={instructorData} onSaveUnavailableHours={handleSaveUnavailableHours} />
                      </div>

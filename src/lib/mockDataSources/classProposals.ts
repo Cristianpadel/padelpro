@@ -1,4 +1,4 @@
-// lib/mockDataSources/classProposals.ts
+// src/lib/mockDataSources/classProposals.ts
 import type { TimeSlot, User, Club, ClassPadelLevel, PadelCategoryForSlot, MatchPadelLevel, Instructor } from '@/types';
 import { matchPadelLevels, numericMatchPadelLevels, daysOfWeek } from '@/types';
 import { isUserLevelCompatibleWithActivity } from './utils';
@@ -90,18 +90,21 @@ export const createProposedClassesForDay = (club: Club, date: Date): TimeSlot[] 
             const endTime = addMinutes(startTime, slotDuration);
             const dayOfWeek = daysOfWeek[getDay(startTime)];
 
-            // Check if instructor is available at this time (based on their personal settings)
-            const isUnavailable = instructor.unavailableHours?.[dayOfWeek]?.some(range =>
-                areIntervalsOverlapping(
-                    { start: startTime, end: endTime },
-                    { start: parse(range.start, 'HH:mm', date), end: parse(range.end, 'HH:mm', date) },
-                    { inclusive: false }
-                )
-            );
-
-            if (isUnavailable) {
-                continue;
+            // NEW LOGIC: Check against defined available hours if they exist
+            const availableRanges = instructor.unavailableHours?.[dayOfWeek];
+            if (availableRanges && availableRanges.length > 0) {
+                const isWithinAvailableTime = availableRanges.some(range => {
+                    const availableStart = parse(range.start, 'HH:mm', date);
+                    const availableEnd = parse(range.end, 'HH:mm', date);
+                    // Check if the proposed class slot is entirely within an available range
+                    return startTime >= availableStart && endTime <= availableEnd;
+                });
+                
+                if (!isWithinAvailableTime) {
+                    continue; // Skip if not within any defined available range
+                }
             }
+            // If unavailableHours is not defined or is empty for the day, we consider the instructor fully available.
 
             // Check for conflict with an existing CONFIRMED class for the same instructor
             const instructorHasConfirmedConflict = state.getMockTimeSlots().find(
@@ -122,8 +125,11 @@ export const createProposedClassesForDay = (club: Club, date: Date): TimeSlot[] 
             const proposalExists = slotsForDay.some(
                 s => s.instructorId === instructor.id && new Date(s.startTime).getTime() === startTime.getTime()
             );
+             const existingBookingOrProposal = state.getMockTimeSlots().some(
+                s => s.instructorId === instructor.id && new Date(s.startTime).getTime() === startTime.getTime()
+            );
 
-            if (proposalExists) {
+            if (proposalExists || existingBookingOrProposal) {
                 continue;
             }
 
