@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -6,7 +7,7 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 
 import ClassDisplay from '@/components/classfinder/ClassDisplay';
 import MatchDisplay from '@/components/classfinder/MatchDisplay'; // Import MatchDisplay
-import { getMockTimeSlots, getMockCurrentUser, getUserActivityStatusForDay, fetchMatches, fetchMatchDayEventsForDate, createMatchesForDay, getMockClubs } from '@/lib/mockData';
+import { getMockTimeSlots, getMockCurrentUser, getUserActivityStatusForDay, fetchMatches, fetchMatchDayEventsForDate, createMatchesForDay, getMockClubs, countUserUnconfirmedInscriptions } from '@/lib/mockData';
 import type { TimeSlot, User, MatchPadelLevel, SortOption, UserActivityStatusForDay, Match, MatchDayEvent, TimeOfDayFilterType } from '@/types';
 import { startOfDay, addDays, isSameDay, format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -22,6 +23,7 @@ import { MobileFiltersSheet } from '@/components/layout/MobileFiltersSheet';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import DesktopSidebar from '@/components/layout/DesktopSidebar';
 
 export default function ActivitiesPage() {
     const router = useRouter();
@@ -35,8 +37,8 @@ export default function ActivitiesPage() {
     const [matchDayEvents, setMatchDayEvents] = useState<MatchDayEvent[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
-    
-    // Use the new hook for filter management
+    const [unconfirmedCount, setUnconfirmedCount] = useState(0);
+
     const {
         activeView,
         setActiveView,
@@ -73,8 +75,7 @@ export default function ActivitiesPage() {
     });
 
     const handleBookingSuccess = useCallback(async () => {
-        triggerRefresh(); // Use the hook's refresh trigger
-        // Re-fetch current user to update balance info in the sidebar
+        triggerRefresh();
         const updatedUser = await getMockCurrentUser();
         setCurrentUser(updatedUser);
     }, [triggerRefresh]);
@@ -92,7 +93,6 @@ export default function ActivitiesPage() {
                 setCurrentUser(user);
                 setAllTimeSlots(slots);
                 
-                // Generate placeholder matches for the next 7 days and combine with existing ones
                 const club = clubs[0];
                 let generatedMatches: Match[] = [];
                 if (club) {
@@ -122,109 +122,144 @@ export default function ActivitiesPage() {
         loadInitialData();
     }, [refreshKey, selectedDate, toast]);
     
+    useEffect(() => {
+        const fetchCount = async () => {
+            if (currentUser) {
+                const count = await countUserUnconfirmedInscriptions(currentUser.id);
+                setUnconfirmedCount(count);
+            }
+        };
+        fetchCount();
+        const intervalId = setInterval(fetchCount, 5000); // Poll every 5 seconds
+        return () => clearInterval(intervalId);
+    }, [currentUser, refreshKey]);
+
     const onViewPrefChange = (date: Date, pref: 'myInscriptions' | 'myConfirmed', type?: 'class' | 'match') => {
         if (type) {
-            const newView = type === 'class' ? 'clases' : 'partidas';
-            updateUrlFilter('view', newView);
+            updateUrlFilter('view', type);
         }
         handleDateChange(date);
         handleViewPrefChange(pref);
     };
 
     return (
-        <div className="flex h-full flex-col">
-            <header className="p-4 md:px-6 md:pt-6 md:pb-4 space-y-3">
-                 <div className="flex justify-between items-center">
-                    <h1 className="font-headline text-2xl md:text-3xl font-semibold">Actividades Disponibles</h1>
-                    <Button onClick={() => setIsFilterSheetOpen(true)} variant="outline" size="sm">
-                        <SlidersHorizontal className="mr-2 h-4 w-4" />
-                        Filtros
-                    </Button>
-                </div>
-                 <div className="flex gap-2 items-center justify-center">
-                    <Link href="/activities?filter=liberadas" passHref>
-                         <Button size="sm" variant={filterByLiberadasOnly ? "default" : "ghost"} className={cn(filterByLiberadasOnly ? "bg-purple-600 text-white" : "text-purple-600 hover:bg-purple-100 hover:text-purple-700")}>
-                            <Zap className="mr-2 h-4 w-4" />Liberadas
-                        </Button>
-                    </Link>
-                     <Link href="/reservar" passHref>
-                         <Button size="sm" variant="ghost" className="text-amber-600 hover:bg-amber-100 hover:text-amber-700">
-                            <Star className="mr-2 h-4 w-4" />Reservar con Puntos
-                        </Button>
-                    </Link>
-                 </div>
-            </header>
-            <main className="flex-1 overflow-y-auto bg-background px-4 md:px-6 pb-6">
-                {isLoading ? (
-                    <PageSkeleton />
-                ) : activeView === 'clases' ? (
-                    <ClassDisplay
-                        currentUser={currentUser}
-                        onBookingSuccess={handleBookingSuccess}
-                        selectedDate={selectedDate}
-                        onDateChange={handleDateChange}
-                        timeSlotFilter={timeSlotFilter}
-                        selectedLevelsSheet={selectedLevel === 'all' ? [] : [selectedLevel]}
-                        sortBy={'time'}
-                        filterAlsoConfirmedClasses={false}
-                        filterByFavoriteInstructors={filterByFavorites}
-                        viewPreference={viewPreference}
-                        proposalView={'join'}
-                        refreshKey={refreshKey}
-                        allClasses={allTimeSlots}
-                        isLoading={isLoading}
-                        dateStripIndicators={dateStripIndicators}
-                        dateStripDates={dateStripDates}
-                        onViewPrefChange={onViewPrefChange}
-                        showPointsBonus={showPointsBonus}
-                        filterByGratisOnly={filterByGratisOnly}
-                        filterByLiberadasOnly={filterByLiberadasOnly}
-                    />
-                ) : (
-                    <MatchDisplay
-                        currentUser={currentUser}
-                        onBookingSuccess={handleBookingSuccess}
-                        selectedDate={selectedDate}
-                        onDateChange={handleDateChange}
-                        timeSlotFilter={timeSlotFilter}
-                        selectedLevel={selectedLevel}
-                        sortBy={'time'}
-                        filterAlsoConfirmedMatches={false}
-                        viewPreference={viewPreference}
-                        proposalView={'join'}
-                        refreshKey={refreshKey}
-                        allMatches={allMatches}
-                        isLoading={isLoading}
-                        dateStripIndicators={dateStripIndicators}
-                        dateStripDates={dateStripDates}
-                        onViewPrefChange={onViewPrefChange}
-                        showPointsBonus={showPointsBonus}
-                        matchDayEvents={matchDayEvents}
-                        filterByGratisOnly={filterByGratisOnly}
-                        filterByLiberadasOnly={filterByLiberadasOnly}
-                        filterByPuntosOnly={filterByPuntosOnly}
-                        matchShareCode={matchShareCode}
-                        matchIdFilter={matchIdFilter}
-                    />
-                )}
-            </main>
-             <ActivityFilterSheet
-                isOpen={isFilterSheetOpen}
-                onOpenChange={setIsFilterSheetOpen}
-                selectedLevels={selectedLevel === 'all' ? [] : [selectedLevel]}
-                setSelectedLevels={(updater) => {
-                    const newLevels = typeof updater === 'function' ? updater(selectedLevel === 'all' ? [] : [selectedLevel]) : updater;
-                    handleLevelChange(newLevels.length > 0 ? newLevels[0] : 'all');
-                 }}
-                sortBy={'time'}
-                setSortBy={() => {}}
-                filterAlsoConfirmed={false}
-                setFilterAlsoConfirmed={() => {}}
-                filterByFavorite={filterByFavorites}
-                setFilterByFavorite={(val) => updateUrlFilter('favorites', val ? 'true' : 'false')}
+        <div className="flex h-full">
+            <DesktopSidebar
+                currentUser={currentUser}
+                clubInfo={getMockClubs()[0]} // Pass club info
+                currentPage={activeView}
+                showFilters={true}
+                unconfirmedInscriptionsCount={unconfirmedCount}
+                viewPreference={viewPreference}
+                timeSlotFilter={timeSlotFilter}
+                selectedLevel={selectedLevel}
+                isFavoritesActive={filterByFavorites}
                 showPointsBonus={showPointsBonus}
-                setShowPointsBonus={handleTogglePointsBonus}
-             />
+                onTogglePointsBonus={handleTogglePointsBonus}
+                onFavoritesClick={() => updateUrlFilter('favorites', !filterByFavorites)}
+                onLogoutClick={() => {
+                    // Implement logout logic here
+                    console.log("logout");
+                }}
+                onProfessionalAccessClick={() => {
+                    // Implement dialog logic here
+                     console.log("pro access");
+                }}
+            />
+            <div className="flex-1 flex flex-col overflow-hidden">
+                <header className="p-4 md:px-6 md:pt-6 md:pb-4 space-y-3 shrink-0">
+                     <div className="flex justify-between items-center">
+                        <h1 className="font-headline text-2xl md:text-3xl font-semibold">Actividades Disponibles</h1>
+                        <Button onClick={() => setIsFilterSheetOpen(true)} variant="outline" size="sm" className="md:hidden">
+                            <SlidersHorizontal className="mr-2 h-4 w-4" />
+                            Filtros
+                        </Button>
+                    </div>
+                     <div className="flex gap-2 items-center justify-center">
+                        <Link href="/activities?filter=liberadas" passHref>
+                             <Button size="sm" variant={filterByLiberadasOnly ? "default" : "ghost"} className={cn(filterByLiberadasOnly ? "bg-purple-600 text-white" : "text-purple-600 hover:bg-purple-100 hover:text-purple-700")}>
+                                <Zap className="mr-2 h-4 w-4" />Liberadas
+                            </Button>
+                        </Link>
+                         <Link href="/reservar" passHref>
+                             <Button size="sm" variant="ghost" className="text-amber-600 hover:bg-amber-100 hover:text-amber-700">
+                                <Star className="mr-2 h-4 w-4" />Reservar con Puntos
+                            </Button>
+                        </Link>
+                     </div>
+                </header>
+                <main className="flex-1 overflow-y-auto bg-background px-4 md:px-6 pb-6">
+                    {isLoading ? (
+                        <PageSkeleton />
+                    ) : activeView === 'clases' ? (
+                        <ClassDisplay
+                            currentUser={currentUser}
+                            onBookingSuccess={handleBookingSuccess}
+                            selectedDate={selectedDate}
+                            onDateChange={handleDateChange}
+                            timeSlotFilter={timeSlotFilter}
+                            selectedLevelsSheet={selectedLevel === 'all' ? [] : [selectedLevel]}
+                            sortBy={'time'}
+                            filterAlsoConfirmedClasses={false}
+                            filterByFavoriteInstructors={filterByFavorites}
+                            viewPreference={viewPreference}
+                            proposalView={'join'}
+                            refreshKey={refreshKey}
+                            allClasses={allTimeSlots}
+                            isLoading={isLoading}
+                            dateStripIndicators={dateStripIndicators}
+                            dateStripDates={dateStripDates}
+                            onViewPrefChange={onViewPrefChange}
+                            showPointsBonus={showPointsBonus}
+                            filterByGratisOnly={filterByGratisOnly}
+                            filterByLiberadasOnly={filterByLiberadasOnly}
+                        />
+                    ) : (
+                        <MatchDisplay
+                            currentUser={currentUser}
+                            onBookingSuccess={handleBookingSuccess}
+                            selectedDate={selectedDate}
+                            onDateChange={handleDateChange}
+                            timeSlotFilter={timeSlotFilter}
+                            selectedLevel={selectedLevel}
+                            sortBy={'time'}
+                            filterAlsoConfirmedMatches={false}
+                            viewPreference={viewPreference}
+                            proposalView={'join'}
+                            refreshKey={refreshKey}
+                            allMatches={allMatches}
+                            isLoading={isLoading}
+                            dateStripIndicators={dateStripIndicators}
+                            dateStripDates={dateStripDates}
+                            onViewPrefChange={onViewPrefChange}
+                            showPointsBonus={showPointsBonus}
+                            matchDayEvents={matchDayEvents}
+                            filterByGratisOnly={filterByGratisOnly}
+                            filterByLiberadasOnly={filterByLiberadasOnly}
+                            filterByPuntosOnly={filterByPuntosOnly}
+                            matchShareCode={matchShareCode}
+                            matchIdFilter={matchIdFilter}
+                        />
+                    )}
+                </main>
+                 <ActivityFilterSheet
+                    isOpen={isFilterSheetOpen}
+                    onOpenChange={setIsFilterSheetOpen}
+                    selectedLevels={selectedLevel === 'all' ? [] : [selectedLevel]}
+                    setSelectedLevels={(updater) => {
+                        const newLevels = typeof updater === 'function' ? updater(selectedLevel === 'all' ? [] : [selectedLevel]) : updater;
+                        handleLevelChange(newLevels.length > 0 ? newLevels[0] : 'all');
+                     }}
+                    sortBy={'time'}
+                    setSortBy={() => {}}
+                    filterAlsoConfirmed={false}
+                    setFilterAlsoConfirmed={() => {}}
+                    filterByFavorite={filterByFavorites}
+                    setFilterByFavorite={(val) => updateUrlFilter('favorites', val ? 'true' : 'false')}
+                    showPointsBonus={showPointsBonus}
+                    setShowPointsBonus={handleTogglePointsBonus}
+                 />
+            </div>
         </div>
     );
 }

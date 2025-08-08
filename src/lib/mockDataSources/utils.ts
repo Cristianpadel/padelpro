@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { isSameDay, areIntervalsOverlapping as dateFnsAreIntervalsOverlapping, startOfDay, format, differenceInDays } from 'date-fns';
@@ -364,7 +365,7 @@ export const isSlotGratisAndAvailable = (slot: TimeSlot): boolean => {
         const optionSize = parseInt(groupSizeStr) as (1 | 2 | 3 | 4);
         
         if (designatedSpotIdx !== null && designatedSpotIdx !== undefined) {
-            const bookingInDesignatedGratisSpot = bookings.find(b =>
+             const bookingInDesignatedGratisSpot = bookings.find(b =>
                 b.activityId === slot.id &&
                 b.groupSize === optionSize &&
                 b.spotIndex === designatedSpotIdx

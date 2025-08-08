@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -45,6 +46,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     toast({ title: "Sesión Cerrada" });
     setIsLogoutConfirmOpen(false);
     router.push('/');
+  }
+
+  // Do not show the main app layout with sidebars on the activities page, as it has its own.
+  if (pathname.startsWith('/activities')) {
+    return (
+       <div className="flex min-h-screen flex-col">
+          <main className="flex-1">
+            {children}
+          </main>
+          <Footer />
+          <BottomNavigationBar />
+      </div>
+    )
   }
 
   return (

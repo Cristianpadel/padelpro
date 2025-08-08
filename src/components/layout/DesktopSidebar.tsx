@@ -330,9 +330,9 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                                 <ClipboardList className="mr-3 h-5 w-5" />
                                 <span className="flex-grow text-left">Mis Inscripciones</span>
                                 {unconfirmedInscriptionsCount > 0 && (
-                                    <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-xs font-bold text-white">
-                                      I
-                                    </span>
+                                    <Badge className="ml-auto bg-blue-500 text-white">
+                                        {unconfirmedInscriptionsCount}
+                                    </Badge>
                                 )}
                             </Button>
                             <Button
