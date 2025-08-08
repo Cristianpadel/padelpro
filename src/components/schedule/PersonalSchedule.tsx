@@ -17,6 +17,9 @@ import { displayClassLevel, displayClassCategory } from '@/types';
 import { cancelBooking, fetchUserBookings, addReviewToState } from '@/lib/mockData';
 import { useRouter } from 'next/navigation';
 import { InfoCard } from './InfoCard';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getInitials } from '@/lib/utils';
+
 
 interface BookingListItemProps {
   booking: Booking;
@@ -68,11 +71,26 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
             {isUpcoming && !isConfirmed && <Badge variant="secondary" className="text-xs">Pendiente</Badge>}
             {!isUpcoming && <Badge variant="outline" className="text-xs">Finalizada</Badge>}
        </div>
-       <div className="mt-2 text-xs text-muted-foreground space-y-1">
+        <div className="mt-2 text-xs text-muted-foreground space-y-1">
             <p className="flex items-center"><Clock className="mr-1.5 h-3.5 w-3.5" />{`${format(new Date(startTime), 'HH:mm')} - ${format(new Date(endTime), 'HH:mm')}`}</p>
             <p className="flex items-center"><UserIcon className="mr-1.5 h-3.5 w-3.5" />Clase de {booking.groupSize} personas</p>
             {courtNumber && <p className="flex items-center"><Hash className="mr-1.5 h-3.5 w-3.5" />Pista {courtNumber}</p>}
        </div>
+
+       {bookedPlayers && bookedPlayers.length > 0 && (
+           <div className="mt-2 pt-2 border-t border-border/30">
+               <p className="text-xs font-medium text-muted-foreground mb-1.5">Inscritos:</p>
+               <div className="flex items-center gap-1.5">
+                   {bookedPlayers.map(player => (
+                       <Avatar key={player.userId} className="h-7 w-7">
+                           <AvatarImage src={`https://i.pravatar.cc/48?u=${player.userId}`} alt={player.name} data-ai-hint="player avatar small" />
+                           <AvatarFallback className="text-[10px]">{getInitials(player.name || '')}</AvatarFallback>
+                       </Avatar>
+                   ))}
+               </div>
+           </div>
+       )}
+
        <div className="mt-3 flex justify-between items-center">
             {isUpcoming ? (
                 <Button size="xs" variant="destructive" onClick={handleCancel} disabled={isCancelling}>

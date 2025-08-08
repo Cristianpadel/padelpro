@@ -127,7 +127,7 @@ export const bookClass = async (
           slot.clubId
       );
   } else {
-      if ((student.credit ?? 0) < pricePerPerson) {
+      if (((student.credit ?? 0) - (student.blockedCredit ?? 0)) < pricePerPerson) {
           return { error: `Saldo insuficiente. Necesitas ${pricePerPerson.toFixed(2)}€.` };
       }
   }
@@ -196,7 +196,7 @@ export const cancelBooking = async (userId: string, bookingId: string): Promise<
     if (!booking) return { error: "Reserva no encontrada." };
     if (booking.userId !== userId && userId !== 'system-cancellation') return { error: "No puedes cancelar la reserva de otro usuario." };
 
-    const slot = booking.slotDetails ? state.getMockTimeSlots().find(s => s.id === booking.slotDetails!.id) : undefined;
+    const slot = state.getMockTimeSlots().find(s => s.id === booking.activityId);
     if (!slot) return { error: "Clase asociada no encontrada." };
     
     const club = state.getMockClubs().find(c => c.id === slot.clubId);
