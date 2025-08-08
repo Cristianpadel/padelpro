@@ -256,7 +256,7 @@ function SchedulePageContent() {
                                 {hasPendingPoints && (
                                     <div className="text-center">
                                         <p className="text-xs text-muted-foreground">Pendientes</p>
-                                        <div className="mt-1 inline-flex items-center justify-center rounded-lg bg-amber-400 px-3 py-1 text-lg font-bold text-white shadow-md">
+                                        <div className="mt-1 inline-flex items-center justify-center rounded-lg bg-muted px-3 py-1 text-lg font-bold text-muted-foreground shadow-inner">
                                             +{Math.round(currentUser.pendingBonusPoints ?? 0)}
                                         </div>
                                     </div>
