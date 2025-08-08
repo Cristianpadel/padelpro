@@ -252,7 +252,7 @@ export const addUserToDB = async (userData: Partial<Omit<UserDB, 'id' | 'created
     const newUser: UserDB = {
         id: newId,
         name: userData.name,
-        email: userData.email!,
+        email: userData.email,
         hashedPassword: `hashed_${userData.password || 'default_password'}`,
         createdAt: new Date(),
         credit: userData.credit ?? 0,
@@ -275,7 +275,7 @@ export const addUserToDB = async (userData: Partial<Omit<UserDB, 'id' | 'created
     state.addUserToUserDatabaseState(newUser);
 
 
-    if (!newUser.email.includes('@padelestrella.com') && !newUser.email.includes('@padelapp.com') && !newUser.id.startsWith('inst-') && !newUser.id.startsWith('admin-') && !newUser.id.startsWith('super-admin-')) {
+    if (newUser.email && !newUser.email.includes('@padelestrella.com') && !newUser.email.includes('@padelapp.com') && !newUser.id.startsWith('inst-') && !newUser.id.startsWith('admin-') && !newUser.id.startsWith('super-admin-')) {
         const studentUser: User = {
             id: newId,
             name: newUser.name,
@@ -365,7 +365,7 @@ export const findUserById = async (id: string): Promise<UserDB | null> => {
 export const fetchStudents = async (): Promise<User[]> => {
     await new Promise(resolve => setTimeout(resolve, config.MINIMAL_DELAY));
     const studentsFromDB = state.getMockUserDatabase()
-        .filter(u => !u.email.includes('@padelestrella.com') && !u.email.includes('@padelapp.com') && !u.id.startsWith('inst-') && !u.id.startsWith('admin-') && !u.id.startsWith('super-admin-'))
+        .filter(u => u.email && !u.email.includes('@padelestrella.com') && !u.email.includes('@padelapp.com') && !u.id.startsWith('inst-') && !u.id.startsWith('admin-') && !u.id.startsWith('super-admin-'))
         .map(user => ({
             id: user.id,
             name: user.name,
@@ -450,7 +450,7 @@ export const updateUserLevel = async (userId: string, newLevel: MatchPadelLevel)
     }
     return {
         success: true, updatedUser: {
-            id: updatedUserDb.id, name: updatedUserDb.name, email: updatedUserDb.email, level: newLevel, credit: updatedUserDb.credit, loyaltyPoints: updatedUserDb.loyaltyPoints, preferredGameType: updatedUserDb.preferredGameType, favoriteInstructorIds: updatedUserDb.favoriteInstructorIds, profilePictureUrl: updatedUserDb.profilePictureUrl, genderCategory: updatedUserDb.genderCategory,
+            id: updatedUserDb.id, name: updatedUserDb.name, email: updatedUserDb.email!, level: newLevel, credit: updatedUserDb.credit, loyaltyPoints: updatedUserDb.loyaltyPoints, preferredGameType: updatedUserDb.preferredGameType, favoriteInstructorIds: updatedUserDb.favoriteInstructorIds, profilePictureUrl: updatedUserDb.profilePictureUrl, genderCategory: updatedUserDb.genderCategory,
         }
     };
 };
@@ -479,7 +479,7 @@ export const updateUserFavoriteInstructors = async (userId: string, favoriteInst
     
     return {
         success: true, updatedUser: {
-            id: updatedUserDb.id, name: updatedUserDb.name, email: updatedUserDb.email, level: updatedUserDb.level, credit: updatedUserDb.credit, loyaltyPoints: updatedUserDb.loyaltyPoints, preferredGameType: updatedUserDb.preferredGameType, favoriteInstructorIds: updatedUserDb.favoriteInstructorIds, profilePictureUrl: updatedUserDb.profilePictureUrl, genderCategory: updatedUserDb.genderCategory,
+            id: updatedUserDb.id, name: updatedUserDb.name, email: updatedUserDb.email!, level: updatedUserDb.level, credit: updatedUserDb.credit, loyaltyPoints: updatedUserDb.loyaltyPoints, preferredGameType: updatedUserDb.preferredGameType, favoriteInstructorIds: updatedUserDb.favoriteInstructorIds, profilePictureUrl: updatedUserDb.profilePictureUrl, genderCategory: updatedUserDb.genderCategory,
         }
     };
 };
@@ -508,7 +508,7 @@ export const updateUserGenderCategory = async (userId: string, genderCategory: U
 
     return {
         success: true, updatedUser: {
-            id: updatedUserFromDB.id, name: updatedUserFromDB.name, email: updatedUserFromDB.email, level: updatedUserFromDB.level, credit: updatedUserFromDB.credit, loyaltyPoints: updatedUserFromDB.loyaltyPoints, preferredGameType: updatedUserFromDB.preferredGameType, favoriteInstructorIds: updatedUserFromDB.favoriteInstructorIds, profilePictureUrl: updatedUserFromDB.profilePictureUrl, genderCategory: updatedUserFromDB.genderCategory,
+            id: updatedUserFromDB.id, name: updatedUserFromDB.name, email: updatedUserFromDB.email!, level: updatedUserFromDB.level, credit: updatedUserFromDB.credit, loyaltyPoints: updatedUserFromDB.loyaltyPoints, preferredGameType: updatedUserFromDB.preferredGameType, favoriteInstructorIds: updatedUserFromDB.favoriteInstructorIds, profilePictureUrl: updatedUserFromDB.profilePictureUrl, genderCategory: updatedUserFromDB.genderCategory,
         }
     };
 };
