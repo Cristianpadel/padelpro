@@ -69,8 +69,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <DesktopSidebar
                   currentUser={currentUser}
                   clubInfo={clubInfo}
-                  currentPage='other'
-                  showFilters={pathname.startsWith('/activities')}
                   onProfessionalAccessClick={() => setIsProfessionalAccessOpen(true)}
                   onLogoutClick={handleLogoutClick}
               />

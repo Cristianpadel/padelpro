@@ -15,7 +15,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { SlidersHorizontal, Star, Zap, User as UserIcon, Check, Activity as ActivityIcon, Users as UsersIcon } from 'lucide-react';
-import ActivityFilterSheet from '@/components/classfinder/ActivityFilterSheet';
 import PageSkeleton from '@/components/layout/PageSkeleton';
 import { useActivityFilters } from '@/hooks/useActivityFilters';
 import ActiveFiltersDisplay from '@/components/layout/ActiveFiltersDisplay';
@@ -24,6 +23,8 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import DesktopSidebar from '@/components/layout/DesktopSidebar';
+import LogoutConfirmationDialog from '@/components/layout/LogoutConfirmationDialog';
+import ProfessionalAccessDialog from '@/components/layout/ProfessionalAccessDialog';
 
 export default function ActivitiesPage() {
     const router = useRouter();
@@ -36,12 +37,13 @@ export default function ActivitiesPage() {
     const [allMatches, setAllMatches] = useState<Match[]>([]);
     const [matchDayEvents, setMatchDayEvents] = useState<MatchDayEvent[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
     const [unconfirmedCount, setUnconfirmedCount] = useState(0);
+    const [isMobileFilterSheetOpen, setIsMobileFilterSheetOpen] = useState(false);
+    const [isLogoutConfimOpen, setIsLogoutConfirmOpen] = React.useState(false);
+    const [isProfessionalAccessOpen, setIsProfessionalAccessOpen] = React.useState(false);
 
     const {
         activeView,
-        setActiveView,
         selectedDate,
         setSelectedDate,
         timeSlotFilter,
@@ -134,43 +136,34 @@ export default function ActivitiesPage() {
         return () => clearInterval(intervalId);
     }, [currentUser, refreshKey]);
 
-    const onViewPrefChange = (date: Date, pref: 'myInscriptions' | 'myConfirmed', type?: 'class' | 'match') => {
+    const onViewPrefChange = (date: Date, pref: 'myInscriptions' | 'myConfirmed', type: 'class' | 'match') => {
         if (type) {
             updateUrlFilter('view', type);
         }
         handleDateChange(date);
         handleViewPrefChange(pref);
     };
+    
+      const handleConfirmLogout = () => {
+        console.log("Logout Confirmed");
+        toast({ title: "Sesión Cerrada" });
+        setIsLogoutConfirmOpen(false);
+        router.push('/');
+      }
 
     return (
         <div className="flex h-full">
             <DesktopSidebar
                 currentUser={currentUser}
                 clubInfo={getMockClubs()[0]} // Pass club info
-                currentPage={activeView}
-                showFilters={true}
-                unconfirmedInscriptionsCount={unconfirmedCount}
-                viewPreference={viewPreference}
-                timeSlotFilter={timeSlotFilter}
-                selectedLevel={selectedLevel}
-                isFavoritesActive={filterByFavorites}
-                showPointsBonus={showPointsBonus}
-                onTogglePointsBonus={handleTogglePointsBonus}
-                onFavoritesClick={() => updateUrlFilter('favorites', !filterByFavorites)}
-                onLogoutClick={() => {
-                    // Implement logout logic here
-                    console.log("logout");
-                }}
-                onProfessionalAccessClick={() => {
-                    // Implement dialog logic here
-                     console.log("pro access");
-                }}
+                onProfessionalAccessClick={() => setIsProfessionalAccessOpen(true)}
+                onLogoutClick={() => setIsLogoutConfirmOpen(true)}
             />
             <div className="flex-1 flex flex-col overflow-hidden">
                 <header className="p-4 md:px-6 md:pt-6 md:pb-4 space-y-3 shrink-0">
                      <div className="flex justify-between items-center">
                         <h1 className="font-headline text-2xl md:text-3xl font-semibold">Actividades Disponibles</h1>
-                        <Button onClick={() => setIsFilterSheetOpen(true)} variant="outline" size="sm" className="md:hidden">
+                        <Button onClick={() => setIsMobileFilterSheetOpen(true)} variant="outline" size="sm" className="md:hidden">
                             <SlidersHorizontal className="mr-2 h-4 w-4" />
                             Filtros
                         </Button>
@@ -242,23 +235,30 @@ export default function ActivitiesPage() {
                         />
                     )}
                 </main>
-                 <ActivityFilterSheet
-                    isOpen={isFilterSheetOpen}
-                    onOpenChange={setIsFilterSheetOpen}
-                    selectedLevels={selectedLevel === 'all' ? [] : [selectedLevel]}
-                    setSelectedLevels={(updater) => {
-                        const newLevels = typeof updater === 'function' ? updater(selectedLevel === 'all' ? [] : [selectedLevel]) : updater;
-                        handleLevelChange(newLevels.length > 0 ? newLevels[0] : 'all');
-                     }}
-                    sortBy={'time'}
-                    setSortBy={() => {}}
-                    filterAlsoConfirmed={false}
-                    setFilterAlsoConfirmed={() => {}}
-                    filterByFavorite={filterByFavorites}
-                    setFilterByFavorite={(val) => updateUrlFilter('favorites', val ? 'true' : 'false')}
+                 <MobileFiltersSheet
+                    isOpen={isMobileFilterSheetOpen}
+                    onOpenChange={setIsMobileFilterSheetOpen}
+                    timeSlotFilter={timeSlotFilter}
+                    selectedLevel={selectedLevel}
+                    viewPreference={viewPreference}
+                    filterByFavorites={filterByFavorites}
                     showPointsBonus={showPointsBonus}
-                    setShowPointsBonus={handleTogglePointsBonus}
+                    onTimeFilterChange={handleTimeFilterChange}
+                    onLevelChange={handleLevelChange}
+                    onViewPreferenceChange={handleViewPrefChange}
+                    onFavoritesClick={() => updateUrlFilter('favorites', !filterByFavorites)}
+                    onTogglePointsBonus={handleTogglePointsBonus}
+                    onClearFilters={clearAllFilters}
                  />
+                 <LogoutConfirmationDialog
+                    isOpen={isLogoutConfimOpen}
+                    onOpenChange={setIsLogoutConfirmOpen}
+                    onConfirm={handleConfirmLogout}
+                />
+                <ProfessionalAccessDialog 
+                    isOpen={isProfessionalAccessOpen}
+                    onOpenChange={setIsProfessionalAccessOpen}
+                />
             </div>
         </div>
     );

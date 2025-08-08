@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback, useTransition, useMemo } from 'react';
@@ -29,7 +30,7 @@ export function useActivityFilters(
 
 
   // --- Local State ---
-  const [activeView, setActiveView] = useState<'clases' | 'partidas'>('clases');
+  const activeView = (searchParams.get('view') as 'clases' | 'partidas') || 'clases';
   const [selectedDate, setSelectedDate] = useState<Date | null>(startOfDay(new Date()));
   const [isUpdatingFavorites, startFavoritesTransition] = useTransition();
 
@@ -58,6 +59,7 @@ export function useActivityFilters(
 
         newIndicators[dateKey] = {
           activityStatus: statusResult.activityStatus,
+          activityType: statusResult.activityType,
           hasEvent: events.length > 0,
           eventId: events.length > 0 ? events[0].id : undefined,
           anticipationPoints: Math.max(0, anticipationPoints)
@@ -124,29 +126,6 @@ export function useActivityFilters(
   }, [currentUser?.level, searchParams, updateUrlFilter]);
 
   useEffect(() => {
-    const queryViewParam = searchParams.get('view');
-    const filterParam = searchParams.get('filter');
-
-    // Force specific views based on special filters
-    if (filterParam === 'liberadas') {
-        setActiveView(queryViewParam === 'partidas' ? 'partidas' : 'clases');
-        return;
-    }
-    
-    if (filterParam === 'puntos') {
-      setActiveView('partidas');
-      return;
-    }
-
-    const userPreferredView = currentUser?.preferredGameType === 'partidas' ? 'partidas' : 'clases';
-    const newView = (queryViewParam === 'clases' || queryViewParam === 'partidas') ? queryViewParam : userPreferredView;
-    
-    if (activeView !== newView) {
-      setActiveView(newView);
-    }
-  }, [currentUser, searchParams, activeView]);
-
-  useEffect(() => {
     if (filterByGratisOnly || filterByLiberadasOnly || filterByPuntosOnly || matchIdFilter || matchShareCode) {
       setSelectedDate(null);
     } else {
@@ -158,7 +137,6 @@ export function useActivityFilters(
 
   return {
     activeView,
-    setActiveView,
     selectedDate,
     setSelectedDate,
     timeSlotFilter,
@@ -178,7 +156,6 @@ export function useActivityFilters(
     showPointsBonus, // Expose new state
     handleTimeFilterChange,
     handleLevelChange,
-    handleFavoritesClick,
     handleApplyFavorites,
     handleDateChange,
     handleViewPrefChange,
