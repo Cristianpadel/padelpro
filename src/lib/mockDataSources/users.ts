@@ -4,7 +4,7 @@
 import type { User, Booking, PointTransactionType, TimeSlot, Match, Product, Instructor, UserDB, MatchPadelLevel, UserGenderCategory, DayOfWeek, TimeRange, InstructorRateTier, MatchBooking, Review, Transaction } from '@/types';
 import * as state from './index'; 
 import * as config from '../config';
-import { areIntervalsOverlapping, parse, getDay, format, differenceInDays } from 'date-fns';
+import { areIntervalsOverlapping, parse, getDay, format, differenceInDays, startOfDay } from 'date-fns';
 import { calculatePricePerPerson } from '@/lib/utils';
 import { cancelBooking } from './classActions';
 
@@ -113,26 +113,24 @@ export const recalculateAndSetBlockedBalances = async (userId: string) => {
         const slot = state.getMockTimeSlots().find(s => s.id === booking.activityId);
         if (slot && (slot.status === 'pre_registration' || (booking.isOrganizerBooking && slot.status === 'confirmed_private'))) {
              if (booking.bookedWithPoints) {
-                // If the user used points to book a GRATIS spot, block those points.
-                // This logic correctly handles the refund if they cancel the pre-inscription.
                 totalBlockedPoints += calculatePricePerPerson(slot.totalPrice, 1);
             } else if (booking.isOrganizerBooking) {
-                // The organizer of a private class doesn't block credit because they pay upfront.
-                // But we should calculate their pending points.
+                 const pointsBaseValues: { [key in 1 | 2 | 3 | 4]: number[] } = { 1: [10], 2: [8, 7], 3: [5, 4, 3], 4: [3, 2, 1, 0] };
+                 const basePoints = (pointsBaseValues[booking.groupSize] || [])[booking.spotIndex] ?? 0;
+                 const daysInAdvance = differenceInDays(startOfDay(new Date(slot.startTime)), startOfDay(new Date()));
+                 const anticipationPoints = Math.max(0, daysInAdvance);
+                 const potentialBonus = basePoints + anticipationPoints;
+                  if (potentialBonus > maxPendingBonusPoints) {
+                    maxPendingBonusPoints = potentialBonus;
+                }
             } else { // Regular pre-inscription
                 totalBlockedCredit += calculatePricePerPerson(slot.totalPrice, booking.groupSize);
-            }
-            
-            // Calculate potential bonus points for any non-gratis inscription
-            if (!booking.bookedWithPoints) {
-                 const pointsBaseValues: { [key in 1 | 2 | 3 | 4]: number[] } = {
-                    1: [10], 2: [8, 7], 3: [5, 4, 3], 4: [3, 2, 1, 0]
-                };
-                const basePoints = (pointsBaseValues[booking.groupSize] || [])[booking.spotIndex] ?? 0;
-                const daysInAdvance = differenceInDays(startOfDay(new Date(slot.startTime)), startOfDay(new Date()));
-                const anticipationPoints = Math.max(0, daysInAdvance);
-                const potentialBonus = basePoints + anticipationPoints;
-                if (potentialBonus > maxPendingBonusPoints) {
+                 const pointsBaseValues: { [key in 1 | 2 | 3 | 4]: number[] } = { 1: [10], 2: [8, 7], 3: [5, 4, 3], 4: [3, 2, 1, 0] };
+                 const basePoints = (pointsBaseValues[booking.groupSize] || [])[booking.spotIndex] ?? 0;
+                 const daysInAdvance = differenceInDays(startOfDay(new Date(slot.startTime)), startOfDay(new Date()));
+                 const anticipationPoints = Math.max(0, daysInAdvance);
+                 const potentialBonus = basePoints + anticipationPoints;
+                  if (potentialBonus > maxPendingBonusPoints) {
                     maxPendingBonusPoints = potentialBonus;
                 }
             }
