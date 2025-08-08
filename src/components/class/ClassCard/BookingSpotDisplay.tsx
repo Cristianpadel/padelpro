@@ -125,7 +125,7 @@ const BookingSpotDisplay: React.FC<BookingSpotDisplayProps> = ({
             </Button>
             {shouldShowPointsBonus && (
               <div className="absolute -top-1 -right-1 z-10 flex h-auto items-center justify-center rounded-full bg-amber-400 px-1 py-0 text-white shadow-md text-[10px] font-bold" title={`${pointsToAward} puntos de bonificación`}>
-                  +{pointsToAward}
+                  +{Math.floor(pointsToAward)}
               </div>
             )}
           </span>
