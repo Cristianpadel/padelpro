@@ -1,3 +1,4 @@
+// src/app/(app)/admin/components/ManageShopPanel.tsx
 "use client";
 
 import React, { useState, useEffect, useTransition, useCallback } from 'react';
@@ -38,7 +39,7 @@ const productFormSchema = z.object({
   status: z.enum(['in-stock', 'on-order']),
   officialPrice: z.coerce.number().min(0, "El precio debe ser un número positivo."),
   offerPrice: z.coerce.number().min(0, "El precio debe ser un número positivo."),
-  aiHint: z.string().min(2, "La pista para la IA es necesaria."),
+  aiHint: z.string().min(2, "La pista para la IA es necesaria.").max(50, "Máximo 50 caracteres."),
   images: z.array(z.string().url("Debe ser una URL válida.").or(z.literal(""))).min(1, "Se requiere al menos una imagen.").max(3, "Máximo 3 imágenes."),
 });
 
@@ -271,6 +272,8 @@ const ManageShopPanel: React.FC<ManageShopPanelProps> = ({ club, onClubSettingsU
 
   const handleProductAdded = () => {
     setRefreshKey(prev => prev + 1);
+     // Dispatch a global event so other components (like the nav bar) can update
+    window.dispatchEvent(new CustomEvent('productReservationChanged'));
   };
   
   const handleSettingsUpdated = (updatedClub: Club) => {
@@ -293,6 +296,7 @@ const ManageShopPanel: React.FC<ManageShopPanelProps> = ({ club, onClubSettingsU
     } else {
       toast({ title: "Producto Eliminado" });
       setRefreshKey(prev => prev + 1);
+       window.dispatchEvent(new CustomEvent('productReservationChanged'));
     }
   };
 
