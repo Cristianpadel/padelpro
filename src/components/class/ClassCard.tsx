@@ -141,6 +141,10 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
         return hasAnyConfirmedActivityForDay(currentUser.id, new Date(currentSlot.startTime), currentSlot.id, 'class');
     }, [currentUser, currentSlot.startTime, currentSlot.id]);
 
+    const anticipationBonus = useMemo(() => {
+        return Math.max(0, differenceInDays(startOfDay(new Date(currentSlot.startTime)), startOfDay(new Date())));
+    }, [currentSlot.startTime]);
+
 
     // Handlers
     const handleBook = async () => {
@@ -165,9 +169,7 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
     const openConfirmationDialog = (optionSize: 1 | 2 | 3 | 4, spotIdx: number) => {
         const pointsBaseValues: { [key in 1 | 2 | 3 | 4]: number[] } = { 1: [10], 2: [8, 7], 3: [5, 4, 3], 4: [3, 2, 1, 0] };
         const basePoints = (pointsBaseValues[optionSize] || [])[spotIdx] ?? 0;
-        const daysInAdvance = differenceInDays(startOfDay(new Date(currentSlot.startTime)), startOfDay(new Date()));
-        const anticipationPoints = Math.max(0, daysInAdvance);
-        const totalPointsToAward = basePoints + anticipationPoints;
+        const totalPointsToAward = basePoints + anticipationBonus;
 
         setDialogContent({ groupSize: optionSize, spotIndex: spotIdx, pointsToAward: totalPointsToAward });
         setShowConfirmDialog(true);
@@ -267,6 +269,7 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
                     onOpenConfirmationDialog={openConfirmationDialog}
                     showPointsBonus={showPointsBonus}
                     handlePriceInfoClick={(optionSize) => handleInfoClick({ type: 'price', optionSize })}
+                    anticipationBonus={anticipationBonus}
                 />
                  <ClassCardFooter
                     courtAvailability={courtAvailability}

@@ -22,6 +22,7 @@ interface ClassCardContentProps {
   onOpenConfirmationDialog: (optionSize: 1 | 2 | 3 | 4, spotIdx: number) => void;
   showPointsBonus: boolean;
   handlePriceInfoClick: (optionSize: number) => void;
+  anticipationBonus: number;
 }
 
 export const ClassCardContent: React.FC<ClassCardContentProps> = ({
@@ -35,6 +36,7 @@ export const ClassCardContent: React.FC<ClassCardContentProps> = ({
   onOpenConfirmationDialog,
   showPointsBonus,
   handlePriceInfoClick,
+  anticipationBonus,
 }) => {
     
   return (
@@ -45,7 +47,6 @@ export const ClassCardContent: React.FC<ClassCardContentProps> = ({
                 const confirmedGroupSize = isSlotEffectivelyFull ? (isSlotEffectivelyCompleted(currentSlot).size) : null;
 
                 const pointsBaseValues: { [key in 1 | 2 | 3 | 4]: number[] } = { 1: [10], 2: [8, 7], 3: [5, 4, 3], 4: [3, 2, 1, 0] };
-                const anticipBonus = Math.max(0, differenceInDays(startOfDay(new Date(currentSlot.startTime)), startOfDay(new Date())));
 
                 return (
                 <div key={optionSize} className={cn(
@@ -69,7 +70,7 @@ export const ClassCardContent: React.FC<ClassCardContentProps> = ({
                             isUserBookedInThisOption={isUserBookedInThisOption}
                             onOpenConfirmationDialog={onOpenConfirmationDialog}
                             showPointsBonus={showPointsBonus}
-                            pointsToAward={ (pointsBaseValues[optionSize][index] ?? 0) + anticipBonus }
+                            pointsToAward={ (pointsBaseValues[optionSize][index] ?? 0) + anticipationBonus }
                         />
                     )}
                     </div>
