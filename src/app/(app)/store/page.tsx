@@ -10,7 +10,31 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { fetchProductsByClub, getMockCurrentUser, reserveProductWithCredit } from '@/lib/mockData';
 import type { Product, User } from '@/types';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ShoppingBag } from 'lucide-react';
+import { Loader2, ShoppingBag, Sparkles, Clock } from 'lucide-react';
+
+const CountdownTimer = () => {
+    const [timeLeft, setTimeLeft] = useState("");
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const now = new Date();
+            const endOfDay = new Date(now);
+            endOfDay.setHours(23, 59, 59, 999);
+            
+            const difference = endOfDay.getTime() - now.getTime();
+            
+            let hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+            let minutes = Math.floor((difference / 1000 / 60) % 60);
+            let seconds = Math.floor((difference / 1000) % 60);
+            
+            setTimeLeft(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, []);
+
+    return <div className="text-xl font-bold text-destructive">{timeLeft}</div>;
+};
 
 const ProductCard: React.FC<{ product: Product; onReserve: (productId: string) => void; isProcessing: boolean; processingId: string | null; }> = ({ product, onReserve, isProcessing, processingId }) => {
     const isThisProductProcessing = isProcessing && processingId === product.id;
@@ -40,6 +64,55 @@ const ProductCard: React.FC<{ product: Product; onReserve: (productId: string) =
                     {isThisProductProcessing ? <Loader2 className="animate-spin" /> : "Reservar"}
                 </Button>
             </CardFooter>
+        </Card>
+    );
+};
+
+const DealOfTheDayCard: React.FC<{ product: Product; onReserve: (productId: string) => void; isProcessing: boolean; processingId: string | null; }> = ({ product, onReserve, isProcessing, processingId }) => {
+    const isThisProductProcessing = isProcessing && processingId === product.id;
+    const discountPrice = product.offerPrice * (1 - (product.discountPercentage || 0) / 100);
+
+    return (
+        <Card className="overflow-hidden shadow-2xl border-2 border-amber-400 bg-amber-50/50 flex flex-col col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 items-center">
+                 <div className="p-4 md:p-6 order-2 md:order-1">
+                     <CardHeader className="p-0 mb-4">
+                        <Badge variant="outline" className="text-amber-700 border-amber-500 bg-white font-semibold text-sm self-start animate-pulse">
+                             <Sparkles className="mr-2 h-4 w-4" /> Oferta del Día
+                        </Badge>
+                        <CardTitle className="text-2xl md:text-3xl font-bold mt-2">{product.name}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        <div className="flex flex-col md:flex-row md:items-end gap-4 mb-4">
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-4xl font-bold text-destructive">{discountPrice.toFixed(2)}€</span>
+                                <span className="text-lg font-semibold text-muted-foreground line-through">{product.offerPrice.toFixed(2)}€</span>
+                            </div>
+                            <Badge variant="destructive">-{product.discountPercentage}%</Badge>
+                        </div>
+                        <div className="flex items-center gap-2 text-muted-foreground mb-4">
+                            <Clock className="h-5 w-5" />
+                            <span>La oferta termina en:</span>
+                            <CountdownTimer />
+                        </div>
+                    </CardContent>
+                    <CardFooter className="p-0">
+                         <Button size="lg" onClick={() => onReserve(product.id)} disabled={isThisProductProcessing}>
+                            {isThisProductProcessing ? <Loader2 className="animate-spin" /> : "Reservar Oferta"}
+                        </Button>
+                    </CardFooter>
+                 </div>
+                 <div className="order-1 md:order-2">
+                     <Image
+                        src={product.images[0] || 'https://placehold.co/600x400.png'}
+                        alt={product.name}
+                        width={800}
+                        height={600}
+                        className="h-64 w-full object-cover md:h-full md:rounded-r-lg"
+                        data-ai-hint={product.aiHint}
+                    />
+                 </div>
+            </div>
         </Card>
     );
 };
@@ -96,6 +169,9 @@ export default function StorePage() {
             setProcessingId(null);
         });
     };
+    
+    const dealOfTheDay = products.find(p => p.isDealOfTheDay);
+    const regularProducts = products.filter(p => !p.isDealOfTheDay);
 
     return (
         <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
@@ -129,7 +205,15 @@ export default function StorePage() {
                 </div>
             ) : (
                 <main className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {products.map((product) => (
+                    {dealOfTheDay && (
+                        <DealOfTheDayCard
+                           product={dealOfTheDay}
+                           onReserve={handleReserveProduct}
+                           isProcessing={isProcessing}
+                           processingId={processingId}
+                        />
+                    )}
+                    {regularProducts.map((product) => (
                         <ProductCard
                             key={product.id}
                             product={product}

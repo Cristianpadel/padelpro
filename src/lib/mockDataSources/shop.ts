@@ -8,6 +8,22 @@ export const fetchProductsByClub = async (clubId: string): Promise<Product[]> =>
     return state.getMockShopProducts().filter(product => product.clubId === clubId);
 };
 
+export const addProduct = async (productData: Omit<Product, 'id'>): Promise<Product | { error: string }> => {
+  await new Promise(resolve => setTimeout(resolve, 50));
+  
+  if (!productData.name || !productData.clubId) {
+    return { error: 'El nombre y el club son obligatorios.' };
+  }
+  
+  const newProduct: Product = {
+    ...productData,
+    id: `prod-${Date.now()}`,
+  };
+
+  state.addProductToState(newProduct);
+  return newProduct;
+};
+
 export const updateProduct = async (productId: string, updates: Partial<Product>): Promise<Product | { error: string }> => {
     await new Promise(resolve => setTimeout(resolve, 50));
     const updatedProduct = state.updateProductInState(productId, updates);
