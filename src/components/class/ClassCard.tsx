@@ -18,7 +18,7 @@ import type { TimeSlot, User, Club, PadelCourt, Instructor, ClassPadelLevel } fr
 import {
     bookClass, isSlotEffectivelyCompleted, hasAnyConfirmedActivityForDay,
     getMockClubs, calculateActivityPrice, getInstructorRate, getCourtAvailabilityForInterval, getMockInstructors,
-    confirmClassAsPrivate
+    confirmClassAsPrivate, getMockUserBookings
 } from '@/lib/mockData';
 import { Lightbulb, ShieldQuestion, Hash, Users2, Venus, Mars, Euro, Info } from 'lucide-react';
 import { calculatePricePerPerson } from '@/lib/utils';
@@ -262,6 +262,7 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
                     onOpenConfirmationDialog={openConfirmationDialog}
                     showPointsBonus={showPointsBonus}
                     handlePriceInfoClick={(optionSize) => handleInfoClick({ type: 'price', optionSize })}
+                    isUserBookedInAnyOption={(Object.values(bookingsByGroupSize).flat()).some(p => p.userId === currentUser.id)}
                 />
                  <ClassCardFooter
                     courtAvailability={courtAvailability}
