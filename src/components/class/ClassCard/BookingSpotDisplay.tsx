@@ -26,6 +26,7 @@ interface BookingSpotDisplayProps {
   isUserBookedInThisOption: boolean;
   onOpenConfirmationDialog: (optionSize: 1 | 2 | 3 | 4, spotIdx: number) => void;
   showPointsBonus: boolean;
+  pointsToAward: number;
 }
 
 const BookingSpotDisplay: React.FC<BookingSpotDisplayProps> = ({
@@ -42,6 +43,7 @@ const BookingSpotDisplay: React.FC<BookingSpotDisplayProps> = ({
   isUserBookedInThisOption,
   onOpenConfirmationDialog,
   showPointsBonus,
+  pointsToAward,
 }) => {
   const { toast } = useToast();
   const bookedPlayersForOption = bookingsByGroupSize[optionSize] || [];
@@ -75,12 +77,7 @@ const BookingSpotDisplay: React.FC<BookingSpotDisplayProps> = ({
     return "No disponible.";
   };
 
-  const pointsBaseValues: { [key in 1 | 2 | 3 | 4]: number[] } = { 1: [10], 2: [8, 7], 3: [5, 4, 3], 4: [3, 2, 1, 0] };
-  const basePoints = (pointsBaseValues[optionSize] || [])[spotIndex] ?? 0;
-  const daysInAdvance = differenceInDays(startOfDay(new Date(currentSlot.startTime)), startOfDay(new Date()));
-  const anticipationPoints = Math.max(0, daysInAdvance);
-  const totalPointsToAward = basePoints + anticipationPoints;
-  const shouldShowPointsBonus = showPointsBonus && totalPointsToAward > 0 && !isDesignatedGratisSpot && !playerInSpot && canJoinStandard;
+  const shouldShowPointsBonus = showPointsBonus && pointsToAward > 0 && !isDesignatedGratisSpot && !playerInSpot && canJoinStandard;
 
   const handleClick = () => {
     if (playerInSpot || isLoading) return;
@@ -127,8 +124,8 @@ const BookingSpotDisplay: React.FC<BookingSpotDisplayProps> = ({
               {isLoading ? <Loader2 className="h-5 w-5 animate-spin text-primary" /> : (canJoinGratis ? <Gift className="h-5 w-5 text-yellow-600" /> : <Plus className="h-5 w-5 text-green-600 stroke-[3]" />)}
             </Button>
             {shouldShowPointsBonus && (
-              <div className="absolute -top-1 -right-1 z-10 flex h-auto items-center justify-center rounded-full bg-amber-400 px-1 py-0 text-white shadow-md text-[10px] font-bold" title={`${basePoints} (base) + ${anticipationPoints} (antelación) = ${totalPointsToAward} puntos`}>
-                  +{totalPointsToAward}
+              <div className="absolute -top-1 -right-1 z-10 flex h-auto items-center justify-center rounded-full bg-amber-400 px-1 py-0 text-white shadow-md text-[10px] font-bold" title={`${pointsToAward} puntos de bonificación`}>
+                  +{pointsToAward}
               </div>
             )}
           </span>

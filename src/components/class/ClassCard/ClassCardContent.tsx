@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { calculatePricePerPerson } from '@/lib/utils';
 import { Euro, Info } from 'lucide-react';
 import { isSlotEffectivelyCompleted } from '@/lib/mockData';
+import { differenceInDays, startOfDay } from 'date-fns';
 
 interface ClassCardContentProps {
   currentUser: User;
@@ -43,6 +44,9 @@ export const ClassCardContent: React.FC<ClassCardContentProps> = ({
                 const isUserBookedInThisOption = (bookingsByGroupSize[optionSize] || []).some(p => p.userId === currentUser.id);
                 const confirmedGroupSize = isSlotEffectivelyFull ? (isSlotEffectivelyCompleted(currentSlot).size) : null;
 
+                const pointsBaseValues: { [key in 1 | 2 | 3 | 4]: number[] } = { 1: [10], 2: [8, 7], 3: [5, 4, 3], 4: [3, 2, 1, 0] };
+                const anticipBonus = Math.max(0, differenceInDays(startOfDay(new Date(currentSlot.startTime)), startOfDay(new Date())));
+
                 return (
                 <div key={optionSize} className={cn(
                     "flex items-center justify-between p-1 rounded-md transition-all border border-transparent min-h-[44px]",
@@ -51,20 +55,21 @@ export const ClassCardContent: React.FC<ClassCardContentProps> = ({
                     <div className="flex items-center gap-1 flex-grow-0 shrink-0 basis-auto justify-start">
                     {Array.from({ length: optionSize }).map((_, index) =>
                         <BookingSpotDisplay
-                        key={`${optionSize}-${index}`}
-                        optionSize={optionSize}
-                        spotIndex={index}
-                        bookingsByGroupSize={bookingsByGroupSize}
-                        currentUser={currentUser!}
-                        currentSlot={currentSlot}
-                        isPendingMap={isPendingMap}
-                        totalPrice={totalPrice}
-                        isSlotOverallConfirmed={isSlotEffectivelyFull}
-                        confirmedGroupSize={confirmedGroupSize}
-                        userHasConfirmedActivityToday={userHasConfirmedActivityToday}
-                        isUserBookedInThisOption={isUserBookedInThisOption}
-                        onOpenConfirmationDialog={onOpenConfirmationDialog}
-                        showPointsBonus={showPointsBonus}
+                            key={`${optionSize}-${index}`}
+                            optionSize={optionSize}
+                            spotIndex={index}
+                            bookingsByGroupSize={bookingsByGroupSize}
+                            currentUser={currentUser!}
+                            currentSlot={currentSlot}
+                            isPendingMap={isPendingMap}
+                            totalPrice={totalPrice}
+                            isSlotOverallConfirmed={isSlotEffectivelyFull}
+                            confirmedGroupSize={confirmedGroupSize}
+                            userHasConfirmedActivityToday={userHasConfirmedActivityToday}
+                            isUserBookedInThisOption={isUserBookedInThisOption}
+                            onOpenConfirmationDialog={onOpenConfirmationDialog}
+                            showPointsBonus={showPointsBonus}
+                            pointsToAward={ (pointsBaseValues[optionSize][index] ?? 0) + anticipBonus }
                         />
                     )}
                     </div>

@@ -27,6 +27,7 @@ interface BookingConfirmationDialogProps {
   groupSize: 1 | 2 | 3 | 4;
   spotIndex: number;
   totalPrice: number;
+  pointsToAward: number;
   isGratisSpot?: boolean;
 }
 
@@ -39,6 +40,7 @@ export const BookingConfirmationDialog: React.FC<BookingConfirmationDialogProps>
   groupSize,
   spotIndex,
   totalPrice,
+  pointsToAward,
   isGratisSpot,
 }) => {
   const pricePerPerson = calculatePricePerPerson(totalPrice, groupSize);
@@ -68,6 +70,12 @@ export const BookingConfirmationDialog: React.FC<BookingConfirmationDialogProps>
                     : <><Euro className="h-7 w-7 mr-1" /> {groupSize === 1 ? totalPrice.toFixed(2) : pricePerPerson.toFixed(2)}</>
                   }
                 </div>
+                 {!isGratisSpot && pointsToAward > 0 && (
+                    <div className="text-sm font-semibold text-amber-600 flex items-center justify-center">
+                        <Star className="h-4 w-4 mr-1.5 fill-amber-400" />
+                        ¡Ganarás {pointsToAward} puntos por esta reserva!
+                    </div>
+                 )}
               </div>
               <div className="flex items-center justify-center gap-2 p-2 bg-slate-100 rounded-md">
                 <PiggyBank className="h-6 w-6 text-slate-500" />

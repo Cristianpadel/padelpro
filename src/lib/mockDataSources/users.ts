@@ -110,31 +110,48 @@ export const recalculateAndSetBlockedBalances = async (userId: string) => {
     const matchBookings = state.getMockUserMatchBookings().filter(b => b.userId === userId);
     const clubSettings = state.getMockClubs()[0]?.pointSettings; // Assuming single club for now for simplicity
 
-    // Blocked credit and pending points from class bookings
+    // --- Blocked credit and pending points from class bookings ---
+    // This part handles pre-inscriptions (pending bookings)
     classBookings.forEach(booking => {
         const slot = state.getMockTimeSlots().find(s => s.id === booking.activityId);
-        // An activity is pending if it's a pre-registration OR a private class booking that isn't full yet
+        
         const isPendingActivity = slot && (slot.status === 'pre_registration' || (booking.isOrganizerBooking && slot.status === 'confirmed_private'));
 
         if (isPendingActivity) {
-             if (booking.bookedWithPoints) {
+            if (booking.bookedWithPoints) {
                 totalBlockedPoints += calculatePricePerPerson(slot.totalPrice, 1);
             } else {
-                 if (!booking.isOrganizerBooking) { // Regular pre-inscription blocks credit
+                if (!booking.isOrganizerBooking) {
                     totalBlockedCredit += calculatePricePerPerson(slot.totalPrice, booking.groupSize);
-                 }
-                 // For all non-gratis bookings in pending state, calculate potential bonus
-                 const pointsBaseValues: { [key in 1 | 2 | 3 | 4]: number[] } = { 1: [10], 2: [8, 7], 3: [5, 4, 3], 4: [3, 2, 1, 0] };
-                 const basePoints = (pointsBaseValues[booking.groupSize] || [])[booking.spotIndex] ?? 0;
-                 const daysInAdvance = differenceInDays(startOfDay(new Date(slot.startTime)), startOfDay(new Date()));
-                 const anticipationPoints = Math.max(0, daysInAdvance);
-                 const potentialBonus = basePoints + anticipationPoints;
-                  if (potentialBonus > maxPendingBonusPoints) {
+                }
+                const pointsBaseValues: { [key in 1 | 2 | 3 | 4]: number[] } = { 1: [10], 2: [8, 7], 3: [5, 4, 3], 4: [3, 2, 1, 0] };
+                const basePoints = (pointsBaseValues[booking.groupSize] || [])[booking.spotIndex] ?? 0;
+                const daysInAdvance = differenceInDays(startOfDay(new Date(slot.startTime)), startOfDay(new Date()));
+                const anticipationPoints = Math.max(0, daysInAdvance);
+                const potentialBonus = basePoints + anticipationPoints;
+                if (potentialBonus > maxPendingBonusPoints) {
                     maxPendingBonusPoints = potentialBonus;
                 }
             }
         }
     });
+
+    // --- This part handles newly confirmed classes (that aren't pre-inscriptions) ---
+    // E.g., booking a private class or the last spot.
+    classBookings.forEach(booking => {
+        const slot = state.getMockTimeSlots().find(s => s.id === booking.activityId);
+        if (slot && state.isSlotEffectivelyCompleted(slot).completed && !booking.bookedWithPoints) {
+            const pointsBaseValues: { [key in 1 | 2 | 3 | 4]: number[] } = { 1: [10], 2: [8, 7], 3: [5, 4, 3], 4: [3, 2, 1, 0] };
+            const basePoints = (pointsBaseValues[booking.groupSize] || [])[booking.spotIndex] ?? 0;
+            const daysInAdvance = differenceInDays(startOfDay(new Date(slot.startTime)), startOfDay(new Date()));
+            const anticipationPoints = Math.max(0, daysInAdvance);
+            const potentialBonus = basePoints + anticipationPoints;
+            if (potentialBonus > maxPendingBonusPoints) {
+                maxPendingBonusPoints = potentialBonus;
+            }
+        }
+    });
+
 
     // Blocked credit and pending points from match bookings
     matchBookings.forEach(booking => {
@@ -566,7 +583,7 @@ export const addInstructor = async (instructorData: Partial<Omit<Instructor, 'id
     addUserToDB({ 
         id: newInstructor.id,
         name: newInstructor.name,
-        email: newInstructor.email!,
+        email: newInstructor.email,
         password: `pass_inst_${newInstructor.name?.toLowerCase().split(' ')[0]}`,
         isBlocked: newInstructor.isBlocked,
         profilePictureUrl: newInstructor.profilePictureUrl,
@@ -809,6 +826,7 @@ export const addProduct = async (productData: Omit<Product, 'id'>): Promise<Prod
   const newProduct: Product = {
     ...productData,
     id: `prod-${Date.now()}`,
+    stock: productData.stock ?? 0,
   };
 
   state.addProductToState(newProduct);

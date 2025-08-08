@@ -64,7 +64,7 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
 
     // State for dialogs
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-    const [dialogContent, setDialogContent] = useState({ spotIndex: 0, groupSize: 4 as (1|2|3|4) });
+    const [dialogContent, setDialogContent] = useState({ spotIndex: 0, groupSize: 4 as (1|2|3|4), pointsToAward: 0 });
     const [infoDialog, setInfoDialog] = useState<{ open: boolean, title: string, description: string, icon: React.ElementType }>({ open: false, title: '', description: '', icon: Lightbulb });
     const [isConfirmPrivateDialogOpen, setIsConfirmPrivateDialogOpen] = useState(false);
     const [isProcessingPrivateAction, setIsProcessingPrivateAction] = useState(false);
@@ -163,7 +163,13 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
     };
     
     const openConfirmationDialog = (optionSize: 1 | 2 | 3 | 4, spotIdx: number) => {
-        setDialogContent({ groupSize: optionSize, spotIndex: spotIdx });
+        const pointsBaseValues: { [key in 1 | 2 | 3 | 4]: number[] } = { 1: [10], 2: [8, 7], 3: [5, 4, 3], 4: [3, 2, 1, 0] };
+        const basePoints = (pointsBaseValues[optionSize] || [])[spotIdx] ?? 0;
+        const daysInAdvance = differenceInDays(startOfDay(new Date(currentSlot.startTime)), startOfDay(new Date()));
+        const anticipationPoints = Math.max(0, daysInAdvance);
+        const totalPointsToAward = basePoints + anticipationPoints;
+
+        setDialogContent({ groupSize: optionSize, spotIndex: spotIdx, pointsToAward: totalPointsToAward });
         setShowConfirmDialog(true);
     };
 
@@ -299,6 +305,7 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
                 totalPrice={totalPrice}
                 groupSize={1} // Indicates private booking
                 spotIndex={0}
+                pointsToAward={0} // No points for self-booking private class
             />
 
             <ClassInfoDialog
