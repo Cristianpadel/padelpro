@@ -60,15 +60,21 @@ export const ClassCardHeader: React.FC<ClassCardHeaderProps> = ({
   
   const canBookPrivate = (bookings[1] || []).length === 0 && (bookings[2] || []).length === 0 && (bookings[3] || []).length === 0 && (bookings[4] || []).length === 0;
 
-  const levelDisplay = currentSlot.level === 'abierto'
-        ? 'Nivel'
-        : (typeof currentSlot.level === 'object' ? `${currentSlot.level.min}-${currentSlot.level.max}` : String(currentSlot.level));
-  
-  const isLevelSelected = currentSlot.level !== 'abierto';
+  const isLevelAssigned = currentSlot.level !== 'abierto';
+  const isCategoryAssigned = currentSlot.category !== 'abierta';
+  const isCourtAssigned = !!currentSlot.courtNumber;
+  const isClassified = isLevelAssigned || isCategoryAssigned || isCourtAssigned;
 
+  const levelDisplay = isLevelAssigned
+    ? (typeof currentSlot.level === 'object' ? `${currentSlot.level.min}-${currentSlot.level.max}` : String(currentSlot.level))
+    : 'Nivel';
+    
+  const categoryDisplay = displayClassCategory(currentSlot.category, true);
+  const courtDisplay = isCourtAssigned ? `Pista ${currentSlot.courtNumber}` : 'Pista';
 
   const CategoryIcon = currentSlot.category === 'chica' ? Venus : currentSlot.category === 'chico' ? Mars : Users2;
-
+  
+  const classifiedBadgeClass = 'text-blue-700 border-blue-200 bg-blue-100 hover:border-blue-300';
 
   return (
     <div className="pt-2 pb-1 px-3 space-y-2">
@@ -110,13 +116,20 @@ export const ClassCardHeader: React.FC<ClassCardHeaderProps> = ({
               icon={Lightbulb} 
               text={levelDisplay} 
               onClick={() => onInfoClick('level')}
-              className={isLevelSelected ? 'text-blue-700 border-blue-200 bg-blue-100 hover:border-blue-300' : ''}
+              className={cn(isClassified && classifiedBadgeClass)}
           />
-          <InfoButton icon={CategoryIcon} text={displayClassCategory(currentSlot.category, true)} onClick={() => onInfoClick('category')} className={
-              currentSlot.category === 'chica' ? 'text-pink-600 border-pink-200 bg-pink-50 hover:border-pink-300' :
-              currentSlot.category === 'chico' ? 'text-blue-600 border-blue-200 bg-blue-50 hover:border-blue-300' : ''
-          } />
-          <InfoButton icon={Hash} text={currentSlot.courtNumber ? `Pista ${currentSlot.courtNumber}` : 'Pista'} onClick={() => onInfoClick('court')} />
+          <InfoButton 
+              icon={CategoryIcon} 
+              text={categoryDisplay} 
+              onClick={() => onInfoClick('category')} 
+              className={cn(isClassified && classifiedBadgeClass)}
+          />
+          <InfoButton 
+              icon={Hash} 
+              text={courtDisplay} 
+              onClick={() => onInfoClick('court')} 
+              className={cn(isClassified && classifiedBadgeClass)}
+          />
       </div>
 
       {/* Middle section: Date, Time, Duration, and Share */}

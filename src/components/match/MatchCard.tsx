@@ -23,6 +23,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
   Dialog,
@@ -129,13 +130,12 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
 
  const handleInfoClick = (type: 'level' | 'court' | 'category') => {
     let dialogContent;
-    const levelDisplay = displayClassLevel(currentMatch.level, true);
     
     switch (type) {
       case 'level':
         dialogContent = currentMatch.level === 'abierto' || currentMatch.isPlaceholder
             ? { title: 'Nivel', description: `El nivel de la partida lo define el primer jugador que se inscribe.\nEsto asegura que las partidas sean siempre equilibradas.`, icon: Lightbulb }
-            : { title: `Nivel de la Partida: ${levelDisplay}`, description: `El nivel se ha fijado en este rango para garantizar una partida competitiva y divertida para todos.\nSolo jugadores con un nivel similar pueden unirse.`, icon: BarChartHorizontal };
+            : { title: `Nivel de la Partida: ${displayClassLevel(matchLevelToDisplay, true)}`, description: `El nivel se ha fijado en este rango para garantizar una partida competitiva y divertida para todos.\nSolo jugadores con un nivel similar pueden unirse.`, icon: BarChartHorizontal };
         break;
       case 'court':
         dialogContent = !currentMatch.courtNumber
@@ -362,12 +362,17 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
   const availableCreditForDialog = (currentUser.credit ?? 0) - (currentUser.blockedCredit ?? 0);
   const durationMinutes = differenceInMinutes(new Date(currentMatch.endTime), new Date(currentMatch.startTime));
 
-  const badges = [
-      { type: 'category', value: displayClassCategory(matchCategoryToDisplay, true), icon: CategoryIconDisplay },
-      { type: 'court', value: currentMatch.courtNumber ? `Pista ${currentMatch.courtNumber}` : 'Pista', icon: Hash },
-      { type: 'level', value: displayClassLevel(matchLevelToDisplay, true), icon: BarChartHorizontal }
-  ];
+  const isLevelAssigned = matchLevelToDisplay !== 'abierto';
+  const isCategoryAssigned = matchCategoryToDisplay !== 'abierta';
+  const isCourtAssigned = !!currentMatch.courtNumber;
+  const isMatchClassified = isLevelAssigned || isCategoryAssigned || isCourtAssigned;
+  const classifiedBadgeClass = 'text-blue-700 border-blue-200 bg-blue-100 hover:border-blue-300';
 
+  const badges = [
+      { type: 'category', value: displayClassCategory(matchCategoryToDisplay, true), icon: CategoryIconDisplay, className: cn(isMatchClassified && classifiedBadgeClass) },
+      { type: 'court', value: currentMatch.courtNumber ? `Pista ${currentMatch.courtNumber}` : 'Pista', icon: Hash, className: cn(isMatchClassified && classifiedBadgeClass) },
+      { type: 'level', value: isLevelAssigned ? matchLevelToDisplay : 'Nivel', icon: BarChartHorizontal, className: cn(isMatchClassified && classifiedBadgeClass) }
+  ];
 
   return (
     <>
@@ -426,7 +431,7 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
              <div className="flex justify-center items-center gap-1.5 px-3 pb-2">
                  {badges.map(item => (
                      <button key={item.type} onClick={() => handleInfoClick(item.type as any)} className="flex-1">
-                        <Badge variant="outline" className="w-full justify-center text-xs py-1.5 rounded-full capitalize shadow-inner bg-slate-50 border-slate-200">
+                        <Badge variant="outline" className={cn("w-full justify-center text-xs py-1.5 rounded-full capitalize shadow-inner bg-slate-50 border-slate-200", item.className)}>
                             <item.icon className="mr-1.5 h-3 w-3" />
                             {item.value}
                         </Badge>
