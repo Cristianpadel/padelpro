@@ -275,7 +275,7 @@ export const addUserToDB = async (userData: Partial<Omit<UserDB, 'id' | 'created
     state.addUserToUserDatabaseState(newUser);
 
 
-    if (!newUser.email.includes('@padelestrella.com') && !newUser.email.includes('@padelapp.com') && !newUser.id.startsWith('instructor-') && !newUser.id.startsWith('admin-') && !newUser.id.startsWith('super-admin-')) {
+    if (!newUser.email.includes('@padelestrella.com') && !newUser.email.includes('@padelapp.com') && !newUser.id.startsWith('inst-') && !newUser.id.startsWith('admin-') && !newUser.id.startsWith('super-admin-')) {
         const studentUser: User = {
             id: newId,
             name: newUser.name,
@@ -365,7 +365,7 @@ export const findUserById = async (id: string): Promise<UserDB | null> => {
 export const fetchStudents = async (): Promise<User[]> => {
     await new Promise(resolve => setTimeout(resolve, config.MINIMAL_DELAY));
     const studentsFromDB = state.getMockUserDatabase()
-        .filter(u => !u.email.includes('@padelestrella.com') && !u.email.includes('@padelapp.com') && !u.id.startsWith('instructor-') && !u.id.startsWith('admin-') && !u.id.startsWith('super-admin-'))
+        .filter(u => !u.email.includes('@padelestrella.com') && !u.email.includes('@padelapp.com') && !u.id.startsWith('inst-') && !u.id.startsWith('admin-') && !u.id.startsWith('super-admin-'))
         .map(user => ({
             id: user.id,
             name: user.name,
@@ -610,9 +610,6 @@ export const fetchInstructors = async (): Promise<Instructor[]> => {
             } as Instructor;
         });
     
-    // This function should ONLY fetch, not have side effects.
-    // The synchronous getMockInstructors() is a "cached" or potentially stale list.
-    // Components needing fresh data must use this async function.
     return JSON.parse(JSON.stringify(instructorsFromDB));
 };
 
