@@ -137,10 +137,30 @@ export const bookClass = async (
   slot.category = newCategory;
   
   slot.bookedPlayers.push({ userId, groupSize, name: student.name });
+  
+  const newBooking: Booking = {
+    id: `booking-${slotId}-${userId}-${Date.now()}`,
+    userId,
+    activityId: slotId,
+    activityType: 'class',
+    groupSize,
+    spotIndex: spotIndexPlaceholder,
+    status: 'pending', // Start as pending, will be confirmed below if needed
+    bookedWithPoints: isGratisSpot,
+    bookedAt: new Date()
+  };
+  state.addUserBookingToState(newBooking);
+
+  // Recalculate blocked balances before checking for confirmation
+  // This ensures pending points are calculated for the new booking
+  await recalculateAndSetBlockedBalances(userId);
 
   const { completed, size: completedSize } = state.isSlotEffectivelyCompleted(slot);
   if (completed) {
       slot.status = 'confirmed';
+      newBooking.status = 'confirmed'; // Update booking status
+      state.updateUserBookingInState(newBooking.id, { status: 'confirmed' });
+
       const court = findAvailableCourt(slot.clubId, new Date(slot.startTime), new Date(slot.endTime));
       if (court) {
         slot.courtNumber = court.courtNumber;
@@ -159,25 +179,12 @@ export const bookClass = async (
       }
       
       _annulConflictingActivities(slot);
-       await removeUserPreInscriptionsForDay(userId, new Date(slot.startTime), slot.id, 'class');
+      await removeUserPreInscriptionsForDay(userId, new Date(slot.startTime), slot.id, 'class');
   } 
-  // Always recalculate blocked balances after a booking action
+
+  // Recalculate again after potential confirmation and credit deduction
   await recalculateAndSetBlockedBalances(userId);
 
-
-  const newBooking: Booking = {
-    id: `booking-${slotId}-${userId}-${Date.now()}`,
-    userId,
-    activityId: slotId,
-    activityType: 'class',
-    groupSize,
-    spotIndex: spotIndexPlaceholder,
-    status: completed ? 'confirmed' : 'pending',
-    bookedWithPoints: isGratisSpot,
-    bookedAt: new Date()
-  };
-  
-  state.addUserBookingToState(newBooking);
   state.updateTimeSlotInState(slot.id, slot);
   
   return { booking: newBooking, updatedSlot: slot };

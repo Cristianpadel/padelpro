@@ -113,20 +113,17 @@ export const recalculateAndSetBlockedBalances = async (userId: string) => {
     // Blocked credit and pending points from class bookings
     classBookings.forEach(booking => {
         const slot = state.getMockTimeSlots().find(s => s.id === booking.activityId);
-        if (slot && (slot.status === 'pre_registration' || (booking.isOrganizerBooking && slot.status === 'confirmed_private'))) {
+        // An activity is pending if it's a pre-registration OR a private class booking that isn't full yet
+        const isPendingActivity = slot && (slot.status === 'pre_registration' || (booking.isOrganizerBooking && slot.status === 'confirmed_private'));
+
+        if (isPendingActivity) {
              if (booking.bookedWithPoints) {
                 totalBlockedPoints += calculatePricePerPerson(slot.totalPrice, 1);
-            } else if (booking.isOrganizerBooking) {
-                 const pointsBaseValues: { [key in 1 | 2 | 3 | 4]: number[] } = { 1: [10], 2: [8, 7], 3: [5, 4, 3], 4: [3, 2, 1, 0] };
-                 const basePoints = (pointsBaseValues[booking.groupSize] || [])[booking.spotIndex] ?? 0;
-                 const daysInAdvance = differenceInDays(startOfDay(new Date(slot.startTime)), startOfDay(new Date()));
-                 const anticipationPoints = Math.max(0, daysInAdvance);
-                 const potentialBonus = basePoints + anticipationPoints;
-                  if (potentialBonus > maxPendingBonusPoints) {
-                    maxPendingBonusPoints = potentialBonus;
-                }
-            } else { // Regular pre-inscription
-                totalBlockedCredit += calculatePricePerPerson(slot.totalPrice, booking.groupSize);
+            } else {
+                 if (!booking.isOrganizerBooking) { // Regular pre-inscription blocks credit
+                    totalBlockedCredit += calculatePricePerPerson(slot.totalPrice, booking.groupSize);
+                 }
+                 // For all non-gratis bookings in pending state, calculate potential bonus
                  const pointsBaseValues: { [key in 1 | 2 | 3 | 4]: number[] } = { 1: [10], 2: [8, 7], 3: [5, 4, 3], 4: [3, 2, 1, 0] };
                  const basePoints = (pointsBaseValues[booking.groupSize] || [])[booking.spotIndex] ?? 0;
                  const daysInAdvance = differenceInDays(startOfDay(new Date(slot.startTime)), startOfDay(new Date()));
