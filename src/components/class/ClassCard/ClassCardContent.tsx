@@ -4,7 +4,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import type { TimeSlot, User } from '@/types';
-import BookingSpotDisplay from '@/components/class/BookingSpotDisplay';
+import BookingSpotDisplay from './BookingSpotDisplay';
 import { Button } from '@/components/ui/button';
 import { calculatePricePerPerson } from '@/lib/utils';
 import { Euro, Info } from 'lucide-react';
@@ -17,6 +17,7 @@ interface ClassCardContentProps {
   bookingsByGroupSize: Record<number, { userId: string; groupSize: 1 | 2 | 3 | 4; }[]>;
   isSlotEffectivelyFull: boolean;
   userHasConfirmedActivityToday: boolean;
+  isUserBookedInAnyOption: boolean;
   isPendingMap: Record<string, boolean>;
   onOpenConfirmationDialog: (optionSize: 1 | 2 | 3 | 4, spotIdx: number) => void;
   showPointsBonus: boolean;
@@ -30,6 +31,7 @@ export const ClassCardContent: React.FC<ClassCardContentProps> = ({
   bookingsByGroupSize,
   isSlotEffectivelyFull,
   userHasConfirmedActivityToday,
+  isUserBookedInAnyOption,
   isPendingMap,
   onOpenConfirmationDialog,
   showPointsBonus,
@@ -41,7 +43,7 @@ export const ClassCardContent: React.FC<ClassCardContentProps> = ({
         <div className="flex-grow space-y-1">
             {([1, 2, 3, 4] as const).map(optionSize => {
                 const isUserBookedInThisOption = (bookingsByGroupSize[optionSize] || []).some(p => p.userId === currentUser.id);
-                const confirmedGroupSize = isSlotEffectivelyFull ? currentSlot.bookedPlayers.find(p => bookingsByGroupSize[optionSize].includes(p))?.groupSize : null;
+                const confirmedGroupSize = isSlotEffectivelyFull ? (isSlotEffectivelyCompleted(currentSlot).size) : null;
 
                 return (
                 <div key={optionSize} className={cn(

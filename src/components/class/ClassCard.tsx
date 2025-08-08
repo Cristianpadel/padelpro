@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { parseISO, differenceInMinutes, differenceInDays, startOfDay, isSameDay } from 'date-fns';
+import { isSameDay, parseISO, differenceInMinutes, differenceInDays, startOfDay } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 
@@ -139,8 +139,7 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
 
     const userHasConfirmedActivityToday = useMemo(() => {
         if (!currentUser) return false;
-        const bookingsForDay = getMockUserBookings().filter(b => b.userId === currentUser.id && isSameDay(new Date(b.slotDetails!.startTime), new Date(currentSlot.startTime)) && b.activityId !== currentSlot.id);
-        return bookingsForDay.some(b => b.status === 'confirmed');
+        return hasAnyConfirmedActivityForDay(currentUser.id, new Date(currentSlot.startTime), currentSlot.id, 'class');
     }, [currentUser, currentSlot.startTime, currentSlot.id]);
 
 
@@ -262,8 +261,8 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
                     isPendingMap={isPendingMap}
                     onOpenConfirmationDialog={openConfirmationDialog}
                     showPointsBonus={showPointsBonus}
-                    handlePriceInfoClick={(optionSize) => handleInfoClick({ type: 'price', optionSize })}
                     isUserBookedInAnyOption={(Object.values(bookingsByGroupSize).flat()).some(p => p.userId === currentUser.id)}
+                    handlePriceInfoClick={(optionSize) => handleInfoClick({ type: 'price', optionSize })}
                 />
                  <ClassCardFooter
                     courtAvailability={courtAvailability}
@@ -290,6 +289,7 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
                 currentUser={currentUser}
                 totalPrice={totalPrice}
                 {...dialogContent}
+                isGratisSpot={currentSlot.designatedGratisSpotPlaceholderIndexForOption?.[dialogContent.groupSize] === dialogContent.spotIndex}
             />
             
              <BookingConfirmationDialog
