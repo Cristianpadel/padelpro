@@ -99,8 +99,8 @@ export const bookClass = async (
   const club = state.getMockClubs().find(c => c.id === slot.clubId);
   if (!club) return { error: "Club no encontrado." };
 
-  if ((slot.bookedPlayers || []).some(p => p.userId === userId)) {
-    return { error: "Ya estás inscrito en esta clase." };
+  if ((slot.bookedPlayers || []).some(p => p.userId === userId && p.groupSize === groupSize)) {
+    return { error: "Ya estás inscrito en esta opción de clase." };
   }
   if (!isUserLevelCompatibleWithActivity(slot.level, student.level)) {
     return { error: 'Tu nivel de juego no es compatible con el de esta clase.' };
