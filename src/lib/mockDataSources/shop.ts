@@ -1,3 +1,4 @@
+// src/lib/mockDataSources/shop.ts
 "use client";
 
 import type { Product } from '@/types';
@@ -18,6 +19,7 @@ export const addProduct = async (productData: Omit<Product, 'id'>): Promise<Prod
   const newProduct: Product = {
     ...productData,
     id: `prod-${Date.now()}`,
+    stock: productData.stock ?? 0,
   };
 
   state.addProductToState(newProduct);

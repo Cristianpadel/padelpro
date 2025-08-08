@@ -378,6 +378,7 @@ export interface Product {
   images: string[];
   officialPrice: number;
   offerPrice: number;
+  stock?: number;
   status: 'in-stock' | 'on-order';
   aiHint: string;
   category: ProductCategory;

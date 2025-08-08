@@ -10,7 +10,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { fetchProductsByClub, getMockCurrentUser, reserveProductWithCredit } from '@/lib/mockData';
 import type { Product, User } from '@/types';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ShoppingBag, Sparkles, Clock } from 'lucide-react';
+import { Loader2, ShoppingBag, Sparkles, Clock, Package, PackageCheck, PackageX } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const CountdownTimer = () => {
     const [timeLeft, setTimeLeft] = useState("");
@@ -38,9 +39,11 @@ const CountdownTimer = () => {
 
 const ProductCard: React.FC<{ product: Product; onReserve: (productId: string) => void; isProcessing: boolean; processingId: string | null; }> = ({ product, onReserve, isProcessing, processingId }) => {
     const isThisProductProcessing = isProcessing && processingId === product.id;
+    const isOutOfStock = product.stock !== undefined && product.stock <= 0;
+    
     return (
         <Card className="overflow-hidden shadow-lg transition-transform hover:scale-105 flex flex-col">
-            <CardHeader className="p-0">
+            <CardHeader className="p-0 relative">
                 <Image
                     src={product.images[0] || 'https://placehold.co/600x400.png'}
                     alt={product.name}
@@ -49,6 +52,12 @@ const ProductCard: React.FC<{ product: Product; onReserve: (productId: string) =
                     className="h-48 w-full object-cover"
                     data-ai-hint={product.aiHint}
                 />
+                 {product.stock !== undefined && (
+                     <Badge variant={isOutOfStock ? "destructive" : "secondary"} className="absolute top-2 right-2">
+                        {isOutOfStock ? <PackageX className="mr-1 h-3 w-3" /> : <PackageCheck className="mr-1 h-3 w-3" />}
+                        {isOutOfStock ? 'Agotado' : `${product.stock} en stock`}
+                    </Badge>
+                 )}
             </CardHeader>
             <CardContent className="p-4 flex-grow">
                 <CardTitle className="text-base font-semibold">{product.name}</CardTitle>
@@ -60,8 +69,8 @@ const ProductCard: React.FC<{ product: Product; onReserve: (productId: string) =
                     )}
                     <Badge variant="default" className="text-lg font-bold">{product.offerPrice.toFixed(2)}€</Badge>
                 </div>
-                <Button onClick={() => onReserve(product.id)} disabled={isThisProductProcessing}>
-                    {isThisProductProcessing ? <Loader2 className="animate-spin" /> : "Reservar"}
+                <Button onClick={() => onReserve(product.id)} disabled={isThisProductProcessing || isOutOfStock}>
+                    {isThisProductProcessing ? <Loader2 className="animate-spin" /> : (isOutOfStock ? "Agotado" : "Reservar")}
                 </Button>
             </CardFooter>
         </Card>
@@ -70,6 +79,7 @@ const ProductCard: React.FC<{ product: Product; onReserve: (productId: string) =
 
 const DealOfTheDayCard: React.FC<{ product: Product; onReserve: (productId: string) => void; isProcessing: boolean; processingId: string | null; }> = ({ product, onReserve, isProcessing, processingId }) => {
     const isThisProductProcessing = isProcessing && processingId === product.id;
+    const isOutOfStock = product.stock !== undefined && product.stock <= 0;
     const discountPrice = product.offerPrice * (1 - (product.discountPercentage || 0) / 100);
 
     return (
@@ -95,10 +105,16 @@ const DealOfTheDayCard: React.FC<{ product: Product; onReserve: (productId: stri
                             <span>La oferta termina en:</span>
                             <CountdownTimer />
                         </div>
+                         {product.stock !== undefined && (
+                             <Badge variant={isOutOfStock ? "destructive" : "secondary"}>
+                                {isOutOfStock ? <PackageX className="mr-1 h-3 w-3" /> : <PackageCheck className="mr-1 h-3 w-3" />}
+                                {isOutOfStock ? 'Agotado' : `${product.stock} en stock`}
+                            </Badge>
+                         )}
                     </CardContent>
-                    <CardFooter className="p-0">
-                         <Button size="lg" onClick={() => onReserve(product.id)} disabled={isThisProductProcessing}>
-                            {isThisProductProcessing ? <Loader2 className="animate-spin" /> : "Reservar Oferta"}
+                    <CardFooter className="p-0 mt-4">
+                         <Button size="lg" onClick={() => onReserve(product.id)} disabled={isThisProductProcessing || isOutOfStock}>
+                            {isThisProductProcessing ? <Loader2 className="animate-spin" /> : (isOutOfStock ? "Agotado" : "Reservar Oferta")}
                         </Button>
                     </CardFooter>
                  </div>
@@ -165,6 +181,10 @@ export default function StorePage() {
                 });
                 // Trigger a re-fetch of user data or update context if available
                  window.dispatchEvent(new CustomEvent('productReservationChanged'));
+                 // Manually update the stock of the product in the local state
+                 setProducts(prevProducts => prevProducts.map(p => 
+                    p.id === productId ? { ...p, stock: (p.stock || 1) - 1 } : p
+                 ));
             }
             setProcessingId(null);
         });

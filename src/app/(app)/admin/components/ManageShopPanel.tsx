@@ -22,7 +22,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { PlusCircle, ListChecks, Edit, Trash2, ShoppingBag, Euro, ImageIcon, FileQuestion, BarChart, Loader2, Image as LucideImage, Sparkles, Settings } from 'lucide-react';
+import { PlusCircle, ListChecks, Edit, Trash2, ShoppingBag, Euro, ImageIcon, FileQuestion, BarChart, Loader2, Image as LucideImage, Sparkles, Settings, Package } from 'lucide-react';
 import { fetchProductsByClub, addProduct, updateProduct, deleteProduct, updateClub } from '@/lib/mockData';
 import Image from 'next/image';
 import ManageDealOfTheDayPanel from './ManageDealOfTheDayPanel';
@@ -39,6 +39,7 @@ const productFormSchema = z.object({
   status: z.enum(['in-stock', 'on-order']),
   officialPrice: z.coerce.number().min(0, "El precio debe ser un número positivo."),
   offerPrice: z.coerce.number().min(0, "El precio debe ser un número positivo."),
+  stock: z.coerce.number().int().min(0, "El stock no puede ser negativo.").optional(),
   aiHint: z.string().min(2, "La pista para la IA es necesaria.").max(50, "Máximo 50 caracteres."),
   images: z.array(z.string().url("Debe ser una URL válida.").or(z.literal(""))).min(1, "Se requiere al menos una imagen.").max(3, "Máximo 3 imágenes."),
 });
@@ -59,6 +60,7 @@ const AddProductForm: React.FC<{ clubId: string; onProductAdded: () => void }> =
       status: "in-stock",
       officialPrice: 0,
       offerPrice: 0,
+      stock: 10,
       aiHint: "",
       images: ["", "", ""],
     },
@@ -94,10 +96,12 @@ const AddProductForm: React.FC<{ clubId: string; onProductAdded: () => void }> =
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Fields for name, category, status, prices, aiHint */}
             <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Nombre</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="category" render={({ field }) => (<FormItem><FormLabel>Categoría</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>{productCategories.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="in-stock">En Stock</SelectItem><SelectItem value="on-order">Bajo Pedido</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
+            <div className="grid grid-cols-2 gap-4">
+                <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="in-stock">En Stock</SelectItem><SelectItem value="on-order">Bajo Pedido</SelectItem></SelectContent></Select><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="stock" render={({ field }) => (<FormItem><FormLabel>Stock</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <FormField control={form.control} name="officialPrice" render={({ field }) => (<FormItem><FormLabel className="text-xs">Precio Oficial</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="offerPrice" render={({ field }) => (<FormItem><FormLabel className="text-xs">Precio Oferta</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
@@ -164,7 +168,10 @@ const ProductList: React.FC<{ products: Product[]; onEdit: (product: Product) =>
                            <Image src={p.images[0] || 'https://placehold.co/64x64.png'} alt={p.name} width={48} height={48} className="rounded-md object-cover mr-3" data-ai-hint={p.aiHint}/>
                            <div className="flex-grow">
                                <p className="font-semibold text-sm line-clamp-1">{p.name}</p>
-                               <p className="text-xs text-muted-foreground">{p.offerPrice.toFixed(2)}€</p>
+                               <div className="flex items-center gap-2">
+                                    <p className="text-xs text-muted-foreground">{p.offerPrice.toFixed(2)}€</p>
+                                    <Badge variant="outline" className="text-xs">Stock: {p.stock ?? 0}</Badge>
+                               </div>
                            </div>
                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={() => onEdit(p)}><Edit className="h-4 w-4"/></Button>
                            <AlertDialog>

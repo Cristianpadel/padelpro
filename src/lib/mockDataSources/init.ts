@@ -74,7 +74,8 @@ export function performInitialization() {
             enabled: true,
             color: '#a855f7',
             intensity: 0.7,
-        }
+        },
+        shopReservationFee: 1, // Add default reservation fee
     },
     // ... other clubs
   ];
@@ -152,6 +153,16 @@ export function performInitialization() {
       }
   });
 
+  // --- Initialize Shop Products ---
+  const initialShopProducts = [
+      { id: 'prod-1', clubId: 'club-1', name: 'Pala Bullpadel Vertex 04', images: ['/vertex-04.webp'], officialPrice: 280, offerPrice: 220, stock: 5, status: 'in-stock', category: 'pala', aiHint: 'Bullpadel Vertex racket' },
+      { id: 'prod-2', clubId: 'club-1', name: 'Cajón de Pelotas Head Pro', images: ['/head-pro-balls.webp'], officialPrice: 85, offerPrice: 75, stock: 20, status: 'in-stock', category: 'pelotas', aiHint: 'Head Pro balls' },
+      { id: 'prod-3', clubId: 'club-1', name: 'Zapatillas Joma T.SLAM', images: ['/joma-slam.webp'], officialPrice: 90, offerPrice: 70, stock: 12, status: 'in-stock', category: 'ropa', aiHint: 'Joma padel shoes' },
+      { id: 'prod-4', clubId: 'club-1', name: 'Paletero Siux', images: ['/siux-bag.webp'], officialPrice: 70, offerPrice: 60, stock: 8, status: 'in-stock', category: 'accesorios', aiHint: 'Siux padel bag' },
+  ];
+  initializeMockShopProducts(initialShopProducts);
+
+
   // --- Initialize Activities ---
   const initialTimeSlots = generateDynamicTimeSlots();
   initializeMockTimeSlots(initialTimeSlots);
@@ -166,7 +177,7 @@ export function performInitialization() {
   initializeMockPointTransactions([]);
   initializeMockMatchDayEvents([]);
   initializeMockMatchDayInscriptions([]);
-  initializeMockShopProducts([]);
+  
 
   // --- Simulate some initial activity to make the app look alive ---
   simulateBookings({

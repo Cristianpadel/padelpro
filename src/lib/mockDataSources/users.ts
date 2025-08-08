@@ -746,12 +746,21 @@ export const reserveProductWithCredit = async (userId: string, productId: string
     
     const product = state.getMockShopProducts().find(p => p.id === productId);
     if (!product) return { error: "Producto no encontrado." };
+
+    if (product.stock !== undefined && product.stock <= 0) {
+        return { error: "Este producto está agotado." };
+    }
     
     const club = state.getMockClubs().find(c => c.id === product.clubId);
     const reservationFee = club?.shopReservationFee ?? 1.0;
 
     if ((user.credit ?? 0) < reservationFee) {
         return { error: `Saldo insuficiente. Necesitas ${reservationFee.toFixed(2)}€ para la fianza.` };
+    }
+
+    // Decrement stock if applicable
+    if (product.stock !== undefined) {
+        state.updateProductInState(productId, { stock: product.stock - 1 });
     }
 
     const newBalance = (user.credit ?? 0) - reservationFee;
