@@ -24,7 +24,7 @@ import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import UserProfileSheet from '@/components/user/UserProfileSheet';
 import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import EditLevelDialog from '@/components/user/EditLevelDialog';
 import { displayClassLevel } from '@/types';
 
@@ -254,12 +254,21 @@ function SchedulePageContent() {
                                     </p>
                                 </div>
                                 {hasPendingPoints && (
-                                    <div className="text-center">
-                                        <p className="text-xs text-muted-foreground">Pendientes</p>
-                                        <div className="mt-1 inline-flex items-center justify-center rounded-lg bg-muted px-3 py-1 text-lg font-bold text-muted-foreground shadow-inner">
-                                            +{Math.round(currentUser.pendingBonusPoints ?? 0)}
-                                        </div>
-                                    </div>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <div className="text-center cursor-help">
+                                                    <p className="text-xs text-muted-foreground">Pendientes</p>
+                                                    <div className="mt-1 inline-flex items-center justify-center rounded-lg bg-muted px-3 py-1 text-lg font-bold text-muted-foreground shadow-inner">
+                                                        +{Math.round(currentUser.pendingBonusPoints ?? 0)}
+                                                    </div>
+                                                </div>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Puntos que ganarás al confirmarse tus pre-inscripciones.</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
                                 )}
                                 </div>
                                 <div className="flex items-center gap-2 pt-2">
