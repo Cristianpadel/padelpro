@@ -144,7 +144,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
             
             <Separator />
             
-            <Link href="/profile" className="w-full text-left p-2 rounded-lg hover:bg-muted transition-colors">
+             <Link href="/profile" className="w-full text-left p-2 rounded-lg hover:bg-muted transition-colors">
                 <div className="flex items-center gap-3">
                     <Avatar className="h-12 w-12">
                          <AvatarImage src={currentUser.profilePictureUrl} alt={currentUser.name} data-ai-hint="user profile picture" />
@@ -159,6 +159,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                     </div>
                 </div>
             </Link>
+
 
             <Separator />
 
@@ -230,6 +231,13 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                                 <Heart className={cn("mr-3 h-4 w-4", filterByFavorites && "fill-current text-destructive")} /> Favoritos
                             </Button>
                         )}
+                        <Button 
+                            variant={showPointsBonus ? "secondary" : "ghost"} 
+                            className={cn("w-full justify-start text-sm h-10 rounded-full", showPointsBonus && "font-semibold")} 
+                            onClick={handleTogglePointsBonus}
+                        >
+                            <Sparkles className="mr-3 h-4 w-4 text-amber-500" /> + Puntos
+                        </Button>
                     </div>
                 </>
             )}

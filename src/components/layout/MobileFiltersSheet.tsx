@@ -113,7 +113,7 @@ export function MobileFiltersSheet({
                                 </Button>
                                 <Button variant={showPointsBonus ? 'secondary' : 'outline'} className={cn("w-full h-auto py-2 justify-start font-semibold", showPointsBonus && 'border-primary')} onClick={onTogglePointsBonus}>
                                     <Sparkles className="mr-2 h-4 w-4 text-amber-500"/>
-                                    Puntos Extra
+                                    + Puntos
                                 </Button>
                              </div>
                         </div>
