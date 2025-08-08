@@ -1,7 +1,7 @@
 // src/lib/mockDataSources/classActions.ts
 "use client";
 
-import { addHours, setHours, setMinutes, startOfDay, format, isSameDay, addDays, addMinutes, areIntervalsOverlapping, parseISO } from 'date-fns';
+import { addHours, setHours, setMinutes, startOfDay, format, isSameDay, addDays, addMinutes, areIntervalsOverlapping, parseISO, differenceInHours } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { TimeSlot, Booking, User, Instructor, ClassPadelLevel, PadelCategoryForSlot } from '@/types';
 import * as state from './index';
@@ -196,7 +196,7 @@ export const cancelBooking = async (userId: string, bookingId: string): Promise<
     if (!booking) return { error: "Reserva no encontrada." };
     if (booking.userId !== userId && userId !== 'system-cancellation') return { error: "No puedes cancelar la reserva de otro usuario." };
 
-    const slot = state.getMockTimeSlots().find(s => s.id === booking.activityId);
+    const slot = booking.slotDetails ? state.getMockTimeSlots().find(s => s.id === booking.slotDetails!.id) : undefined;
     if (!slot) return { error: "Clase asociada no encontrada." };
     
     const club = state.getMockClubs().find(c => c.id === slot.clubId);
