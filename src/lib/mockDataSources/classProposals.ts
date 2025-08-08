@@ -90,21 +90,23 @@ export const createProposedClassesForDay = (club: Club, date: Date): TimeSlot[] 
             const endTime = addMinutes(startTime, slotDuration);
             const dayOfWeek = daysOfWeek[getDay(startTime)];
 
-            // NEW LOGIC: Check against defined available hours if they exist
-            const availableRanges = instructor.unavailableHours?.[dayOfWeek];
-            if (availableRanges && availableRanges.length > 0) {
-                const isWithinAvailableTime = availableRanges.some(range => {
-                    const availableStart = parse(range.start, 'HH:mm', date);
-                    const availableEnd = parse(range.end, 'HH:mm', date);
-                    // Check if the proposed class slot is entirely within an available range
-                    return startTime >= availableStart && endTime <= availableEnd;
+            // Check against defined UNAVAILABLE hours if they exist
+            const unavailableRanges = instructor.unavailableHours?.[dayOfWeek];
+            if (unavailableRanges && unavailableRanges.length > 0) {
+                const isWithinUnavailableTime = unavailableRanges.some(range => {
+                    const unavailableStart = parse(range.start, 'HH:mm', date);
+                    const unavailableEnd = parse(range.end, 'HH:mm', date);
+                    return areIntervalsOverlapping(
+                        { start: startTime, end: endTime },
+                        { start: unavailableStart, end: unavailableEnd },
+                        { inclusive: false }
+                    );
                 });
                 
-                if (!isWithinAvailableTime) {
-                    continue; // Skip if not within any defined available range
+                if (isWithinUnavailableTime) {
+                    continue; // Skip if the proposed slot overlaps with an unavailable range
                 }
             }
-            // If unavailableHours is not defined or is empty for the day, we consider the instructor fully available.
 
             // Check for conflict with an existing CONFIRMED class for the same instructor
             const instructorHasConfirmedConflict = state.getMockTimeSlots().find(
