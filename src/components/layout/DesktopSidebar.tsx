@@ -163,22 +163,22 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
             <Separator />
 
             <div className="p-1 space-y-1">
-                <Link href="/schedule" className="w-full">
+                 <Link href="/schedule" className="w-full">
                     <Button variant={pathname.startsWith('/schedule') ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md">
                         <ClipboardList className="mr-3 h-5 w-5" /> Agenda
                     </Button>
                 </Link>
                 <Link href="/activities?view=clases" className="w-full">
-                    <Button variant={activeView === 'clases' ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md">
+                    <Button variant={isActivitiesPage && activeView === 'clases' ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md">
                         <Activity className="mr-3 h-5 w-5" /> Clases
                     </Button>
                 </Link>
                 <Link href="/activities?view=partidas" className="w-full">
-                    <Button variant={activeView === 'partidas' ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md">
+                    <Button variant={isActivitiesPage && activeView === 'partidas' ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md">
                         <Users className="mr-3 h-5 w-5" /> Partidas
                     </Button>
                 </Link>
-                {clubInfo?.isMatchDayEnabled && (
+                 {clubInfo?.isMatchDayEnabled && (
                   <Link href="/match-day" className="w-full">
                       <Button variant={pathname.startsWith('/match-day') ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md">
                           <PartyPopper className="mr-3 h-5 w-5" /> Match-Day
