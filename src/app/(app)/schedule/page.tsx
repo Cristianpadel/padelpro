@@ -10,7 +10,7 @@ import { getMockCurrentUser, getMockClubs, setGlobalCurrentUser, getMockUserBook
 import { recommendClasses, type RecommendClassesOutput } from '@/ai/flows/recommend-classes';
 import type { User, Booking, MatchBooking, Club, MatchPadelLevel, ClassPadelLevel } from '@/types';
 import { Button } from '@/components/ui/button';
-import { CalendarDays, User as UserIcon, Wallet, Star, History, Repeat, PlusCircle, Settings, Wallet2, UserPlus, Edit, AlertCircle, HelpCircle, Activity, Trophy, Lightbulb } from 'lucide-react';
+import { CalendarDays, User as UserIcon, Wallet, Star, History, Repeat, PlusCircle, Settings, Wallet2, UserPlus, Edit, AlertCircle, HelpCircle, Activity, Trophy, Lightbulb, Lock } from 'lucide-react';
 import Link from 'next/link';
 import { Toaster } from '@/components/ui/toaster';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -224,9 +224,15 @@ function SchedulePageContent() {
                         </CardHeader>
                         <CardContent className="space-y-2">
                                 <div className="text-4xl font-bold text-foreground">{availableCredit.toFixed(2)}€</div>
-                                <p className="text-sm text-muted-foreground">
-                                Total: {(currentUser.credit ?? 0).toFixed(2)}€ | Bloqueado: {(currentUser.blockedCredit ?? 0).toFixed(2)}€
-                                </p>
+                                 <div className="text-xs text-muted-foreground space-y-1">
+                                    <p>Total: {(currentUser.credit ?? 0).toFixed(2)}€</p>
+                                    {(currentUser.blockedCredit ?? 0) > 0 && (
+                                        <div className="inline-flex items-center gap-1 bg-muted px-2 py-0.5 rounded-md">
+                                            <Lock className="h-3 w-3"/>
+                                            <span>Bloqueado: {(currentUser.blockedCredit ?? 0).toFixed(2)}€</span>
+                                        </div>
+                                    )}
+                                </div>
                                 <div className="flex items-center gap-2 pt-2">
                                     <Button variant="default" size="sm" onClick={() => setIsAddCreditDialogOpen(true)} className="flex-1 bg-green-600 hover:bg-green-700">
                                     <PlusCircle className="mr-1.5 h-4 w-4" />
@@ -248,9 +254,9 @@ function SchedulePageContent() {
                         <CardContent className="space-y-2">
                                 <div className="flex justify-between items-start">
                                 <div>
-                                    <div className="text-4xl font-bold text-foreground">{availablePoints.toFixed(2)}</div>
-                                    <p className="text-sm text-muted-foreground">
-                                        Total: {(currentUser.loyaltyPoints ?? 0).toFixed(2)} | Bloqueados: {(currentUser.blockedLoyaltyPoints ?? 0).toFixed(2)}
+                                    <div className="text-4xl font-bold text-foreground">{availablePoints.toFixed(0)}</div>
+                                    <p className="text-xs text-muted-foreground">
+                                        Total: {(currentUser.loyaltyPoints ?? 0).toFixed(0)} | Bloqueados: {(currentUser.blockedLoyaltyPoints ?? 0).toFixed(0)}
                                     </p>
                                 </div>
                                 {hasPendingPoints && (
@@ -266,6 +272,7 @@ function SchedulePageContent() {
                                             </TooltipTrigger>
                                             <TooltipContent>
                                                 <p>Puntos que ganarás al confirmarse tus pre-inscripciones.</p>
+                                                <p>Es la suma de bonificaciones por anticipación y por ser de los primeros.</p>
                                             </TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>
