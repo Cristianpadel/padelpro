@@ -58,23 +58,25 @@ export const BookingConfirmationDialog: React.FC<BookingConfirmationDialogProps>
             <Rocket className="h-8 w-8 mr-3 text-blue-500" /> {confirmationDialogTitle}
           </AlertDialogTitle>
         </AlertDialogHeader>
-        <AlertDialogDescription className="text-center text-lg text-foreground space-y-4 py-4">
-          <div className="space-y-1">
-            <p>{confirmationDialogDescription.split('\n')[0]}</p>
-            <p className="flex items-center justify-center text-3xl font-bold">
-              {isGratisSpot
-                ? <><Gift className="h-8 w-8 mr-2 text-yellow-500" /> {pointsCost} <span className="text-lg ml-1">puntos</span></>
-                : <><Euro className="h-7 w-7 mr-1" /> {groupSize === 1 ? totalPrice.toFixed(2) : pricePerPerson.toFixed(2)}</>
-              }
-            </p>
-          </div>
-          <div className="flex items-center justify-center gap-2 p-2 bg-slate-100 rounded-md">
-            <PiggyBank className="h-6 w-6 text-slate-500" />
-            <span className="text-sm">Tu hucha tiene:</span>
-            <span className="font-bold text-slate-800">{availableCredit.toFixed(2)}€</span>
-            <span className="text-slate-400">/</span>
-            <Star className="h-5 w-5 text-amber-500"/>
-            <span className="font-bold text-slate-800">{currentUser?.loyaltyPoints ?? 0}</span>
+        <AlertDialogDescription asChild>
+          <div className="text-center text-lg text-foreground space-y-4 py-4">
+              <div className="space-y-1">
+                <div>{confirmationDialogDescription.split('\n')[0]}</div>
+                <div className="flex items-center justify-center text-3xl font-bold">
+                  {isGratisSpot
+                    ? <><Gift className="h-8 w-8 mr-2 text-yellow-500" /> {pointsCost} <span className="text-lg ml-1">puntos</span></>
+                    : <><Euro className="h-7 w-7 mr-1" /> {groupSize === 1 ? totalPrice.toFixed(2) : pricePerPerson.toFixed(2)}</>
+                  }
+                </div>
+              </div>
+              <div className="flex items-center justify-center gap-2 p-2 bg-slate-100 rounded-md">
+                <PiggyBank className="h-6 w-6 text-slate-500" />
+                <span className="text-sm">Tu hucha tiene:</span>
+                <span className="font-bold text-slate-800">{availableCredit.toFixed(2)}€</span>
+                <span className="text-slate-400">/</span>
+                <Star className="h-5 w-5 text-amber-500"/>
+                <span className="font-bold text-slate-800">{currentUser?.loyaltyPoints ?? 0}</span>
+              </div>
           </div>
         </AlertDialogDescription>
         <div className="text-sm bg-blue-50 text-blue-800 p-3 rounded-lg space-y-2">
