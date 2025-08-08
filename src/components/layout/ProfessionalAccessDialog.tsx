@@ -34,28 +34,28 @@ const ProfessionalAccessDialog: React.FC<ProfessionalAccessDialogProps> = ({ isO
         </DialogHeader>
         <div className="py-4 space-y-3">
           <DialogClose asChild>
-            <Link href="/auth/login-instructor" passHref legacyBehavior>
-                <Button variant="outline" className="w-full justify-start text-base h-auto p-3">
-                    <UserCog className="mr-3 h-5 w-5 text-primary/80" />
-                    <span>Acceso Instructor</span>
-                </Button>
-            </Link>
+            <Button asChild variant="outline" className="w-full justify-start text-base h-auto p-3">
+              <Link href="/auth/login-instructor">
+                <UserCog className="mr-3 h-5 w-5 text-primary/80" />
+                <span>Acceso Instructor</span>
+              </Link>
+            </Button>
           </DialogClose>
           <DialogClose asChild>
-             <Link href="/auth/login-club-admin" passHref legacyBehavior>
-                 <Button variant="outline" className="w-full justify-start text-base h-auto p-3">
-                    <Building className="mr-3 h-5 w-5 text-primary/80" />
-                    <span>Acceso Club</span>
-                </Button>
-             </Link>
+             <Button asChild variant="outline" className="w-full justify-start text-base h-auto p-3">
+               <Link href="/auth/login-club-admin">
+                  <Building className="mr-3 h-5 w-5 text-primary/80" />
+                  <span>Acceso Club</span>
+              </Link>
+            </Button>
           </DialogClose>
            <DialogClose asChild>
-             <Link href="/auth/login-superadmin" passHref legacyBehavior>
-                <Button variant="outline" className="w-full justify-start text-base h-auto p-3">
+             <Button asChild variant="outline" className="w-full justify-start text-base h-auto p-3">
+                <Link href="/auth/login-superadmin">
                     <ShieldCheck className="mr-3 h-5 w-5 text-primary/80" />
                     <span>Acceso Super Admin</span>
-                </Button>
-            </Link>
+                </Link>
+            </Button>
           </DialogClose>
         </div>
         <DialogFooter className="mt-2">
