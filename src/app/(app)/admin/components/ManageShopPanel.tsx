@@ -26,6 +26,7 @@ import { PlusCircle, ListChecks, Edit, Trash2, ShoppingBag, Euro, ImageIcon, Fil
 import { fetchProductsByClub, addProduct, updateProduct, deleteProduct, updateClub } from '@/lib/mockData';
 import Image from 'next/image';
 import ManageDealOfTheDayPanel from './ManageDealOfTheDayPanel';
+import { Badge } from '@/components/ui/badge';
 
 
 interface ManageShopPanelProps {
