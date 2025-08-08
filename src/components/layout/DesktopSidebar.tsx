@@ -157,6 +157,18 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                         <Users className="mr-3 h-5 w-5" /> Partidas
                     </Button>
                 </Link>
+                {clubInfo?.isMatchDayEnabled && (
+                  <Link href="/match-day" className="w-full">
+                      <Button variant={pathname.startsWith('/match-day') ? "secondary" : "ghost"} className={cn("w-full justify-start text-base h-12 rounded-full", pathname.startsWith('/match-day') && "font-bold")}>
+                          <PartyPopper className="mr-3 h-5 w-5" /> Match-Day
+                      </Button>
+                  </Link>
+                )}
+                 <Link href="/store" className="w-full">
+                    <Button variant={pathname.startsWith('/store') ? "secondary" : "ghost"} className={cn("w-full justify-start text-base h-12 rounded-full", pathname.startsWith('/store') && "font-bold")}>
+                        <ShoppingBag className="mr-3 h-5 w-5" /> Tienda
+                    </Button>
+                </Link>
             </div>
             
             {isActivitiesPage && (
