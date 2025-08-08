@@ -10,7 +10,7 @@ import { getMockCurrentUser, getMockClubs, setGlobalCurrentUser, getMockUserBook
 import { recommendClasses, type RecommendClassesOutput } from '@/ai/flows/recommend-classes';
 import type { User, Booking, MatchBooking, Club, MatchPadelLevel, ClassPadelLevel } from '@/types';
 import { Button } from '@/components/ui/button';
-import { CalendarDays, User as UserIcon, Wallet, Star, History, Repeat, PlusCircle, Settings, Wallet2, UserPlus, Edit, AlertCircle, HelpCircle, Activity, Trophy, Lightbulb, Lock } from 'lucide-react';
+import { CalendarDays, User as UserIcon, Wallet, Star, History, Repeat, PlusCircle, Settings, Wallet2, UserPlus, Edit, AlertCircle, HelpCircle, Activity, Trophy, Lightbulb, Lock, PiggyBank } from 'lucide-react';
 import Link from 'next/link';
 import { Toaster } from '@/components/ui/toaster';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -222,71 +222,68 @@ function SchedulePageContent() {
                                 Tu Saldo
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-2">
-                                <div className="text-4xl font-bold text-foreground">{availableCredit.toFixed(2)}€</div>
-                                 <div className="text-xs text-muted-foreground space-y-1">
-                                    <p>Total: {(currentUser.credit ?? 0).toFixed(2)}€</p>
-                                    {(currentUser.blockedCredit ?? 0) > 0 && (
-                                        <div className="inline-flex items-center gap-1 bg-muted px-2 py-0.5 rounded-md">
-                                            <Lock className="h-3 w-3"/>
-                                            <span>Bloqueado: {(currentUser.blockedCredit ?? 0).toFixed(2)}€</span>
-                                        </div>
-                                    )}
+                        <CardContent className="space-y-3">
+                            <div className="text-4xl font-bold text-foreground">{availableCredit.toFixed(2)}€</div>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <div className="flex-1 p-2 bg-muted rounded-md text-center">
+                                    <p className="flex items-center justify-center gap-1"><PiggyBank className="h-3 w-3"/> Total</p>
+                                    <p className="font-semibold text-foreground">{(currentUser.credit ?? 0).toFixed(2)}€</p>
                                 </div>
-                                <div className="flex items-center gap-2 pt-2">
-                                    <Button variant="default" size="sm" onClick={() => setIsAddCreditDialogOpen(true)} className="flex-1 bg-green-600 hover:bg-green-700">
-                                    <PlusCircle className="mr-1.5 h-4 w-4" />
-                                    Añadir
-                                </Button>
-                                <Button variant="outline" size="sm" onClick={() => setIsCreditMovementsDialogOpen(true)} className="flex-1">
-                                    <History className="mr-1 h-3.5 w-3.5" /> Movimientos
-                                </Button>
+                                <div className="flex-1 p-2 bg-muted rounded-md text-center">
+                                    <p className="flex items-center justify-center gap-1"><Lock className="h-3 w-3"/> Bloqueado</p>
+                                    <p className="font-semibold text-foreground">{(currentUser.blockedCredit ?? 0).toFixed(2)}€</p>
                                 </div>
+                            </div>
+                            <div className="flex items-center gap-2 pt-2">
+                                <Button variant="default" size="sm" onClick={() => setIsAddCreditDialogOpen(true)} className="flex-1 bg-green-600 hover:bg-green-700">
+                                <PlusCircle className="mr-1.5 h-4 w-4" />
+                                Añadir
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => setIsCreditMovementsDialogOpen(true)} className="flex-1">
+                                <History className="mr-1 h-3.5 w-3.5" /> Movimientos
+                            </Button>
+                            </div>
                         </CardContent>
                     </Card>
-                        <Card className="shadow-md">
+                    <Card className="shadow-md">
                         <CardHeader className="pb-3">
                             <CardTitle className="text-lg flex items-center text-amber-600">
                                 <Star className="mr-2.5 h-5 w-5" />
                                 Tus Puntos
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-2">
-                                <div className="flex justify-between items-start">
-                                <div>
-                                    <div className="text-4xl font-bold text-foreground">{availablePoints.toFixed(0)}</div>
-                                    <p className="text-xs text-muted-foreground">
-                                        Total: {(currentUser.loyaltyPoints ?? 0).toFixed(0)} | Bloqueados: {(currentUser.blockedLoyaltyPoints ?? 0).toFixed(0)}
-                                    </p>
+                        <CardContent className="space-y-3">
+                            <div className="text-4xl font-bold text-foreground">{availablePoints.toFixed(0)}</div>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <div className="flex-1 p-2 bg-amber-500/10 rounded-md text-center">
+                                    <p className="flex items-center justify-center gap-1"><Star className="h-3 w-3 text-amber-500"/> Total Obtenidos</p>
+                                    <p className="font-semibold text-foreground">{(currentUser.loyaltyPoints ?? 0).toFixed(0)}</p>
                                 </div>
                                 {hasPendingPoints && (
-                                    <TooltipProvider>
+                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
-                                                <div className="text-center cursor-help">
-                                                    <p className="text-xs text-muted-foreground">Pendientes</p>
-                                                    <div className="mt-1 inline-flex items-center justify-center rounded-lg bg-muted px-3 py-1 text-lg font-bold text-muted-foreground shadow-inner">
-                                                        +{Math.round(currentUser.pendingBonusPoints ?? 0)}
-                                                    </div>
+                                                <div className="flex-1 p-2 bg-muted rounded-md text-center cursor-help">
+                                                    <p className="flex items-center justify-center gap-1"><Clock className="h-3 w-3"/> Pendientes</p>
+                                                    <p className="font-semibold text-foreground">+{Math.round(currentUser.pendingBonusPoints ?? 0)}</p>
                                                 </div>
                                             </TooltipTrigger>
                                             <TooltipContent>
-                                                <p>Puntos que ganarás al confirmarse tus pre-inscripciones.</p>
-                                                <p>Es la suma de bonificaciones por anticipación y por ser de los primeros.</p>
+                                                <p className="max-w-xs">Puntos que ganarás al confirmarse tus pre-inscripciones. Es la suma de bonificaciones por anticipación y por ser de los primeros en apuntarte.</p>
                                             </TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>
                                 )}
-                                </div>
-                                <div className="flex items-center gap-2 pt-2">
-                                    <Button variant="default" size="sm" onClick={() => setIsConvertBalanceDialogOpen(true)} className="flex-1 bg-amber-500 hover:bg-amber-600">
-                                    <Repeat className="mr-1.5 h-4 w-4" />
-                                    Convertir
-                                </Button>
-                                <Button variant="outline" size="sm" onClick={() => setIsPointMovementsDialogOpen(true)} className="flex-1">
-                                    <History className="mr-1 h-3.5 w-3.5" /> Movimientos
-                                </Button>
-                                </div>
+                            </div>
+                            <div className="flex items-center gap-2 pt-2">
+                                <Button variant="default" size="sm" onClick={() => setIsConvertBalanceDialogOpen(true)} className="flex-1 bg-amber-500 hover:bg-amber-600">
+                                <Repeat className="mr-1.5 h-4 w-4" />
+                                Convertir
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => setIsPointMovementsDialogOpen(true)} className="flex-1">
+                                <History className="mr-1 h-3.5 w-3.5" /> Movimientos
+                            </Button>
+                            </div>
                         </CardContent>
                     </Card>
                 </div>
