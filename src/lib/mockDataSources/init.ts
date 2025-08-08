@@ -101,7 +101,7 @@ export function performInitialization() {
       level: '4.0',
       credit: 125.50,
       blockedCredit: 0,
-      loyaltyPoints: 1234,
+      loyaltyPoints: 50,
       pendingBonusPoints: 0,
       blockedLoyaltyPoints: 0,
       preferredGameType: 'partidas',
@@ -118,7 +118,7 @@ export function performInitialization() {
   initializeMockUserDatabase(initialUserDatabase);
   
   const initialStudents = initialUserDatabase
-    .filter(u => !u.email.includes('@padelestrella.com') && !u.id.startsWith('instructor-'))
+    .filter(u => u.email && !u.email.includes('@padelestrella.com') && !u.email.includes('@padelapp.com') && !u.id.startsWith('instructor-'))
     .map(u => ({
         id: u.id, name: u.name, email: u.email, level: u.level, credit: u.credit,
         blockedCredit: u.blockedCredit, loyaltyPoints: u.loyaltyPoints,
