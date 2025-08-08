@@ -188,3 +188,5 @@ const AddCreditForm: React.FC<AddCreditFormProps> = ({ instructor }) => {
     </Form>
   );
 };
+
+export default AddCreditForm;

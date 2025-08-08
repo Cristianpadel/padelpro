@@ -407,3 +407,35 @@ export const joinPrivateClass = async (
     
     return { newBooking, updatedSlot: slot, organizerRefundAmount: pricePerPerson };
 };
+
+
+export const toggleGratisSpot = async (slotId: string, optionSize: 1 | 2 | 3 | 4, spotIndex: number): Promise<{ updatedSlot: TimeSlot } | { error: string }> => {
+    await new Promise(resolve => setTimeout(resolve, config.MINIMAL_DELAY));
+    const slotIndex = state.getMockTimeSlots().findIndex(s => s.id === slotId);
+    if (slotIndex === -1) return { error: 'Clase no encontrada.' };
+
+    let slot = { ...state.getMockTimeSlots()[slotIndex] };
+    
+    if (state.isSlotEffectivelyCompleted(slot).completed) {
+        return { error: "No se puede modificar una clase ya confirmada." };
+    }
+    if ((slot.bookedPlayers || []).some(p => p.groupSize === optionSize)) {
+         return { error: "No se puede ofrecer una plaza gratis si ya hay alumnos en esa opción." };
+    }
+    
+    if (!slot.designatedGratisSpotPlaceholderIndexForOption) {
+        slot.designatedGratisSpotPlaceholderIndexForOption = {};
+    }
+
+    const currentDesignatedIndex = slot.designatedGratisSpotPlaceholderIndexForOption[optionSize];
+    
+    if (currentDesignatedIndex === spotIndex) {
+        slot.designatedGratisSpotPlaceholderIndexForOption[optionSize] = null;
+    } else {
+        slot.designatedGratisSpotPlaceholderIndexForOption[optionSize] = spotIndex;
+    }
+
+    state.updateTimeSlotInState(slotId, slot);
+    
+    return { updatedSlot: slot };
+};
