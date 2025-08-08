@@ -112,17 +112,24 @@ export const recalculateAndSetBlockedBalances = async (userId: string) => {
     classBookings.forEach(booking => {
         const slot = state.getMockTimeSlots().find(s => s.id === booking.activityId);
         if (slot && (slot.status === 'pre_registration' || (booking.isOrganizerBooking && slot.status === 'confirmed_private'))) {
-            if (booking.bookedWithPoints) {
+             if (booking.bookedWithPoints) {
+                // If the user used points to book a GRATIS spot, block those points.
+                // This logic correctly handles the refund if they cancel the pre-inscription.
                 totalBlockedPoints += calculatePricePerPerson(slot.totalPrice, 1);
-            } else {
+            } else if (booking.isOrganizerBooking) {
+                // The organizer of a private class doesn't block credit because they pay upfront.
+                // But we should calculate their pending points.
+            } else { // Regular pre-inscription
                 totalBlockedCredit += calculatePricePerPerson(slot.totalPrice, booking.groupSize);
-                
-                // Calculate potential bonus points
-                const pointsBaseValues: { [key in 1 | 2 | 3 | 4]: number[] } = {
+            }
+            
+            // Calculate potential bonus points for any non-gratis inscription
+            if (!booking.bookedWithPoints) {
+                 const pointsBaseValues: { [key in 1 | 2 | 3 | 4]: number[] } = {
                     1: [10], 2: [8, 7], 3: [5, 4, 3], 4: [3, 2, 1, 0]
                 };
                 const basePoints = (pointsBaseValues[booking.groupSize] || [])[booking.spotIndex] ?? 0;
-                const daysInAdvance = differenceInDays(new Date(slot.startTime), new Date());
+                const daysInAdvance = differenceInDays(startOfDay(new Date(slot.startTime)), startOfDay(new Date()));
                 const anticipationPoints = Math.max(0, daysInAdvance);
                 const potentialBonus = basePoints + anticipationPoints;
                 if (potentialBonus > maxPendingBonusPoints) {
@@ -799,3 +806,4 @@ export const addProduct = async (productData: Omit<Product, 'id'>): Promise<Prod
   state.addProductToState(newProduct);
   return newProduct;
 };
+
