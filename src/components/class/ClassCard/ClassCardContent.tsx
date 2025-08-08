@@ -17,7 +17,6 @@ interface ClassCardContentProps {
   bookingsByGroupSize: Record<number, { userId: string; groupSize: 1 | 2 | 3 | 4; }[]>;
   isSlotEffectivelyFull: boolean;
   userHasConfirmedActivityToday: boolean;
-  isUserBookedInAnyOption: boolean;
   isPendingMap: Record<string, boolean>;
   onOpenConfirmationDialog: (optionSize: 1 | 2 | 3 | 4, spotIdx: number) => void;
   showPointsBonus: boolean;
@@ -31,7 +30,6 @@ export const ClassCardContent: React.FC<ClassCardContentProps> = ({
   bookingsByGroupSize,
   isSlotEffectivelyFull,
   userHasConfirmedActivityToday,
-  isUserBookedInAnyOption,
   isPendingMap,
   onOpenConfirmationDialog,
   showPointsBonus,

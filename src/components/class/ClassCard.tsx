@@ -16,7 +16,6 @@ import { BookingConfirmationDialog } from './ClassCard/BookingConfirmationDialog
 
 import type { TimeSlot, User, Club, PadelCourt, Instructor, ClassPadelLevel } from '@/types';
 import {
-    getMockUserBookings,
     bookClass, isSlotEffectivelyCompleted, hasAnyConfirmedActivityForDay,
     getMockClubs, calculateActivityPrice, getInstructorRate, getCourtAvailabilityForInterval, getMockInstructors,
     confirmClassAsPrivate
@@ -261,7 +260,6 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
                     isPendingMap={isPendingMap}
                     onOpenConfirmationDialog={openConfirmationDialog}
                     showPointsBonus={showPointsBonus}
-                    isUserBookedInAnyOption={(Object.values(bookingsByGroupSize).flat()).some(p => p.userId === currentUser.id)}
                     handlePriceInfoClick={(optionSize) => handleInfoClick({ type: 'price', optionSize })}
                 />
                  <ClassCardFooter

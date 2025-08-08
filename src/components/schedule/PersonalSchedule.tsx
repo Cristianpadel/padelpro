@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { displayClassLevel, displayClassCategory } from '@/types';
-import { cancelBooking } from '@/lib/mockData';
+import { cancelBooking, fetchUserBookings, addReviewToState } from '@/lib/mockData';
 import { useRouter } from 'next/navigation';
 import { InfoCard } from './InfoCard';
 
@@ -81,7 +81,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
             ) : (
                 <div className="flex items-center gap-1">
                     {[1, 2, 3, 4, 5].map((star) => (
-                        <button key={star} onClick={() => handleRateClass(bookingId, instructorName, star)}>
+                        <button key={star} onClick={() => onRateClass(bookingId, instructorName, star)}>
                             <Star className={cn("h-5 w-5", (ratedBookings[bookingId] || 0) >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300')} />
                         </button>
                     ))}
