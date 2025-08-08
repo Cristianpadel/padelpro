@@ -200,13 +200,15 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                                 <CheckCircle className="mr-3 h-4 w-4" /> Mis Reservas
                             </Button>
                         </div>
-                        <Button 
-                            variant={filterByFavorites ? "secondary" : "ghost"} 
-                            className={cn("w-full justify-start text-sm h-10 rounded-full", filterByFavorites && "font-semibold")} 
-                            onClick={handleFavoritesClick}
-                        >
-                            <Heart className={cn("mr-3 h-4 w-4", filterByFavorites && "fill-current text-destructive")} /> Favoritos
-                        </Button>
+                        {activeView === 'clases' && (
+                            <Button 
+                                variant={filterByFavorites ? "secondary" : "ghost"} 
+                                className={cn("w-full justify-start text-sm h-10 rounded-full", filterByFavorites && "font-semibold")} 
+                                onClick={handleFavoritesClick}
+                            >
+                                <Heart className={cn("mr-3 h-4 w-4", filterByFavorites && "fill-current text-destructive")} /> Favoritos
+                            </Button>
+                        )}
                     </div>
                 </>
             )}
