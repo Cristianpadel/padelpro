@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -14,7 +15,7 @@ import {
     Briefcase, LogOut, Building, CalendarDays, Eye, ClipboardList, CheckCircle, LogIn, PartyPopper, ShoppingBag, Star, Sparkles, Plus, Calendar
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { countConfirmedLiberadasSpots, fetchMatchDayEventsForDate, getHasNewSpecialOfferNotification, countUserReservedProducts } from '@/lib/mockData';
+import { countConfirmedLiberadasSpots, fetchMatchDayEventsForDate, getHasNewSpecialOfferNotification, countUserReservedProducts, countUserConfirmedActivitiesForDay } from '@/lib/mockData';
 import { Badge } from '@/components/ui/badge';
 import { useSearchParams, usePathname, useRouter } from 'next/navigation';
 import { addDays } from 'date-fns';
@@ -35,7 +36,7 @@ interface DesktopSidebarProps {
     viewPreference?: 'normal' | 'myInscriptions' | 'myConfirmed';
     timeSlotFilter?: TimeOfDayFilterType;
     selectedLevel?: MatchPadelLevel | 'all';
-    confirmedBookingsCount?: number;
+    // confirmedBookingsCount is no longer needed as a prop, it will be handled internally
     unconfirmedInscriptionsCount?: number;
     showPointsBonus?: boolean;
     onTogglePointsBonus?: () => void;
@@ -62,13 +63,13 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     viewPreference = 'normal',
     timeSlotFilter = 'all',
     selectedLevel = 'all',
-    confirmedBookingsCount = 0,
     unconfirmedInscriptionsCount = 0,
     showPointsBonus,
     onTogglePointsBonus,
 }) => {
     const [liberadasCount, setLiberadasCount] = useState(0);
     const [reservedProductsCount, setReservedProductsCount] = useState(0);
+    const [confirmedBookingsCount, setConfirmedBookingsCount] = useState(0);
     const [showSpecialOfferNotificationDot, setShowSpecialOfferNotificationDot] = useState(false);
     const searchParams = useSearchParams();
     const pathname = usePathname();
@@ -88,6 +89,18 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
             setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(currentUrl)}`);
         }
     }, []);
+    
+    useEffect(() => {
+        if (!currentUser) return;
+        const fetchConfirmedCount = async () => {
+            const count = countUserConfirmedActivitiesForDay(currentUser.id, new Date());
+            setConfirmedBookingsCount(count);
+        };
+        fetchConfirmedCount();
+        const interval = setInterval(fetchConfirmedCount, 5000); // Poll every 5 seconds
+        return () => clearInterval(interval);
+    }, [currentUser]);
+
 
     const handleViewPrefChange = (value: 'normal' | 'myInscriptions' | 'myConfirmed') => {
         const newSearchParams = new URLSearchParams(searchParams.toString());
