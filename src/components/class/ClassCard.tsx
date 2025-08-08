@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { parseISO, differenceInMinutes, differenceInDays, startOfDay } from 'date-fns';
+import { parseISO, differenceInMinutes, differenceInDays, startOfDay, isSameDay } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 
@@ -16,9 +16,10 @@ import { BookingConfirmationDialog } from './ClassCard/BookingConfirmationDialog
 
 import type { TimeSlot, User, Club, PadelCourt, Instructor, ClassPadelLevel } from '@/types';
 import {
+    getMockUserBookings,
     bookClass, isSlotEffectivelyCompleted, hasAnyConfirmedActivityForDay,
     getMockClubs, calculateActivityPrice, getInstructorRate, getCourtAvailabilityForInterval, getMockInstructors,
-    confirmClassAsPrivate, getMockUserBookings
+    confirmClassAsPrivate
 } from '@/lib/mockData';
 import { Lightbulb, ShieldQuestion, Hash, Users2, Venus, Mars, Euro, Info } from 'lucide-react';
 import { calculatePricePerPerson } from '@/lib/utils';
