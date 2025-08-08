@@ -2,7 +2,7 @@
 
 import type { TimeSlot, Booking, User, Instructor, Club, ClassPadelLevel, MatchPadelLevel, BookingSlotDetails, ClubFormData, UserDB, Match, MatchBooking, PadelGameType, SortOption, PadelCourt, CourtGridBooking, PadelCourtStatus, Review, CreateMatchFormData, PointTransaction, PointTransactionType, Transaction } from '../types';
 import { classPadelLevels, matchPadelLevels, padelCategories } from '../types';
-import { addHours, setHours, setMinutes, startOfDay, format, isSameDay, addDays, addMinutes, eachMinuteOfInterval, isEqual, areIntervalsOverlapping, parseISO, differenceInHours, differenceInMinutes } from 'date-fns';
+import { addHours, setHours, setMinutes, startOfDay, format, isSameDay, addDays, addMinutes, eachMinuteOfInterval, isEqual, areIntervalsOverlapping, parseISO, differenceInHours, differenceInMinutes, getDay, parse } from 'date-fns';
 import { es } from 'date-fns/locale';
 import * as state from './mockDataSources';
 import { performInitialization as initializeMockData } from './mockDataSources';
@@ -59,3 +59,22 @@ export const getCourtAvailabilityForInterval = async (clubId: string, startTime:
 
     return { available, occupied, total: activeCourts.length };
 };
+
+export const isMatchBookableWithPoints = (match: Match, club?: Club | null): boolean => {
+    if (!match.isPlaceholder || !club?.pointBookingSlots) {
+        return false;
+    }
+    const matchStartTime = new Date(match.startTime);
+    const dayOfWeek = dayOfWeekArray[getDay(matchStartTime)];
+    const pointBookingSlotsToday = club.pointBookingSlots?.[dayOfWeek as keyof typeof club.pointBookingSlots];
+    if (pointBookingSlotsToday) {
+        return pointBookingSlotsToday.some(range => {
+            const rangeStart = parse(range.start, 'HH:mm', matchStartTime);
+            const rangeEnd = parse(range.end, 'HH:mm', matchStartTime);
+            return matchStartTime >= rangeStart && matchStartTime < rangeEnd;
+        });
+    }
+    return false;
+};
+
+const dayOfWeekArray: DayOfWeek[] = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];

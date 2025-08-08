@@ -174,9 +174,9 @@ export default function ActivitiesPage() {
                                 <Zap className="mr-2 h-4 w-4" />Liberadas
                             </Button>
                         </Link>
-                         <Link href="/reservar" passHref>
-                             <Button size="sm" variant="ghost" className="text-amber-600 hover:bg-amber-100 hover:text-amber-700">
-                                <Star className="mr-2 h-4 w-4" />Reservar con Puntos
+                         <Link href="/activities?filter=puntos" passHref>
+                             <Button size="sm" variant={filterByPuntosOnly ? "default" : "ghost"} className={cn(filterByPuntosOnly ? "bg-amber-600 text-white" : "text-amber-600 hover:bg-amber-100 hover:text-amber-700")}>
+                                <Star className="mr-2 h-4 w-4" />Pagar con Puntos
                             </Button>
                         </Link>
                      </div>

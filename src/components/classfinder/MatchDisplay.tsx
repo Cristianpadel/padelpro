@@ -6,7 +6,7 @@ import type { Match, User, MatchBooking, MatchPadelLevel, PadelCategoryForSlot, 
 import { matchPadelLevels, timeSlotFilterOptions } from '@/types';
 import MatchCard from '@/components/match/MatchCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { fetchMatches, getMockClubs, findAvailableCourt, fetchMatchDayEventsForDate, getUserActivityStatusForDay, getMatchDayInscriptions, isUserLevelCompatibleWithActivity } from '@/lib/mockData';
+import { fetchMatches, getMockClubs, findAvailableCourt, fetchMatchDayEventsForDate, getUserActivityStatusForDay, getMatchDayInscriptions, isUserLevelCompatibleWithActivity, isMatchBookableWithPoints } from '@/lib/mockData';
 import { Loader2, SearchX, CalendarDays, Plus, CheckCircle, PartyPopper, ArrowRight, Users, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -138,20 +138,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
             workingMatches = workingMatches.filter(match => {
                 if ('isEventCard' in match) return false;
                 const regularMatch = match as Match;
-                if (!regularMatch.isPlaceholder) return false;
-
-                const matchStartTime = new Date(regularMatch.startTime);
-                const dayOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][getDay(matchStartTime)];
-                const pointBookingSlotsToday = club?.pointBookingSlots?.[dayOfWeek as keyof typeof club.pointBookingSlots];
-
-                if (pointBookingSlotsToday) {
-                    return pointBookingSlotsToday.some(range => {
-                        const rangeStart = parse(range.start, 'HH:mm', matchStartTime);
-                        const rangeEnd = parse(range.end, 'HH:mm', matchStartTime);
-                        return matchStartTime >= rangeStart && matchStartTime < rangeEnd;
-                    });
-                }
-                return false;
+                return isMatchBookableWithPoints(regularMatch, club);
             });
         } else {
             if (!selectedDate) {
