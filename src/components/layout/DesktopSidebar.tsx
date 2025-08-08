@@ -142,30 +142,30 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
             )}
 
             <div className="p-1 space-y-2">
-                 <Link href="/schedule" className="w-full">
-                    <Button variant={pathname.startsWith('/schedule') ? "secondary" : "ghost"} className={cn("w-full justify-start text-base h-12 rounded-full", pathname.startsWith('/schedule') && "font-bold")}>
+                <Link href="/schedule" className="w-full">
+                    <Button variant={pathname.startsWith('/schedule') ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-full">
                         <ClipboardList className="mr-3 h-5 w-5" /> Agenda
                     </Button>
                 </Link>
                 <Link href="/activities?view=clases" className="w-full">
-                    <Button variant={activeView === 'clases' ? "secondary" : "ghost"} className={cn("w-full justify-start text-base h-12 rounded-full", activeView === 'clases' && "font-bold")}>
+                    <Button variant={activeView === 'clases' ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-full">
                         <Activity className="mr-3 h-5 w-5" /> Clases
                     </Button>
                 </Link>
-                 <Link href="/activities?view=partidas" className="w-full">
-                    <Button variant={activeView === 'partidas' ? "secondary" : "ghost"} className={cn("w-full justify-start text-base h-12 rounded-full", activeView === 'partidas' && "font-bold")}>
+                <Link href="/activities?view=partidas" className="w-full">
+                    <Button variant={activeView === 'partidas' ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-full">
                         <Users className="mr-3 h-5 w-5" /> Partidas
                     </Button>
                 </Link>
                 {clubInfo?.isMatchDayEnabled && (
                   <Link href="/match-day" className="w-full">
-                      <Button variant={pathname.startsWith('/match-day') ? "secondary" : "ghost"} className={cn("w-full justify-start text-base h-12 rounded-full", pathname.startsWith('/match-day') && "font-bold")}>
+                      <Button variant={pathname.startsWith('/match-day') ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-full">
                           <PartyPopper className="mr-3 h-5 w-5" /> Match-Day
                       </Button>
                   </Link>
                 )}
                  <Link href="/store" className="w-full">
-                    <Button variant={pathname.startsWith('/store') ? "secondary" : "ghost"} className={cn("w-full justify-start text-base h-12 rounded-full", pathname.startsWith('/store') && "font-bold")}>
+                    <Button variant={pathname.startsWith('/store') ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-full">
                         <ShoppingBag className="mr-3 h-5 w-5" /> Tienda
                     </Button>
                 </Link>
