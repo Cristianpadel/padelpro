@@ -1,7 +1,7 @@
 // src/lib/mockDataSources/users.ts
 "use client";
 
-import type { User, Booking, PointTransactionType, TimeSlot, Match, Product, Instructor, UserDB, MatchPadelLevel, UserGenderCategory, DayOfWeek, TimeRange, InstructorRateTier, MatchBooking, Review, Transaction } from '@/types';
+import type { User, Booking, PointTransactionType, TimeSlot, Match, Product, Instructor, UserDB, MatchPadelLevel, UserGenderCategory, DayOfWeek, TimeRange, InstructorRateTier, MatchBooking, Review, Transaction, MatchDayEvent } from '@/types';
 import * as state from './index'; 
 import * as config from '../config';
 import { areIntervalsOverlapping, parse, getDay, format, differenceInDays, startOfDay } from 'date-fns';
@@ -40,7 +40,7 @@ export const addUserPointsAndAddTransaction = async (
     }
 };
 
-export const deductCredit = (userId: string, amount: number, activity: TimeSlot | Match, type: 'Clase' | 'Partida'): void => {
+export const deductCredit = (userId: string, amount: number, activity: TimeSlot | Match | MatchDayEvent, type: 'Clase' | 'Partida' | 'Evento Match-Day'): void => {
     const key = `${userId}-${activity.id}`;
     if (state.getChargedUsersForThisConfirmation().has(key)) return;
 
@@ -54,6 +54,8 @@ export const deductCredit = (userId: string, amount: number, activity: TimeSlot 
     if (currentUser?.id === userId) {
         state.initializeMockCurrentUser({ ...currentUser, credit: newCredit });
     }
+    
+    const activityDate = 'eventDate' in activity ? activity.eventDate : activity.startTime;
 
     state.addTransactionToState({
         id: `txn-deduct-${Date.now()}-${userId.slice(-4)}`,
@@ -61,7 +63,7 @@ export const deductCredit = (userId: string, amount: number, activity: TimeSlot 
         date: new Date(),
         type: `Reserva ${type}`,
         amount: -amount,
-        description: `${type} con ${'instructorName' in activity ? activity.instructorName : 'varios'} el ${format(new Date(activity.startTime), "dd/MM")}`,
+        description: `${type} con ${'instructorName' in activity ? activity.instructorName : 'varios'} el ${format(new Date(activityDate), "dd/MM")}`,
     });
     
     state.addChargedUserForConfirmation(key);
@@ -804,4 +806,3 @@ export const addProduct = async (productData: Omit<Product, 'id'>): Promise<Prod
   state.addProductToState(newProduct);
   return newProduct;
 };
-
