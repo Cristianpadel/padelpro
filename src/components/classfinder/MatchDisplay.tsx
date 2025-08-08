@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import type { Match, User, MatchBooking, MatchPadelLevel, PadelCategoryForSlot, SortOption, TimeOfDayFilterType, MatchDayEvent } from '@/types';
+import type { Match, User, MatchBooking, MatchPadelLevel, PadelCategoryForSlot, SortOption, TimeOfDayFilterType, MatchDayEvent, UserActivityStatusForDay } from '@/types';
 import { matchPadelLevels, timeSlotFilterOptions } from '@/types';
 import MatchCard from '@/components/match/MatchCard';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -42,9 +42,9 @@ interface MatchDisplayProps {
   allMatches: Match[];
   isLoading: boolean;
   matchDayEvents: MatchDayEvent[]; // Changed to array
-  dateStripIndicators: Record<string, { activityStatus: 'confirmed' | 'inscribed' | 'none', hasEvent: boolean, eventId?: string, anticipationPoints: number }>;
+  dateStripIndicators: Record<string, UserActivityStatusForDay>;
   dateStripDates: Date[];
-  onViewPrefChange: (date: Date, pref: 'myInscriptions' | 'myConfirmed') => void;
+  onViewPrefChange: (date: Date, pref: 'myInscriptions' | 'myConfirmed', type: 'class' | 'match') => void;
   showPointsBonus: boolean;
 }
 
@@ -180,7 +180,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
             
             if (viewPreference === 'myInscriptions') {
                 workingMatches = workingMatches.filter(match => 
-                    !('isEventCard' in match) && ((match as Match).bookedPlayers || []).some(p => p.userId === currentUser.id)
+                    !('isEventCard' in match) && ((match as Match).bookedPlayers || []).some(p => p.userId === currentUser.id) && (match as Match).status !== 'confirmed' && (match as Match).status !== 'confirmed_private'
                 );
             } else if (viewPreference === 'myConfirmed') {
                 workingMatches = workingMatches.filter(match => {
@@ -344,10 +344,10 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                                  {/* INDICATOR SECTION */}
                                  <div className="h-10 w-8 flex flex-col items-center justify-center relative space-y-0.5">
                                         {indicators.activityStatus === 'confirmed' && (
-                                             <button onClick={() => onViewPrefChange(day, 'myConfirmed')} title="Ver actividad confirmada" className="h-6 w-6 flex items-center justify-center bg-destructive text-destructive-foreground rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">R</button>
+                                             <button onClick={() => onViewPrefChange(day, 'myConfirmed', 'match')} title="Ver actividad confirmada" className="h-6 w-6 flex items-center justify-center bg-destructive text-destructive-foreground rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">R</button>
                                         )}
                                         {indicators.activityStatus === 'inscribed' && (
-                                             <button onClick={() => onViewPrefChange(day, 'myInscriptions')} title="Ver pre-inscripción" className="h-6 w-6 flex items-center justify-center bg-blue-500 text-white rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">I</button>
+                                             <button onClick={() => onViewPrefChange(day, 'myInscriptions', indicators.activityType || 'match')} title="Ver pre-inscripción" className="h-6 w-6 flex items-center justify-center bg-blue-500 text-white rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">I</button>
                                         )}
                                         {indicators.hasEvent && indicators.activityStatus === 'none' && (
                                             <Link href={`/match-day/${indicators.eventId}`} passHref>
