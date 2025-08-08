@@ -121,6 +121,16 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
         }
         router.replace(`${pathname}?${newSearchParams.toString()}`, { scroll: false });
     };
+    
+    const handleLevelFilterChange = (value: MatchPadelLevel | 'all') => {
+        const newSearchParams = new URLSearchParams(searchParams.toString());
+        if (value === 'all') {
+            newSearchParams.delete('level');
+        } else {
+            newSearchParams.set('level', value);
+        }
+        router.replace(`${pathname}?${newSearchParams.toString()}`, { scroll: false });
+    };
 
 
     useEffect(() => {
