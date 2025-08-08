@@ -136,13 +136,11 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
         return groups;
     }, [currentSlot.bookedPlayers]);
 
-    const isUserBookedInAnyOption = useMemo(() => 
-        currentUser ? (currentSlot.bookedPlayers || []).some(p => p.userId === currentUser.id) : false,
-    [currentUser, currentSlot.bookedPlayers]);
-
-    const userHasConfirmedActivityToday = useMemo(() => 
-        currentUser ? hasAnyConfirmedActivityForDay(currentUser.id, new Date(currentSlot.startTime), currentSlot.id, 'class') : false,
-    [currentUser, currentSlot.startTime, currentSlot.id]);
+    const userHasConfirmedActivityToday = useMemo(() => {
+        if (!currentUser) return false;
+        const bookingsForDay = getMockUserBookings().filter(b => b.userId === currentUser.id && isSameDay(new Date(b.slotDetails!.startTime), new Date(currentSlot.startTime)) && b.activityId !== currentSlot.id);
+        return bookingsForDay.some(b => b.status === 'confirmed');
+    }, [currentUser, currentSlot.startTime, currentSlot.id]);
 
 
     // Handlers
@@ -264,7 +262,6 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
                     onOpenConfirmationDialog={openConfirmationDialog}
                     showPointsBonus={showPointsBonus}
                     handlePriceInfoClick={(optionSize) => handleInfoClick({ type: 'price', optionSize })}
-                    isUserBookedInAnyOption={isUserBookedInAnyOption}
                 />
                  <ClassCardFooter
                     courtAvailability={courtAvailability}
