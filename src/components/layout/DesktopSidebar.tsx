@@ -12,7 +12,7 @@ import type { User, Club, TimeOfDayFilterType, MatchPadelLevel } from '@/types';
 import { timeSlotFilterOptions } from '@/types';
 import {
     Activity, Users, Gift, Clock, BarChartHorizontal, Heart,
-    Briefcase, LogOut, Building, CalendarDays, Eye, ClipboardList, CheckCircle, LogIn, PartyPopper, ShoppingBag, Star, Sparkles, Plus, Calendar
+    Briefcase, LogOut, Building, CalendarDays, Eye, ClipboardList, CheckCircle, LogIn, PartyPopper, ShoppingBag, Star, Sparkles, Plus, Calendar, User as UserIcon, Wallet
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { countConfirmedLiberadasSpots, fetchMatchDayEventsForDate, getHasNewSpecialOfferNotification, countUserReservedProducts, countUserConfirmedActivitiesForDay } from '@/lib/mockData';
@@ -22,6 +22,7 @@ import { addDays } from 'date-fns';
 import { useActivityFilters } from '@/hooks/useActivityFilters';
 import { useToast } from '@/hooks/use-toast';
 import ManageFavoriteInstructorsDialog from '@/components/schedule/ManageFavoriteInstructorsDialog';
+import { Separator } from '../ui/separator';
 
 interface DesktopSidebarProps {
     currentUser: User | null;
@@ -126,46 +127,66 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 
     return (
         <Card className="p-4 flex flex-col gap-4 sticky top-6 h-fit w-72" style={shadowStyle}>
-            {clubInfo && (
-                <Link href="/" className="flex flex-col items-center text-center gap-2 hover:opacity-90 transition-opacity">
-                    <Avatar className="h-24 w-24 rounded-md">
+             {clubInfo && (
+                <div className="flex flex-col items-center text-center gap-2">
+                    <Avatar className="h-20 w-20 rounded-md">
                          <AvatarImage src={clubInfo.logoUrl} alt={clubInfo.name} data-ai-hint="club logo" />
                          <AvatarFallback className="rounded-md bg-muted">
-                             <Building className="h-12 w-12" />
+                             <Building className="h-10 w-10" />
                          </AvatarFallback>
                     </Avatar>
                     <div>
-                        <h2 className="font-bold text-xl">{clubInfo.name}</h2>
-                        <p className="text-sm text-muted-foreground">{clubInfo.location}</p>
+                        <h2 className="font-bold text-lg">{clubInfo.name}</h2>
+                        <p className="text-xs text-muted-foreground">{clubInfo.location}</p>
                     </div>
-                </Link>
+                </div>
             )}
+            
+            <Separator />
+            
+            <Link href="/profile" className="w-full text-left p-2 rounded-lg hover:bg-muted transition-colors">
+                <div className="flex items-center gap-3">
+                    <Avatar className="h-12 w-12">
+                         <AvatarImage src={currentUser.profilePictureUrl} alt={currentUser.name} data-ai-hint="user profile picture" />
+                         <AvatarFallback>{getInitials(currentUser.name)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-grow">
+                        <p className="font-semibold text-base">{currentUser.name}</p>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <div className="flex items-center"><Wallet className="h-3 w-3 mr-1"/> {(currentUser.credit ?? 0).toFixed(2)}€</div>
+                            <div className="flex items-center"><Star className="h-3 w-3 mr-1"/> {currentUser.loyaltyPoints ?? 0} Pts</div>
+                        </div>
+                    </div>
+                </div>
+            </Link>
 
-            <div className="p-1 space-y-2">
+            <Separator />
+
+            <div className="p-1 space-y-1">
                 <Link href="/schedule" className="w-full">
-                    <Button variant={pathname.startsWith('/schedule') ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-full">
+                    <Button variant={pathname.startsWith('/schedule') ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md">
                         <ClipboardList className="mr-3 h-5 w-5" /> Agenda
                     </Button>
                 </Link>
                 <Link href="/activities?view=clases" className="w-full">
-                    <Button variant={activeView === 'clases' ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-full">
+                    <Button variant={activeView === 'clases' ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md">
                         <Activity className="mr-3 h-5 w-5" /> Clases
                     </Button>
                 </Link>
                 <Link href="/activities?view=partidas" className="w-full">
-                    <Button variant={activeView === 'partidas' ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-full">
+                    <Button variant={activeView === 'partidas' ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md">
                         <Users className="mr-3 h-5 w-5" /> Partidas
                     </Button>
                 </Link>
                 {clubInfo?.isMatchDayEnabled && (
                   <Link href="/match-day" className="w-full">
-                      <Button variant={pathname.startsWith('/match-day') ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-full">
+                      <Button variant={pathname.startsWith('/match-day') ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md">
                           <PartyPopper className="mr-3 h-5 w-5" /> Match-Day
                       </Button>
                   </Link>
                 )}
                  <Link href="/store" className="w-full">
-                    <Button variant={pathname.startsWith('/store') ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-full">
+                    <Button variant={pathname.startsWith('/store') ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md">
                         <ShoppingBag className="mr-3 h-5 w-5" /> Tienda
                     </Button>
                 </Link>
