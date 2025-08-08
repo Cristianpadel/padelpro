@@ -104,24 +104,27 @@ export const recalculateAndSetBlockedBalances = async (userId: string) => {
 
     let totalBlockedCredit = 0;
     let totalBlockedPoints = 0;
-    let maxPendingBonusPoints = 0;
+    let totalPendingBonusPoints = 0;
 
     const classBookings = state.getMockUserBookings().filter(b => b.userId === userId);
     const matchBookings = state.getMockUserMatchBookings().filter(b => b.userId === userId);
-    const clubSettings = state.getMockClubs()[0]?.pointSettings; // Assuming single club for now for simplicity
+    const clubSettings = state.getMockClubs()[0]?.pointSettings; 
 
     // --- Blocked credit and pending points from class bookings ---
-    // This part handles pre-inscriptions (pending bookings)
     classBookings.forEach(booking => {
         const slot = state.getMockTimeSlots().find(s => s.id === booking.activityId);
         
+        // Is a pre-inscription or a private class you organized
         const isPendingActivity = slot && (slot.status === 'pre_registration' || (booking.isOrganizerBooking && slot.status === 'confirmed_private'));
+        
+        // Is a class you just joined that got confirmed
+        const isNewlyConfirmed = slot && state.isSlotEffectivelyCompleted(slot).completed && !isPendingActivity;
 
         if (isPendingActivity) {
             if (booking.bookedWithPoints) {
                 totalBlockedPoints += calculatePricePerPerson(slot.totalPrice, 1);
             } else {
-                if (!booking.isOrganizerBooking) {
+                if (!booking.isOrganizerBooking) { // Don't block credit if you organized it (you paid upfront)
                     totalBlockedCredit += calculatePricePerPerson(slot.totalPrice, booking.groupSize);
                 }
                 const pointsBaseValues: { [key in 1 | 2 | 3 | 4]: number[] } = { 1: [10], 2: [8, 7], 3: [5, 4, 3], 4: [3, 2, 1, 0] };
@@ -129,26 +132,16 @@ export const recalculateAndSetBlockedBalances = async (userId: string) => {
                 const daysInAdvance = differenceInDays(startOfDay(new Date(slot.startTime)), startOfDay(new Date()));
                 const anticipationPoints = Math.max(0, daysInAdvance);
                 const potentialBonus = basePoints + anticipationPoints;
-                if (potentialBonus > maxPendingBonusPoints) {
-                    maxPendingBonusPoints = potentialBonus;
-                }
+                totalPendingBonusPoints += potentialBonus;
             }
-        }
-    });
-
-    // --- This part handles newly confirmed classes (that aren't pre-inscriptions) ---
-    // E.g., booking a private class or the last spot.
-    classBookings.forEach(booking => {
-        const slot = state.getMockTimeSlots().find(s => s.id === booking.activityId);
-        if (slot && state.isSlotEffectivelyCompleted(slot).completed && !booking.bookedWithPoints) {
+        } else if (isNewlyConfirmed && !booking.bookedWithPoints) {
+            // Also calculate potential bonus if you were the one to confirm the class
             const pointsBaseValues: { [key in 1 | 2 | 3 | 4]: number[] } = { 1: [10], 2: [8, 7], 3: [5, 4, 3], 4: [3, 2, 1, 0] };
             const basePoints = (pointsBaseValues[booking.groupSize] || [])[booking.spotIndex] ?? 0;
             const daysInAdvance = differenceInDays(startOfDay(new Date(slot.startTime)), startOfDay(new Date()));
             const anticipationPoints = Math.max(0, daysInAdvance);
             const potentialBonus = basePoints + anticipationPoints;
-            if (potentialBonus > maxPendingBonusPoints) {
-                maxPendingBonusPoints = potentialBonus;
-            }
+            totalPendingBonusPoints += potentialBonus;
         }
     });
 
@@ -165,9 +158,7 @@ export const recalculateAndSetBlockedBalances = async (userId: string) => {
                 // Calculate potential bonus points for matches
                 const firstToJoinBonus = clubSettings?.firstToJoinMatch || 0;
                 if (match.bookedPlayers.length === 1 && match.bookedPlayers[0].userId === userId) {
-                     if (firstToJoinBonus > maxPendingBonusPoints) {
-                        maxPendingBonusPoints = firstToJoinBonus;
-                    }
+                     totalPendingBonusPoints += firstToJoinBonus;
                 }
             }
         }
@@ -187,13 +178,13 @@ export const recalculateAndSetBlockedBalances = async (userId: string) => {
     state.updateUserInUserDatabaseState(userId, { 
         blockedCredit: totalBlockedCredit, 
         blockedLoyaltyPoints: totalBlockedPoints,
-        pendingBonusPoints: maxPendingBonusPoints,
+        pendingBonusPoints: totalPendingBonusPoints,
     });
     
     if (state.getMockCurrentUser()?.id === userId) {
         const currentUser = state.getMockCurrentUser();
         if (currentUser) {
-            state.initializeMockCurrentUser({ ...currentUser, blockedCredit: totalBlockedCredit, blockedLoyaltyPoints: totalBlockedPoints, pendingBonusPoints: maxPendingBonusPoints });
+            state.initializeMockCurrentUser({ ...currentUser, blockedCredit: totalBlockedCredit, blockedLoyaltyPoints: totalBlockedPoints, pendingBonusPoints: totalPendingBonusPoints });
         }
     }
 };
