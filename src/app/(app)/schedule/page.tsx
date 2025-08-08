@@ -10,7 +10,7 @@ import { getMockCurrentUser, getMockClubs, setGlobalCurrentUser, getMockUserBook
 import { recommendClasses, type RecommendClassesOutput } from '@/ai/flows/recommend-classes';
 import type { User, Booking, MatchBooking, Club, MatchPadelLevel, ClassPadelLevel } from '@/types';
 import { Button } from '@/components/ui/button';
-import { CalendarDays, User as UserIcon, Wallet, Star, History, Repeat, PlusCircle, Settings, Wallet2, UserPlus, Edit, AlertCircle, HelpCircle, Activity, Trophy, Lightbulb, Lock, PiggyBank } from 'lucide-react';
+import { CalendarDays, User as UserIcon, Wallet, Star, History, Repeat, PlusCircle, Settings, Wallet2, UserPlus, Edit, AlertCircle, HelpCircle, Activity, Trophy, Lightbulb, Lock, PiggyBank, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { Toaster } from '@/components/ui/toaster';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -254,9 +254,9 @@ function SchedulePageContent() {
                         </CardHeader>
                         <CardContent className="space-y-3">
                             <div className="text-4xl font-bold text-foreground">{availablePoints.toFixed(0)}</div>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                 <div className="flex-1 p-2 bg-amber-500/10 rounded-md text-center">
-                                    <p className="flex items-center justify-center gap-1"><Star className="h-3 w-3 text-amber-500"/> Total Obtenidos</p>
+                                    <p className="flex items-center justify-center gap-1"><Star className="h-3 w-3 text-amber-500"/> Obtenidos</p>
                                     <p className="font-semibold text-foreground">{(currentUser.loyaltyPoints ?? 0).toFixed(0)}</p>
                                 </div>
                                 {hasPendingPoints && (
@@ -269,7 +269,7 @@ function SchedulePageContent() {
                                                 </div>
                                             </TooltipTrigger>
                                             <TooltipContent>
-                                                <p className="max-w-xs">Puntos que ganarás al confirmarse tus pre-inscripciones. Es la suma de bonificaciones por anticipación y por ser de los primeros en apuntarte.</p>
+                                                <p className="max-w-xs text-xs">Es la suma de los puntos de bonificación de todas tus pre-inscripciones. Se añadirán a tu saldo cuando se confirmen las actividades.</p>
                                             </TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>
