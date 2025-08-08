@@ -199,7 +199,6 @@ export const cancelBooking = async (userId: string, bookingId: string): Promise<
     if (!updatedSlot) return { error: "Error al actualizar la clase." };
 
     state.removeUserBookingFromState(bookingId);
-    await recalculateAndSetBlockedBalances(userId);
     
     let message = "Tu inscripción ha sido cancelada.";
     let pointsAwarded = 0;
@@ -229,12 +228,19 @@ export const cancelBooking = async (userId: string, bookingId: string): Promise<
         }
 
     } else if (booking.status === 'pending') {
-        const penaltyPoints = club.pointSettings?.unconfirmedCancelPenaltyPoints ?? 1;
-        await addUserPointsAndAddTransaction(userId, -penaltyPoints, 'penalizacion_cancelacion_no_confirmada', 'Penalización por cancelación de clase no confirmada', slot.id, slot.clubId);
-        message += ` Se ha aplicado una penalización de ${penaltyPoints} punto(s).`;
-        penaltyApplied = true;
+        if(booking.bookedWithPoints) {
+            const pointsToRefund = calculatePricePerPerson(slot.totalPrice, 1);
+            await addUserPointsAndAddTransaction(userId, pointsToRefund, 'devolucion_cancelacion_anticipada', 'Reembolso por cancelación de pre-inscripción', slot.id, slot.clubId);
+            message = `Inscripción cancelada. Se han devuelto ${pointsToRefund} puntos a tu cuenta.`;
+        } else {
+            const penaltyPoints = club.pointSettings?.unconfirmedCancelPenaltyPoints ?? 1;
+            await addUserPointsAndAddTransaction(userId, -penaltyPoints, 'penalizacion_cancelacion_no_confirmada', 'Penalización por cancelación de clase no confirmada', slot.id, slot.clubId);
+            message += ` Se ha aplicado una penalización de ${penaltyPoints} punto(s).`;
+            penaltyApplied = true;
+        }
     }
     
+    await recalculateAndSetBlockedBalances(userId);
     return { success: true, message, pointsAwarded: pointsAwarded > 0 ? pointsAwarded : undefined, penaltyApplied };
 };
 
@@ -347,7 +353,7 @@ export const confirmClassAsPrivate = async (
     state.addUserBookingToState(newOrganizerBooking);
 
     _annulConflictingActivities(slot);
-    await recalculateAndSetBlockedBalances(organizerUserId);
+    await recalculateAndSetBlockedBalances(organizerUserId); // Recalculate to show pending points
     await confirmAndAwardPendingPoints(organizerUserId, slot.clubId); // Award points for the private class
 
     const shareLink = `/?view=clases&code=${privateShareCode}`;

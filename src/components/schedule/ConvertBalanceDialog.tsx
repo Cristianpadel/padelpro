@@ -49,7 +49,7 @@ const ConvertBalanceDialog: React.FC<ConvertBalanceDialogProps> = ({
 }) => {
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
-  const currentCredit = currentUser.credit ?? 0;
+  const currentCredit = (currentUser.credit ?? 0) - (currentUser.blockedCredit ?? 0);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -64,7 +64,7 @@ const ConvertBalanceDialog: React.FC<ConvertBalanceDialogProps> = ({
     if (values.eurosToConvert > currentCredit) {
       form.setError("eurosToConvert", {
         type: "manual",
-        message: `No puedes convertir más de tu saldo actual (${currentCredit.toFixed(2)}€).`,
+        message: `No puedes convertir más de tu saldo disponible (${currentCredit.toFixed(2)}€).`,
       });
       return;
     }
@@ -126,7 +126,7 @@ const ConvertBalanceDialog: React.FC<ConvertBalanceDialogProps> = ({
                   </FormControl>
                   <FormMessage />
                    <FormFieldDescription className="text-xs">
-                    Saldo actual: {currentCredit.toFixed(2)}€
+                    Saldo disponible: {currentCredit.toFixed(2)}€
                   </FormFieldDescription>
                 </FormItem>
               )}

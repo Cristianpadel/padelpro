@@ -111,29 +111,30 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
   const router = useRouter();
 
 
-  useEffect(() => {
-    const loadBookings = async () => {
-      try {
-        setLoading(true);
-        const fetchedBookings = await fetchUserBookings(currentUser.id);
-        const now = new Date();
-        const upcoming = fetchedBookings.filter(b => b.slotDetails && new Date(b.slotDetails.endTime) > now);
-        const past = fetchedBookings.filter(b => b.slotDetails && new Date(b.slotDetails.endTime) <= now);
-        
-        upcoming.sort((a, b) => (a.slotDetails?.startTime?.getTime() ?? 0) - (b.slotDetails?.startTime?.getTime() ?? 0));
-        past.sort((a, b) => (b.slotDetails?.startTime?.getTime() ?? 0) - (a.slotDetails?.startTime?.getTime() ?? 0));
+  const loadBookings = useCallback(async () => {
+    try {
+      setLoading(true);
+      const fetchedBookings = await fetchUserBookings(currentUser.id);
+      const now = new Date();
+      const upcoming = fetchedBookings.filter(b => b.slotDetails && new Date(b.slotDetails.endTime) > now);
+      const past = fetchedBookings.filter(b => b.slotDetails && new Date(b.slotDetails.endTime) <= now);
+      
+      upcoming.sort((a, b) => (a.slotDetails?.startTime?.getTime() ?? 0) - (b.slotDetails?.startTime?.getTime() ?? 0));
+      past.sort((a, b) => (b.slotDetails?.startTime?.getTime() ?? 0) - (a.slotDetails?.startTime?.getTime() ?? 0));
 
-        setBookings([...upcoming, ...past]);
-        setError(null);
-      } catch (err) {
-        console.error("Failed to fetch user bookings:", err);
-        setError("No se pudo cargar tu horario.");
-      } finally {
-        setLoading(false);
-      }
-    };
+      setBookings([...upcoming, ...past]);
+      setError(null);
+    } catch (err) {
+      console.error("Failed to fetch user bookings:", err);
+      setError("No se pudo cargar tu horario.");
+    } finally {
+      setLoading(false);
+    }
+  }, [currentUser.id]);
+
+  useEffect(() => {
     loadBookings();
-  }, [currentUser.id, refreshKey, onBookingActionSuccess]);
+  }, [loadBookings, refreshKey]);
 
   const handleRateClass = (bookingId: string, instructorName: string, rating: number) => {
     setRatedBookings(prev => ({ ...prev, [bookingId]: rating }));

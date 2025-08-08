@@ -111,7 +111,7 @@ export const recalculateAndSetBlockedBalances = async (userId: string) => {
     // Blocked credit and pending points from class bookings
     classBookings.forEach(booking => {
         const slot = state.getMockTimeSlots().find(s => s.id === booking.activityId);
-        if (slot && (slot.status === 'pre_registration' || (slot.status === 'confirmed_private' && booking.isOrganizerBooking))) {
+        if (slot && (slot.status === 'pre_registration' || (booking.isOrganizerBooking && slot.status === 'confirmed_private'))) {
             if (booking.bookedWithPoints) {
                 totalBlockedPoints += calculatePricePerPerson(slot.totalPrice, 1);
             } else {
@@ -207,7 +207,9 @@ export const convertEurosToPoints = async (userId: string, euros: number, points
     await new Promise(resolve => setTimeout(resolve, config.MINIMAL_DELAY));
     const user = state.getMockUserDatabase().find(u => u.id === userId);
     if (!user) return { error: "Usuario no encontrado." };
-    if ((user.credit ?? 0) < euros) return { error: "Saldo insuficiente." };
+    
+    const availableCredit = (user.credit ?? 0) - (user.blockedCredit ?? 0);
+    if (availableCredit < euros) return { error: "Saldo disponible insuficiente." };
     
     const pointsToAdd = euros * pointsPerEuro;
     const newCredit = (user.credit ?? 0) - euros;
