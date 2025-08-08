@@ -550,7 +550,7 @@ export const addInstructor = async (instructorData: Partial<Omit<Instructor, 'id
     if (state.getMockInstructors().find(inst => inst.name?.toLowerCase() === instructorData.name!.toLowerCase())) {
         return { error: 'Ya existe un instructor con este nombre.' };
     }
-    const newId = `instructor-${instructorData.name?.toLowerCase().replace(/\s+/g, '-')}-${Date.now().toString().slice(-4)}`;
+    const newId = `inst-${instructorData.name?.toLowerCase().replace(/\s+/g, '-')}-${Date.now().toString().slice(-4)}`;
     const newInstructor: Instructor = {
         id: newId,
         name: instructorData.name,
@@ -588,7 +588,7 @@ export const fetchInstructors = async (): Promise<Instructor[]> => {
     await new Promise(resolve => setTimeout(resolve, config.MINIMAL_DELAY));
     
     const instructorsFromDB = state.getMockUserDatabase()
-        .filter(u => u.id.startsWith('instructor-'))
+        .filter(u => u.id.startsWith('inst-'))
         .map(userDb => {
             // All data should come from the single source of truth: UserDB.
             return {
@@ -606,6 +606,7 @@ export const fetchInstructors = async (): Promise<Instructor[]> => {
                 experience: userDb.experience || [],
                 languages: userDb.languages || [],
                 rateTiers: userDb.rateTiers,
+                defaultRatePerHour: userDb.defaultRatePerHour
             } as Instructor;
         });
     
@@ -650,6 +651,7 @@ export const updateInstructor = async (instructorId: string, updatedData: Partia
     if (updatedData.isAvailable !== undefined) userDbUpdates.isAvailable = updatedInstructor.isAvailable;
     if (updatedData.unavailableHours !== undefined) userDbUpdates.unavailableHours = updatedData.unavailableHours;
     if (updatedData.rateTiers !== undefined) userDbUpdates.rateTiers = updatedData.rateTiers;
+    if (updatedData.defaultRatePerHour !== undefined) userDbUpdates.defaultRatePerHour = updatedData.defaultRatePerHour;
 
 
     state.updateUserInUserDatabaseState(instructorId, userDbUpdates);
@@ -664,6 +666,9 @@ export const updateInstructor = async (instructorId: string, updatedData: Partia
         }
         if (updatedData.unavailableHours !== undefined) {
             (updatedCurrentUser as Instructor).unavailableHours = updatedData.unavailableHours;
+        }
+        if (updatedData.defaultRatePerHour !== undefined) {
+             (updatedCurrentUser as Instructor).defaultRatePerHour = updatedData.defaultRatePerHour;
         }
         state.initializeMockCurrentUser(updatedCurrentUser);
     }
