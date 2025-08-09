@@ -109,7 +109,9 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
         workingMatches = workingMatches.filter((match) => {
             if ('isEventCard' in match && match.isEventCard) return true; // Always include event cards for the selected date
             const regularMatch = match as Match;
+            // On private matches, only show if user is the organizer
             if (regularMatch.status === 'confirmed_private') return regularMatch.organizerId === currentUser.id;
+            // Otherwise, show all other matches (forming, confirmed, placeholders)
             return true;
         });
 
@@ -117,6 +119,24 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
             workingMatches = workingMatches.filter(match => match.clubId === filterByClubId);
         }
         
+        // --- View Preference Filter (has priority) ---
+        if (viewPreference === 'myInscriptions') {
+            workingMatches = workingMatches.filter(match => {
+                if ('isEventCard' in match) return false;
+                const regularMatch = match as Match;
+                return (regularMatch.bookedPlayers || []).some(p => p.userId === currentUser.id) && !isPast(new Date(regularMatch.endTime));
+            });
+        } else if (viewPreference === 'myConfirmed') {
+             workingMatches = workingMatches.filter(match => {
+                if ('isEventCard' in match) return false;
+                const regularMatch = match as Match;
+                const isUserInMatch = (regularMatch.bookedPlayers || []).some(p => p.userId === currentUser.id);
+                if (!isUserInMatch) return false;
+                return regularMatch.status === 'confirmed' || regularMatch.status === 'confirmed_private';
+            });
+        }
+        
+        // --- Special Filters (Gratis, Liberadas, Puntos) ---
         if (filterByLiberadasOnly) {
             workingMatches = workingMatches.filter(match => {
                 if ('isEventCard' in match && match.isEventCard) return false;
@@ -140,7 +160,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                 const regularMatch = match as Match;
                 return isMatchBookableWithPoints(regularMatch, club);
             });
-        } else {
+        } else { // Standard filters if no special filter is active
             if (!selectedDate) {
                 workingMatches = [];
             } else {
@@ -165,23 +185,8 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                 }
             }
             
-             if (viewPreference === 'myInscriptions') {
-                workingMatches = workingMatches.filter(match => 
-                    !('isEventCard' in match) && ((match as Match).bookedPlayers || []).some(p => p.userId === currentUser.id) && !isPast(new Date((match as Match).endTime))
-                );
-            } else if (viewPreference === 'myConfirmed') {
-                workingMatches = workingMatches.filter(match => {
-                    if('isEventCard' in match) return false;
-                    const regularMatch = match as Match;
-                    const isUserInMatch = (regularMatch.bookedPlayers || []).some(p => p.userId === currentUser.id);
-                    if (!isUserInMatch) return false;
-                    
-                    return regularMatch.status === 'confirmed' || regularMatch.status === 'confirmed_private';
-                });
-            } else { // 'normal' view
-                if (!filterAlsoConfirmedMatches) {
-                    workingMatches = workingMatches.filter(match => ('isEventCard' in match) || ((match as Match).bookedPlayers || []).length < 4);
-                }
+            if (viewPreference === 'normal' && !filterAlsoConfirmedMatches) {
+                workingMatches = workingMatches.filter(match => ('isEventCard' in match) || ((match as Match).bookedPlayers || []).length < 4);
             }
         }
 
