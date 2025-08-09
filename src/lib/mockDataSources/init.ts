@@ -109,11 +109,12 @@ export function performInitialization() {
       profilePictureUrl: 'https://randomuser.me/api/portraits/men/32.jpg',
       genderCategory: 'masculino',
       createdAt: new Date(),
+      clubId: 'club-1',
     },
-     { id: 'user-2', name: 'Beatriz López', email: 'beatriz.lopez@email.com', hashedPassword: 'hashed_password123', level: '3.5', credit: 80.00, loyaltyPoints: 450, profilePictureUrl: 'https://randomuser.me/api/portraits/women/44.jpg', genderCategory: 'femenino', createdAt: new Date(), },
-     { id: 'user-3', name: 'Carlos Fernández', email: 'carlos.fernandez@email.com', hashedPassword: 'hashed_password123', level: '4.5', credit: 25.00, loyaltyPoints: 800, profilePictureUrl: 'https://randomuser.me/api/portraits/men/45.jpg', genderCategory: 'masculino', createdAt: new Date(), },
-     { id: 'user-4', name: 'Diana Martínez', email: 'diana.martinez@email.com', hashedPassword: 'hashed_password123', level: '2.5', credit: 150.00, loyaltyPoints: 120, profilePictureUrl: 'https://randomuser.me/api/portraits/women/46.jpg', genderCategory: 'femenino', createdAt: new Date(), },
-     { id: 'user-5', name: 'Eduardo Ruiz', email: 'eduardo.ruiz@email.com', hashedPassword: 'hashed_password123', level: '3.0', credit: 10.00, loyaltyPoints: 300, profilePictureUrl: 'https://randomuser.me/api/portraits/men/47.jpg', genderCategory: 'masculino', createdAt: new Date(), },
+     { id: 'user-2', name: 'Beatriz López', email: 'beatriz.lopez@email.com', hashedPassword: 'hashed_password123', level: '3.5', credit: 80.00, loyaltyPoints: 450, profilePictureUrl: 'https://randomuser.me/api/portraits/women/44.jpg', genderCategory: 'femenino', createdAt: new Date(), clubId: 'club-1', },
+     { id: 'user-3', name: 'Carlos Fernández', email: 'carlos.fernandez@email.com', hashedPassword: 'hashed_password123', level: '4.5', credit: 25.00, loyaltyPoints: 800, profilePictureUrl: 'https://randomuser.me/api/portraits/men/45.jpg', genderCategory: 'masculino', createdAt: new Date(), clubId: 'club-1', },
+     { id: 'user-4', name: 'Diana Martínez', email: 'diana.martinez@email.com', hashedPassword: 'hashed_password123', level: '2.5', credit: 150.00, loyaltyPoints: 120, profilePictureUrl: 'https://randomuser.me/api/portraits/women/46.jpg', genderCategory: 'femenino', createdAt: new Date(), clubId: 'club-1', },
+     { id: 'user-5', name: 'Eduardo Ruiz', email: 'eduardo.ruiz@email.com', hashedPassword: 'hashed_password123', level: '3.0', credit: 10.00, loyaltyPoints: 300, profilePictureUrl: 'https://randomuser.me/api/portraits/men/47.jpg', genderCategory: 'masculino', createdAt: new Date(), clubId: 'club-1', },
   ];
   initializeMockUserDatabase(initialUserDatabase);
   
@@ -139,8 +140,8 @@ export function performInitialization() {
 
   // --- Initialize Instructors ---
   const initialInstructors = [
-      { id: 'inst-1', name: 'Carlos Santana', email: 'carlos.santana@padelestrella.com', profilePictureUrl: 'https://randomuser.me/api/portraits/men/1.jpg', level: '6.0', genderCategory: 'masculino', assignedClubId: 'club-1', isAvailable: true, defaultRatePerHour: 35 },
-      { id: 'inst-2', name: 'Ana García', email: 'ana.garcia@padelestrella.com', profilePictureUrl: 'https://randomuser.me/api/portraits/women/2.jpg', level: '5.5', genderCategory: 'femenino', assignedClubId: 'club-1', isAvailable: true, defaultRatePerHour: 30, assignedCourtNumber: 2 },
+      { id: 'inst-1', name: 'Carlos Santana', email: 'carlos.santana@padelestrella.com', profilePictureUrl: 'https://randomuser.me/api/portraits/men/1.jpg', level: '6.0', genderCategory: 'masculino', assignedClubId: 'club-1', isAvailable: true, defaultRatePerHour: 35, clubId: 'club-1' },
+      { id: 'inst-2', name: 'Ana García', email: 'ana.garcia@padelestrella.com', profilePictureUrl: 'https://randomuser.me/api/portraits/women/2.jpg', level: '5.5', genderCategory: 'femenino', assignedClubId: 'club-1', isAvailable: true, defaultRatePerHour: 30, assignedCourtNumber: 2, clubId: 'club-1' },
   ];
   initializeMockInstructors(initialInstructors);
   

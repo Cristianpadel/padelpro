@@ -7,7 +7,7 @@ import InstructorList from './InstructorList';
 import EditInstructorDialog from './EditInstructorDialog';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { UserPlus, List, Settings, CalendarDays, Shield, HardHat, Activity, BarChartHorizontal, Loader2, PlayCircle, CalendarPlus as CalendarPlusIcon, LogOut, KeyRound, Star, Network, Trophy, ArrowLeft, ClockIcon as ClockIconLucide, ClipboardList, Tag, PartyPopper, ShoppingBag, Sparkles, AlertTriangle, Palette } from 'lucide-react';
-import { fetchInstructors, updateClub, fetchPadelCourtsByClub, getMockStudents, fetchPointTransactions, addInstructor, deleteInstructor, updateInstructor as updateInstructorMock } from '@/lib/mockData';
+import { fetchInstructors as fetchInstructorsFromDb, updateClub, fetchPadelCourtsByClub, getMockStudents, fetchPointTransactions, addInstructor, deleteInstructor, updateInstructor as updateInstructorMock } from '@/lib/mockData';
 import CourtBookingManagement from './CourtBookingManagement';
 import ManageCourtsPanel from './ManageCourtsPanel';
 import AddClassFormForAdmin from '../../add-class/components/AddClassFormForAdmin';
@@ -86,13 +86,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminClub }) => {
         setLoadingData(true);
         try {
             const [fetchedInstructors, fetchedCourts, fetchedTransactions, allStudents] = await Promise.all([
-                fetchInstructors(),
+                fetchInstructorsFromDb(),
                 fetchPadelCourtsByClub(currentAdminClub.id),
                 fetchPointTransactions(currentAdminClub.id),
                 getMockStudents()
             ]);
 
-            setInstructors(fetchedInstructors.filter(inst => !inst.isBlocked));
+            setInstructors(fetchedInstructors.filter(inst => !inst.isBlocked && inst.clubId === currentAdminClub.id));
             setClubPadelCourts(fetchedCourts.filter(court => court.isActive));
             setPointTransactions(fetchedTransactions);
             setStudentPointBalances(allStudents.sort((a,b) => (b.loyaltyPoints || 0) - (a.loyaltyPoints || 0) ));
