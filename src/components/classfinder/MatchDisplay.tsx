@@ -10,7 +10,7 @@ import { fetchMatches, getMockClubs, findAvailableCourt, fetchMatchDayEventsForD
 import { Loader2, SearchX, CalendarDays, Plus, CheckCircle, PartyPopper, ArrowRight, Users, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { format, isSameDay, addDays, startOfDay, addMinutes, getDay, parse } from 'date-fns';
+import { format, isSameDay, addDays, startOfDay, addMinutes, getDay, parse, isPast } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import Link from 'next/link';
@@ -165,9 +165,9 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                 }
             }
             
-            if (viewPreference === 'myInscriptions') {
+             if (viewPreference === 'myInscriptions') {
                 workingMatches = workingMatches.filter(match => 
-                    !('isEventCard' in match) && ((match as Match).bookedPlayers || []).some(p => p.userId === currentUser.id) && (match as Match).status !== 'confirmed' && (match as Match).status !== 'confirmed_private'
+                    !('isEventCard' in match) && ((match as Match).bookedPlayers || []).some(p => p.userId === currentUser.id) && !isPast(new Date((match as Match).endTime))
                 );
             } else if (viewPreference === 'myConfirmed') {
                 workingMatches = workingMatches.filter(match => {
