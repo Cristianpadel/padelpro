@@ -121,7 +121,17 @@ const BookingSpotDisplay: React.FC<BookingSpotDisplayProps> = ({
               )}
               disabled={isLoading || !(canJoinStandard || canJoinGratis)}
             >
-              {isLoading ? <Loader2 className="h-5 w-5 animate-spin text-primary" /> : (canJoinGratis ? <Gift className="h-5 w-5 text-yellow-600" /> : <Plus className="h-5 w-5 text-green-600 stroke-[3]" />)}
+              {isLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              ) : canJoinGratis ? (
+                <Gift className="h-5 w-5 text-yellow-600" />
+              ) : canJoinStandard ? (
+                <Plus className="h-5 w-5 text-green-600 stroke-[3]" />
+              ) : !hasEnoughCredit ? (
+                <CreditCard className="h-5 w-5 text-destructive/70" />
+              ) : (
+                 <Plus className="h-5 w-5 text-muted-foreground stroke-[3] opacity-60" />
+              )}
             </Button>
             {shouldShowPointsBonus && (
               <div className="absolute -top-1 -right-1 z-10 flex h-auto items-center justify-center rounded-full bg-amber-400 px-1 py-0 text-white shadow-md text-[10px] font-bold" title={`${pointsToAward} puntos de bonificación`}>
@@ -137,3 +147,4 @@ const BookingSpotDisplay: React.FC<BookingSpotDisplayProps> = ({
 };
 
 export default React.memo(BookingSpotDisplay);
+
