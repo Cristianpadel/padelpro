@@ -26,6 +26,7 @@ interface MatchSpotDisplayProps {
   canBookWithPoints?: boolean;
   showPointsBonus: boolean;
   pricePerPlayer: number;
+  pointsToAward: number;
 }
 
 const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
@@ -42,6 +43,7 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
   canBookWithPoints,
   showPointsBonus,
   pricePerPlayer,
+  pointsToAward,
 }) => {
     const { toast } = useToast();
     const player = match.bookedPlayers?.[spotIndex];
@@ -64,19 +66,8 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
     const hasEnoughCredit = availableCredit >= pricePerPlayer;
     const hasEnoughPoints = (currentUser?.loyaltyPoints ?? 0) >= pointsCost;
 
-    const progressivePointsScheme: number[] = [5, 4, 3, 2];
-    
-    const daysInAdvance = differenceInDays(startOfDay(new Date(match.startTime)), startOfDay(new Date()));
-    const anticipationPoints = Math.max(0, daysInAdvance);
-
-    const existingPlayersCount = (match.bookedPlayers || []).length;
-    const thisSpotOrderIndex = existingPlayersCount + (player ? 0 : Array.from({ length: 4 }).filter((_, i) => i < spotIndex && !match.bookedPlayers?.[i]).length);
-    const basePoints = progressivePointsScheme[thisSpotOrderIndex] ?? 0;
-    const totalPointsToAward = basePoints + anticipationPoints;
-
     const isMatchBookableWithPoints = canBookWithPoints && isPlaceholderMatch;
-    const isPointsBonusVisible = showPointsBonus && !isMatchBookableWithPoints && totalPointsToAward > 0 && !player;
-    const showPlaceholderPointsBonus = isPlaceholderMatch && isPointsBonusVisible;
+    const isPointsBonusVisible = showPointsBonus && !isMatchBookableWithPoints && pointsToAward > 0 && !player && !isMatchFull;
 
 
     let actionHandler = () => {
@@ -222,13 +213,8 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
                             <div className="absolute -top-1.5 -right-1.5 bg-background text-foreground border border-border rounded-md px-1 py-0.5 text-[10px] font-bold shadow-md z-20">{playerLevelDisplay}</div>
                         )}
                         {isPointsBonusVisible && (
-                            <div className={cn("absolute -top-1 -right-1 flex h-auto items-center justify-center rounded-full bg-amber-400 px-1 py-0 text-white shadow-md text-[10px] font-bold")} title={`${totalPointsToAward} puntos de bonificación`}>
-                                +{totalPointsToAward.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                            </div>
-                        )}
-                         {showPlaceholderPointsBonus && (
-                             <div className="absolute -top-1 -right-1 flex h-auto items-center justify-center rounded-full bg-amber-400 px-1 py-0 text-white shadow-md text-[10px] font-bold" title={`${totalPointsToAward} puntos de bonificación`}>
-                                +{totalPointsToAward}
+                            <div className={cn("absolute -top-1 -right-1 flex h-auto items-center justify-center rounded-full bg-amber-400 px-1 py-0 text-white shadow-md text-[10px] font-bold")} title={`${pointsToAward} puntos de bonificación`}>
+                                +{pointsToAward.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                             </div>
                         )}
                     </div>

@@ -89,7 +89,7 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [joiningSpotIndex, setJoiningSpotIndex] = useState<number | null>(null);
+  const [dialogContent, setDialogContent] = useState<{ spotIndex: number; pointsToAward: number; }>({ spotIndex: 0, pointsToAward: 0 });
   const [currentMatch, setCurrentMatch] = useState<Match>(initialMatch);
   const [isConfirmPrivateDialogOpen, setIsConfirmPrivateDialogOpen] = useState(false);
   const [isRecurring, setIsRecurring] = useState(false);
@@ -158,8 +158,9 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
 
   const anticipationPoints = useMemo(() => {
       if (!currentMatch?.startTime) return 0;
-      const days = differenceInDays(startOfDay(new Date(currentMatch.startTime)), startOfDay(new Date()));
-      return Math.max(0, days);
+      const startTime = new Date(currentMatch.startTime);
+      if (isNaN(startTime.getTime())) return 0;
+      return Math.max(0, differenceInDays(startOfDay(startTime), startOfDay(new Date())));
   }, [currentMatch?.startTime]);
 
 
@@ -172,10 +173,11 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
 
   // *** NEW LOGIC: Check if this specific match slot is bookable with points ***
   const isBookableWithPointsBySchedule = useMemo(() => {
-    if (!club?.pointBookingSlots || isUserBooked) {
+    if (!club?.pointBookingSlots || !currentMatch.startTime || isUserBooked) {
         return false;
     }
     const matchStartTime = new Date(currentMatch.startTime);
+    if (isNaN(matchStartTime.getTime())) return false;
     const dayOfWeek = dayOfWeekArray[getDay(matchStartTime)];
     const pointBookingSlotsToday = club.pointBookingSlots?.[dayOfWeek as keyof typeof club.pointBookingSlots];
 
@@ -187,7 +189,7 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
         });
     }
     return false;
-  }, [club, currentMatch, isUserBooked]);
+  }, [club, currentMatch.startTime, isUserBooked]);
 
 
   const handleJoinMatch = (spotIndex: number, usePoints: boolean = false) => {
@@ -195,7 +197,7 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
       const result = await bookMatchFromMockData(currentUser.id, currentMatch.id, usePoints);
       setShowConfirmDialog(false);
       setIsBookWithPointsDialogOpen(false);
-      setJoiningSpotIndex(null);
+      setDialogContent({ spotIndex: 0, pointsToAward: 0 });
       setIsJoiningWithPoints(false);
 
       if ('error' in result) {
@@ -344,8 +346,14 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
     'border-l-green-500';
     
   const handleOpenConfirmDialog = (spotIdx: number) => {
+    const existingPlayersCount = (currentMatch.bookedPlayers || []).length;
+    const thisSpotOrderIndex = existingPlayersCount + (Array.from({ length: 4 }).filter((_, i) => i < spotIdx && !currentMatch.bookedPlayers?.[i]).length);
+    const progressivePointsScheme: number[] = [5, 4, 3, 2];
+    const basePoints = progressivePointsScheme[thisSpotOrderIndex] ?? 0;
+    const totalPointsToAward = basePoints + anticipationPoints;
+
+    setDialogContent({ spotIndex: spotIdx, pointsToAward: totalPointsToAward });
     setShowConfirmDialog(true);
-    setJoiningSpotIndex(spotIdx);
   };
 
   const occupancyPercentage = (currentMatch.bookedPlayers.length / 4) * 100;
@@ -354,13 +362,13 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
   
   const shadowEffect = clubInfo?.cardShadowEffect;
   const shadowStyle = shadowEffect?.enabled 
-    ? { boxShadow: `0 0 25px ${shadowEffect.color}${Math.round(shadowEffect.intensity * 255).toString(16).padStart(2, '0')}` } 
+    ? { boxShadow: `0 0 25px ${hexToRgba(shadowEffect.color, shadowEffect.intensity)}` } 
     : {};
   
   const privateMatchBonusPoints = 10 + anticipationPoints;
 
   const availableCreditForDialog = (currentUser.credit ?? 0) - (currentUser.blockedCredit ?? 0);
-  const durationMinutes = differenceInMinutes(new Date(currentMatch.endTime), new Date(currentMatch.startTime));
+  const durationMinutes = currentMatch.endTime && currentMatch.startTime ? differenceInMinutes(new Date(currentMatch.endTime), new Date(currentMatch.startTime)) : 90;
 
   const isLevelAssigned = matchLevelToDisplay !== 'abierto';
   const isCategoryAssigned = matchCategoryToDisplay !== 'abierta';
@@ -443,27 +451,36 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
 
         <CardContent className="pt-1 pb-2 px-2 flex-grow flex flex-col justify-between">
             <div className="grid grid-cols-4 gap-1 items-start">
-                {Array.from({ length: 4 }).map((_, index) => (
-                <MatchSpotDisplay
-                    key={index}
-                    spotIndex={index}
-                    match={currentMatch}
-                    currentUser={currentUser}
-                    onJoin={(spotIdx, usePoints) => {
-                    setIsJoiningWithPoints(!!usePoints);
-                    handleOpenConfirmDialog(spotIdx);
-                    }}
-                    onJoinPrivate={() => setIsJoinPrivateDialogOpen(true)}
-                    isPending={isPending && joiningSpotIndex === index}
-                    userHasOtherConfirmedActivityToday={userHasOtherConfirmedActivityToday}
-                    isUserLevelCompatible={isUserLevelCompatibleWithActivity(matchLevelToDisplay, currentUser.level, isPlaceholderMatch)}
-                    canJoinThisPrivateMatch={canJoinThisPrivateMatch}
-                    isOrganizer={isOrganizer}
-                    canBookWithPoints={isBookableWithPointsBySchedule}
-                    showPointsBonus={showPointsBonus}
-                    pricePerPlayer={pricePerPlayerEuro}
-                />
-                ))}
+                {Array.from({ length: 4 }).map((_, index) => {
+                    const progressivePointsScheme: number[] = [5, 4, 3, 2];
+                    const existingPlayersCount = (currentMatch.bookedPlayers || []).length;
+                    const thisSpotOrderIndex = existingPlayersCount + (Array.from({ length: 4 }).filter((_, i) => i < index && !currentMatch.bookedPlayers?.[i]).length);
+                    const basePoints = progressivePointsScheme[thisSpotOrderIndex] ?? 0;
+                    const totalPointsToAward = basePoints + anticipationPoints;
+
+                    return (
+                        <MatchSpotDisplay
+                            key={index}
+                            spotIndex={index}
+                            match={currentMatch}
+                            currentUser={currentUser}
+                            onJoin={(spotIdx, usePoints) => {
+                                setIsJoiningWithPoints(!!usePoints);
+                                handleOpenConfirmDialog(spotIdx);
+                            }}
+                            onJoinPrivate={() => setIsJoinPrivateDialogOpen(true)}
+                            isPending={isPending && dialogContent.spotIndex === index}
+                            userHasOtherConfirmedActivityToday={userHasOtherConfirmedActivityToday}
+                            isUserLevelCompatible={isUserLevelCompatibleWithActivity(matchLevelToDisplay, currentUser.level, isPlaceholderMatch)}
+                            canJoinThisPrivateMatch={canJoinThisPrivateMatch}
+                            isOrganizer={isOrganizer}
+                            canBookWithPoints={isBookableWithPointsBySchedule}
+                            showPointsBonus={showPointsBonus}
+                            pricePerPlayer={pricePerPlayerEuro}
+                            pointsToAward={totalPointsToAward}
+                        />
+                    );
+                })}
             </div>
              <div className="mt-2">
                  <CourtAvailabilityIndicator
@@ -478,10 +495,10 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
       </TooltipProvider>
 
       <AlertDialog
-        open={showConfirmDialog && joiningSpotIndex !== null}
-        onOpenChange={(open) => { if (!open) { setShowConfirmDialog(false); setJoiningSpotIndex(null); setIsJoiningWithPoints(false); }}}
+        open={showConfirmDialog && dialogContent.spotIndex !== null}
+        onOpenChange={(open) => { if (!open) { setShowConfirmDialog(false); setDialogContent({ spotIndex: 0, pointsToAward: 0 }); setIsJoiningWithPoints(false); }}}
       >
-        {joiningSpotIndex !== null && (
+        {dialogContent.spotIndex !== null && (
             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle className="text-2xl font-bold flex items-center justify-center">
@@ -497,6 +514,12 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
                                 : <> <Euro className="h-7 w-7 mr-1" /> {pricePerPlayerEuro.toFixed(2)} </>
                             }
                         </p>
+                        {dialogContent.pointsToAward > 0 && !isJoiningWithPoints && !(currentMatch.gratisSpotAvailable && currentMatch.bookedPlayers.length === 3) && (
+                            <div className="text-sm font-semibold text-amber-600 flex items-center justify-center">
+                                <Star className="h-4 w-4 mr-1.5 fill-amber-400" />
+                                ¡Ganarás {dialogContent.pointsToAward} puntos por esta reserva!
+                            </div>
+                        )}
                     </div>
                      <div className="flex items-center justify-center gap-2 p-2 bg-slate-100 rounded-md">
                         <PiggyBank className="h-6 w-6 text-slate-500" />
@@ -518,7 +541,7 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
                 <AlertDialogFooter className="grid grid-cols-2 gap-2 mt-4">
                     <AlertDialogCancel className="h-12 text-base" disabled={isPending}>Cancelar</AlertDialogCancel>
                     <AlertDialogAction
-                        onClick={() => handleJoinMatch(joiningSpotIndex, isJoiningWithPoints)}
+                        onClick={() => handleJoinMatch(dialogContent.spotIndex, isJoiningWithPoints)}
                         disabled={isPending}
                         className="h-12 text-base bg-green-600 text-white hover:bg-green-700" 
                     >
