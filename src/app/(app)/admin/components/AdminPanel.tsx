@@ -92,7 +92,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminClub }) => {
                 getMockStudents()
             ]);
 
-            setInstructors(fetchedInstructors.filter(inst => !inst.isBlocked && inst.clubId === currentAdminClub.id));
+            setInstructors(fetchedInstructors.filter(inst => !inst.isBlocked && inst.assignedClubId === currentAdminClub.id));
             setClubPadelCourts(fetchedCourts.filter(court => court.isActive));
             setPointTransactions(fetchedTransactions);
             setStudentPointBalances(allStudents.sort((a,b) => (b.loyaltyPoints || 0) - (a.loyaltyPoints || 0) ));
