@@ -102,78 +102,90 @@ export const recalculateAndSetBlockedBalances = async (userId: string) => {
     const user = state.getMockUserDatabase().find(u => u.id === userId);
     if (!user) return;
 
+    const pendingBookingsByDay: Record<string, { credit: number; points: number; bonusPoints: number }[]> = {};
+
+    const classBookings = state.getMockUserBookings().filter(b => b.userId === userId);
+    const matchBookings = state.getMockUserMatchBookings().filter(b => b.userId === userId);
+    const clubSettings = state.getMockClubs()[0]?.pointSettings;
+
+    // --- Gather all pending costs and bonuses per day ---
+    const processBooking = (booking: Booking | MatchBooking, activity: TimeSlot | Match | MatchDayEvent, type: 'class' | 'match' | 'event') => {
+        if (!('status' in activity) || (activity.status !== 'pre_registration' && activity.status !== 'forming')) {
+            // Also check for organizer bookings of private classes
+             if (!(type === 'class' && (booking as Booking).isOrganizerBooking && (activity as TimeSlot).status === 'confirmed_private')) {
+                 return;
+             }
+        }
+        
+        const activityDate = 'startTime' in activity ? activity.startTime : activity.eventDate;
+        const dateKey = format(startOfDay(new Date(activityDate)), 'yyyy-MM-dd');
+        if (!pendingBookingsByDay[dateKey]) {
+            pendingBookingsByDay[dateKey] = [];
+        }
+
+        let creditCost = 0;
+        let pointsCost = 0;
+        let bonusPoints = 0;
+
+        if (booking.bookedWithPoints) {
+            pointsCost = calculatePricePerPerson((activity as TimeSlot).totalPrice, 1);
+        } else {
+            if (type === 'class') {
+                const classBooking = booking as Booking;
+                // Don't block credit if you organized it (you paid upfront)
+                if (!classBooking.isOrganizerBooking) {
+                    creditCost = calculatePricePerPerson((activity as TimeSlot).totalPrice, classBooking.groupSize);
+                }
+                const pointsBaseValues: { [key in 1 | 2 | 3 | 4]: number[] } = { 1: [10], 2: [8, 7], 3: [5, 4, 3], 4: [3, 2, 1, 0] };
+                const basePoints = (pointsBaseValues[classBooking.groupSize] || [])[classBooking.spotIndex] ?? 0;
+                const daysInAdvance = differenceInDays(startOfDay(new Date(activityDate)), startOfDay(new Date()));
+                const anticipationPoints = Math.max(0, daysInAdvance);
+                bonusPoints = basePoints + anticipationPoints;
+            } else if (type === 'match') {
+                creditCost = calculatePricePerPerson((activity as Match).totalCourtFee, 4);
+                if ((activity as Match).bookedPlayers.length === 1 && (activity as Match).bookedPlayers[0].userId === userId) {
+                    bonusPoints += clubSettings?.firstToJoinMatch || 0;
+                }
+            } else if (type === 'event') {
+                creditCost = (activity as MatchDayEvent).price || 0;
+            }
+        }
+        
+        pendingBookingsByDay[dateKey].push({ credit: creditCost, points: pointsCost, bonusPoints });
+    };
+
+    classBookings.forEach(b => {
+        const slot = state.getMockTimeSlots().find(s => s.id === b.activityId);
+        if (slot) processBooking(b, slot, 'class');
+    });
+
+    matchBookings.forEach(b => {
+        const match = state.getMockMatches().find(m => m.id === b.activityId);
+        if (match) processBooking(b, match, 'match');
+    });
+
+    state.getMockMatchDayInscriptions().filter(i => i.userId === userId).forEach(i => {
+        const event = state.getMockMatchDayEvents().find(e => e.id === i.eventId);
+        if (event && !event.matchesGenerated) {
+            processBooking({} as Booking, event, 'event');
+        }
+    });
+
+    // --- Calculate final blocked amounts ---
     let totalBlockedCredit = 0;
     let totalBlockedPoints = 0;
     let totalPendingBonusPoints = 0;
 
-    const classBookings = state.getMockUserBookings().filter(b => b.userId === userId);
-    const matchBookings = state.getMockUserMatchBookings().filter(b => b.userId === userId);
-    const clubSettings = state.getMockClubs()[0]?.pointSettings; 
-
-    // --- Blocked credit and pending points from class bookings ---
-    classBookings.forEach(booking => {
-        const slot = state.getMockTimeSlots().find(s => s.id === booking.activityId);
+    Object.values(pendingBookingsByDay).forEach(dayBookings => {
+        const maxCreditForDay = Math.max(0, ...dayBookings.map(b => b.credit));
+        const maxPointsForDay = Math.max(0, ...dayBookings.map(b => b.points));
         
-        // Is a pre-inscription or a private class you organized
-        const isPendingActivity = slot && (slot.status === 'pre_registration' || (booking.isOrganizerBooking && slot.status === 'confirmed_private'));
+        totalBlockedCredit += maxCreditForDay;
+        totalBlockedPoints += maxPointsForDay;
         
-        // Is a class you just joined that got confirmed
-        const isNewlyConfirmed = slot && state.isSlotEffectivelyCompleted(slot).completed && !isPendingActivity;
-
-        if (isPendingActivity) {
-            if (booking.bookedWithPoints) {
-                totalBlockedPoints += calculatePricePerPerson(slot.totalPrice, 1);
-            } else {
-                if (!booking.isOrganizerBooking) { // Don't block credit if you organized it (you paid upfront)
-                    totalBlockedCredit += calculatePricePerPerson(slot.totalPrice, booking.groupSize);
-                }
-                const pointsBaseValues: { [key in 1 | 2 | 3 | 4]: number[] } = { 1: [10], 2: [8, 7], 3: [5, 4, 3], 4: [3, 2, 1, 0] };
-                const basePoints = (pointsBaseValues[booking.groupSize] || [])[booking.spotIndex] ?? 0;
-                const daysInAdvance = differenceInDays(startOfDay(new Date(slot.startTime)), startOfDay(new Date()));
-                const anticipationPoints = Math.max(0, daysInAdvance);
-                const potentialBonus = basePoints + anticipationPoints;
-                totalPendingBonusPoints += potentialBonus;
-            }
-        } else if (isNewlyConfirmed && !booking.bookedWithPoints) {
-            // Also calculate potential bonus if you were the one to confirm the class
-            const pointsBaseValues: { [key in 1 | 2 | 3 | 4]: number[] } = { 1: [10], 2: [8, 7], 3: [5, 4, 3], 4: [3, 2, 1, 0] };
-            const basePoints = (pointsBaseValues[booking.groupSize] || [])[booking.spotIndex] ?? 0;
-            const daysInAdvance = differenceInDays(startOfDay(new Date(slot.startTime)), startOfDay(new Date()));
-            const anticipationPoints = Math.max(0, daysInAdvance);
-            const potentialBonus = basePoints + anticipationPoints;
-            totalPendingBonusPoints += potentialBonus;
-        }
+        // Sum up all potential bonus points
+        totalPendingBonusPoints += dayBookings.reduce((sum, b) => sum + b.bonusPoints, 0);
     });
-
-
-    // Blocked credit and pending points from match bookings
-    matchBookings.forEach(booking => {
-        const match = state.getMockMatches().find(m => m.id === booking.activityId);
-        if (match && match.status === 'forming') {
-            if (booking.bookedWithPoints) {
-                totalBlockedPoints += calculatePricePerPerson(match.totalCourtFee, 4);
-            } else {
-                totalBlockedCredit += calculatePricePerPerson(match.totalCourtFee, 4);
-
-                // Calculate potential bonus points for matches
-                const firstToJoinBonus = clubSettings?.firstToJoinMatch || 0;
-                if (match.bookedPlayers.length === 1 && match.bookedPlayers[0].userId === userId) {
-                     totalPendingBonusPoints += firstToJoinBonus;
-                }
-            }
-        }
-    });
-        
-     // Blocked credit from Match-Day inscriptions
-    state.getMockMatchDayInscriptions()
-        .filter(i => i.userId === userId)
-        .forEach(inscription => {
-            const event = state.getMockMatchDayEvents().find(e => e.id === inscription.eventId);
-            if(event && !event.matchesGenerated) {
-                totalBlockedCredit += inscription.amountBlocked || 0;
-            }
-        });
-
 
     state.updateUserInUserDatabaseState(userId, { 
         blockedCredit: totalBlockedCredit, 
