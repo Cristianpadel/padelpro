@@ -607,7 +607,6 @@ export const fetchInstructors = async (): Promise<Instructor[]> => {
     const instructorsFromDB = state.getMockUserDatabase()
         .filter(u => u.id.startsWith('inst-'))
         .map(userDb => {
-            // All data should come from the single source of truth: UserDB.
             return {
                 id: userDb.id,
                 name: userDb.name,
