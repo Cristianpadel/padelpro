@@ -122,7 +122,7 @@ const InstructorList: React.FC<InstructorListProps> = ({ instructors, loading, e
   }
 
   if (instructors.length === 0) {
-     return <p className="text-muted-foreground italic text-center py-4">No hay instructores registrados.</p>;
+     return <p className="text-muted-foreground italic text-center py-4">No hay instructores registrados para este club.</p>;
   }
 
   return (
@@ -132,7 +132,7 @@ const InstructorList: React.FC<InstructorListProps> = ({ instructors, loading, e
           <div key={instructor.id} className={cn("flex items-center space-x-3 p-2 rounded-md bg-secondary/30 hover:bg-secondary/50 transition-colors", instructor.isBlocked && "opacity-60 bg-destructive/10 hover:bg-destructive/20")}>
             <Avatar className="h-9 w-9">
               <AvatarImage
-                 src={`https://picsum.photos/seed/${instructor.id}/36/36`}
+                 src={instructor.profilePictureUrl || `https://picsum.photos/seed/${instructor.id}/36/36`}
                  alt={`Foto de ${instructor.name}`}
                  data-ai-hint="instructor profile photo small"
                  width={36} height={36}

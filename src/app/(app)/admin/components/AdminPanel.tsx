@@ -92,7 +92,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminClub }) => {
                 getMockStudents()
             ]);
 
-            setInstructors(fetchedInstructors.filter(inst => !inst.isBlocked && inst.assignedClubId === currentAdminClub.id));
+            setInstructors(fetchedInstructors.filter(inst => !inst.isBlocked));
             setClubPadelCourts(fetchedCourts.filter(court => court.isActive));
             setPointTransactions(fetchedTransactions);
             setStudentPointBalances(allStudents.sort((a,b) => (b.loyaltyPoints || 0) - (a.loyaltyPoints || 0) ));
@@ -169,13 +169,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminClub }) => {
         { value: "instructors", label: "Instructores", icon: UserPlus, componentFactory: (props) => (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-1"><Card><CardHeader><CardTitle className="flex items-center"><UserPlus className="mr-2 h-5 w-5 text-primary" /> Añadir Instructor</CardTitle></CardHeader><CardContent><AddInstructorForm onInstructorAdded={props.onDataChanged} /></CardContent></Card></div>
-                <div className="lg:col-span-2"><Card><CardHeader><CardTitle className="flex items-center"><List className="mr-2 h-5 w-5 text-primary" /> Instructores Registrados ({props.club.name})</CardTitle></CardHeader><CardContent><InstructorList instructors={props.instructors} loading={props.loading} error={null} onInstructorUpdated={props.onDataChanged} onEditInstructor={handleEditInstructor} /></CardContent></Card></div>
+                <div className="lg:col-span-2"><Card><CardHeader><CardTitle className="flex items-center"><List className="mr-2 h-5 w-5 text-primary" /> Instructores Registrados ({props.club.name})</CardTitle></CardHeader><CardContent><InstructorList instructors={props.instructors.filter(i => i.assignedClubId === props.club.id)} loading={props.loading} error={null} onInstructorUpdated={props.onDataChanged} onEditInstructor={handleEditInstructor} /></CardContent></Card></div>
             </div>
         )},
         { value: "managePadelCourts", label: "Pistas", icon: HardHat, componentFactory: (props) => <ManageCourtsPanel clubId={props.club.id} /> },
         { value: "courtRates", label: "Tarifas de Pista", icon: Tag, componentFactory: (props) => <ManageCourtRatesPanel club={props.club} onRatesUpdated={props.onClubSettingsUpdated} />, contentDescription: "Define los precios de las pistas por franjas horarias y días de la semana." },
         { value: "createClass", label: "Crear Clase", icon: CalendarPlusIcon, contentDescription: `Configura y añade una nueva clase para ${currentAdminClub.name}.`, componentFactory: (props) => (
-            props.loading ? <Skeleton className="h-[400px] w-full" /> : <AddClassFormForAdmin club={props.club} availableInstructors={props.instructors} clubPadelCourts={props.clubPadelCourts} onClassAdded={props.onActivityAdded} />
+            props.loading ? <Skeleton className="h-[400px] w-full" /> : <AddClassFormForAdmin club={props.club} availableInstructors={props.instructors.filter(i => i.assignedClubId === props.club.id)} clubPadelCourts={props.clubPadelCourts} onClassAdded={props.onActivityAdded} />
         )},
         { value: "createMatch", label: "Crear Partida", icon: PlayCircle, contentDescription: `Configura y abre una nueva partida en tu club.`, componentFactory: (props) => (
             props.loading ? <Skeleton className="h-[400px] w-full" /> : <OpenMatchFormForAdmin club={props.club} clubPadelCourts={props.clubPadelCourts} onMatchOpened={props.onActivityAdded} />
