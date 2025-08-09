@@ -161,15 +161,15 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
             iconToShow = <AlertTriangle className="h-5 w-5 text-destructive/70" />;
             spotTooltipText = `Nivel incompatible (${currentUser?.level || 'N/A'}).`;
             isDisabled = true;
-        } else if (hasEnoughCredit) {
+        } else if (!hasEnoughCredit) {
+            iconToShow = <CreditCard className="h-5 w-5 text-destructive/70" />;
+            spotTooltipText = `Saldo disponible insuficiente (${availableCredit.toFixed(2)}€ / ${pricePerPlayer.toFixed(2)}€).`;
+            isDisabled = true;
+        } else { // This is the final "can join" case
             iconToShow = <Plus className="h-5 w-5 text-green-600 stroke-[3]" />;
             spotTooltipText = isPlaceholderMatch ? `Iniciar Partida (Coste: ${pricePerPlayer.toFixed(2)}€)` : `Unirse (Coste: ${pricePerPlayer.toFixed(2)}€)`;
             isDisabled = false;
             actionHandler = () => onJoin(spotIndex, false);
-        } else {
-            iconToShow = <CreditCard className="h-5 w-5 text-destructive/70" />;
-            spotTooltipText = `Saldo disponible insuficiente (${availableCredit.toFixed(2)}€ / ${pricePerPlayer.toFixed(2)}€).`;
-            isDisabled = true;
         }
     }
     
