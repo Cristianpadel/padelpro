@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -185,10 +186,10 @@ export function BottomNavigationBar() {
         },
         {
             key: 'agenda',
-            href: '/schedule',
+            href: '/dashboard',
             icon: ClipboardList,
             label: 'Agenda',
-            isActive: pathname === '/schedule',
+            isActive: pathname === '/dashboard' || pathname === '/schedule',
             hidden: !currentUser,
             badgeCount: confirmedBookingsCount,
         },
@@ -227,10 +228,10 @@ export function BottomNavigationBar() {
         },
         {
             key: 'tienda',
-            href: '/shop',
+            href: '/store',
             icon: ShoppingBag,
             label: 'Tienda',
-            isActive: pathname === '/shop',
+            isActive: pathname === '/store',
             badgeCount: reservedProductsCount,
             hidden: !currentUser,
         },

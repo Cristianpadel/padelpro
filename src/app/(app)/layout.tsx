@@ -60,20 +60,26 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
     )
   }
+  
+  const noSidebarRoutes = ['/admin', '/superadmin', '/instructor'];
+  const shouldShowSidebar = !noSidebarRoutes.some(route => pathname.startsWith(route));
+
 
   return (
     <div className="flex min-h-screen flex-col">
       <div className='flex flex-1'>
-        <div className="hidden md:block">
-          {!isLoading && (
-              <DesktopSidebar
-                  currentUser={currentUser}
-                  clubInfo={clubInfo}
-                  onProfessionalAccessClick={() => setIsProfessionalAccessOpen(true)}
-                  onLogoutClick={handleLogoutClick}
-              />
-          )}
-        </div>
+        {shouldShowSidebar && (
+            <div className="hidden md:block">
+            {!isLoading && (
+                <DesktopSidebar
+                    currentUser={currentUser}
+                    clubInfo={clubInfo}
+                    onProfessionalAccessClick={() => setIsProfessionalAccessOpen(true)}
+                    onLogoutClick={handleLogoutClick}
+                />
+            )}
+            </div>
+        )}
         <main className="flex-1">
           {children}
         </main>

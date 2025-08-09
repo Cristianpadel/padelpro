@@ -180,6 +180,16 @@ export default function ActivitiesPage() {
                             </Button>
                         </Link>
                      </div>
+                      <div className="min-h-[2rem]">
+                        <ActiveFiltersDisplay
+                            activeView={activeView}
+                            timeSlotFilter={timeSlotFilter}
+                            selectedLevel={selectedLevel}
+                            viewPreference={viewPreference}
+                            filterByFavorites={filterByFavorites}
+                            onClearFilters={clearAllFilters}
+                        />
+                     </div>
                 </header>
                 <main className="flex-1 overflow-y-auto bg-background px-4 md:px-6 pb-6">
                     {isLoading ? (

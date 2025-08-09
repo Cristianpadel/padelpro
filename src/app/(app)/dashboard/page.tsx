@@ -1,4 +1,5 @@
 
+
 // src/app/(app)/dashboard/page.tsx
 "use client";
 
@@ -155,7 +156,6 @@ function DashboardPageContent() {
 
                 <PersonalMatches 
                     currentUser={user} 
-                    newMatchBooking={null} 
                     onBookingActionSuccess={handleDataChange} 
                 />
                 <PersonalSchedule 
@@ -202,4 +202,3 @@ export default function DashboardPage() {
         </Suspense>
     );
 }
-
