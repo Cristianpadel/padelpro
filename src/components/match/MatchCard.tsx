@@ -13,7 +13,7 @@ import { Clock, Users, Plus, Loader2, CheckCircle, BarChart, Hash, CalendarDays,
 import { format, isSameDay, parse, getDay, differenceInDays, startOfDay, addMinutes, differenceInMinutes } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
-import { cn, getInitials, getPlaceholderUserName, calculatePricePerPerson } from '@/lib/utils';
+import { cn, getInitials, getPlaceholderUserName, calculatePricePerPerson, hexToRgba } from '@/lib/utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -362,7 +362,7 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
   
   const shadowEffect = clubInfo?.cardShadowEffect;
   const shadowStyle = shadowEffect?.enabled 
-    ? { boxShadow: `0 0 25px ${hexToRgba(shadowEffect.color, shadowEffect.intensity)}` } 
+    ? { boxShadow: `0 0 25px ${hexToRgba(shadowEffect.color ?? '#a855f7', shadowEffect.intensity)}` } 
     : {};
   
   const privateMatchBonusPoints = 10 + anticipationPoints;

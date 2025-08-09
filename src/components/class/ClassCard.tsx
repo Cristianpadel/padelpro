@@ -21,7 +21,7 @@ import {
     confirmClassAsPrivate
 } from '@/lib/mockData';
 import { Lightbulb, ShieldQuestion, Hash, Users2, Venus, Mars, Euro, Info } from 'lucide-react';
-import { calculatePricePerPerson } from '@/lib/utils';
+import { calculatePricePerPerson, hexToRgba } from '@/lib/utils';
 import { displayClassCategory } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -32,20 +32,6 @@ interface ClassCardProps {
     shareCode?: string;
     showPointsBonus: boolean;
 }
-
-const hexToRgba = (hex: string, alpha: number) => {
-    let c: any;
-    if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) {
-        c = hex.substring(1).split('');
-        if (c.length == 3) {
-            c = [c[0], c[0], c[1], c[1], c[2], c[2]];
-        }
-        c = '0x' + c.join('');
-        return `rgba(${[(c >> 16) & 255, (c >> 8) & 255, c & 255].join(',')},${alpha})`;
-    }
-    return 'rgba(0,0,0,0)';
-};
-
 
 const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot, currentUser, onBookingSuccess, shareCode, showPointsBonus }) => {
     const { toast } = useToast();
@@ -64,7 +50,7 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
 
     // State for dialogs
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-    const [dialogContent, setDialogContent] = useState({ spotIndex: 0, groupSize: 4 as (1|2|3|4), pointsToAward: 0 });
+    const [dialogContent, setDialogContent] = useState<{ spotIndex: number, groupSize: 1 | 2 | 3 | 4, pointsToAward: number }>({ spotIndex: 0, groupSize: 4 as (1|2|3|4), pointsToAward: 0 });
     const [infoDialog, setInfoDialog] = useState<{ open: boolean, title: string, description: string, icon: React.ElementType }>({ open: false, title: '', description: '', icon: Lightbulb });
     const [isConfirmPrivateDialogOpen, setIsConfirmPrivateDialogOpen] = useState(false);
     const [isProcessingPrivateAction, setIsProcessingPrivateAction] = useState(false);
