@@ -142,10 +142,14 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
     }, [currentUser, currentSlot.startTime, currentSlot.id]);
 
     const anticipationBonus = useMemo(() => {
+      try {
         if (!currentSlot.startTime) return 0;
         const startTime = new Date(currentSlot.startTime);
         if (isNaN(startTime.getTime())) return 0;
         return Math.max(0, differenceInDays(startOfDay(startTime), startOfDay(new Date())));
+      } catch (e) {
+        return 0;
+      }
     }, [currentSlot.startTime]);
 
 

@@ -54,25 +54,30 @@ export const ClassCardContent: React.FC<ClassCardContentProps> = ({
                     isUserBookedInThisOption && "bg-blue-50 border-blue-200"
                 )}>
                     <div className="flex items-center gap-1 flex-grow-0 shrink-0 basis-auto justify-start">
-                    {Array.from({ length: optionSize }).map((_, index) =>
-                        <BookingSpotDisplay
-                            key={`${optionSize}-${index}`}
-                            optionSize={optionSize}
-                            spotIndex={index}
-                            bookingsByGroupSize={bookingsByGroupSize}
-                            currentUser={currentUser!}
-                            currentSlot={currentSlot}
-                            isPendingMap={isPendingMap}
-                            totalPrice={totalPrice}
-                            isSlotOverallConfirmed={isSlotEffectivelyFull}
-                            confirmedGroupSize={confirmedGroupSize}
-                            userHasConfirmedActivityToday={userHasConfirmedActivityToday}
-                            isUserBookedInThisOption={isUserBookedInThisOption}
-                            onOpenConfirmationDialog={onOpenConfirmationDialog}
-                            showPointsBonus={showPointsBonus}
-                            pointsToAward={ (pointsBaseValues[optionSize][index] ?? 0) + anticipationBonus }
-                        />
-                    )}
+                    {Array.from({ length: optionSize }).map((_, index) => {
+                        const basePoints = (pointsBaseValues[optionSize] || [])[index] ?? 0;
+                        const totalPointsToAward = basePoints + anticipationBonus;
+
+                        return (
+                            <BookingSpotDisplay
+                                key={`${optionSize}-${index}`}
+                                optionSize={optionSize}
+                                spotIndex={index}
+                                bookingsByGroupSize={bookingsByGroupSize}
+                                currentUser={currentUser!}
+                                currentSlot={currentSlot}
+                                isPendingMap={isPendingMap}
+                                totalPrice={totalPrice}
+                                isSlotOverallConfirmed={isSlotEffectivelyFull}
+                                confirmedGroupSize={confirmedGroupSize}
+                                userHasConfirmedActivityToday={userHasConfirmedActivityToday}
+                                isUserBookedInThisOption={isUserBookedInThisOption}
+                                onOpenConfirmationDialog={onOpenConfirmationDialog}
+                                showPointsBonus={showPointsBonus}
+                                pointsToAward={totalPointsToAward}
+                            />
+                        )
+                    })}
                     </div>
                     <Button variant="outline" className="text-xs flex items-center h-8 px-3 rounded-full shadow-sm bg-slate-100 hover:bg-slate-200 text-slate-700" onClick={() => handlePriceInfoClick(optionSize)}>
                     <Euro className="mr-1 h-3.5 w-3.5"/>
