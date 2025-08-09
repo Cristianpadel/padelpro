@@ -39,14 +39,14 @@ export const ClassCardContent: React.FC<ClassCardContentProps> = ({
   anticipationBonus,
 }) => {
     
+  const pointsBaseValues: { [key in 1 | 2 | 3 | 4]: number[] } = { 1: [10], 2: [8, 7], 3: [5, 4, 3], 4: [3, 2, 1, 0] };
+
   return (
     <div className="flex-grow pt-1 pb-2 px-3 space-y-1 flex flex-col">
         <div className="flex-grow space-y-1">
             {([1, 2, 3, 4] as const).map(optionSize => {
                 const isUserBookedInThisOption = (bookingsByGroupSize[optionSize] || []).some(p => p.userId === currentUser.id);
                 const confirmedGroupSize = isSlotEffectivelyFull ? (isSlotEffectivelyCompleted(currentSlot).size) : null;
-
-                const pointsBaseValues: { [key in 1 | 2 | 3 | 4]: number[] } = { 1: [10], 2: [8, 7], 3: [5, 4, 3], 4: [3, 2, 1, 0] };
 
                 return (
                 <div key={optionSize} className={cn(
