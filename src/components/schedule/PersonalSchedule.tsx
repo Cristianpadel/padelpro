@@ -377,7 +377,7 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
 
   return (
     <div className="space-y-6">
-       <h3 className="text-lg font-semibold mb-3 text-blue-600 flex items-center"><Activity className="mr-2 h-5 w-5" /> Mis Clases</h3>
+      <h3 className="text-lg font-semibold text-blue-600 flex items-center"><Activity className="mr-2 h-5 w-5" /> Mis Clases</h3>
       {upcomingBookings.length > 0 && (
         <div>
           <h4 className="text-base font-semibold mb-3 text-foreground flex items-center"><Clock className="mr-2 h-4 w-4" /> Próximas</h4>
