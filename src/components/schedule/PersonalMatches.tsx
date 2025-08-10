@@ -8,7 +8,7 @@ import { List, Clock, Users, CalendarCheck, CalendarX, Loader2, Ban, Hash, Troph
 import { format, differenceInHours } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
-import { fetchUserMatchBookings, cancelMatchBooking, getMockClubs, makeMatchPublic, cancelPrivateMatchAndReofferWithPoints, getMockMatches, renewRecurringMatch, getCourtAvailabilityForInterval } from '@/lib/mockData';
+import { fetchUserMatchBookings, cancelMatchBooking, getMockClubs, makeMatchPublic, cancelPrivateMatchAndReofferWithPoints, getMockMatches, renewRecurringMatch, getCourtAvailabilityForInterval, fillMatchAndMakePrivate } from '@/lib/mockData';
 import * as state from '@/lib/mockDataSources/state';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -51,9 +51,10 @@ interface CourtAvailabilityState {
 }
 
 const InfoButton = ({ icon: Icon, text, onClick, className }: { icon: React.ElementType, text: string, onClick: () => void, className?: string }) => (
-    <Button variant="outline" className={cn("flex-1 h-8 rounded-full shadow-inner bg-slate-50 border-slate-200 capitalize text-xs", className)} onClick={onClick}>
-        <span className="font-bold text-slate-500 mr-1.5">+</span> {text}
-    </Button>
+    <button className={cn("flex-1 flex items-center justify-center text-xs h-8 rounded-full shadow-inner bg-slate-50 border border-slate-200 capitalize hover:bg-slate-100 transition-colors", className)} onClick={onClick}>
+        <Icon className="mr-1.5 h-3 w-3 text-slate-500" /> 
+        <span className="font-medium text-slate-700">{text}</span>
+    </button>
 );
 
 const DialogInfo: React.FC<{
@@ -93,7 +94,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isProcessingAction, startProcessingTransition] = useTransition();
-  const [currentActionInfo, setCurrentActionInfo] = useState<{ type: 'cancel' | 'cede' | 'cancelAndReoffer' | 'renew', bookingId: string, matchId?: string } | null>(null);
+  const [currentActionInfo, setCurrentActionInfo] = useState<{ type: 'cancel' | 'cede' | 'cancelAndReoffer' | 'renew' | 'makePrivate', bookingId: string, matchId?: string } | null>(null);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -218,6 +219,22 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
         setCurrentActionInfo(null);
     });
   };
+  
+  const handleMakePrivate = (booking: MatchBooking) => {
+    if (!booking.matchDetails) return;
+    setCurrentActionInfo({ type: 'makePrivate', bookingId: booking.id });
+    startProcessingTransition(async () => {
+        const result = await fillMatchAndMakePrivate(currentUser.id, booking.activityId);
+        if ('error' in result) {
+            toast({ title: "Error al Hacer Privada", description: result.error, variant: 'destructive' });
+        } else {
+            toast({ title: "¡Partida Privada!", description: `Has completado la partida. Coste de plazas restantes: ${result.cost.toFixed(2)}€.`, className: "bg-purple-600 text-white" });
+            onBookingActionSuccess();
+        }
+        setCurrentActionInfo(null);
+    });
+  };
+
 
   const handleRenew = (completedMatchId: string) => {
     setCurrentActionInfo({ type: 'renew', bookingId: '', matchId: completedMatchId });
@@ -399,11 +416,11 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground"><Share2 className="h-4 w-4"/></Button>
                   </div>
              </div>
-
-              <div className="flex justify-around items-center gap-1.5 my-2">
-                 <InfoButton icon={CategoryIcon} text={displayClassCategory(category, true)} onClick={() => handleInfoClick('category', booking.matchDetails!)} />
-                 <InfoButton icon={Hash} text={courtNumber ? `# ${courtNumber}` : '# Pista'} onClick={() => handleInfoClick('court', booking.matchDetails!)} />
-                 <InfoButton icon={BarChartHorizontal} text={level || "Nivel"} onClick={() => handleInfoClick('level', booking.matchDetails!)} />
+             
+             <div className="flex justify-around items-center gap-1.5 my-1">
+                <InfoButton icon={CategoryIcon} text={displayClassCategory(category, true)} onClick={() => handleInfoClick('category', booking.matchDetails!)} />
+                <InfoButton icon={Hash} text={courtNumber ? `# ${courtNumber}` : '# Pista'} onClick={() => handleInfoClick('court', booking.matchDetails!)} />
+                <InfoButton icon={BarChartHorizontal} text={level || "Nivel"} onClick={() => handleInfoClick('level', booking.matchDetails!)} />
              </div>
            
             <div className="grid grid-cols-4 gap-2 items-start justify-items-center mt-1">
@@ -414,30 +431,34 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
 
                     return (
                         <div key={idx} className="flex flex-col items-center group/avatar-wrapper space-y-0.5 relative text-center">
-                             <TooltipProvider key={idx} delayDuration={150}>
+                            <TooltipProvider key={idx} delayDuration={150}>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <div className={cn(
-                                            "relative flex items-center justify-center h-12 w-12 rounded-full border-[3px] transition-all shadow-inner",
-                                            player ? "border-green-500 bg-green-100" : "border-dashed border-green-400 bg-green-50/50"
-                                        )}>
-                                            {player && fullPlayer ? (
-                                                <Avatar className="h-full w-full">
-                                                    <AvatarImage src={fullPlayer.profilePictureUrl} data-ai-hint="player avatar small" />
-                                                    <AvatarFallback className="text-sm bg-muted text-muted-foreground">{getInitials(fullPlayer.name || 'P')}</AvatarFallback>
-                                                </Avatar>
-                                            ) : (
-                                                <Plus className="h-5 w-5 text-green-600 opacity-60" />
-                                            )}
+                                        <div className="flex flex-col items-center space-y-1">
+                                            <Avatar className={cn(
+                                                "h-12 w-12 border-[3px] transition-all shadow-inner",
+                                                player ? "border-green-500 bg-green-100" : "border-dashed border-green-400 bg-green-50/50"
+                                            )}>
+                                                {player && fullPlayer ? (
+                                                    <>
+                                                        <AvatarImage src={fullPlayer.profilePictureUrl} data-ai-hint="player avatar small" />
+                                                        <AvatarFallback className="text-sm bg-muted text-muted-foreground">{getInitials(fullPlayer.name || 'P')}</AvatarFallback>
+                                                    </>
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center">
+                                                        <Plus className="h-5 w-5 text-green-600 opacity-60" />
+                                                    </div>
+                                                )}
+                                            </Avatar>
+                                            <span className={cn(
+                                                "text-[11px] font-medium truncate w-auto max-w-[60px]",
+                                                player ? "text-foreground" : "text-muted-foreground",
+                                            )}>{spotLabel}</span>
                                         </div>
                                     </TooltipTrigger>
                                     <TooltipContent side="bottom"><p>{player ? (player.name || 'Tú') : 'Plaza Libre'}</p></TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
-                            <span className={cn(
-                                "text-[11px] font-medium truncate w-auto max-w-[60px]",
-                                player ? "text-foreground" : "text-muted-foreground",
-                            )}>{spotLabel}</span>
                         </div>
                     );
                 })}
@@ -475,12 +496,26 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                       </>
                   )}
                  {isUpcomingItem && !isOrganizerOfPrivateMatch && (
-                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto justify-center">
+                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full justify-center">
                          <AlertDialog>
-                             <AlertDialogTrigger asChild><Button variant={buttonVariant} size="sm" className={cn("w-full sm:w-auto text-xs shadow-md border-red-500", buttonVariant === "destructive" && "bg-card text-destructive border-destructive hover:bg-destructive/10 hover:text-destructive", buttonVariant === "outline" && cancellationButtonText.includes("Bonificada") && "bg-green-500 text-white border-green-600 hover:bg-green-600", "disabled:opacity-50 disabled:cursor-not-allowed")} disabled={isProcessingAction && currentActionInfo?.bookingId === booking.id}>{isProcessingAction && currentActionInfo?.bookingId === booking.id ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Ban className="mr-1.5 h-3.5 w-3.5" />}{cancellationButtonText}</Button></AlertDialogTrigger>
+                             <AlertDialogTrigger asChild><Button variant={buttonVariant} size="sm" className={cn("w-full sm:w-auto text-xs shadow-md border", buttonVariant === "destructive" && "bg-card text-destructive border-destructive hover:bg-destructive/10 hover:text-destructive", buttonVariant === "outline" && cancellationButtonText.includes("Bonificada") && "bg-green-500 text-white border-green-600 hover:bg-green-600", "disabled:opacity-50 disabled:cursor-not-allowed")} disabled={isProcessingAction && currentActionInfo?.bookingId === booking.id}>{isProcessingAction && currentActionInfo?.bookingId === booking.id ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Ban className="mr-1.5 h-3.5 w-3.5" />}{cancellationButtonText}</Button></AlertDialogTrigger>
                              <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>¿Confirmar Cancelación?</AlertDialogTitle><AlertDialogDescription>{cancellationDialogText}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={isProcessingAction && currentActionInfo?.bookingId === booking.id}>Cerrar</AlertDialogCancel><AlertDialogAction onClick={() => handleCancellationAction(booking)} disabled={isProcessingAction && currentActionInfo?.bookingId === booking.id} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{isProcessingAction && currentActionInfo?.bookingId === booking.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Sí, Cancelar"}</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
                          </AlertDialog>
                          {isMatchFull && isUpcomingItem && (<Button variant="outline" size="sm" className="w-full sm:w-auto text-xs bg-blue-500 text-white border-blue-600 hover:bg-blue-600" onClick={() => handleOpenChatDialog(booking.matchDetails)}><MessageSquare className="mr-1.5 h-3.5 w-3.5" />Chat</Button>)}
+                          {isUpcomingItem && !isMatchFull && (
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button size="sm" className="w-full sm:w-auto text-xs bg-purple-600 text-white border-purple-700 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed" disabled={isProcessingAction}>
+                                        {isProcessingAction && currentActionInfo?.bookingId === booking.id && currentActionInfo.type === 'makePrivate' ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Lock className="mr-1.5 h-3.5 w-3.5" />}
+                                        Hacer Privada
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader><AlertDialogTitle>Hacer Partida Privada</AlertDialogTitle><AlertDialogDescription>Pagarás las plazas restantes para completar la partida y asegurarla. Se te cobrará el coste correspondiente de tu saldo. ¿Continuar?</AlertDialogDescription></AlertDialogHeader>
+                                    <AlertDialogFooter><AlertDialogCancel disabled={isProcessingAction}>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => handleMakePrivate(booking)} disabled={isProcessingAction} className="bg-purple-600 text-white hover:bg-purple-700">{isProcessingAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : "Sí, Hacer Privada"}</AlertDialogAction></AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                          )}
                      </div>
                  )}
                   {!isUpcomingItem && provisionalMatch && !isRenewalExpired && (

@@ -811,3 +811,50 @@ export const fetchUserMatchBookings = async (userId: string): Promise<MatchBooki
     };
   });
 };
+
+export const fillMatchAndMakePrivate = async (userId: string, matchId: string): Promise<{ updatedMatch: Match; cost: number } | { error: string }> => {
+  await new Promise(resolve => setTimeout(resolve, config.MINIMAL_DELAY));
+
+  const user = state.getMockUserDatabase().find(u => u.id === userId);
+  if (!user) return { error: "Usuario no encontrado." };
+
+  const matchIndex = state.getMockMatches().findIndex(m => m.id === matchId);
+  if (matchIndex === -1) return { error: "Partida no encontrada." };
+
+  let match = { ...state.getMockMatches()[matchIndex] };
+  const club = state.getMockClubs().find(c => c.id === match.clubId);
+  if (!club) return { error: "Club no encontrado." };
+
+  if (match.status !== 'forming') {
+    return { error: "Solo se pueden hacer privadas las partidas en formación." };
+  }
+
+  const playersInMatch = match.bookedPlayers || [];
+  if (!playersInMatch.some(p => p.userId === userId)) {
+    return { error: "Debes estar inscrito en la partida para hacerla privada." };
+  }
+  
+  const emptySpots = 4 - playersInMatch.length;
+  if (emptySpots <= 0) {
+    return { error: "La partida ya está llena." };
+  }
+  
+  const pricePerPlayer = calculatePricePerPerson(calculateActivityPrice(club, new Date(match.startTime)), 4);
+  const totalCost = emptySpots * pricePerPlayer;
+
+  if ((user.credit ?? 0) < totalCost) {
+    return { error: `Saldo insuficiente. Necesitas ${totalCost.toFixed(2)}€.` };
+  }
+
+  // Deduct credit for the remaining spots
+  deductCredit(userId, totalCost, match, 'Partida');
+
+  // Update match state
+  match.status = 'confirmed_private';
+  match.organizerId = userId; // The user who pays becomes the organizer
+  match.privateShareCode = `privmatch-${matchId.slice(-6)}-${Date.now().toString().slice(-6)}`;
+  
+  state.updateMatchInState(matchId, match);
+
+  return { updatedMatch: match, cost: totalCost };
+};
