@@ -82,6 +82,19 @@ export function useActivityFilters(
     }
     router.replace(`${pathname}?${newSearchParams.toString()}`, { scroll: false });
   }, [searchParams, router, pathname]);
+  
+  const setUrlFilters = useCallback((filters: Record<string, string | boolean | null>) => {
+    const newSearchParams = new URLSearchParams(searchParams.toString());
+    for(const key in filters) {
+        const value = filters[key];
+        if (value && value !== 'all' && value !== false && value !== 'normal') {
+            newSearchParams.set(key, String(value));
+        } else {
+            newSearchParams.delete(key);
+        }
+    }
+    router.replace(`${pathname}?${newSearchParams.toString()}`, { scroll: false });
+  },[searchParams, router, pathname]);
 
   const clearAllFilters = useCallback(() => {
     const newSearchParams = new URLSearchParams();
@@ -123,10 +136,12 @@ export function useActivityFilters(
         router.push(`/match-day/${eventId}`);
         return;
     }
-    if (type) {
-        updateUrlFilter('view', type);
-    }
-    updateUrlFilter('viewPref', pref);
+    
+    // Use the new batch update function
+    setUrlFilters({
+        view: type || activeView,
+        viewPref: pref,
+    });
   };
 
 
