@@ -137,11 +137,9 @@ export default function ActivitiesPage() {
     }, [currentUser, refreshKey]);
 
     const onViewPrefChange = (date: Date, pref: 'myInscriptions' | 'myConfirmed', type: 'class' | 'match') => {
-        if (type) {
-            updateUrlFilter('view', type);
-        }
-        handleDateChange(date);
-        handleViewPrefChange(pref, type);
+        handleDateChange(date); // Set the date first
+        // Then handle the preference change, which now reads the latest date state
+        handleViewPrefChange(pref, type); 
     };
     
       const handleConfirmLogout = () => {
@@ -255,7 +253,7 @@ export default function ActivitiesPage() {
                     showPointsBonus={showPointsBonus}
                     onTimeFilterChange={handleTimeFilterChange}
                     onLevelChange={handleLevelChange}
-                    onViewPreferenceChange={handleViewPrefChange}
+                    onViewPreferenceChange={(pref) => handleViewPrefChange(pref, activeView)}
                     onFavoritesClick={() => updateUrlFilter('favorites', !filterByFavorites)}
                     onTogglePointsBonus={handleTogglePointsBonus}
                     onClearFilters={clearAllFilters}

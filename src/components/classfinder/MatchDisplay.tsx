@@ -187,7 +187,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                 }
             }
             
-            if (viewPreference === 'normal' && !filterAlsoConfirmedMatches) {
+             if (viewPreference === 'normal' && !filterAlsoConfirmedMatches) {
                  workingMatches = workingMatches.filter(match => {
                     if ('isEventCard' in match) return true; // Always show events
                     const regularMatch = match as Match;
