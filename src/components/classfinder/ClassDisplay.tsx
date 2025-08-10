@@ -203,7 +203,7 @@ const ClassDisplay: React.FC<ClassDisplayProps> = ({
     
     useEffect(() => {
         applyClassFilters();
-    }, [applyClassFilters, refreshKey]); // Depend on refreshKey
+    }, [applyClassFilters, refreshKey, selectedDate]); // Depend on selectedDate
 
      // Effect to reset pagination when filters change
     useEffect(() => {

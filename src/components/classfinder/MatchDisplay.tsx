@@ -234,7 +234,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
   
   useEffect(() => {
     applyMatchFilters();
-  }, [applyMatchFilters, refreshKey, selectedDate, timeSlotFilter, selectedLevel, viewPreference, sortBy]);
+  }, [applyMatchFilters, refreshKey, selectedDate]);
 
   useEffect(() => {
     setDisplayedMatches(filteredMatches.slice(0, ITEMS_PER_PAGE * currentPage));
