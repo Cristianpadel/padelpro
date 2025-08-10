@@ -1,20 +1,22 @@
 // src/components/match-day/MatchDayPlayerGrid.tsx
 "use client";
 
-import React, { useState } from 'react';
-import type { MatchDayEvent, MatchDayInscription, User } from '@/types';
+import React, { useState, useEffect } from 'react';
+import type { MatchDayEvent, MatchDayInscription, User, PadelCourt } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getInitials } from '@/lib/utils';
-import { UserPlus, PlusCircle, CheckCircle, Hourglass, Handshake, Dices, Swords } from 'lucide-react';
+import { UserPlus, PlusCircle, CheckCircle, Hourglass, Handshake, Dices, Swords, HardHat } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import MatchDayDrawSimulator from './MatchDayDrawSimulator';
+import { getMockPadelCourts } from '@/lib/mockData';
+
 
 interface MatchDayPlayerGridProps {
     event: MatchDayEvent;
@@ -31,6 +33,19 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
     const { toast } = useToast();
     const [isSimulationVisible, setIsSimulationVisible] = useState(false);
     const [simulatedMatches, setSimulatedMatches] = useState<{ player1: MatchDayInscription, player2: MatchDayInscription }[][]>([]);
+    const [eventCourts, setEventCourts] = useState<PadelCourt[]>([]);
+
+
+    useEffect(() => {
+        const fetchCourts = async () => {
+            if (event) {
+                const allCourts = await getMockPadelCourts();
+                const courtsForEvent = allCourts.filter(c => event.courtIds.includes(c.id));
+                setEventCourts(courtsForEvent);
+            }
+        };
+        fetchCourts();
+    }, [event]);
 
     const isMainListFull = mainList.length >= event.maxPlayers;
     
@@ -51,13 +66,12 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
             userId: `empty-${i}`,
             userName: 'Plaza Libre',
             userLevel: 'abierto',
-            status: 'main', // Treat as main for shuffling
+            status: 'main', 
             inscriptionTime: new Date(),
         }));
         
         const playersToShuffle = [...mainList, ...emptySlots];
         
-        // Fisher-Yates shuffle
         for (let i = playersToShuffle.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [playersToShuffle[i], playersToShuffle[j]] = [playersToShuffle[j], playersToShuffle[i]];
@@ -75,7 +89,6 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
              if (pairs[i+1]) {
                 matches.push([pairs[i], pairs[i+1]]);
              } else {
-                 // Handle leftover pair if odd number of pairs
                  matches.push([pairs[i]]);
              }
         }
@@ -125,8 +138,6 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                         onClick={!isCurrentUser && userInscription ? () => onSelectPartner(inscription.userId) : undefined}
                                         className={cn(
                                             "p-3 border rounded-lg flex flex-col items-center justify-center text-center bg-background shadow-md transition-all h-40 relative focus:outline-none focus:ring-2 focus:ring-offset-2",
-                                            isCurrentUser ? "bg-blue-50 border-blue-300 ring-2 ring-blue-400" :
-                                            isPreferredPartner ? "bg-purple-50 border-purple-300" :
                                             !isCurrentUser && userInscription ? "hover:bg-muted/80 cursor-pointer focus:ring-purple-500" : "cursor-default"
                                         )}
                                     >
@@ -208,6 +219,27 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                     </div>
                                 );
                             })}
+                        </div>
+                    </div>
+                )}
+
+                 {!event.matchesGenerated && eventCourts.length > 0 && (
+                    <div className="mt-6">
+                        <h4 className="font-semibold mb-3">Pistas Reservadas para el Evento</h4>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                            {eventCourts.map(court => (
+                                <div key={court.id} className="p-3 border rounded-lg flex flex-col items-center justify-center text-center bg-background shadow-md h-40">
+                                    <div className="flex flex-col items-center gap-1">
+                                        <div className="relative inline-flex items-center justify-center h-16 w-16 rounded-full border-2 border-gray-300 bg-gray-100 shadow-inner">
+                                            <HardHat className="h-8 w-8 text-gray-500" />
+                                        </div>
+                                        <div className="flex-1 overflow-hidden mt-1">
+                                            <p className="font-medium text-sm truncate">{court.name}</p>
+                                            <Badge variant="outline" className="text-xs">Pista #{court.courtNumber}</Badge>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 )}
