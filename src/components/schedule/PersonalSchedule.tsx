@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback, useTransition } from 'react';
-import type { Booking, User, Review, TimeSlot, PadelCourt, Instructor } from '@/types';
+import type { Booking, User, Review, TimeSlot, PadelCourt, Instructor, UserActivityStatusForDay } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { List, Star, Activity, CheckCircle, CalendarX, Ban, UserCircle as UserIcon, Clock, Hash, Euro, Gift, Lightbulb, BarChartHorizontal, Users2, Venus, Mars, Plus, Share2, Lock, Loader2 } from 'lucide-react';
@@ -455,10 +455,10 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
       activityId: bookingId,
       activityType: 'class',
       userId: currentUser.id,
-      instructorId,
       rating,
       comment: comment || undefined,
       createdAt: new Date(),
+      instructorId,
     });
 
     toast({
