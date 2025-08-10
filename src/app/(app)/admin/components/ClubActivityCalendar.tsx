@@ -1,3 +1,4 @@
+// src/app/(app)/admin/components/ClubActivityCalendar.tsx
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -62,6 +63,7 @@ type ProcessedCalendarData = Record<number, Record<string, CellContent>>;
 interface ClubActivityCalendarProps {
   club: Club;
   refreshKey: number;
+  activityFilter?: 'clases' | 'partidas' | 'all';
 }
 
 const timeHeaders = Array.from({ length: (22 - 8) * 2 + 1 }, (_, i) => {
@@ -85,7 +87,7 @@ const levelRangeColors = [
     'hsl(47.9 95.8% 53.1%)',  // yellow
 ];
 
-const ClubActivityCalendar: React.FC<ClubActivityCalendarProps> = ({ club, refreshKey }) => {
+const ClubActivityCalendar: React.FC<ClubActivityCalendarProps> = ({ club, refreshKey, activityFilter = 'all' }) => {
   const [currentDate, setCurrentDate] = useState<Date>(startOfDay(new Date()));
   const [loading, setLoading] = useState(true);
   const [clubPadelCourts, setClubPadelCourts] = useState<PadelCourt[]>([]);
@@ -170,11 +172,11 @@ const ClubActivityCalendar: React.FC<ClubActivityCalendarProps> = ({ club, refre
       const activitiesForSelectedDate = [
           ...fetchedTimeSlots.filter(slot =>
               (slot.status === 'pre_registration' || slot.status === 'confirmed' || slot.status === 'confirmed_private' || slot.status === 'forming') &&
-              isSameDay(new Date(slot.startTime), currentDate)
+              isSameDay(new Date(slot.startTime), currentDate) && (activityFilter === 'all' || activityFilter === 'clases')
           ).map(s => ({...s, _activityType: 'class'} as const)),
           ...fetchedMatches.filter(match =>
               (match.status === 'confirmed' || match.status === 'confirmed_private' || match.status === 'forming' || match.isPlaceholder) && 
-              isSameDay(new Date(match.startTime), currentDate)
+              isSameDay(new Date(match.startTime), currentDate) && (activityFilter === 'all' || activityFilter === 'partidas')
           ).map(m => ({...m, _activityType: 'match'} as const))
       ];
 
@@ -260,7 +262,7 @@ const ClubActivityCalendar: React.FC<ClubActivityCalendarProps> = ({ club, refre
       });
       
       // Process Match-Day Event
-      if (fetchedMatchDayEvents && fetchedMatchDayEvents.length > 0) {
+      if ((activityFilter === 'all' || activityFilter === 'partidas') && fetchedMatchDayEvents && fetchedMatchDayEvents.length > 0) {
           fetchedMatchDayEvents.forEach(event => {
             const eventStartTime = new Date(event.eventDate);
             const eventEndTime = event.eventEndTime ? new Date(event.eventEndTime) : addMinutes(eventStartTime, 180);
@@ -306,7 +308,7 @@ const ClubActivityCalendar: React.FC<ClubActivityCalendarProps> = ({ club, refre
     } finally {
       setLoading(false);
     }
-  }, [club.id, club.levelRanges, currentDate, isActivityInLevelRange, refreshKey, allStudents]);
+  }, [club.id, club.levelRanges, currentDate, isActivityInLevelRange, refreshKey, allStudents, activityFilter]);
 
   useEffect(() => {
     if (allStudents.length > 0) {

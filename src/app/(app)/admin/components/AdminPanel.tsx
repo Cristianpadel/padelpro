@@ -1,3 +1,4 @@
+// src/app/(app)/admin/components/AdminPanel.tsx
 "use client";
 
 import React, { useState, useEffect, useCallback, useTransition } from 'react';
@@ -6,7 +7,7 @@ import AddInstructorForm from '../../add-instructor/components/AddInstructorForm
 import InstructorList from './InstructorList';
 import EditInstructorDialog from './EditInstructorDialog';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { UserPlus, List, Settings, CalendarDays, Shield, HardHat, Activity, BarChartHorizontal, Loader2, PlayCircle, CalendarPlus as CalendarPlusIcon, LogOut, KeyRound, Star, Network, Trophy, ArrowLeft, ClockIcon as ClockIconLucide, ClipboardList, Tag, PartyPopper, ShoppingBag, Sparkles, AlertTriangle, Palette } from 'lucide-react';
+import { UserPlus, List, Settings, CalendarDays, Shield, HardHat, Activity, BarChartHorizontal, Loader2, PlayCircle, CalendarPlus as CalendarPlusIcon, LogOut, KeyRound, Star, Network, Trophy, ArrowLeft, ClockIcon as ClockIconLucide, ClipboardList, Tag, PartyPopper, ShoppingBag, Sparkles, AlertTriangle, Palette, Eye } from 'lucide-react';
 import { fetchInstructors as fetchInstructorsFromDb, updateClub, fetchPadelCourtsByClub, getMockStudents, fetchPointTransactions, addInstructor, deleteInstructor, updateInstructor as updateInstructorMock } from '@/lib/mockData';
 import CourtBookingManagement from './CourtBookingManagement';
 import ManageCourtsPanel from './ManageCourtsPanel';
@@ -59,6 +60,7 @@ interface AdminPanelContentProps {
     onClubSettingsUpdated: (updatedClub: Club) => void;
     onActivityAdded: (activity?: TimeSlot | Match) => void;
     onEventCreated: (event: MatchDayEvent) => void;
+    activityFilter?: 'clases' | 'partidas' | 'all';
 }
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ adminClub }) => {
@@ -72,8 +74,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminClub }) => {
     const [isUpdatingSettings, startSettingsTransition] = useTransition();
     const [editingInstructor, setEditingInstructor] = useState<Instructor | null>(null);
 
-    const [activePanelValue, setActivePanelValue] = useState("instructors");
+    const [activePanelValue, setActivePanelValue] = useState<string | null>(null);
     const [showPanelContent, setShowPanelContent] = useState(false);
+    const [activityFilter, setActivityFilter] = useState<'clases' | 'partidas' | 'all'>('all');
     
     const { toast } = useToast();
     const router = useRouter();
@@ -114,13 +117,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminClub }) => {
     
     const handleClubSettingsUpdated = useCallback((updatedClub: Club) => {
         setCurrentAdminClub(updatedClub);
-        handleDataChanged(); // Trigger a full data refresh if settings that affect data are changed
+        handleDataChanged();
     }, [handleDataChanged]);
 
     const handleActivityAdded = useCallback(() => {
         toast({title: "Actividad Creada", description: "La nueva clase o partida ha sido añadida."})
         handleDataChanged();
         setShowPanelContent(false);
+        setActivePanelValue(null);
     }, [toast, handleDataChanged]);
     
     const handleEventCreated = useCallback((event: MatchDayEvent) => {
@@ -164,6 +168,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminClub }) => {
         toast({ title: "Has salido del panel del club", description: `Ya no estás gestionando ${currentAdminClub.name}. Serás redirigido.` });
         router.push('/auth/login-club-admin');
     };
+    
+    const handleSetView = (view: 'clases' | 'partidas') => {
+        setActivityFilter(view);
+        setActivePanelValue('activityCalendar');
+        setShowPanelContent(true);
+    };
 
     const adminPanelOptions: AdminPanelOption[] = [
         { value: "instructors", label: "Instructores", icon: UserPlus, componentFactory: (props) => (
@@ -184,7 +194,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminClub }) => {
         { value: "manageShop", label: "Tienda", icon: ShoppingBag, componentFactory: (props) => <ManageShopPanel club={props.club} onClubSettingsUpdated={props.onClubSettingsUpdated} />, contentDescription: "Gestiona los productos disponibles para la venta en tu club." },
         { value: "manageMatches", label: "Gestionar Partidas", icon: Trophy, componentFactory: (props) => <ManageMatchesPanel clubId={props.club.id} /> },
         { value: "courtBookings", label: "Reservas Pistas", icon: CalendarDays, componentFactory: (props) => <CourtBookingManagement clubId={props.club.id} key={`courtbooking-${refreshKey}`} /> },
-        { value: "activityCalendar", label: "Calendario Actividad", icon: ClipboardList, contentDescription: `Visualiza las actividades (clases/partidas con inscritos) por rangos de nivel en ${currentAdminClub.name}.`, componentFactory: (props) => <ClubActivityCalendar club={props.club} refreshKey={refreshKey} /> },
+        { value: "activityCalendar", label: "Calendario Actividad", icon: ClipboardList, contentDescription: `Visualiza las actividades (clases/partidas con inscritos) por rangos de nivel en ${currentAdminClub.name}.`, componentFactory: (props) => <ClubActivityCalendar club={props.club} refreshKey={refreshKey} activityFilter={props.activityFilter} /> },
         { value: "cardStyles", label: "Estilos de Tarjetas", icon: Palette, componentFactory: (props) => <ManageCardStylesPanel club={props.club} onSettingsUpdated={props.onClubSettingsUpdated} />, contentDescription: "Personaliza el aspecto visual de las tarjetas de clases y partidas." },
         { value: "levelRanges", label: "Rangos Nivel", icon: Network, componentFactory: (props) => <ManageLevelRangesForm club={props.club} onRangesUpdated={props.onClubSettingsUpdated} /> },
         { value: "clubMatchAvailability", label: "Horario Partidas", icon: ClockIconLucide, contentDescription: `Configura las horas en las que NO se generarán tarjetas de partidas automáticamente para ${currentAdminClub.name}.`, componentFactory: (props) => <ManageClubMatchAvailability club={props.club} onSettingsUpdated={props.onClubSettingsUpdated} /> },
@@ -215,6 +225,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminClub }) => {
             <div className="mb-6 flex justify-end">
                 <Button variant="outline" onClick={handleExitClubPanel} className="text-sm"><LogOut className="mr-2 h-4 w-4" />Salir del Panel de {currentAdminClub.name}</Button>
             </div>
+            
+            {!showPanelContent && (
+                <div className="mb-6 p-4 border rounded-lg bg-muted/50">
+                    <h3 className="font-semibold text-lg mb-2 flex items-center"><Eye className="mr-2 h-5 w-5 text-primary"/>Filtros de Vista Rápida</h3>
+                    <div className="flex gap-2">
+                         <Button onClick={() => handleSetView('clases')}><Activity className="mr-2 h-4 w-4"/>Ver Solo Clases</Button>
+                         <Button onClick={() => handleSetView('partidas')}><Trophy className="mr-2 h-4 w-4"/>Ver Solo Partidas</Button>
+                    </div>
+                </div>
+            )}
+
             {!showPanelContent ? (
                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {adminPanelOptions.map(option => {
@@ -224,7 +245,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminClub }) => {
                                 key={option.value}
                                 variant="outline"
                                 className="w-full justify-start text-left px-4 py-3 text-base h-auto flex items-center gap-3 rounded-lg shadow-sm border"
-                                onClick={() => { setActivePanelValue(option.value); setShowPanelContent(true); }}
+                                onClick={() => { setActivePanelValue(option.value); setShowPanelContent(true); setActivityFilter('all'); }}
                             >
                                 <Icon className="mr-1.5 h-5 w-5 text-primary" />
                                 {option.label}
@@ -239,7 +260,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminClub }) => {
                             <CardTitle className="flex items-center">
                                 <currentPanel.icon className="mr-2 h-5 w-5 text-primary" /> {currentPanel.label}
                             </CardTitle>
-                            <Button variant="outline" size="sm" onClick={() => setShowPanelContent(false)}>
+                            <Button variant="outline" size="sm" onClick={() => { setShowPanelContent(false); setActivePanelValue(null); }}>
                                 <ArrowLeft className="mr-2 h-4 w-4" />
                                 Volver al Menú
                             </Button>
@@ -257,7 +278,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminClub }) => {
                             onDataChanged: handleDataChanged,
                             onClubSettingsUpdated: handleClubSettingsUpdated,
                             onActivityAdded: handleActivityAdded,
-                            onEventCreated: handleEventCreated
+                            onEventCreated: handleEventCreated,
+                            activityFilter: activityFilter
                         })}
                     </CardContent>
                 </Card>
