@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useTransition } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getMockCurrentUser, fetchActiveMatchDayEvents, getMatchDayInscriptions, getMockMatches, addMatchDayInscription, cancelMatchDayInscription } from '@/lib/mockData';
