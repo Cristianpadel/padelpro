@@ -1,7 +1,7 @@
 // src/components/schedule/PersonalSchedule.tsx
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback, useTransition } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { Booking, User, Review, TimeSlot, PadelCourt, Instructor } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -22,9 +22,10 @@ import { calculatePricePerPerson } from '@/lib/utils';
 import Link from 'next/link';
 import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogFooter, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogFooter } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 
 
 interface CourtAvailabilityState {
@@ -79,23 +80,70 @@ const DialogInfo: React.FC<{
   );
 };
 
+const RateClassDialog: React.FC<{
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (rating: number, comment: string) => void;
+}> = ({ isOpen, onOpenChange, onSubmit }) => {
+    const [rating, setRating] = useState(0);
+    const [comment, setComment] = useState("");
+
+    const handleSubmit = () => {
+        if (rating > 0) {
+            onSubmit(rating, comment);
+        }
+    };
+    
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Valora esta Clase</DialogTitle>
+                    <DialogDescription>Tu opinión ayuda a mejorar.</DialogDescription>
+                </DialogHeader>
+                <div className="py-4 space-y-4">
+                     <div className="flex items-center justify-center gap-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                            <button key={star} onClick={() => setRating(star)}>
+                            <Star className={cn("h-8 w-8 transition-colors", rating >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300')} />
+                            </button>
+                        ))}
+                    </div>
+                    <Textarea 
+                        placeholder="Añade un comentario (opcional)..."
+                        value={comment}
+                        onChange={(e) => setComment(e.target.value)}
+                    />
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button variant="outline">Cancelar</Button>
+                    </DialogClose>
+                    <Button onClick={handleSubmit} disabled={rating === 0}>Enviar Valoración</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+};
+
 
 interface BookingListItemProps {
   booking: Booking;
   isUpcoming: boolean;
-  ratedBookings: Record<string, number>;
-  onRateClass: (bookingId: string, instructorName: string, rating: number) => void;
+  onRateClass: (bookingId: string, instructorId: string, instructorName: string, rating: number, comment?: string) => void;
   currentUser: User;
   onBookingCancelledOrCeded: () => void;
   instructor: Instructor | null;
   availability: CourtAvailabilityState;
 }
 
-const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, ratedBookings, onRateClass, currentUser, onBookingCancelledOrCeded, instructor, availability }) => {
+const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, onRateClass, currentUser, onBookingCancelledOrCeded, instructor, availability }) => {
   const { toast } = useToast();
   const [isCancelling, setIsCancelling] = useState(false);
   const [isMakingPrivate, startMakePrivateTransition] = useTransition();
   const [infoDialog, setInfoDialog] = useState<{ open: boolean, title: string, description: string, icon: React.ElementType }>({ open: false, title: '', description: '', icon: Lightbulb });
+  const [isRatingDialogOpen, setIsRatingDialogOpen] = useState(false);
+
   
   if (!booking.slotDetails || !instructor) return null;
 
@@ -141,6 +189,11 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
       });
   };
   
+  const handleRatingSubmit = (rating: number, comment: string) => {
+    onRateClass(bookingId, instructor.id, instructorName, rating, comment);
+    setIsRatingDialogOpen(false);
+  };
+
   const handleInfoClick = (type: 'level' | 'court' | 'category') => {
         let dialogData;
         const CategoryIcon = category === 'chica' ? Venus : category === 'chico' ? Mars : Users2;
@@ -198,28 +251,27 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
       <div className="w-80 flex flex-col max-w-md mx-auto">
         <Card className={cn("flex flex-col shadow-md border-l-4 h-full", cardBorderColor)}>
           <CardHeader className="p-3 pb-1 space-y-2">
-           <div className="flex justify-between items-start">
-                <div className="flex items-center space-x-3">
-                   <Link href={`/instructors/${instructor.id}`} passHref className="group">
-                     <Avatar className="h-12 w-12">
-                        <AvatarImage src={instructor?.profilePictureUrl} alt={instructor?.name || ''} data-ai-hint="instructor profile photo"/>
-                        <AvatarFallback className="text-xl">{getInitials(instructor?.name || '')}</AvatarFallback>
-                    </Avatar>
-                   </Link>
-                   <div className="flex flex-col">
-                      <Link href={`/instructors/${instructor.id}`} passHref className="group">
-                        <p className="font-semibold text-lg text-gray-800 -mb-0.5 group-hover:underline">{instructorName}</p>
-                      </Link>
-                      {renderStarsDisplay(4.5)}
-                   </div>
-                </div>
+            <div className="flex justify-between items-start">
+              <div className="flex items-center space-x-3">
+                 <Link href={`/instructors/${instructor.id}`} passHref className="group">
+                   <Avatar className="h-12 w-12">
+                      <AvatarImage src={instructor?.profilePictureUrl} alt={instructor?.name || ''} data-ai-hint="instructor profile photo"/>
+                      <AvatarFallback className="text-xl">{getInitials(instructor?.name || '')}</AvatarFallback>
+                  </Avatar>
+                 </Link>
+                 <div className="flex flex-col">
+                    <Link href={`/instructors/${instructor.id}`} passHref className="group">
+                      <p className="font-semibold text-lg text-gray-800 -mb-0.5 group-hover:underline">{instructorName}</p>
+                    </Link>
+                    {renderStarsDisplay(4.5)}
+                 </div>
+              </div>
             </div>
              <div className="flex justify-around items-center gap-1.5 pt-1">
                 <InfoButton icon={Lightbulb} text={levelDisplay} onClick={() => handleInfoClick('level')} className={cn(isLevelAssigned && classifiedBadgeClass)} />
                 <InfoButton icon={CategoryIcon} text={categoryDisplay} onClick={() => handleInfoClick('category')} className={cn(isCategoryAssigned && classifiedBadgeClass)} />
                 <InfoButton icon={Hash} text={courtDisplay} onClick={() => handleInfoClick('court')} className={cn(isCourtAssigned && classifiedBadgeClass)} />
             </div>
-
             <div className="flex justify-between items-center border-t border-border pt-1.5 mt-1">
               <div className="flex items-center space-x-3">
                   <div className="flex flex-col items-center justify-center font-bold">
@@ -307,19 +359,20 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
                     </Button>
                 </>
               ) : (
-                <div className="flex items-center justify-center gap-1 w-full">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button key={star} onClick={() => onRateClass(bookingId, instructorName, star)}>
-                      <Star className={cn("h-6 w-6", (ratedBookings[bookingId] || 0) >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300')} />
-                    </button>
-                  ))}
-                </div>
+                <Button onClick={() => setIsRatingDialogOpen(true)} variant="outline" className="w-full">
+                    <Star className="mr-2 h-4 w-4"/> Valorar Clase
+                </Button>
               )}
             </div>
           </CardFooter>
         </Card>
       </div>
       <DialogInfo isOpen={infoDialog.open} onOpenChange={(open) => setInfoDialog(prev => ({ ...prev, open }))} title={infoDialog.title} description={infoDialog.description} icon={infoDialog.icon} />
+      <RateClassDialog 
+        isOpen={isRatingDialogOpen} 
+        onOpenChange={setIsRatingDialogOpen}
+        onSubmit={handleRatingSubmit}
+      />
     </>
   );
 };
@@ -387,13 +440,24 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
     loadData();
   }, [loadData, refreshKey]);
 
-  const handleRateClass = (bookingId: string, instructorName: string, rating: number) => {
-    setRatedBookings(prev => ({ ...prev, [bookingId]: rating }));
+  const handleRateClass = (bookingId: string, instructorId: string, instructorName: string, rating: number, comment?: string) => {
+    addReview({
+      id: `review-${bookingId}`,
+      activityId: bookingId,
+      activityType: 'class',
+      userId: currentUser.id,
+      instructorId,
+      rating,
+      comment: comment || undefined,
+      createdAt: new Date(),
+    });
+
     toast({
       title: "¡Gracias por tu valoración!",
       description: `Has valorado la clase de ${instructorName} con ${rating} estrellas.`,
       className: "bg-primary text-primary-foreground",
     });
+    // In a real app, you might want to mark this booking as "rated" in the UI immediately
   };
 
   const handleBookingUpdate = () => {
@@ -420,6 +484,7 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
   
   const upcomingBookings = bookings.filter(b => b.slotDetails && !isPast(new Date(b.slotDetails.endTime)));
   const pastBookings = bookings.filter(b => b.slotDetails && isPast(new Date(b.slotDetails.endTime)));
+  
   const hasUpcomingBookings = upcomingBookings.length > 0;
   const hasPastBookings = pastBookings.length > 0;
   
