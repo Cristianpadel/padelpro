@@ -8,14 +8,17 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getInitials } from '@/lib/utils';
-import { UserPlus, PlusCircle, CheckCircle, Hourglass, Handshake, Dices, Swords, HardHat, RefreshCw } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { UserPlus, CheckCircle, Handshake, Dices, Swords, HardHat, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import { getMockPadelCourts } from '@/lib/mockData';
 
+type SimulatedTeam = {
+  players: (MatchDayInscription | { id: string; userName: string; userLevel: string; userProfilePictureUrl?: string, isEmptySlot?: boolean })[];
+  teamLevel: number;
+};
 
 interface MatchDayPlayerGridProps {
     event: MatchDayEvent;
@@ -31,7 +34,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
     const userPreferredPartnerId = userInscription?.preferredPartnerId;
     const { toast } = useToast();
     const [eventCourts, setEventCourts] = useState<PadelCourt[]>([]);
-    const [simulatedMatches, setSimulatedMatches] = useState<Match[]>([]);
+    const [simulatedMatches, setSimulatedMatches] = useState<SimulatedTeam[][]>([]);
 
 
     useEffect(() => {
@@ -63,49 +66,83 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
             eventId: event.id,
             userId: `empty-${i}`,
             userName: 'Plaza Libre',
-            userLevel: 'abierto',
+            userLevel: '0.0', // Assign lowest level
             status: 'main', 
             inscriptionTime: new Date(),
         }));
         
-        let playersToShuffle = [...mainList, ...emptySlots];
-        
-        for (let i = playersToShuffle.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [playersToShuffle[i], playersToShuffle[j]] = [playersToShuffle[j], playersToShuffle[i]];
-        }
-        
-        const generatedMatches: Match[] = [];
-        let courtIndex = 0;
+        let playersToProcess = [...mainList, ...emptySlots];
+        let mutualPairs: SimulatedTeam[] = [];
+        let singles: (MatchDayInscription | { id: string; userName: string; userLevel: string; userProfilePictureUrl?: string, isEmptySlot?: boolean })[] = [];
 
-        for (let i = 0; i < playersToShuffle.length; i += 4) {
-            if (courtIndex >= eventCourts.length) break; 
+        const processedUserIds = new Set<string>();
 
-            const matchPlayers = playersToShuffle.slice(i, i + 4);
-            if (matchPlayers.length === 4) {
-                const court = eventCourts[courtIndex];
-                generatedMatches.push({
-                    id: `sim-match-${court.id}`,
-                    clubId: event.clubId,
-                    startTime: event.eventDate,
-                    endTime: event.eventEndTime || event.eventDate,
-                    durationMinutes: 90,
-                    courtNumber: court.courtNumber,
-                    level: 'abierto',
-                    category: 'abierta',
-                    status: 'confirmed',
-                    bookedPlayers: matchPlayers.map(p => ({
-                        userId: p.userId, 
-                        name: p.userName,
-                        profilePictureUrl: p.userProfilePictureUrl 
-                    })),
-                });
-                courtIndex++;
+        // 1. Find mutual pairs first
+        for (const playerA of playersToProcess) {
+            if (processedUserIds.has(playerA.userId) || playerA.userName === 'Plaza Libre') continue;
+            
+            const partnerId = playerA.preferredPartnerId;
+            if (!partnerId) continue;
+            
+            const playerB = playersToProcess.find(p => p.userId === partnerId);
+
+            if (playerB && playerB.preferredPartnerId === playerA.userId) {
+                const levelA = parseFloat(playerA.userLevel);
+                const levelB = parseFloat(playerB.userLevel);
+                const teamLevel = Math.min(isNaN(levelA) ? 99 : levelA, isNaN(levelB) ? 99 : levelB);
+                
+                mutualPairs.push({ players: [playerA, playerB], teamLevel });
+                processedUserIds.add(playerA.userId);
+                processedUserIds.add(playerB.userId);
             }
         }
         
-        setSimulatedMatches(generatedMatches);
+        // 2. The rest are singles
+        singles = playersToProcess.filter(p => !processedUserIds.has(p.userId));
+
+        // 3. Sort singles by level (descending)
+        singles.sort((a, b) => {
+             const levelA = parseFloat(a.userLevel);
+             const levelB = parseFloat(b.userLevel);
+             return (isNaN(levelB) ? 0 : levelB) - (isNaN(levelA) ? 0 : levelA);
+        });
+
+        // 4. Form pairs from singles
+        let singlePairs: SimulatedTeam[] = [];
+        for (let i = 0; i < singles.length; i += 2) {
+             if (singles[i+1]) {
+                const playerA = singles[i];
+                const playerB = singles[i+1];
+                const levelA = parseFloat(playerA.userLevel);
+                const levelB = parseFloat(playerB.userLevel);
+                const teamLevel = Math.min(isNaN(levelA) ? 99 : levelA, isNaN(levelB) ? 99 : levelB);
+                singlePairs.push({ players: [playerA, playerB], teamLevel });
+            } else {
+                // Odd one out - create a pair with an empty slot
+                const playerA = singles[i];
+                 const levelA = parseFloat(playerA.userLevel);
+                 singlePairs.push({ players: [playerA, {id: 'empty-single', userName: 'Plaza Libre', userLevel: '0.0', isEmptySlot: true}], teamLevel: isNaN(levelA) ? 0 : levelA });
+            }
+        }
+
+        // 5. Combine all pairs and sort by team level
+        let allPairs = [...mutualPairs, ...singlePairs];
+        allPairs.sort((a, b) => b.teamLevel - a.teamLevel);
+
+        // 6. Form matches
+        const finalMatches: SimulatedTeam[][] = [];
+        for (let i = 0; i < allPairs.length; i += 2) {
+            if (allPairs[i+1]) {
+                finalMatches.push([allPairs[i], allPairs[i+1]]);
+            } else {
+                // Handle the case of an odd number of pairs if necessary
+                finalMatches.push([allPairs[i]]);
+            }
+        }
+        
+        setSimulatedMatches(finalMatches);
     };
+
 
     const handleResetSimulation = () => {
         setSimulatedMatches([]);
@@ -139,12 +176,11 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                 const isCurrentUser = inscription.userId === currentUser?.id;
                                 const isPreferredPartner = userPreferredPartnerId === inscription.userId;
                                 
-                                const PlayerCardWrapper = isCurrentUser || !userInscription ? 'div' : 'button';
-
                                 return (
-                                    <PlayerCardWrapper
+                                    <button
                                         key={inscription.id}
                                         onClick={!isCurrentUser && userInscription ? () => onSelectPartner(inscription.userId) : undefined}
+                                        disabled={isCurrentUser || !userInscription}
                                         className={cn(
                                             "p-3 border rounded-lg flex flex-col items-center justify-center text-center bg-background shadow-md transition-all h-40 relative focus:outline-none focus:ring-2 focus:ring-offset-2",
                                             !isCurrentUser && userInscription ? "hover:bg-muted/80 cursor-pointer focus:ring-purple-500" : "cursor-default"
@@ -170,7 +206,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                                 <Badge variant="outline" className="text-xs">N: {inscription.userLevel}</Badge>
                                             </div>
                                         </div>
-                                    </PlayerCardWrapper>
+                                    </button>
                                 );
                             }
                             // Render empty slot
@@ -222,7 +258,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                 return (
                                      <div key={`empty-reserve-${index}`} className={cn("p-3 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-muted-foreground h-40 shadow-sm", isMainListFull ? "bg-secondary/30" : "bg-gray-100 opacity-60")}>
                                         <div className="relative inline-flex items-center justify-center h-16 w-16 rounded-full border-[3px] border-dashed border-gray-400 bg-white/50 shadow-inner">
-                                            <Hourglass className="h-8 w-8" />
+                                            <UserPlus className="h-8 w-8 opacity-50" />
                                         </div>
                                         <p className="text-xs font-medium mt-2">Plaza Reserva</p>
                                     </div>
@@ -250,7 +286,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {eventCourts.map((court, index) => {
-                                const simulatedMatch = simulatedMatches[index];
+                                const match = simulatedMatches[index];
                                 return (
                                     <div key={court.id} className="p-3 border rounded-lg flex flex-col justify-between bg-secondary/20 shadow-sm min-h-40">
                                         <div>
@@ -258,19 +294,17 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                             <Badge variant="outline" className="text-xs">Pista #{court.courtNumber}</Badge>
                                         </div>
                                         <div className="flex-grow flex items-center justify-center">
-                                            {simulatedMatch ? (
+                                            {match ? (
                                                 <div className="w-full max-w-[150px] aspect-[2/3] bg-green-500 rounded-md p-2 flex flex-col justify-between items-center relative shadow-lg border-2 border-white/50">
                                                     {/* Top side players */}
                                                     <div className="w-full flex justify-around">
-                                                        <Avatar className="h-8 w-8 border-2 border-white"><AvatarImage src={simulatedMatch.bookedPlayers[0]?.profilePictureUrl} /><AvatarFallback>{getInitials(simulatedMatch.bookedPlayers[0]?.name || '')}</AvatarFallback></Avatar>
-                                                        <Avatar className="h-8 w-8 border-2 border-white"><AvatarImage src={simulatedMatch.bookedPlayers[1]?.profilePictureUrl} /><AvatarFallback>{getInitials(simulatedMatch.bookedPlayers[1]?.name || '')}</AvatarFallback></Avatar>
+                                                       {match[0].players.map(p => <Avatar key={p.id} className="h-8 w-8 border-2 border-white"><AvatarImage src={p.userProfilePictureUrl} data-ai-hint="player avatar"/><AvatarFallback>{getInitials(p.userName || '')}</AvatarFallback></Avatar>)}
                                                     </div>
                                                     {/* Net */}
                                                     <div className="h-0.5 w-full bg-white/50 my-1"></div>
                                                     {/* Bottom side players */}
                                                     <div className="w-full flex justify-around">
-                                                        <Avatar className="h-8 w-8 border-2 border-white"><AvatarImage src={simulatedMatch.bookedPlayers[2]?.profilePictureUrl} /><AvatarFallback>{getInitials(simulatedMatch.bookedPlayers[2]?.name || '')}</AvatarFallback></Avatar>
-                                                        <Avatar className="h-8 w-8 border-2 border-white"><AvatarImage src={simulatedMatch.bookedPlayers[3]?.profilePictureUrl} /><AvatarFallback>{getInitials(simulatedMatch.bookedPlayers[3]?.name || '')}</AvatarFallback></Avatar>
+                                                         {match[1].players.map(p => <Avatar key={p.id} className="h-8 w-8 border-2 border-white"><AvatarImage src={p.userProfilePictureUrl} data-ai-hint="player avatar"/><AvatarFallback>{getInitials(p.userName || '')}</AvatarFallback></Avatar>)}
                                                     </div>
                                                 </div>
                                             ) : (
