@@ -5,7 +5,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { Booking, User, Review, TimeSlot, PadelCourt, Instructor } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { List, Star, Activity, CheckCircle, CalendarX, Ban, UserCircle as UserIcon, Clock, Hash, Euro, Gift, Lightbulb, BarChartHorizontal, Users2, Venus, Mars } from 'lucide-react';
+import { List, Star, Activity, CheckCircle, CalendarX, Ban, UserCircle as UserIcon, Clock, Hash, Euro, Gift, Lightbulb, BarChartHorizontal, Users2, Venus, Mars, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { isPast, format, differenceInHours } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -62,8 +62,15 @@ const InfoDialog: React.FC<{
 };
 
 
-const InfoButton = ({ icon: Icon, text, onClick, className }: { icon: React.ElementType, text: string, onClick: () => void, className?: string }) => (
-    <button onClick={onClick} className="flex-1">
+interface InfoButtonProps {
+    icon: React.ElementType;
+    text: string;
+    onClick: () => void;
+    className?: string;
+}
+
+const InfoButton: React.FC<InfoButtonProps> = ({ icon: Icon, text, onClick, className }) => (
+    <button className="flex-1" onClick={onClick}>
         <Badge variant="outline" className={cn("w-full justify-center text-xs py-1.5 rounded-full capitalize shadow-inner bg-slate-50 border-slate-200 hover:border-slate-300 transition-colors", className)}>
             <Icon className="mr-1.5 h-3 w-3" /> {text}
         </Badge>
@@ -155,6 +162,16 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
   const CategoryIcon = category === 'chica' ? Venus : category === 'chico' ? Mars : Users2;
   const classifiedBadgeClass = 'text-blue-700 border-blue-200 bg-blue-100 hover:border-blue-300';
 
+  const renderStarsDisplay = (rating: number) => {
+        const fullStars = Math.round(rating);
+        const stars = [];
+        for (let i = 1; i <= 5; i++) {
+            stars.push(<Star key={i} className={cn("h-4 w-4", i <= fullStars ? "fill-amber-500 text-amber-500" : "fill-gray-300 text-gray-400")} />);
+        }
+        return <div className="flex items-center">{stars} <span className="ml-1.5 text-sm text-gray-600 font-medium">({rating.toFixed(1)})</span></div>;
+    };
+
+
   return (
     <>
       <div className="w-80 max-w-md mx-auto">
@@ -170,6 +187,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
                      <div className="flex flex-col">
                         <span className="font-semibold text-lg">{format(new Date(startTime), 'HH:mm')}h</span>
                         <span className="text-sm text-muted-foreground">con {instructorName}</span>
+                         {instructor && renderStarsDisplay(4.5)}
                     </div>
                 </div>
                  <div className="flex items-center">
@@ -178,27 +196,6 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
                     {!isUpcoming && <Badge variant="outline" className="text-xs">Finalizada</Badge>}
                  </div>
              </div>
-
-             <div className="flex justify-center items-center gap-1.5 pt-2">
-                <InfoButton 
-                    icon={Lightbulb} 
-                    text={levelDisplay} 
-                    onClick={() => handleInfoClick('level')}
-                    className={cn(isLevelAssigned && classifiedBadgeClass)}
-                />
-                <InfoButton 
-                    icon={CategoryIcon} 
-                    text={categoryDisplay} 
-                    onClick={() => handleInfoClick('category')} 
-                    className={cn(isCategoryAssigned && classifiedBadgeClass)}
-                />
-                <InfoButton 
-                    icon={Hash} 
-                    text={courtDisplay} 
-                    onClick={() => handleInfoClick('court')} 
-                    className={cn(isCourtAssigned && classifiedBadgeClass)}
-                />
-            </div>
           </CardHeader>
           <CardContent className="p-3 pt-1 flex-grow">
             <div className="space-y-1">
@@ -214,16 +211,20 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
                         const isCurrentUserInSpot = playerInSpot?.userId === currentUser.id;
                         const student = playerInSpot ? getMockStudents().find(s => s.id === playerInSpot.userId) : null;
                         return (
-                          <Avatar key={index} className={cn("h-10 w-10", isCurrentUserInSpot && "border-2 border-primary")}>
-                            {playerInSpot && student ? (
-                              <>
-                                <AvatarImage src={student.profilePictureUrl} alt={student.name} data-ai-hint="student avatar small" />
-                                <AvatarFallback className="text-xs">{getInitials(student.name || '')}</AvatarFallback>
-                              </>
-                            ) : (
-                              <AvatarFallback className="bg-muted"><UserIcon className="h-4 w-4 text-muted-foreground" /></AvatarFallback>
-                            )}
-                          </Avatar>
+                          <div key={index} className="relative">
+                             <Avatar className={cn("h-10 w-10 p-0 overflow-hidden shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.4)]", isCurrentUserInSpot ? "border-[3px] border-primary shadow-lg" : "border-gray-300")}>
+                                {playerInSpot && student ? (
+                                    <>
+                                        <AvatarImage src={student.profilePictureUrl} alt={student.name} data-ai-hint="student avatar small" />
+                                        <AvatarFallback className="text-xs">{getInitials(student.name || '')}</AvatarFallback>
+                                    </>
+                                ) : (
+                                    <AvatarFallback className="bg-muted border-[3px] border-dashed border-muted-foreground/30 flex items-center justify-center">
+                                         <Plus className="h-4 w-4 text-muted-foreground/60" />
+                                    </AvatarFallback>
+                                )}
+                            </Avatar>
+                           </div>
                         );
                       })}
                     </div>
