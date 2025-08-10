@@ -63,6 +63,7 @@ interface MatchCardProps {
   onBookingSuccess: () => void;
   onMatchUpdate: (updatedMatch: Match) => void;
   matchShareCode?: string | null;
+  showPointsBonus: boolean;
 }
 
 const InfoButton = ({ icon: Icon, text, onClick, className }: { icon: React.ElementType, text: string, onClick: () => void, className?: string }) => (
@@ -72,7 +73,7 @@ const InfoButton = ({ icon: Icon, text, onClick, className }: { icon: React.Elem
 );
 
 
-const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, currentUser, onBookingSuccess }) => {
+const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, currentUser, onBookingSuccess, showPointsBonus }) => {
     const { toast } = useToast();
     const [isPending, startTransition] = useTransition();
     const [currentMatch, setCurrentMatch] = useState<Match>(initialMatch);
@@ -118,14 +119,14 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
     }, [clubInfo, currentMatch.startTime]);
 
     const pointsToAward = useMemo(() => {
-        if (!isPlaceholderMatch || isUserBooked) return 0;
+        if (!isPlaceholderMatch || isUserBooked || !showPointsBonus) return 0;
         const clubPointSettings = clubInfo?.pointSettings;
         if (!clubPointSettings) return 0;
         const basePoints = clubPointSettings.firstToJoinMatch || 0;
         const daysInAdvance = differenceInDays(startOfDay(new Date(currentMatch.startTime)), startOfDay(new Date()));
         const anticipationPoints = Math.max(0, daysInAdvance);
         return basePoints + anticipationPoints;
-    }, [isPlaceholderMatch, isUserBooked, currentMatch.startTime, clubInfo]);
+    }, [isPlaceholderMatch, isUserBooked, currentMatch.startTime, clubInfo, showPointsBonus]);
 
     
     const handleJoinClick = (spotIndex: number, isJoiningWithPoints = false) => {
@@ -216,8 +217,8 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
     const matchCategoryToDisplay = isPlaceholderMatch ? 'abierta' : currentMatch.category || 'abierta';
     
     const shadowEffect = clubInfo?.cardShadowEffect;
-    const shadowStyle = shadowEffect?.enabled && shadowEffect.color
-      ? { boxShadow: `0 0 25px ${hexToRgba(shadowEffect.color, shadowEffect.intensity)}` }
+    const shadowStyle = showPointsBonus && shadowEffect?.enabled && shadowEffect.color
+      ? { boxShadow: `0 0 35px ${hexToRgba(shadowEffect.color, shadowEffect.intensity)}` }
       : {};
 
 
@@ -241,33 +242,34 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
                          <div className="flex items-center gap-1.5">
                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground"><Share2 className="h-4 w-4"/></Button>
                              {canBookPrivate && (
-                                <div
-                                    className="flex items-center h-10 bg-purple-600 text-white rounded-lg rounded-l-full shadow-lg cursor-pointer hover:bg-purple-700 transition-colors"
+                                <button
+                                    className="flex items-center h-10 bg-purple-600 text-white rounded-lg rounded-l-full shadow-lg cursor-pointer hover:bg-purple-700 transition-colors disabled:opacity-50"
                                     onClick={() => setIsConfirmPrivateDialogOpen(true)}
+                                    disabled={isProcessingPrivateAction}
                                 >
                                     <div className="flex items-center justify-center h-10 w-10">
                                         <Plus className="h-5 w-5" />
                                     </div>
-                                    <div className="pr-3 pl-1 text-center">
+                                    <div className="pr-4 pl-1 text-center">
                                         <p className="text-xs font-bold leading-tight">Reservar</p>
                                         <p className="text-xs leading-tight">Privada</p>
                                     </div>
-                                </div>
+                                </button>
                              )}
                         </div>
                     </div>
                 </CardHeader>
                 <CardContent className="px-3 pb-3 flex-grow">
                      <div className="flex justify-around items-center gap-1.5 my-2">
-                         <Button variant="outline" className="flex-1 h-8 rounded-full shadow-inner bg-slate-50 border-slate-200" onClick={() => handleInfoClick('category')}>
+                        <Button variant="outline" className="flex-1 h-8 rounded-full shadow-inner bg-slate-50 border-slate-200" onClick={() => handleInfoClick('category')}>
                             + Cat.
-                         </Button>
-                         <Button variant="outline" className="flex-1 h-8 rounded-full shadow-inner bg-slate-50 border-slate-200" onClick={() => handleInfoClick('court')}>
-                            + Pista
-                         </Button>
-                         <Button variant="outline" className="flex-1 h-8 rounded-full shadow-inner bg-slate-50 border-slate-200" onClick={() => handleInfoClick('level')}>
+                        </Button>
+                        <Button variant="outline" className="flex-1 h-8 rounded-full shadow-inner bg-slate-50 border-slate-200" onClick={() => handleInfoClick('court')}>
+                           + Pista
+                        </Button>
+                        <Button variant="outline" className="flex-1 h-8 rounded-full shadow-inner bg-slate-50 border-slate-200" onClick={() => handleInfoClick('level')}>
                            + Nivel
-                         </Button>
+                        </Button>
                      </div>
 
                     <div className="grid grid-cols-4 gap-2 items-start justify-items-center mt-3">
@@ -285,7 +287,7 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
                                 canJoinThisPrivateMatch={canJoinThisPrivateMatch}
                                 isOrganizer={isOrganizer}
                                 canBookWithPoints={isBookableWithPointsBySchedule}
-                                showPointsBonus={true}
+                                showPointsBonus={showPointsBonus}
                                 pricePerPlayer={pricePerPlayer}
                                 pointsToAward={pointsToAward}
                             />
@@ -311,7 +313,7 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
                                              : <> <Euro className="h-7 w-7 mr-1" /> {dialogContent.price.toFixed(2)} </>
                                          }
                                     </div>
-                                     {true && !dialogContent.isJoiningWithPoints && pointsToAward > 0 && (
+                                     {showPointsBonus && !dialogContent.isJoiningWithPoints && pointsToAward > 0 && (
                                         <div className="text-sm font-semibold text-amber-600 flex items-center justify-center">
                                             <Star className="h-4 w-4 mr-1.5 fill-amber-400" />
                                             ¡Ganarás {pointsToAward} puntos por esta reserva!
