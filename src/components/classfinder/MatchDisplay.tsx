@@ -210,7 +210,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
             const isAPlaceholder = !('isEventCard' in a) && (a as Match).isPlaceholder;
             const isBPlaceholder = !('isEventCard' in b) && (b as Match).isPlaceholder;
             if (isAPlaceholder && !isBPlaceholder) return 1;
-            if (!isAPlaceholder && isBPlaceholder) return -1;
+            if (isBPlaceholder && !isAPlaceholder) return -1;
 
             const dateA = new Date('isEventCard' in a ? a.eventDate : a.startTime).getTime();
             const dateB = new Date('isEventCard' in b ? b.eventDate : b.startTime).getTime();
