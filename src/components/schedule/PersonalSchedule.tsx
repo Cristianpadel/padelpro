@@ -325,13 +325,13 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
               })}
             </div>
           </CardContent>
-          <CardFooter className="p-3 flex-col items-stretch space-y-2 border-t">
+          <CardFooter className="p-2 pt-1 flex-col items-stretch space-y-1 border-t">
             <CourtAvailabilityIndicator
               availableCourts={availability.available}
               occupiedCourts={availability.occupied}
               totalCourts={availability.total}
             />
-            <div className="pt-2 w-full flex gap-2">
+            <div className="pt-1 w-full flex gap-2">
               {isUpcoming ? (
                 <>
                    {canMakePrivate && (
@@ -504,7 +504,7 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
   return (
     <div className="space-y-6">
        { (hasUpcomingBookings || hasPastBookings) &&
-         <h3 className="text-lg font-semibold text-blue-600 flex items-center"><Activity className="mr-2 h-5 w-5" /> Mis Clases</h3>
+         <h3 className="text-lg font-semibold mb-3 text-blue-600 flex items-center"><Activity className="mr-2 h-5 w-5" /> Mis Clases</h3>
        }
       {hasUpcomingBookings && (
         <div>
