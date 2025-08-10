@@ -157,108 +157,109 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
 
   return (
     <>
-    <div className="w-80 max-w-md mx-auto">
-      <Card className={cn("flex flex-col shadow-md border-l-4 h-full", cardBorderColor)}>
-        <CardHeader className="p-3">
-          <div className="flex justify-between items-start">
-            <div className="flex items-center space-x-3">
-              <Link href={`/instructors/${instructor.id}`} passHref className="group">
-                <Avatar className="h-12 w-12">
-                  <AvatarImage src={instructor.profilePictureUrl} alt={instructorName} data-ai-hint="instructor profile photo" />
-                  <AvatarFallback>{getInitials(instructorName)}</AvatarFallback>
-                </Avatar>
-              </Link>
-              <div className="flex flex-col">
-                <p className="font-semibold text-lg text-gray-800 -mb-0.5">{instructorName}</p>
-                <p className="text-xs text-muted-foreground capitalize">{format(new Date(startTime), "eeee, d 'de' MMMM, HH:mm'h'", { locale: es })}</p>
-              </div>
-            </div>
-            {isUpcoming && isConfirmed && <Badge variant="default" className="text-xs bg-green-600">Confirmada</Badge>}
-            {isUpcoming && !isConfirmed && <Badge variant="secondary" className="text-xs">Pendiente</Badge>}
-            {!isUpcoming && <Badge variant="outline" className="text-xs">Finalizada</Badge>}
-          </div>
-
-           <div className="flex justify-center items-center gap-1.5 pt-2">
-              <InfoButton 
-                  icon={Lightbulb} 
-                  text={levelDisplay} 
-                  onClick={() => handleInfoClick('level')}
-                  className={cn(isLevelAssigned && classifiedBadgeClass)}
-              />
-              <InfoButton 
-                  icon={CategoryIcon} 
-                  text={categoryDisplay} 
-                  onClick={() => handleInfoClick('category')} 
-                  className={cn(isCategoryAssigned && classifiedBadgeClass)}
-              />
-              <InfoButton 
-                  icon={Hash} 
-                  text={courtDisplay} 
-                  onClick={() => handleInfoClick('court')} 
-                  className={cn(isCourtAssigned && classifiedBadgeClass)}
-              />
-          </div>
-        </CardHeader>
-        <CardContent className="p-3 pt-1 flex-grow">
-          <div className="space-y-1">
-            {([1, 2, 3, 4] as const).map((optionSize) => {
-              const isUserBookedInThisOption = booking.groupSize === optionSize;
-              const playersInThisOption = bookingsByGroupSize[optionSize] || [];
-
-              return (
-                <div key={optionSize} className={cn("flex items-center justify-between p-1 rounded-md transition-all border border-transparent min-h-[44px]", isUserBookedInThisOption && "bg-blue-100/70 border-blue-200")}>
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: optionSize }).map((_, index) => {
-                      const playerInSpot = playersInThisOption[index];
-                      const isCurrentUserInSpot = playerInSpot?.userId === currentUser.id;
-                      const student = playerInSpot ? getMockStudents().find(s => s.id === playerInSpot.userId) : null;
-                      return (
-                        <Avatar key={index} className={cn("h-10 w-10", isCurrentUserInSpot && "border-2 border-primary")}>
-                          {playerInSpot && student ? (
-                            <>
-                              <AvatarImage src={student.profilePictureUrl} alt={student.name} data-ai-hint="student avatar small" />
-                              <AvatarFallback className="text-xs">{getInitials(student.name || '')}</AvatarFallback>
-                            </>
-                          ) : (
-                            <AvatarFallback className="bg-muted"><UserIcon className="h-4 w-4 text-muted-foreground" /></AvatarFallback>
-                          )}
-                        </Avatar>
-                      );
-                    })}
-                  </div>
-                  <div className="text-xs font-semibold flex items-center">
-                    {bookedWithPoints ? <><Gift className="mr-1.5 h-4 w-4 text-purple-600" />Gratis</> : <><Euro className="mr-1.5 h-4 w-4 text-green-600" />{(totalPrice! / booking.groupSize).toFixed(2)}</>}
-                  </div>
+      <div className="w-80 max-w-md mx-auto">
+        <Card className={cn("flex flex-col shadow-md border-l-4 h-full", cardBorderColor)}>
+          <CardHeader className="p-3">
+             <div className="flex justify-between items-start">
+                <div className="flex items-center space-x-3">
+                     <div className="flex-shrink-0 text-center font-bold bg-white p-1 rounded-md w-14 shadow-lg border border-border/20">
+                        <p className="text-xs uppercase">{format(new Date(startTime), "EEE", { locale: es })}</p>
+                        <p className="text-3xl leading-none">{format(new Date(startTime), "d")}</p>
+                        <p className="text-xs uppercase">{format(new Date(startTime), "MMM", { locale: es })}</p>
+                    </div>
+                     <div className="flex flex-col">
+                        <span className="font-semibold text-lg">{format(new Date(startTime), 'HH:mm')}h</span>
+                        <span className="text-sm text-muted-foreground">con {instructorName}</span>
+                    </div>
                 </div>
-              )
-            })}
-          </div>
-        </CardContent>
-        <CardFooter className="p-3 flex-col items-stretch space-y-2 border-t">
-          <CourtAvailabilityIndicator
-            availableCourts={availability.available}
-            occupiedCourts={availability.occupied}
-            totalCourts={availability.total}
-          />
-          <div className="pt-2 w-full">
-            {isUpcoming ? (
-              <Button size="sm" variant="destructive" className="w-full" onClick={handleCancel} disabled={isCancelling}>
-                {isCancelling ? <><List className="mr-1.5 h-3.5 w-3.5 animate-spin" />Cancelando...</> : <><Ban className="mr-1.5 h-3.5 w-3.5" />Cancelar</>}
-              </Button>
-            ) : (
-              <div className="flex items-center justify-center gap-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button key={star} onClick={() => onRateClass(bookingId, instructorName, star)}>
-                    <Star className={cn("h-6 w-6", (ratedBookings[bookingId] || 0) >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300')} />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </CardFooter>
-      </Card>
-    </div>
-    <InfoDialog isOpen={infoDialog.open} onOpenChange={(open) => setInfoDialog(prev => ({ ...prev, open }))} title={infoDialog.title} description={infoDialog.description} icon={infoDialog.icon} />
+                 <div className="flex items-center">
+                    {isUpcoming && isConfirmed && <Badge variant="default" className="text-xs bg-green-600">Confirmada</Badge>}
+                    {isUpcoming && !isConfirmed && <Badge variant="secondary" className="text-xs">Pendiente</Badge>}
+                    {!isUpcoming && <Badge variant="outline" className="text-xs">Finalizada</Badge>}
+                 </div>
+             </div>
+
+             <div className="flex justify-center items-center gap-1.5 pt-2">
+                <InfoButton 
+                    icon={Lightbulb} 
+                    text={levelDisplay} 
+                    onClick={() => handleInfoClick('level')}
+                    className={cn(isLevelAssigned && classifiedBadgeClass)}
+                />
+                <InfoButton 
+                    icon={CategoryIcon} 
+                    text={categoryDisplay} 
+                    onClick={() => handleInfoClick('category')} 
+                    className={cn(isCategoryAssigned && classifiedBadgeClass)}
+                />
+                <InfoButton 
+                    icon={Hash} 
+                    text={courtDisplay} 
+                    onClick={() => handleInfoClick('court')} 
+                    className={cn(isCourtAssigned && classifiedBadgeClass)}
+                />
+            </div>
+          </CardHeader>
+          <CardContent className="p-3 pt-1 flex-grow">
+            <div className="space-y-1">
+              {([1, 2, 3, 4] as const).map((optionSize) => {
+                const isUserBookedInThisOption = booking.groupSize === optionSize;
+                const playersInThisOption = bookingsByGroupSize[optionSize] || [];
+
+                return (
+                  <div key={optionSize} className={cn("flex items-center justify-between p-1 rounded-md transition-all border border-transparent min-h-[44px]", isUserBookedInThisOption && "bg-blue-100/70 border-blue-200")}>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: optionSize }).map((_, index) => {
+                        const playerInSpot = playersInThisOption[index];
+                        const isCurrentUserInSpot = playerInSpot?.userId === currentUser.id;
+                        const student = playerInSpot ? getMockStudents().find(s => s.id === playerInSpot.userId) : null;
+                        return (
+                          <Avatar key={index} className={cn("h-10 w-10", isCurrentUserInSpot && "border-2 border-primary")}>
+                            {playerInSpot && student ? (
+                              <>
+                                <AvatarImage src={student.profilePictureUrl} alt={student.name} data-ai-hint="student avatar small" />
+                                <AvatarFallback className="text-xs">{getInitials(student.name || '')}</AvatarFallback>
+                              </>
+                            ) : (
+                              <AvatarFallback className="bg-muted"><UserIcon className="h-4 w-4 text-muted-foreground" /></AvatarFallback>
+                            )}
+                          </Avatar>
+                        );
+                      })}
+                    </div>
+                    <div className="text-xs font-semibold flex items-center">
+                      {bookedWithPoints ? <><Gift className="mr-1.5 h-4 w-4 text-purple-600" />Gratis</> : <><Euro className="mr-1.5 h-4 w-4 text-green-600" />{(totalPrice! / booking.groupSize).toFixed(2)}</>}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </CardContent>
+          <CardFooter className="p-3 flex-col items-stretch space-y-2 border-t">
+            <CourtAvailabilityIndicator
+              availableCourts={availability.available}
+              occupiedCourts={availability.occupied}
+              totalCourts={availability.total}
+            />
+            <div className="pt-2 w-full">
+              {isUpcoming ? (
+                <Button size="sm" variant="destructive" className="w-full" onClick={handleCancel} disabled={isCancelling}>
+                  {isCancelling ? <><List className="mr-1.5 h-3.5 w-3.5 animate-spin" />Cancelando...</> : <><Ban className="mr-1.5 h-3.5 w-3.5" />Cancelar</>}
+                </Button>
+              ) : (
+                <div className="flex items-center justify-center gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button key={star} onClick={() => onRateClass(bookingId, instructorName, star)}>
+                      <Star className={cn("h-6 w-6", (ratedBookings[bookingId] || 0) >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300')} />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </CardFooter>
+        </Card>
+      </div>
+      <InfoDialog isOpen={infoDialog.open} onOpenChange={(open) => setInfoDialog(prev => ({ ...prev, open }))} title={infoDialog.title} description={infoDialog.description} icon={infoDialog.icon} />
     </>
   );
 };
