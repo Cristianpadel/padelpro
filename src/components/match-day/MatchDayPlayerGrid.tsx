@@ -8,12 +8,23 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getInitials } from '@/lib/utils';
-import { UserPlus, CheckCircle, Handshake, Dices, Swords, HardHat, RefreshCw, Clock, Loader2, Euro } from 'lucide-react';
+import { UserPlus, CheckCircle, Handshake, Dices, Swords, HardHat, RefreshCw, Clock, Loader2, Euro, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import { getMockPadelCourts } from '@/lib/mockData';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 type SimulatedPlayer = MatchDayInscription | { id: string; userName: string; userLevel: string; userProfilePictureUrl?: string; isEmptySlot?: boolean; userId: string; };
 
@@ -28,9 +39,10 @@ interface MatchDayPlayerGridProps {
     currentUser: User | null;
     onSelectPartner: (partnerId: string) => void;
     onSignUp: () => void;
+    isSubmitting: boolean;
 }
 
-const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscriptions, currentUser, onSelectPartner, onSignUp }) => {
+const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscriptions, currentUser, onSelectPartner, onSignUp, isSubmitting }) => {
     const mainList = inscriptions.filter(i => i.status === 'main');
     const reserveList = inscriptions.filter(i => i.status === 'reserve');
     const userInscription = inscriptions.find(i => i.userId === currentUser?.id);
@@ -171,7 +183,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
         
         simulationResetTimer.current = setTimeout(() => {
             handleResetSimulation();
-        }, 30000); // Reset after 30 seconds
+        }, 30000);
 
         setCountdown(30);
         countdownTimerRef.current = setInterval(() => {
@@ -273,12 +285,34 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                             }
                             // Render empty slot
                             return (
-                                <button key={`empty-${index}`} disabled={isMainListFull || !!userInscription} onClick={onSignUp} className="p-3 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-muted-foreground bg-secondary/30 h-40 shadow-sm transition-colors hover:bg-secondary/60 disabled:cursor-not-allowed disabled:opacity-50">
-                                    <div className="relative inline-flex items-center justify-center h-16 w-16 rounded-full border-[3px] border-dashed border-gray-400 bg-white/50 shadow-inner">
-                                        <UserPlus className="h-8 w-8" />
-                                    </div>
-                                    <p className="text-sm font-semibold mt-2 flex items-center">{event.price?.toFixed(2)}€</p>
-                                </button>
+                                 <AlertDialog key={`empty-${index}`}>
+                                    <AlertDialogTrigger asChild>
+                                        <button disabled={isMainListFull || !!userInscription || isSubmitting} className="p-3 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-muted-foreground bg-secondary/30 h-40 shadow-sm transition-colors hover:bg-secondary/60 disabled:cursor-not-allowed disabled:opacity-50">
+                                            {isSubmitting ? (
+                                                <Loader2 className="h-8 w-8 animate-spin" />
+                                            ) : (
+                                                 <div className="relative inline-flex items-center justify-center h-16 w-16 rounded-full border-[3px] border-dashed border-gray-400 bg-white/50 shadow-inner">
+                                                    <UserPlus className="h-8 w-8" />
+                                                </div>
+                                            )}
+                                            <p className="text-sm font-semibold mt-2 flex items-center">{event.price?.toFixed(2)}€</p>
+                                        </button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                        <AlertDialogTitle>Confirmar Inscripción</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            ¿Confirmas tu inscripción al evento "{event.name}" del {format(new Date(event.eventDate), "dd/MM/yyyy 'a las' HH:mm'h'", { locale: es })} por {event.price?.toFixed(2)}€? Una vez realizado el sorteo, la plaza es definitiva.
+                                        </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                        <AlertDialogCancel disabled={isSubmitting}>Cancelar</AlertDialogCancel>
+                                        <AlertDialogAction onClick={onSignUp} disabled={isSubmitting}>
+                                            {isSubmitting ? <Loader2 className="animate-spin" /> : "Confirmar Inscripción"}
+                                        </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
                             );
                         })}
                     </div>
@@ -318,12 +352,30 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                 }
                                 // Render empty reserve slot
                                 return (
-                                     <button key={`empty-reserve-${index}`} disabled={!isMainListFull || !!userInscription} onClick={onSignUp} className={cn("p-3 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-muted-foreground h-40 shadow-sm transition-colors", isMainListFull ? "bg-secondary/30 hover:bg-secondary/60" : "bg-gray-100 opacity-60", 'disabled:cursor-not-allowed disabled:opacity-50')}>
-                                        <div className="relative inline-flex items-center justify-center h-16 w-16 rounded-full border-[3px] border-dashed border-gray-400 bg-white/50 shadow-inner">
-                                            <UserPlus className="h-8 w-8 opacity-50" />
-                                        </div>
-                                        <p className="text-xs font-medium mt-2">Plaza Reserva</p>
-                                    </button>
+                                     <AlertDialog key={`empty-reserve-${index}`}>
+                                        <AlertDialogTrigger asChild>
+                                            <button disabled={!isMainListFull || !!userInscription || isSubmitting} className={cn("p-3 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-muted-foreground h-40 shadow-sm transition-colors", isMainListFull ? "bg-secondary/30 hover:bg-secondary/60" : "bg-gray-100 opacity-60", 'disabled:cursor-not-allowed disabled:opacity-50')}>
+                                                <div className="relative inline-flex items-center justify-center h-16 w-16 rounded-full border-[3px] border-dashed border-gray-400 bg-white/50 shadow-inner">
+                                                    <UserPlus className="h-8 w-8 opacity-50" />
+                                                </div>
+                                                <p className="text-xs font-medium mt-2">Plaza Reserva</p>
+                                            </button>
+                                        </AlertDialogTrigger>
+                                         <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                            <AlertDialogTitle>Confirmar Inscripción en Reserva</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                La lista principal está llena. Te inscribirás en la lista de reserva para el evento "{event.name}". Se te notificará si se libera una plaza.
+                                            </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                            <AlertDialogCancel disabled={isSubmitting}>Cancelar</AlertDialogCancel>
+                                            <AlertDialogAction onClick={onSignUp} disabled={isSubmitting}>
+                                                {isSubmitting ? <Loader2 className="animate-spin" /> : "Confirmar en Reserva"}
+                                            </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
                                 );
                             })}
                         </div>
@@ -333,14 +385,22 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                  {!event.matchesGenerated && eventCourts.length > 0 && (
                     <div className="mt-6">
                         <div className="flex items-center justify-between mb-3">
-                            <h4 className="font-semibold flex items-center"><Swords className="mr-2 h-5 w-5"/>Pistas Reservadas para el Evento</h4>
+                            <div className="flex items-center gap-4">
+                                <h4 className="font-semibold flex items-center"><Swords className="mr-2 h-5 w-5"/>Pistas Reservadas para el Evento</h4>
+                                {event.drawTime && (
+                                    <Badge variant="outline" className="text-xs">
+                                        <Clock className="mr-1.5 h-3 w-3"/>
+                                        Sorteo: {format(new Date(event.drawTime), "dd MMM, HH:mm'h'", { locale: es })}
+                                    </Badge>
+                                )}
+                            </div>
                              <div className="flex items-center gap-2">
                                 {isSimulating ? (
                                     <Button variant="ghost" size="sm" onClick={handleResetSimulation}>
-                                        <RefreshCw className="mr-2 h-4 w-4" /> Resetear ({countdown}s)
+                                        <RefreshCw className="mr-2 h-4 w-4" /> Resetear ({countdown})
                                     </Button>
                                 ) : (
-                                    <Button onClick={handleStartSimulation} size="lg" className="bg-purple-600 text-white hover:bg-purple-700" disabled={!userInscription}>
+                                    <Button onClick={handleStartSimulation} size="lg" className="bg-purple-600 text-white hover:bg-purple-700 sm:w-auto w-full" disabled={!userInscription}>
                                         <Dices className="mr-2 h-4 w-4" />
                                         Simular Sorteo
                                     </Button>
