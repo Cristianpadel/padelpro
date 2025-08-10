@@ -22,6 +22,7 @@ import { calculatePricePerPerson } from '@/lib/utils';
 import Link from 'next/link';
 import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
 
 interface CourtAvailabilityState {
     available: PadelCourt[];
@@ -175,12 +176,12 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
     <>
       <div className="w-80 max-w-md mx-auto">
         <Card className={cn("flex flex-col shadow-md border-l-4 h-full", cardBorderColor)}>
-            <CardHeader className="p-3 pt-2 pb-1 space-y-2">
+            <CardHeader className="p-3 pb-1 space-y-2">
                  <div className="flex justify-between items-start">
                     <div className="flex items-center space-x-3">
                         <Link href={`/instructors/${instructor.id}`} passHref className="group">
                             <Avatar className="h-12 w-12">
-                                <AvatarImage src={instructor?.profilePictureUrl} alt={instructor?.name || ''} data-ai-hint="instructor profile photo" />
+                                <AvatarImage src={instructor?.profilePictureUrl} alt={instructor?.name || ''} data-ai-hint="instructor profile photo"/>
                                 <AvatarFallback className="text-xl">{getInitials(instructor?.name || '')}</AvatarFallback>
                             </Avatar>
                         </Link>
@@ -190,11 +191,6 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
                             </Link>
                             {renderStarsDisplay(4.5)}
                         </div>
-                    </div>
-                     <div className="flex items-center">
-                        {isUpcoming && isConfirmed && <Badge variant="default" className="text-xs bg-green-600">Confirmada</Badge>}
-                        {isUpcoming && !isConfirmed && <Badge variant="secondary" className="text-xs">Pendiente</Badge>}
-                        {!isUpcoming && <Badge variant="outline" className="text-xs">Finalizada</Badge>}
                     </div>
                 </div>
 
