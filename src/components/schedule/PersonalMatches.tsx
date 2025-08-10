@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useTransition, useMemo } from 'react';
 import type { MatchBooking, User, Match, Club, PadelCategoryForSlot, MatchBookingMatchDetails, PadelCourt } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { List, Clock, Users, CalendarCheck, CalendarX, Loader2, Ban, Hash, Trophy, UserCircle, Gift, Info, MessageSquare, Euro, Users2 as CategoryIcon, Venus, Mars, Share2, Unlock, Lock, Repeat, Lightbulb } from 'lucide-react';
+import { List, Clock, Users, CalendarCheck, CalendarX, Loader2, Ban, Hash, Trophy, UserCircle, Gift, Info, MessageSquare, Euro, Users2 as CategoryIcon, Venus, Mars, Share2, Unlock, Lock, Repeat, Lightbulb, BarChartHorizontal } from 'lucide-react';
 import { format, differenceInHours } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -23,6 +23,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent as InfoDialogContent, DialogHeader as InfoDialogHeader, DialogTitle as InfoDialogTitle, DialogFooter as InfoDialogFooter, DialogClose as InfoDialogClose } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials, getPlaceholderUserName, calculatePricePerPerson } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -49,6 +50,42 @@ interface CourtAvailabilityState {
     total: number;
 }
 
+const InfoButton = ({ icon: Icon, text, onClick, className }: { icon: React.ElementType, text: string, onClick: () => void, className?: string }) => (
+    <Button variant="outline" className={cn("flex-1 h-8 rounded-full shadow-inner bg-slate-50 border-slate-200 capitalize text-xs", className)} onClick={onClick}>
+        <span className="font-bold text-slate-500 mr-1.5">+</span> {text}
+    </Button>
+);
+
+const InfoDialog: React.FC<{
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description: string;
+  icon: React.ElementType;
+}> = ({ isOpen, onOpenChange, title, description, icon: Icon }) => {
+  return (
+    <InfoDialogContent>
+        <InfoDialogHeader>
+          <InfoDialogTitle className="flex items-center text-xl">
+            <Icon className="mr-3 h-6 w-6 text-primary" />
+            {title}
+          </InfoDialogTitle>
+        </InfoDialogHeader>
+        <div className="py-4 text-base text-muted-foreground leading-relaxed whitespace-pre-line">
+            {description.split('\n').map((item, key) => (
+                <p key={key} className="mb-2">{`• ${item}`}</p>
+            ))}
+        </div>
+        <InfoDialogFooter>
+          <InfoDialogClose asChild>
+            <Button className="w-full">¡Entendido!</Button>
+          </InfoDialogClose>
+        </InfoDialogFooter>
+    </InfoDialogContent>
+  );
+};
+
+
 const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatchBooking, onBookingActionSuccess }) => {
   const [bookings, setBookings] = useState<MatchBooking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,6 +100,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
   const [allMatches, setAllMatches] = useState<Match[]>([]);
   const [now, setNow] = useState(new Date());
   const [availabilityData, setAvailabilityData] = useState<Record<string, CourtAvailabilityState>>({});
+  const [infoDialog, setInfoDialog] = useState<{ open: boolean, title: string, description: string, icon: React.ElementType }>({ open: false, title: '', description: '', icon: Lightbulb });
 
 
   const loadData = async () => {
@@ -77,7 +115,6 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
       setAllMatches(fetchedMatches);
       setError(null);
 
-      // Fetch availability for upcoming matches
       const upcoming = fetchedBookings.filter(b => b.matchDetails && new Date(b.matchDetails.endTime) > new Date());
       const newAvailabilityData: Record<string, CourtAvailabilityState> = {};
       for (const booking of upcoming) {
@@ -145,6 +182,24 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
         });
     }
   };
+  
+    const handleInfoClick = (type: 'level' | 'court' | 'category', match: MatchBookingMatchDetails) => {
+        let dialogData;
+        const CategoryIconDisplay = match.category === 'chica' ? Venus : match.category === 'chico' ? Mars : CategoryIcon;
+
+        switch (type) {
+            case 'level':
+                 dialogData = { title: 'Nivel', description: `El nivel de la partida lo define el primer jugador que se inscribe.\nEsto asegura que las partidas sean siempre equilibradas.`, icon: Lightbulb };
+                 break;
+            case 'court':
+                 dialogData = { title: 'Pista', description: `La pista se asigna automáticamente solo cuando la partida está completa (4 jugadores).\nRecibirás una notificación con el número de pista cuando se confirme.`, icon: Hash };
+                 break;
+            case 'category':
+                 dialogData = { title: 'Categoría', description: `La categoría (chicos/chicas) la sugiere el primer jugador que se apunta.\nNo es una regla estricta, solo una guía para los demás.`, icon: CategoryIconDisplay };
+                 break;
+        }
+        setInfoDialog({ open: true, ...dialogData });
+    };
 
   const handleCancelAndReoffer = (matchId: string) => {
     setCurrentActionInfo({ type: 'cancelAndReoffer', bookingId: '', matchId: matchId });
@@ -212,7 +267,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
   const renderBookingItem = (booking: MatchBooking, isUpcomingItem: boolean) => {
       if (!booking.matchDetails) {
           return (
-            <div key={booking.id} className="flex items-start space-x-3 p-3 sm:p-4 rounded-md bg-muted/30 opacity-50 w-80">
+            <div key={booking.id} className="flex items-start space-x-3 p-3 sm:p-4 rounded-lg bg-muted/30 opacity-50 w-80">
                <div className="flex-shrink-0 mt-1">
                  <CalendarX className="h-5 w-5 text-muted-foreground" />
                </div>
@@ -231,7 +286,6 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
       const isOrganizerOfPrivateMatch = status === 'confirmed_private' && organizerId === currentUser.id;
       const availability = availabilityData[booking.activityId];
       const pricePerPlayer = calculatePricePerPerson(totalCourtFee || 0, 4);
-
 
       let cancellationButtonText = "Cancelar Inscripción";
       let cancellationDialogText = "¿Estás seguro de que quieres cancelar tu inscripción?";
@@ -338,36 +392,36 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                  <div className="flex items-center"><Hash className="h-3.5 w-3.5 mr-1" />Pista {courtNumber || '?'}</div>
                  <div className="flex items-center"><Trophy className="h-3.5 w-3.5 mr-1" />{levelDisplay}</div>
              </div>
+             
+             <div className="flex justify-around items-center gap-1.5 my-2">
+                 <InfoButton icon={CategoryIcon} text={displayClassCategory(category, true)} onClick={() => handleInfoClick('category', booking.matchDetails!)} />
+                 <InfoButton icon={Hash} text={courtNumber ? `# ${courtNumber}` : '# Pista'} onClick={() => handleInfoClick('court', booking.matchDetails!)} />
+                 <InfoButton icon={BarChartHorizontal} text={level || "Nivel"} onClick={() => handleInfoClick('level', booking.matchDetails!)} />
+             </div>
            
-             <div className="flex justify-between items-center gap-2 mt-3">
+             <div className="grid grid-cols-4 gap-2 items-start justify-items-center mt-1">
                 {Array.from({ length: 4 }).map((_, idx) => {
                     const player = (bookedPlayers || [])[idx];
                     const fullPlayer = player ? (state.getMockStudents().find(s => s.id === player.userId) || (currentUser?.id === player.userId ? currentUser : null)) : null;
-                    
                     return (
-                        <TooltipProvider key={idx} delayDuration={150}>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <div className="flex flex-col items-center group/avatar-wrapper space-y-0.5 relative">
+                        <div key={idx} className="flex flex-col items-center group/avatar-wrapper space-y-0.5 relative text-center">
+                            <TooltipProvider delayDuration={150}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
                                         <Avatar className="h-10 w-10">
                                             <AvatarImage src={fullPlayer?.profilePictureUrl} data-ai-hint="player avatar small"/>
                                             <AvatarFallback className="text-sm bg-muted text-muted-foreground">{player ? getInitials(player.name || 'P') : '?'}</AvatarFallback>
                                         </Avatar>
-                                    </div>
-                                </TooltipTrigger>
-                                <TooltipContent side="bottom"><p>{player ? (player.name || 'Tú') : 'Plaza Libre'}</p></TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    )
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom"><p>{player ? (player.name || 'Tú') : 'Plaza Libre'}</p></TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                            <span className={cn("text-[11px] font-medium truncate w-auto max-w-[60px]", player ? "text-foreground" : "text-muted-foreground")}>
+                                {player ? (player.name || 'Tú').split(' ')[0] : 'Libre'}
+                            </span>
+                        </div>
+                    );
                 })}
-            </div>
-
-            <div className="text-center text-sm font-semibold text-muted-foreground mt-2">
-                {wasBookedWithPoints ? (
-                    <span className="flex items-center justify-center"><Gift className="h-4 w-4 mr-1 text-purple-600"/>{pointsCostForThisBooking} Puntos</span>
-                ) : (
-                    <span className="flex items-center justify-center"><Euro className="h-4 w-4 mr-1 text-green-600"/>{euroCostForThisBooking.toFixed(2)}€</span>
-                )}
             </div>
 
             {isUpcomingItem && availability && (
@@ -448,6 +502,9 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
               </div>
           )}
       </div>
+      <Dialog open={infoDialog.open} onOpenChange={(open) => setInfoDialog(prev => ({ ...prev, open }))}>
+        <InfoDialog isOpen={infoDialog.open} onOpenChange={(open) => setInfoDialog(prev => ({ ...prev, open }))} title={infoDialog.title} description={infoDialog.description} icon={infoDialog.icon} />
+      </Dialog>
       {selectedMatchForChat && (
           <MatchChatDialog
               isOpen={isChatDialogOpen}
