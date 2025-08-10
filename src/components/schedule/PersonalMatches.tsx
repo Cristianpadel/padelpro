@@ -335,24 +335,6 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
             }
       }
 
-      let levelDisplay: string;
-      if (level === 'abierto') {
-          levelDisplay = 'Nivel Abierto';
-      } else if (clubDetails && clubDetails.levelRanges) {
-          const numericLevel = parseFloat(level);
-          const matchingRange = clubDetails.levelRanges.find(range => {
-              const min = parseFloat(range.min);
-              const max = parseFloat(range.max);
-              return !isNaN(min) && !isNaN(max) && numericLevel >= min && numericLevel <= max;
-          });
-          levelDisplay = matchingRange ? `${matchingRange.name} (${level})` : `Nivel ${level}`;
-      } else {
-          levelDisplay = `Nivel ${level}`;
-      }
-
-      const pointsCostForThisBooking = wasBookedWithPoints ? calculatePricePerPerson(totalCourtFee || 0, 4) : 0;
-      const euroCostForThisBooking = !wasBookedWithPoints && totalCourtFee ? calculatePricePerPerson(totalCourtFee, 4) : 0;
-
       const handleSharePrivateMatch = () => {
         if (!privateShareCode) {
             toast({ title: "Error", description: "No se encontró el código para compartir esta partida.", variant: "destructive" });
@@ -375,11 +357,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
             }
         });
       };
-
-      const cardBorderColor = isUpcomingItem
-        ? (status === 'confirmed_private' ? 'border-l-purple-600' : (isMatchFull ? 'border-l-red-500' : 'border-l-blue-500'))
-        : 'border-l-gray-400';
-        
+      
       const provisionalMatch = !isUpcomingItem && nextRecurringMatchId ? allMatches.find(m => m.id === nextRecurringMatchId) : undefined;
       let renewalTimeLeft = '';
       let isRenewalExpired = false;
@@ -393,6 +371,11 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
               renewalTimeLeft = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
           }
       }
+
+      const canMakePrivate = isUpcomingItem && isUserInMatch && !isMatchFull && status !== 'confirmed_private';
+      const cardBorderColor = isUpcomingItem
+        ? (status === 'confirmed_private' ? 'border-l-purple-600' : (isMatchFull ? 'border-l-red-500' : 'border-l-blue-500'))
+        : 'border-l-gray-400';
 
       return (
         <div key={booking.id} className={cn("flex flex-col p-3 rounded-lg shadow-md space-y-2 border-l-4 w-80", cardBorderColor, isUpcomingItem ? 'bg-card border' : 'bg-muted/60 border border-border/50')}>
@@ -410,11 +393,33 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                     </div>
                 </div>
                   <div className="mt-0.5 flex flex-col items-end gap-1.5">
-                     {status === 'confirmed_private' && isUpcomingItem && <Badge variant="outline" className="text-xs bg-purple-100 text-purple-700 border-purple-400">Privada</Badge>}
-                     {isMatchFull && status !== 'confirmed_private' && isUpcomingItem && <Badge variant="default" className="text-xs bg-red-500">Completa</Badge>}
-                      {!isMatchFull && status !== 'confirmed_private' && isUpcomingItem && <Badge variant="outline" className="text-xs bg-blue-100 text-blue-700 border-blue-500">Inscrito</Badge>}
-                      {!isUpcomingItem && <Badge variant="outline" className="text-xs">Finalizada</Badge>}
-                       <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground"><Share2 className="h-4 w-4"/></Button>
+                    {canMakePrivate && (
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <button
+                                    className="flex items-center h-10 bg-purple-600 text-white rounded-lg shadow-lg cursor-pointer hover:bg-purple-700 transition-colors disabled:opacity-50"
+                                    disabled={isProcessingAction}
+                                >
+                                    <div className="flex items-center justify-center h-full w-10 bg-purple-700 rounded-l-lg">
+                                        {isProcessingAction && currentActionInfo?.bookingId === booking.id && currentActionInfo.type === 'makePrivate' ? <Loader2 className="h-5 w-5 animate-spin" /> : <Lock className="h-5 w-5" />}
+                                    </div>
+                                    <div className="px-3 text-center">
+                                        <p className="text-sm font-bold leading-tight">Hacer</p>
+                                        <p className="text-xs leading-tight">Privada</p>
+                                    </div>
+                                </button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader><AlertDialogTitle>Hacer Partida Privada</AlertDialogTitle><AlertDialogDescription>Pagarás las plazas restantes para completar la partida y asegurarla. Se te cobrará el coste correspondiente de tu saldo. ¿Continuar?</AlertDialogDescription></AlertDialogHeader>
+                                <AlertDialogFooter><AlertDialogCancel disabled={isProcessingAction}>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => handleMakePrivate(booking)} disabled={isProcessingAction} className="bg-purple-600 text-white hover:bg-purple-700">{isProcessingAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : "Sí, Hacer Privada"}</AlertDialogAction></AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    )}
+                    {isUpcomingItem && !canMakePrivate && status !== 'confirmed_private' && <Badge variant={isMatchFull ? 'destructive' : 'default'} className={cn('text-xs', isMatchFull ? 'bg-red-500' : 'bg-blue-500')}>{isMatchFull ? 'Completa' : 'Inscrito'}</Badge>}
+                    {isUpcomingItem && status === 'confirmed_private' && <Badge variant="outline" className="text-xs bg-purple-100 text-purple-700 border-purple-400">Privada</Badge>}
+                    {!isUpcomingItem && <Badge variant="outline" className="text-xs">Finalizada</Badge>}
+
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground"><Share2 className="h-4 w-4"/></Button>
                   </div>
              </div>
              
@@ -428,7 +433,6 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                 {Array.from({ length: 4 }).map((_, idx) => {
                     const player = (bookedPlayers || [])[idx];
                     const fullPlayer = player ? (state.getMockStudents().find(s => s.id === player.userId) || (currentUser?.id === player.userId ? currentUser : null)) : null;
-                    const spotLabel = player ? (player.name || 'Jugador').split(' ')[0] : (pricePerPlayer > 0 ? `${pricePerPlayer.toFixed(2)}€` : "Libre");
 
                     return (
                         <div key={idx} className="flex flex-col items-center group/avatar-wrapper space-y-0.5 relative text-center">
@@ -453,8 +457,8 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                                             </Avatar>
                                             <span className={cn(
                                                 "text-[11px] font-medium truncate w-auto max-w-[60px]",
-                                                player ? "text-foreground" : "text-muted-foreground",
-                                            )}>{spotLabel}</span>
+                                                player ? "text-foreground" : "text-muted-foreground"
+                                            )}>{player ? (player.name || 'Jugador').split(' ')[0] : (pricePerPlayer > 0 ? `${pricePerPlayer.toFixed(2)}€` : "Libre")}</span>
                                         </div>
                                     </TooltipTrigger>
                                     <TooltipContent side="bottom"><p>{player ? (player.name || 'Tú') : 'Plaza Libre'}</p></TooltipContent>
@@ -497,26 +501,27 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                       </div>
                   )}
                  {isUpcomingItem && !isOrganizerOfPrivateMatch && (
-                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full justify-center">
+                     <div className="flex items-center justify-center w-full">
                          <AlertDialog>
-                             <AlertDialogTrigger asChild><Button variant={buttonVariant} size="sm" className={cn("w-full sm:w-auto text-xs shadow-md border", buttonVariant === "destructive" && "bg-card text-destructive border-destructive hover:bg-destructive/10 hover:text-destructive", buttonVariant === "outline" && cancellationButtonText.includes("Bonificada") && "bg-green-500 text-white border-green-600 hover:bg-green-600", "disabled:opacity-50 disabled:cursor-not-allowed")} disabled={isProcessingAction && currentActionInfo?.bookingId === booking.id}>{isProcessingAction && currentActionInfo?.bookingId === booking.id ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Ban className="mr-1.5 h-3.5 w-3.5" />}{cancellationButtonText}</Button></AlertDialogTrigger>
+                             <AlertDialogTrigger asChild>
+                                <Button 
+                                    variant={buttonVariant} 
+                                    size="sm" 
+                                    className={cn(
+                                        "w-full sm:w-auto text-xs shadow-md border", 
+                                        buttonVariant === "destructive" && "bg-card text-destructive border-destructive hover:bg-destructive/10 hover:text-destructive", 
+                                        buttonVariant === "outline" && cancellationButtonText.includes("Bonificada") && "bg-green-500 text-white border-green-600 hover:bg-green-600",
+                                        "disabled:opacity-50 disabled:cursor-not-allowed"
+                                    )} 
+                                    disabled={isProcessingAction && currentActionInfo?.bookingId === booking.id}
+                                >
+                                    {isProcessingAction && currentActionInfo?.bookingId === booking.id ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Ban className="mr-1.5 h-3.5 w-3.5" />}
+                                    {cancellationButtonText}
+                                </Button>
+                             </AlertDialogTrigger>
                              <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>¿Confirmar Cancelación?</AlertDialogTitle><AlertDialogDescription>{cancellationDialogText}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={isProcessingAction && currentActionInfo?.bookingId === booking.id}>Cerrar</AlertDialogCancel><AlertDialogAction onClick={() => handleCancellationAction(booking)} disabled={isProcessingAction && currentActionInfo?.bookingId === booking.id} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{isProcessingAction && currentActionInfo?.bookingId === booking.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Sí, Cancelar"}</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
                          </AlertDialog>
-                         {isMatchFull && isUpcomingItem && (<Button variant="outline" size="sm" className="w-full sm:w-auto text-xs bg-blue-500 text-white border-blue-600 hover:bg-blue-600" onClick={() => handleOpenChatDialog(booking.matchDetails)}><MessageSquare className="mr-1.5 h-3.5 w-3.5" />Chat</Button>)}
-                          {isUpcomingItem && isUserInMatch && !isMatchFull && (
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button size="sm" className="w-full sm:w-auto text-xs bg-purple-600 text-white border-purple-700 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed" disabled={isProcessingAction}>
-                                        {isProcessingAction && currentActionInfo?.bookingId === booking.id && currentActionInfo.type === 'makePrivate' ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Lock className="mr-1.5 h-3.5 w-3.5" />}
-                                        Hacer Privada
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader><AlertDialogTitle>Hacer Partida Privada</AlertDialogTitle><AlertDialogDescription>Pagarás las plazas restantes para completar la partida y asegurarla. Se te cobrará el coste correspondiente de tu saldo. ¿Continuar?</AlertDialogDescription></AlertDialogHeader>
-                                    <AlertDialogFooter><AlertDialogCancel disabled={isProcessingAction}>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => handleMakePrivate(booking)} disabled={isProcessingAction} className="bg-purple-600 text-white hover:bg-purple-700">{isProcessingAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : "Sí, Hacer Privada"}</AlertDialogAction></AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-                          )}
+                         {isMatchFull && isUpcomingItem && (<Button variant="outline" size="sm" className="w-full sm:w-auto ml-2 text-xs bg-blue-500 text-white border-blue-600 hover:bg-blue-600" onClick={() => handleOpenChatDialog(booking.matchDetails)}><MessageSquare className="mr-1.5 h-3.5 w-3.5" />Chat</Button>)}
                      </div>
                  )}
                   {!isUpcomingItem && provisionalMatch && !isRenewalExpired && (
