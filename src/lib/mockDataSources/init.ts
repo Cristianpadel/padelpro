@@ -34,6 +34,7 @@ import { generateDynamicTimeSlots, generateDynamicMatches, simulateBookings } fr
 import { startOfDay, addDays, setHours, setMinutes, addMinutes, nextSunday } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import { defaultPointSettings } from '../config';
+import { bookClass, bookMatch } from './index';
 
 let isInitialized = false;
 
@@ -234,21 +235,75 @@ export function performInitialization() {
   
 
   // --- Simulate some initial activity to make the app look alive ---
-  simulateBookings({
-    clubId: 'club-1',
-    activityType: 'partidas',
-    days: ['monday', 'wednesday', 'friday', 'saturday'],
-    timeRanges: ['evening'],
-    studentCount: 3,
-    density: 20, // 20% of evening matches on these days
-  });
-   simulateBookings({
-    clubId: 'club-1',
-    activityType: 'clases',
-    days: ['tuesday', 'thursday'],
-    timeRanges: ['morning', 'midday'],
-    studentCount: 2,
-    density: 15, // 15% of morning/midday classes on these days
-  });
+  const simulateInitialData = async () => {
+    // General simulation
+    await simulateBookings({
+        clubId: 'club-1',
+        activityType: 'partidas',
+        days: ['monday', 'wednesday', 'friday', 'saturday'],
+        timeRanges: ['evening'],
+        studentCount: 3,
+        density: 20,
+    });
+    await simulateBookings({
+        clubId: 'club-1',
+        activityType: 'clases',
+        days: ['tuesday', 'thursday'],
+        timeRanges: ['morning', 'midday'],
+        studentCount: 2,
+        density: 15,
+    });
 
+    // Specific simulation from user request
+    const club = clubs().find(c => c.id === 'club-1');
+    if (club && club.levelRanges) {
+        const timeIntervals = ["08:00", "08:30", "09:00", "09:30"];
+        const students = userDatabase().filter(u => u.id !== 'user-current');
+        const today = startOfDay(new Date());
+
+        for (let i = 0; i < 7; i++) {
+            const date = addDays(today, i);
+            for (const time of timeIntervals) {
+                for (const levelRange of club.levelRanges) {
+                    const [hour, minute] = time.split(':').map(Number);
+                    const targetTime = setMinutes(setHours(date, hour), minute);
+
+                    // Book a class
+                    const classTarget = timeSlots().find(s =>
+                        s.clubId === club.id &&
+                        new Date(s.startTime).getTime() === targetTime.getTime() &&
+                        (s.bookedPlayers || []).length === 0
+                    );
+                    if (classTarget) {
+                        const studentForClass = students.find(st => {
+                            const studentLevel = parseFloat(st.level || '0');
+                            return studentLevel >= parseFloat(levelRange.min) && studentLevel <= parseFloat(levelRange.max);
+                        });
+                        if (studentForClass) {
+                            await bookClass(studentForClass.id, classTarget.id, 4, 0);
+                        }
+                    }
+
+                    // Book a match
+                    const matchTarget = matches().find(m =>
+                        m.clubId === club.id &&
+                        new Date(m.startTime).getTime() === targetTime.getTime() &&
+                        m.isPlaceholder
+                    );
+                    if (matchTarget) {
+                        const studentForMatch = students.find(st => {
+                             const studentLevel = parseFloat(st.level || '0');
+                            return studentLevel >= parseFloat(levelRange.min) && studentLevel <= parseFloat(levelRange.max);
+                        });
+                        if (studentForMatch) {
+                            await bookMatch(studentForMatch.id, matchTarget.id);
+                        }
+                    }
+                }
+            }
+        }
+    }
+  };
+
+  simulateInitialData();
 }
