@@ -5,8 +5,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { Booking, User, Review, TimeSlot, PadelCourt, Instructor } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { List, Star, Activity, CheckCircle, CalendarX, Ban, UserCircle as UserIcon, Clock, Hash, Euro, Gift, Lightbulb, BarChartHorizontal, Users2, Venus, Mars, Plus } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { List, Star, Activity, CheckCircle, CalendarX, Ban, UserCircle as UserIcon, Clock, Hash, Euro, Gift, Lightbulb, BarChartHorizontal, Users2, Venus, Mars, Plus, Share2 } from 'lucide-react';
 import { isPast, format, differenceInHours } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
@@ -176,27 +175,49 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
     <>
       <div className="w-80 max-w-md mx-auto">
         <Card className={cn("flex flex-col shadow-md border-l-4 h-full", cardBorderColor)}>
-          <CardHeader className="p-3">
-             <div className="flex justify-between items-start">
-                <div className="flex items-center space-x-3">
-                     <div className="flex-shrink-0 text-center font-bold bg-white p-1 rounded-md w-14 shadow-lg border border-border/20">
-                        <p className="text-xs uppercase">{format(new Date(startTime), "EEE", { locale: es })}</p>
-                        <p className="text-3xl leading-none">{format(new Date(startTime), "d")}</p>
-                        <p className="text-xs uppercase">{format(new Date(startTime), "MMM", { locale: es })}</p>
+            <CardHeader className="p-3 pt-2 pb-1 space-y-2">
+                 <div className="flex justify-between items-start">
+                    <div className="flex items-center space-x-3">
+                        <Link href={`/instructors/${instructor.id}`} passHref className="group">
+                            <Avatar className="h-12 w-12">
+                                <AvatarImage src={instructor?.profilePictureUrl} alt={instructor?.name || ''} data-ai-hint="instructor profile photo" />
+                                <AvatarFallback className="text-xl">{getInitials(instructor?.name || '')}</AvatarFallback>
+                            </Avatar>
+                        </Link>
+                        <div className="flex flex-col">
+                            <Link href={`/instructors/${instructor.id}`} passHref className="group">
+                                <p className="font-semibold text-lg text-gray-800 -mb-0.5 group-hover:underline">{instructorName}</p>
+                            </Link>
+                            {renderStarsDisplay(4.5)}
+                        </div>
                     </div>
-                     <div className="flex flex-col">
-                        <span className="font-semibold text-lg">{format(new Date(startTime), 'HH:mm')}h</span>
-                        <span className="text-sm text-muted-foreground">con {instructorName}</span>
-                         {instructor && renderStarsDisplay(4.5)}
+                     <div className="flex items-center">
+                        {isUpcoming && isConfirmed && <Badge variant="default" className="text-xs bg-green-600">Confirmada</Badge>}
+                        {isUpcoming && !isConfirmed && <Badge variant="secondary" className="text-xs">Pendiente</Badge>}
+                        {!isUpcoming && <Badge variant="outline" className="text-xs">Finalizada</Badge>}
                     </div>
                 </div>
-                 <div className="flex items-center">
-                    {isUpcoming && isConfirmed && <Badge variant="default" className="text-xs bg-green-600">Confirmada</Badge>}
-                    {isUpcoming && !isConfirmed && <Badge variant="secondary" className="text-xs">Pendiente</Badge>}
-                    {!isUpcoming && <Badge variant="outline" className="text-xs">Finalizada</Badge>}
+
+                 <div className="flex justify-center items-center gap-1.5 pt-1">
+                    <InfoButton icon={Lightbulb} text={levelDisplay} onClick={() => handleInfoClick('level')} className={cn(isLevelAssigned && classifiedBadgeClass)} />
+                    <InfoButton icon={CategoryIcon} text={categoryDisplay} onClick={() => handleInfoClick('category')} className={cn(isCategoryAssigned && classifiedBadgeClass)} />
+                    <InfoButton icon={Hash} text={courtDisplay} onClick={() => handleInfoClick('court')} className={cn(isCourtAssigned && classifiedBadgeClass)} />
                  </div>
-             </div>
-          </CardHeader>
+
+                <div className="flex justify-between items-center border-t border-border pt-1.5 mt-1">
+                    <div className="flex items-center space-x-3">
+                        <div className="flex flex-col items-center justify-center font-bold">
+                            <span className="text-4xl leading-none -mb-1">{format(new Date(startTime), 'd')}</span>
+                            <span className="text-[10px] uppercase leading-none">{format(new Date(startTime), "MMM", { locale: es })}</span>
+                        </div>
+                        <div className="text-sm">
+                            <p className="font-semibold text-foreground uppercase">{format(new Date(startTime), 'eeee HH:mm\'h\'', { locale: es })}</p>
+                            <p className="text-xs text-muted-foreground flex items-center"><Clock className="mr-1 h-3 w-3" />{slotDetails.durationMinutes} min</p>
+                        </div>
+                    </div>
+                    <Button variant="ghost" className="h-auto p-1 text-muted-foreground self-start"><Share2 className="h-5 w-5" /></Button>
+                </div>
+            </CardHeader>
           <CardContent className="p-3 pt-1 flex-grow">
             <div className="space-y-1">
               {([1, 2, 3, 4] as const).map((optionSize) => {
