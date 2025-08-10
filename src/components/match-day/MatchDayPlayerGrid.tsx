@@ -307,7 +307,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
                                         <AlertDialogCancel disabled={isSubmitting}>Mejor no</AlertDialogCancel>
-                                        <AlertDialogAction onClick={onSignUp} disabled={isSubmitting}>
+                                        <AlertDialogAction onClick={onSignUp} disabled={isSubmitting} className="bg-primary hover:bg-primary/90">
                                             {isSubmitting ? <Loader2 className="animate-spin" /> : "¡Sí, a jugar!"}
                                         </AlertDialogAction>
                                         </AlertDialogFooter>
