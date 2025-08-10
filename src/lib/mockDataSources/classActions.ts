@@ -446,3 +446,66 @@ export const toggleGratisSpot = async (slotId: string, optionSize: 1 | 2 | 3 | 4
     
     return { updatedSlot: slot };
 };
+
+export const fillClassAndMakePrivate = async (userId: string, slotId: string): Promise<{ updatedSlot: TimeSlot; cost: number } | { error: string }> => {
+    await new Promise(resolve => setTimeout(resolve, config.MINIMAL_DELAY));
+    const user = state.getMockUserDatabase().find(u => u.id === userId);
+    if (!user) return { error: "Usuario no encontrado." };
+
+    const slotIndex = state.getMockTimeSlots().findIndex(s => s.id === slotId);
+    if (slotIndex === -1) return { error: "Clase no encontrada." };
+
+    let slot = { ...state.getMockTimeSlots()[slotIndex] };
+    if (slot.status !== 'pre_registration') {
+        return { error: "Solo se pueden hacer privadas las clases en formación." };
+    }
+
+    const playersInClass = slot.bookedPlayers || [];
+    if (!playersInClass.some(p => p.userId === userId)) {
+        return { error: "Debes estar inscrito en la clase para hacerla privada." };
+    }
+
+    const userBooking = playersInClass.find(p => p.userId === userId);
+    if (!userBooking) return { error: "No se encontró tu reserva en esta clase." };
+
+    const groupSize = userBooking.groupSize;
+    const emptySpots = groupSize - playersInClass.length;
+    if (emptySpots <= 0) {
+        return { error: "La clase para este tamaño de grupo ya está llena." };
+    }
+
+    const pricePerPlayer = calculatePricePerPerson(slot.totalPrice, groupSize);
+    const totalCost = emptySpots * pricePerPlayer;
+
+    if (((user.credit ?? 0) - (user.blockedCredit ?? 0)) < totalCost) {
+        return { error: `Saldo insuficiente. Necesitas ${totalCost.toFixed(2)}€.` };
+    }
+    
+    const availableCourt = findAvailableCourt(slot.clubId, new Date(slot.startTime), new Date(slot.endTime));
+    if (!availableCourt) {
+        return { error: "No hay pistas disponibles en este momento para confirmar la clase." };
+    }
+
+    // Deduct credit and update balances
+    deductCredit(userId, totalCost, slot, 'Clase');
+    
+    // Update slot to be confirmed and private
+    slot.status = 'confirmed_private';
+    slot.organizerId = userId;
+    slot.confirmedPrivateSize = groupSize;
+    slot.courtNumber = availableCourt.courtNumber;
+    slot.privateShareCode = `privclass-${slotId.slice(-6)}-${Date.now().toString().slice(-6)}`;
+    
+    state.updateTimeSlotInState(slotId, slot);
+    _annulConflictingActivities(slot);
+    
+    // Update all bookings for this slot to 'confirmed'
+    for(const player of playersInClass) {
+        const booking = state.getMockUserBookings().find(b => b.activityId === slotId && b.userId === player.userId);
+        if (booking) {
+            state.updateUserBookingInState(booking.id, { status: 'confirmed' });
+        }
+    }
+
+    return { updatedSlot: slot, cost: totalCost };
+};

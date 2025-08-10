@@ -1,18 +1,18 @@
 // src/components/schedule/PersonalSchedule.tsx
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useTransition } from 'react';
 import type { Booking, User, Review, TimeSlot, PadelCourt, Instructor } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { List, Star, Activity, CheckCircle, CalendarX, Ban, UserCircle as UserIcon, Clock, Hash, Euro, Gift, Lightbulb, BarChartHorizontal, Users2, Venus, Mars, Plus, Share2 } from 'lucide-react';
+import { List, Star, Activity, CheckCircle, CalendarX, Ban, UserCircle as UserIcon, Clock, Hash, Euro, Gift, Lightbulb, BarChartHorizontal, Users2, Venus, Mars, Plus, Share2, Lock, Loader2 } from 'lucide-react';
 import { isPast, format, differenceInHours } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { displayClassLevel, displayClassCategory } from '@/types';
-import { cancelBooking, fetchUserBookings, addReviewToState, getMockStudents, getMockInstructors, isSlotEffectivelyCompleted, getCourtAvailabilityForInterval } from '@/lib/mockData';
+import { cancelBooking, fetchUserBookings, addReviewToState, getMockStudents, getMockInstructors, isSlotEffectivelyCompleted, getCourtAvailabilityForInterval, fillClassAndMakePrivate } from '@/lib/mockData';
 import { useRouter } from 'next/navigation';
 import { InfoCard } from './InfoCard';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -21,7 +21,8 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { calculatePricePerPerson } from '@/lib/utils';
 import Link from 'next/link';
 import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 
 interface CourtAvailabilityState {
@@ -91,6 +92,7 @@ interface BookingListItemProps {
 const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, ratedBookings, onRateClass, currentUser, onBookingCancelledOrCeded, instructor, availability }) => {
   const { toast } = useToast();
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isMakingPrivate, startMakePrivateTransition] = useTransition();
   const [infoDialog, setInfoDialog] = useState<{ open: boolean, title: string, description: string, icon: React.ElementType }>({ open: false, title: '', description: '', icon: Lightbulb });
   
   if (!booking.slotDetails || !instructor) return null;
@@ -119,6 +121,22 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
       onBookingCancelledOrCeded();
     }
     setIsCancelling(false);
+  };
+  
+  const handleMakePrivate = () => {
+      startMakePrivateTransition(async () => {
+        const result = await fillClassAndMakePrivate(currentUser.id, slotId);
+        if('error' in result) {
+            toast({ title: "Error", description: result.error, variant: 'destructive'});
+        } else {
+            toast({
+                title: "¡Clase Privada!",
+                description: `Has completado la clase. Coste de plazas restantes: ${result.cost.toFixed(2)}€.`,
+                className: "bg-purple-600 text-white"
+            });
+            onBookingCancelledOrCeded();
+        }
+      });
   };
   
   const handleInfoClick = (type: 'level' | 'court' | 'category') => {
@@ -160,6 +178,8 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
 
   const CategoryIcon = category === 'chica' ? Venus : category === 'chico' ? Mars : Users2;
   const classifiedBadgeClass = 'text-blue-700 border-blue-200 bg-blue-100 hover:border-blue-300';
+  
+  const canMakePrivate = isUpcoming && !isSlotCompleted && status === 'pre_registration' && booking.groupSize > 1;
 
   const renderStarsDisplay = (rating: number) => {
         const fullStars = Math.round(rating);
@@ -173,7 +193,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
 
   return (
     <>
-      <div className="w-80 max-w-md mx-auto">
+      <div className={cn("w-80 flex flex-col max-w-md mx-auto")}>
         <Card className={cn("flex flex-col shadow-md border-l-4 h-full", cardBorderColor)}>
           <CardHeader className="p-3 pb-1 space-y-2">
             <div className="flex justify-between items-start">
@@ -258,13 +278,35 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
               occupiedCourts={availability.occupied}
               totalCourts={availability.total}
             />
-            <div className="pt-2 w-full">
+            <div className="pt-2 w-full flex gap-2">
               {isUpcoming ? (
-                <Button size="sm" variant="destructive" className="w-full" onClick={handleCancel} disabled={isCancelling}>
-                  {isCancelling ? <><List className="mr-1.5 h-3.5 w-3.5 animate-spin" />Cancelando...</> : <><Ban className="mr-1.5 h-3.5 w-3.5" />Cancelar</>}
-                </Button>
+                <>
+                   {canMakePrivate && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="flex-1 bg-purple-100 text-purple-700 border-purple-300 hover:bg-purple-200 hover:text-purple-800" disabled={isMakingPrivate}>
+                                {isMakingPrivate ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Lock className="mr-1.5 h-3.5 w-3.5" />}
+                                Hacer Privada
+                            </Button>
+                           </AlertDialogTrigger>
+                           <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Hacer Clase Privada</AlertDialogTitle>
+                                <AlertDialogDescription>Pagarás las plazas restantes para completar la clase y asegurarla. Se te cobrará el coste correspondiente. ¿Continuar?</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel disabled={isMakingPrivate}>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleMakePrivate} disabled={isMakingPrivate} className="bg-purple-600 text-white hover:bg-purple-700">{isMakingPrivate ? <Loader2 className="animate-spin h-4 w-4"/> : "Sí, Hacer Privada"}</AlertDialogAction>
+                            </AlertDialogFooter>
+                           </AlertDialogContent>
+                        </AlertDialog>
+                    )}
+                    <Button size="sm" variant="destructive" className="flex-1" onClick={handleCancel} disabled={isCancelling}>
+                        {isCancelling ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Cancelando...</> : <><Ban className="mr-1.5 h-3.5 w-3.5" />Cancelar</>}
+                    </Button>
+                </>
               ) : (
-                <div className="flex items-center justify-center gap-1">
+                <div className="flex items-center justify-center gap-1 w-full">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button key={star} onClick={() => onRateClass(bookingId, instructorName, star)}>
                       <Star className={cn("h-6 w-6", (ratedBookings[bookingId] || 0) >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300')} />
