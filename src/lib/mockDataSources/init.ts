@@ -202,7 +202,7 @@ export function performInitialization() {
       eventEndTime: eventEndTime,
       courtIds: ['court-1', 'court-2', 'court-3', 'court-4'],
       maxPlayers: 16,
-      reservePlayers: 2,
+      reservePlayers: 4,
       price: 5,
       matchesGenerated: false,
     },
@@ -210,9 +210,9 @@ export function performInitialization() {
   initializeMockMatchDayEvents(initialMatchDayEvents);
   
   // --- Initialize Match-Day Inscriptions ---
-  const inscribedUsers = initialUserDatabase.slice(0, 18);
+  const inscribedUsers = initialUserDatabase.slice(0, 16);
   const initialMatchDayInscriptions = inscribedUsers.map((user, index) => {
-      const status = index < 16 ? 'main' : 'reserve';
+      const status = index < 14 ? 'main' : 'reserve';
       return {
           id: `md-insc-${user.id}`,
           eventId: matchDayEventId,
