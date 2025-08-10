@@ -3,7 +3,7 @@
 
 import React, { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
 import type { Match, User, Club, PadelCourt } from '@/types';
-import { getMockStudents, getMockClubs, bookMatch, confirmMatchAsPrivate, joinPrivateMatch, makeMatchPublic, bookCourtForMatchWithPoints, calculateActivityPrice, getCourtAvailabilityForInterval, isUserLevelCompatibleWithActivity } from '@/lib/mockData';
+import { getMockStudents, getMockClubs, bookMatch, confirmMatchAsPrivate, joinPrivateMatch, makeMatchPublic, bookCourtForMatchWithPoints, calculateActivityPrice, getCourtAvailabilityForInterval, isUserLevelCompatibleWithActivity, isMatchBookableWithPoints } from '@/lib/mockData';
 import { displayClassCategory } from '@/types';
 import { format, differenceInMinutes, differenceInDays, startOfDay, parse, getDay } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -77,7 +77,7 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
     const [isConfirmPrivateDialogOpen, setIsConfirmPrivateDialogOpen] = useState(false);
     const [isProcessingPrivateAction, setIsProcessingPrivateAction] = useState(false);
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-    const [dialogContent, setDialogContent] = useState<{ isJoiningWithPoints: boolean, pointsCost: number, price: number }>({ isJoiningWithPoints: false, pointsCost: 0, price: 0 });
+    const [dialogContent, setDialogContent] = useState<{ isJoiningWithPoints: boolean, pointsCost: number, price: number, spotIndex: number }>({ isJoiningWithPoints: false, pointsCost: 0, price: 0, spotIndex: 0 });
 
 
     useEffect(() => {
@@ -119,11 +119,12 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
     }, [isPlaceholderMatch, isUserBooked, currentMatch.startTime, clubInfo]);
 
     
-    const handleJoinClick = (isJoiningWithPoints = false) => {
+    const handleJoinClick = (spotIndex: number, isJoiningWithPoints = false) => {
       if(!currentUser) return;
       const pointsCostForSpot = isJoiningWithPoints ? (calculatePricePerPerson(currentMatch.totalCourtFee, 4) || 20) : 0;
       
       setDialogContent({
+          spotIndex,
           isJoiningWithPoints,
           pointsCost: pointsCostForSpot,
           price: pricePerPlayer
@@ -280,18 +281,18 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
                         <AlertDialogDescription asChild>
                             <div className="text-center text-lg text-foreground space-y-4 py-4">
                                 <div className="space-y-1">
-                                    <div>Te apuntas a una partida de pádel.</div>
-                                    <div className="flex items-center justify-center text-3xl font-bold">
+                                    <p>Te apuntas a una partida de pádel.</p>
+                                    <p className="flex items-center justify-center text-3xl font-bold">
                                          {dialogContent.isJoiningWithPoints || (currentMatch.gratisSpotAvailable && currentMatch.bookedPlayers.length === 3)
                                              ? <> <Gift className="h-8 w-8 mr-2 text-yellow-500" /> {dialogContent.pointsCost} <span className="text-lg ml-1">puntos</span> </>
                                              : <> <Euro className="h-7 w-7 mr-1" /> {dialogContent.price.toFixed(2)} </>
                                          }
-                                    </div>
+                                    </p>
                                      {!dialogContent.isJoiningWithPoints && pointsToAward > 0 && (
-                                        <div className="text-sm font-semibold text-amber-600 flex items-center justify-center">
+                                        <p className="text-sm font-semibold text-amber-600 flex items-center justify-center">
                                             <Star className="h-4 w-4 mr-1.5 fill-amber-400" />
                                             ¡Ganarás {pointsToAward} puntos por esta reserva!
-                                        </div>
+                                        </p>
                                      )}
                                   </div>
                             </div>
