@@ -236,39 +236,42 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                     <div className="mt-6">
                         <div className="flex items-center justify-between mb-3">
                             <h4 className="font-semibold">Pistas Reservadas para el Evento</h4>
-                            <div className="flex items-center gap-2">
+                             <div className="flex items-center gap-2">
                                 {simulatedMatches.length > 0 && (
                                     <Button variant="ghost" size="sm" onClick={handleResetSimulation}>
                                         <RefreshCw className="mr-2 h-4 w-4" /> Resetear
                                     </Button>
                                 )}
-                                <Button onClick={handleSimulateDraw} size="lg" className="bg-purple-600 text-white hover:bg-purple-700 sm:w-auto" disabled={!userInscription}>
+                                <Button onClick={handleSimulateDraw} size="lg" className="w-full bg-purple-600 text-white hover:bg-purple-700 sm:w-auto" disabled={!userInscription}>
                                     <Dices className="mr-2 h-4 w-4" />
                                     Simular Sorteo
                                 </Button>
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {eventCourts.map((court, index) => {
                                 const simulatedMatch = simulatedMatches[index];
                                 return (
-                                    <div key={court.id} className="p-3 border rounded-lg flex flex-col justify-between bg-background shadow-md min-h-40">
+                                    <div key={court.id} className="p-3 border rounded-lg flex flex-col justify-between bg-secondary/20 shadow-sm min-h-40">
                                         <div>
                                             <p className="font-semibold text-sm truncate">{court.name}</p>
                                             <Badge variant="outline" className="text-xs">Pista #{court.courtNumber}</Badge>
                                         </div>
                                         <div className="flex-grow flex items-center justify-center">
                                             {simulatedMatch ? (
-                                                <div className="grid grid-cols-2 gap-2 mt-2">
-                                                    {simulatedMatch.bookedPlayers.map(player => (
-                                                        <div key={player.userId} className="flex flex-col items-center text-center">
-                                                             <Avatar className="h-10 w-10">
-                                                                <AvatarImage src={player.profilePictureUrl} data-ai-hint="player avatar small" />
-                                                                <AvatarFallback>{getInitials(player.name || '')}</AvatarFallback>
-                                                            </Avatar>
-                                                            <p className="text-[10px] mt-1 truncate max-w-[50px]">{player.name}</p>
-                                                        </div>
-                                                    ))}
+                                                <div className="w-full max-w-[150px] aspect-[2/3] bg-green-500 rounded-md p-2 flex flex-col justify-between items-center relative shadow-lg border-2 border-white/50">
+                                                    {/* Top side players */}
+                                                    <div className="w-full flex justify-around">
+                                                        <Avatar className="h-8 w-8 border-2 border-white"><AvatarImage src={simulatedMatch.bookedPlayers[0]?.profilePictureUrl} /><AvatarFallback>{getInitials(simulatedMatch.bookedPlayers[0]?.name || '')}</AvatarFallback></Avatar>
+                                                        <Avatar className="h-8 w-8 border-2 border-white"><AvatarImage src={simulatedMatch.bookedPlayers[1]?.profilePictureUrl} /><AvatarFallback>{getInitials(simulatedMatch.bookedPlayers[1]?.name || '')}</AvatarFallback></Avatar>
+                                                    </div>
+                                                    {/* Net */}
+                                                    <div className="h-0.5 w-full bg-white/50 my-1"></div>
+                                                    {/* Bottom side players */}
+                                                    <div className="w-full flex justify-around">
+                                                        <Avatar className="h-8 w-8 border-2 border-white"><AvatarImage src={simulatedMatch.bookedPlayers[2]?.profilePictureUrl} /><AvatarFallback>{getInitials(simulatedMatch.bookedPlayers[2]?.name || '')}</AvatarFallback></Avatar>
+                                                        <Avatar className="h-8 w-8 border-2 border-white"><AvatarImage src={simulatedMatch.bookedPlayers[3]?.profilePictureUrl} /><AvatarFallback>{getInitials(simulatedMatch.bookedPlayers[3]?.name || '')}</AvatarFallback></Avatar>
+                                                    </div>
                                                 </div>
                                             ) : (
                                                 <div className="relative inline-flex items-center justify-center h-16 w-16 rounded-full border-2 border-gray-300 bg-gray-100 shadow-inner">
