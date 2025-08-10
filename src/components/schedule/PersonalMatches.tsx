@@ -35,6 +35,7 @@ import {
   Tooltip,
   TooltipProvider,
   TooltipTrigger,
+  TooltipContent,
 } from "@/components/ui/tooltip";
 import * as state from '@/lib/mockDataSources/state'; // Fix: Import the state module
 
@@ -156,8 +157,8 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
     });
   };
 
-  const upcomingBookings = bookings.filter(b => b.matchDetails && !b.matchDetails.eventId && new Date(b.matchDetails.endTime) > now);
-  const pastBookings = bookings.filter(b => b.matchDetails && !b.matchDetails.eventId && new Date(b.matchDetails.endTime) <= now);
+  const upcomingBookings = bookings.filter(b => b.matchDetails && new Date(b.matchDetails.endTime) > now);
+  const pastBookings = bookings.filter(b => b.matchDetails && new Date(b.matchDetails.endTime) <= now);
 
 
   if (loading) {
