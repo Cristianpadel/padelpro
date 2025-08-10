@@ -36,6 +36,7 @@ import { Separator } from '../ui/separator';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
+import { hasAnyConfirmedActivityForDay } from '@/lib/mockData';
 
 
 interface PersonalMatchesProps {
@@ -50,7 +51,12 @@ interface CourtAvailabilityState {
     total: number;
 }
 
-const InfoButton = ({ icon: Icon, text, onClick, className }: { icon: React.ElementType, text: string, onClick: () => void, className?: string }) => (
+const InfoButton: React.FC<{
+    icon: React.ElementType;
+    text: string;
+    onClick: () => void;
+    className?: string;
+}> = ({ icon: Icon, text, onClick, className }) => (
     <button className={cn("flex-1 flex items-center justify-center text-xs h-8 rounded-full shadow-inner bg-slate-50 border border-slate-200 capitalize hover:bg-slate-100 transition-colors", className)} onClick={onClick}>
         <Icon className="mr-1.5 h-3 w-3 text-slate-500" /> 
         <span className="font-medium text-slate-700">{text}</span>
@@ -309,6 +315,13 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
       const pricePerPlayer = calculatePricePerPerson(totalCourtFee || 0, 4);
       const isUserInMatch = (bookedPlayers || []).some(p => p.userId === currentUser.id);
 
+      const isLevelAssigned = level !== 'abierto';
+      const isCategoryAssigned = category !== 'abierta';
+      const isCourtAssigned = !!courtNumber;
+      const classifiedBadgeClass = 'text-blue-700 border-blue-200 bg-blue-100 hover:border-blue-300';
+      const CategoryIconDisplay = category === 'chica' ? Venus : category === 'chico' ? Mars : CategoryIcon;
+
+
       let cancellationButtonText = "Cancelar Inscripción";
       let cancellationDialogText = "¿Estás seguro de que quieres cancelar tu inscripción?";
       let buttonVariant: "destructive" | "outline" = "destructive";
@@ -424,9 +437,9 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
              </div>
              
              <div className="flex justify-around items-center gap-1.5 my-1">
-                <InfoButton icon={CategoryIcon} text={displayClassCategory(category, true)} onClick={() => handleInfoClick('category', booking.matchDetails!)} />
-                <InfoButton icon={Hash} text={courtNumber ? `# ${courtNumber}` : '# Pista'} onClick={() => handleInfoClick('court', booking.matchDetails!)} />
-                <InfoButton icon={BarChartHorizontal} text={level || "Nivel"} onClick={() => handleInfoClick('level', booking.matchDetails!)} />
+                <InfoButton icon={CategoryIcon} text={displayClassCategory(category, true)} onClick={() => handleInfoClick('category', booking.matchDetails!)} className={cn(isCategoryAssigned && classifiedBadgeClass)} />
+                <InfoButton icon={Hash} text={courtNumber ? `# ${courtNumber}` : '# Pista'} onClick={() => handleInfoClick('court', booking.matchDetails!)} className={cn(isCourtAssigned && classifiedBadgeClass)} />
+                <InfoButton icon={BarChartHorizontal} text={level || "Nivel"} onClick={() => handleInfoClick('level', booking.matchDetails!)} className={cn(isLevelAssigned && classifiedBadgeClass)} />
              </div>
            
             <div className="grid grid-cols-4 gap-2 items-start justify-items-center mt-1">
