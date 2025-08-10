@@ -323,7 +323,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ bookingsForSlot, isUp
               })}
             </div>
           </CardContent>
-          <CardFooter className="p-2 pt-1 flex-col items-stretch space-y-1 border-t">
+          <CardFooter className="p-2 pt-1 flex flex-col items-stretch space-y-1 border-t">
             <CourtAvailabilityIndicator
               availableCourts={availability.available}
               occupiedCourts={availability.occupied}
@@ -360,10 +360,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ bookingsForSlot, isUp
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader><AlertDialogTitle>Confirmar Cancelación</AlertDialogTitle><AlertDialogDescription>¿Estás seguro que quieres cancelar tu inscripción? Se te podría aplicar una penalización.</AlertDialogDescription></AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Volver</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleCancel(primaryBooking.id)} className="bg-destructive hover:bg-destructive/90">Sí, Cancelar</AlertDialogAction>
-                        </AlertDialogFooter>
+                        <AlertDialogFooter><AlertDialogCancel>Volver</AlertDialogCancel><AlertDialogAction onClick={() => handleCancel(primaryBooking.id)} className="bg-destructive hover:bg-destructive/90">Sí, Cancelar</AlertDialogAction></AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
                 </>
@@ -493,7 +490,7 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
     return (
       <div className="space-y-4">
          <Skeleton className="h-8 w-3/4" />
-         <div className="flex space-x-4">
+         <div className="flex space-x-2">
             <Skeleton className="h-96 w-80" />
             <Skeleton className="h-96 w-80" />
          </div>
@@ -548,7 +545,7 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
         <div>
           <h4 className="text-base font-semibold mb-3 text-foreground flex items-center"><Clock className="mr-2 h-4 w-4" /> Próximas</h4>
            <ScrollArea>
-              <div className="flex space-x-4 pb-4">
+              <div className="flex space-x-2 pb-4">
                 {upcomingBookings.map(group => renderBookingGroup(group, true))}
               </div>
               <ScrollBar orientation="horizontal" />
@@ -560,7 +557,7 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
         <div>
            <h4 className="text-base font-semibold mb-3 text-muted-foreground flex items-center"><CheckCircle className="mr-2 h-4 w-4" /> Historial</h4>
             <ScrollArea>
-              <div className="flex space-x-4 pb-4">
+              <div className="flex space-x-2 pb-4">
                 {pastBookings.map(group => renderBookingGroup(group, false))}
               </div>
               <ScrollBar orientation="horizontal" />
