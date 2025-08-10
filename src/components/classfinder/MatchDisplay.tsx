@@ -203,6 +203,11 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
         }
 
         workingMatches.sort((a, b) => {
+            const isUserInA = !('isEventCard' in a) && (a as Match).bookedPlayers?.some(p => p.userId === currentUser.id);
+            const isUserInB = !('isEventCard' in b) && (b as Match).bookedPlayers?.some(p => p.userId === currentUser.id);
+            if (isUserInA && !isUserInB) return -1;
+            if (!isUserInA && isUserInB) return 1;
+
             const isAPlaceholder = !('isEventCard' in a) && (a as Match).isPlaceholder;
             const isBPlaceholder = !('isEventCard' in b) && (b as Match).isPlaceholder;
             if (isAPlaceholder && !isBPlaceholder) return 1;
