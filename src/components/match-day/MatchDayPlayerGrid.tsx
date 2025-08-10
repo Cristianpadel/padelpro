@@ -291,7 +291,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                             {isSubmitting ? (
                                                 <Loader2 className="h-8 w-8 animate-spin" />
                                             ) : (
-                                                 <div className="relative inline-flex items-center justify-center h-16 w-16 rounded-full border-[3px] border-dashed border-gray-400 bg-white/50 shadow-inner">
+                                                    <div className="relative inline-flex items-center justify-center h-16 w-16 rounded-full border-[3px] border-dashed border-gray-400 bg-white/50 shadow-inner">
                                                     <UserPlus className="h-8 w-8" />
                                                 </div>
                                             )}
@@ -300,15 +300,15 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>
                                         <AlertDialogHeader>
-                                        <AlertDialogTitle>Confirmar Inscripción</AlertDialogTitle>
+                                        <AlertDialogTitle>¡Hola! ¿Quieres Jugar?</AlertDialogTitle>
                                         <AlertDialogDescription>
-                                            ¿Confirmas tu inscripción al evento "{event.name}" del {format(new Date(event.eventDate), "dd/MM/yyyy 'a las' HH:mm'h'", { locale: es })} por {event.price?.toFixed(2)}€? Una vez realizado el sorteo, la plaza es definitiva.
+                                            Vamos a jugar una partida muy chula. Cuesta unas poquitas monedas. Si dices que sí, ¡es para siempre y no puedes borrarte! ¿Te apuntas?
                                         </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
-                                        <AlertDialogCancel disabled={isSubmitting}>Cancelar</AlertDialogCancel>
+                                        <AlertDialogCancel disabled={isSubmitting}>Mejor no</AlertDialogCancel>
                                         <AlertDialogAction onClick={onSignUp} disabled={isSubmitting}>
-                                            {isSubmitting ? <Loader2 className="animate-spin" /> : "Confirmar Inscripción"}
+                                            {isSubmitting ? <Loader2 className="animate-spin" /> : "¡Sí, a jugar!"}
                                         </AlertDialogAction>
                                         </AlertDialogFooter>
                                     </AlertDialogContent>
@@ -464,6 +464,6 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
         </Card>
         </>
     );
-};
+}
 
 export default MatchDayPlayerGrid;
