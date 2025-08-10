@@ -38,7 +38,6 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
     const [eventCourts, setEventCourts] = useState<PadelCourt[]>([]);
     const [simulatedMatches, setSimulatedMatches] = useState<SimulatedTeam[][]>([]);
     const [isSimulating, setIsSimulating] = useState(false);
-    const [countdown, setCountdown] = useState(30);
     const simulationResetTimer = useRef<NodeJS.Timeout | null>(null);
 
 
@@ -82,14 +81,14 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
 
         // 1. Process mutual pairs first
         for (const playerA of playersToProcess) {
-            if (processedUserIds.has(playerA.userId) || 'isEmptySlot' in playerA) continue;
+            if (processedUserIds.has(playerA.userId) || ('isEmptySlot' in playerA && playerA.isEmptySlot)) continue;
             
             const partnerId = (playerA as MatchDayInscription).preferredPartnerId;
             if (!partnerId) continue;
             
             const playerB = playersToProcess.find(p => p.userId === partnerId) as MatchDayInscription | undefined;
 
-            if (playerB && playerB.preferredPartnerId === playerA.userId) {
+            if (playerB && !('isEmptySlot' in playerB) && playerB.preferredPartnerId === playerA.userId) {
                 const levelA = parseFloat(playerA.userLevel);
                 const levelB = parseFloat(playerB.userLevel);
                 const teamLevel = Math.min(isNaN(levelA) ? 99 : levelA, isNaN(levelB) ? 99 : levelB);
@@ -121,7 +120,6 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                 const teamLevel = Math.min(isNaN(levelA) ? 99 : levelA, isNaN(levelB) ? 99 : levelB);
                 singlePairs.push({ players: [playerA, playerB], teamLevel });
             } else {
-                // If there's an odd player left, pair them with an empty slot
                 const playerA = singles[i];
                  const levelA = parseFloat(playerA.userLevel);
                  singlePairs.push({ players: [playerA, {id: 'empty-single', userName: 'Plaza Libre', userLevel: '0.0', isEmptySlot: true, userProfilePictureUrl: '/avatar-placeholder.png', userId:'empty-single-user'}], teamLevel: isNaN(levelA) ? 0 : levelA });
@@ -138,7 +136,6 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
             if (allPairs[i+1]) {
                 finalMatches.push([allPairs[i], allPairs[i+1]]);
             } else {
-                // Handle the case of an odd number of teams
                 const placeholderTeam: SimulatedTeam = {
                     players: [
                         { id: 'empty-team-1', userName: 'Plaza Libre', userLevel: '0.0', isEmptySlot: true, userProfilePictureUrl: '/avatar-placeholder.png', userId: 'empty-team-user-1'},
@@ -164,23 +161,12 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
         }
 
         setIsSimulating(true);
-        setCountdown(30);
-
-        const timer = setInterval(() => {
-            setCountdown(prev => {
-                if (prev <= 1) {
-                    clearInterval(timer);
-                    handleSimulateDraw(); // Run the actual draw logic
-                    setIsSimulating(false);
-                    // Set a timer to reset the simulation after 30 seconds
-                    simulationResetTimer.current = setTimeout(() => {
-                        handleResetSimulation();
-                    }, 30000);
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
+        handleSimulateDraw(); // Run the actual draw logic immediately
+        
+        // Set a timer to reset the simulation after 30 seconds
+        simulationResetTimer.current = setTimeout(() => {
+            handleResetSimulation();
+        }, 30000);
     };
 
 
@@ -190,6 +176,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
             simulationResetTimer.current = null;
         }
         setSimulatedMatches([]);
+        setIsSimulating(false);
     }
 
     return (
@@ -317,24 +304,16 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                         <div className="flex items-center justify-between mb-3">
                             <h4 className="font-semibold">Pistas Reservadas para el Evento</h4>
                             <div className="flex items-center gap-2">
-                                {simulatedMatches.length > 0 && (
+                                {isSimulating ? (
                                     <Button variant="ghost" size="sm" onClick={handleResetSimulation}>
                                         <RefreshCw className="mr-2 h-4 w-4" /> Resetear
                                     </Button>
+                                ) : (
+                                    <Button onClick={handleStartSimulation} size="lg" className="bg-purple-600 text-white hover:bg-purple-700" disabled={!userInscription}>
+                                        <Dices className="mr-2 h-4 w-4" />
+                                        Simular Sorteo
+                                    </Button>
                                 )}
-                                <Button onClick={handleStartSimulation} size="lg" className="w-full bg-purple-600 text-white hover:bg-purple-700 sm:w-auto" disabled={isSimulating || !userInscription}>
-                                    {isSimulating ? (
-                                        <>
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            Simulando en {countdown}s...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Dices className="mr-2 h-4 w-4" />
-                                            Simular Sorteo
-                                        </>
-                                    )}
-                                </Button>
                             </div>
                         </div>
                         <div className="flex flex-wrap justify-center gap-4">
