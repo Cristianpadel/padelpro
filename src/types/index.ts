@@ -369,6 +369,7 @@ export interface MatchDayInscription {
   preferredPartnerId?: string;
   amountBlocked?: number;
   cancelledAt?: Date;
+  eventDetails?: MatchDayEvent;
 }
 
 export interface Product {

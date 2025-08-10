@@ -1,10 +1,11 @@
+// src/app/(app)/admin/components/ManageMatchDayPanel.tsx
 "use client";
 
 import React, { useState, useEffect, useTransition, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { addDays, format } from 'date-fns';
+import { addDays, format, set, setHours, setMinutes } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,7 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, CalendarPlus, List, Check, HardHat, Users, ArrowRight, Euro, Edit, Trash2, Dices, Settings2 } from 'lucide-react';
+import { Loader2, CalendarPlus, List, Check, HardHat, Users, ArrowRight, Euro, Edit, Trash2, Dices, Settings2, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { createMatchDayEvent, getMockPadelCourts, fetchActiveMatchDayEvents, getMatchDayInscriptions, deleteMatchDayEvent, manuallyTriggerMatchDayDraw } from '@/lib/mockData';
 import type { Club, PadelCourt, MatchDayEvent } from '@/types';
@@ -54,6 +55,8 @@ const formSchema = z.object({
   eventDate: z.date({ required_error: "Se requiere una fecha." }),
   eventTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Formato HH:MM requerido."),
   eventEndTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Formato HH:MM requerido."),
+  drawDate: z.date({ required_error: "Se requiere una fecha de sorteo." }),
+  drawTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Formato HH:MM requerido."),
   price: z.coerce.number().min(0, "El precio no puede ser negativo.").default(0),
   maxPlayers: z.coerce.number().int().min(4, "Mínimo 4 plazas.").max(100,"Máximo 100 plazas."),
   reservePlayers: z.coerce.number().int().min(0, "Debe ser 0 o más.").max(20, "Máximo 20 reservas."),
@@ -109,6 +112,8 @@ const ManageMatchDayPanel: React.FC<ManageMatchDayPanelProps> = ({ club, onEvent
       eventDate: addDays(new Date(), 7),
       eventTime: "10:00",
       eventEndTime: "13:00",
+      drawDate: addDays(new Date(), 6),
+      drawTime: "12:00",
       price: 5,
       maxPlayers: 16,
       reservePlayers: 4,
@@ -160,12 +165,16 @@ const ManageMatchDayPanel: React.FC<ManageMatchDayPanelProps> = ({ club, onEvent
         const [endHours, endMinutes] = values.eventEndTime.split(':').map(Number);
         eventEndDateTime.setHours(endHours, endMinutes, 0, 0);
 
+        const drawDateTime = new Date(values.drawDate);
+        const [drawHours, drawMinutes] = values.drawTime.split(':').map(Number);
+        drawDateTime.setHours(drawHours, drawMinutes, 0, 0);
 
         const eventData = {
             clubId: club.id,
             name: values.name,
             eventDate: eventStartDateTime,
             eventEndTime: eventEndDateTime,
+            drawTime: drawDateTime,
             price: values.price,
             maxPlayers: values.maxPlayers,
             reservePlayers: values.reservePlayers,
@@ -203,6 +212,10 @@ const ManageMatchDayPanel: React.FC<ManageMatchDayPanelProps> = ({ club, onEvent
                      <div className="flex gap-4">
                         <FormField control={form.control} name="eventTime" render={({ field }) => (<FormItem className="flex-1"><FormLabel>Hora Inicio (HH:MM)</FormLabel><FormControl><Input type="time" {...field} /></FormControl><FormMessage /></FormItem>)} />
                         <FormField control={form.control} name="eventEndTime" render={({ field }) => (<FormItem className="flex-1"><FormLabel>Hora Fin (HH:MM)</FormLabel><FormControl><Input type="time" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    </div>
+                    <div className="flex gap-4">
+                         <FormField control={form.control} name="drawDate" render={({ field }) => (<FormItem className="flex flex-col flex-1"><FormLabel>Fecha Sorteo</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}>{field.value ? format(field.value, "PPP", { locale: es }) : <span>Elige fecha</span>}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                         <FormField control={form.control} name="drawTime" render={({ field }) => (<FormItem className="flex-1"><FormLabel>Hora Sorteo</FormLabel><FormControl><Input type="time" {...field} /></FormControl><FormMessage /></FormItem>)} />
                     </div>
                      <div className="flex gap-4">
                         <FormField control={form.control} name="maxPlayers" render={({ field }) => (<FormItem className="flex-1"><FormLabel>Plazas Principales</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />

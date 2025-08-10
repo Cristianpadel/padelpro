@@ -22,6 +22,7 @@ export const createMatchDayEvent = async (
     ...eventData,
     id: uuidv4(),
     matchesGenerated: false,
+    drawTime: eventData.drawTime,
   };
 
   state.addMatchDayEventToState(newEvent);

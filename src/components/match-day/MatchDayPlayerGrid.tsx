@@ -167,8 +167,12 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
 
         setIsSimulating(true);
         handleSimulateDraw();
-        setCountdown(30);
+        
+        simulationResetTimer.current = setTimeout(() => {
+            handleResetSimulation();
+        }, 30000); // Reset after 30 seconds
 
+        setCountdown(30);
         countdownTimerRef.current = setInterval(() => {
             setCountdown(prev => {
                 if (prev <= 1) {
@@ -178,10 +182,6 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                 return prev - 1;
             });
         }, 1000);
-        
-        simulationResetTimer.current = setTimeout(() => {
-            handleResetSimulation();
-        }, 30000);
     };
 
 
@@ -212,6 +212,17 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                         <div className="flex-grow pt-1">
                             <CardTitle>Jugadores Inscritos</CardTitle>
                             <CardDescription>Aquí puedes ver quién se ha apuntado y elegir tu pareja preferida para el sorteo.</CardDescription>
+                            {event.drawTime && !event.matchesGenerated && (
+                                <Badge variant="secondary" className="mt-2 text-xs">
+                                    <Clock className="mr-1.5 h-3 w-3"/>
+                                    Sorteo: {format(new Date(event.drawTime), "dd MMM, HH:mm'h'", { locale: es })}
+                                </Badge>
+                            )}
+                             {event.matchesGenerated && (
+                                 <Badge variant="destructive" className="mt-2 text-xs">
+                                    ¡Sorteo Realizado!
+                                </Badge>
+                             )}
                         </div>
                     </div>
                 </div>
@@ -328,7 +339,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                         <RefreshCw className="mr-2 h-4 w-4" /> Resetear ({countdown}s)
                                     </Button>
                                 ) : (
-                                    <Button onClick={handleStartSimulation} size="lg" className="bg-purple-600 text-white hover:bg-purple-700" disabled={!userInscription}>
+                                    <Button onClick={handleStartSimulation} size="lg" className="bg-purple-600 text-white hover:bg-purple-700 sm:w-auto" disabled={!userInscription}>
                                         <Dices className="mr-2 h-4 w-4" />
                                         Simular Sorteo
                                     </Button>
