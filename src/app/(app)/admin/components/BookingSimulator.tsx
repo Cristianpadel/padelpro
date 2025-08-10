@@ -49,10 +49,10 @@ const BookingSimulator: React.FC<BookingSimulatorProps> = ({ club, onSimulationR
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      activityType: 'clases',
-      days: ['Lunes', 'Miércoles', 'Viernes'],
-      timeRanges: ['evening'],
-      studentCount: [2],
+      activityType: 'partidas',
+      days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
+      timeRanges: ['morning'],
+      studentCount: [3],
       density: [50],
     },
   });
@@ -267,5 +267,3 @@ const BookingSimulator: React.FC<BookingSimulatorProps> = ({ club, onSimulationR
 };
 
 export default BookingSimulator;
-
-    
