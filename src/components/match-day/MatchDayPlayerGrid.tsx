@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getInitials } from '@/lib/utils';
-import { UserPlus, PlusCircle, CheckCircle, Hourglass, Handshake, Dices } from 'lucide-react';
+import { UserPlus, PlusCircle, CheckCircle, Hourglass, Handshake, Dices, Swords } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -87,7 +87,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                         <div className="flex-grow pt-1">
                             <CardTitle>Jugadores Inscritos</CardTitle>
                             <CardDescription>Aquí puedes ver quién se ha apuntado y elegir tu pareja preferida para el sorteo.</CardDescription>
-                             <Button onClick={handleSimulateDraw} variant="outline" size="sm" className="mt-2" disabled={!userInscription}>
+                             <Button onClick={handleSimulateDraw} size="lg" className="mt-2 w-full bg-purple-600 text-white hover:bg-purple-700" disabled={!userInscription}>
                                 <Dices className="mr-2 h-4 w-4" />
                                 Simular Sorteo
                             </Button>
