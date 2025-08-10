@@ -2,13 +2,13 @@
 "use client";
 
 import React, { useState, useEffect, useTransition, useMemo } from 'react';
-import type { MatchBooking, User, Match, Club, PadelCategoryForSlot, MatchBookingMatchDetails } from '@/types';
+import type { MatchBooking, User, Match, Club, PadelCategoryForSlot, MatchBookingMatchDetails, PadelCourt } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { List, Clock, Users, CalendarCheck, CalendarX, Loader2, Ban, Hash, Trophy, UserCircle, Gift, Info, MessageSquare, Euro, Users2 as CategoryIcon, Venus, Mars, Share2, Unlock, Lock, Repeat, Lightbulb } from 'lucide-react';
 import { format, differenceInHours } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
-import { fetchUserMatchBookings, cancelMatchBooking, getMockClubs, makeMatchPublic, cancelPrivateMatchAndReofferWithPoints, getMockMatches, renewRecurringMatch } from '@/lib/mockData';
+import { fetchUserMatchBookings, cancelMatchBooking, getMockClubs, makeMatchPublic, cancelPrivateMatchAndReofferWithPoints, getMockMatches, renewRecurringMatch, getCourtAvailabilityForInterval } from '@/lib/mockData';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -34,12 +34,19 @@ import { Separator } from '../ui/separator';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import * as state from '@/lib/mockDataSources/state';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
 
 
 interface PersonalMatchesProps {
   currentUser: User;
   newMatchBooking?: MatchBooking | null;
   onBookingActionSuccess: () => void;
+}
+
+interface CourtAvailabilityState {
+    available: PadelCourt[];
+    occupied: PadelCourt[];
+    total: number;
 }
 
 const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatchBooking, onBookingActionSuccess }) => {
@@ -55,6 +62,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
   const [selectedMatchForChat, setSelectedMatchForChat] = useState<Match | null | undefined>(null);
   const [allMatches, setAllMatches] = useState<Match[]>([]);
   const [now, setNow] = useState(new Date());
+  const [availabilityData, setAvailabilityData] = useState<Record<string, CourtAvailabilityState>>({});
 
 
   const loadData = async () => {
@@ -68,6 +76,18 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
       setBookings(fetchedBookings);
       setAllMatches(fetchedMatches);
       setError(null);
+
+      // Fetch availability for upcoming matches
+      const upcoming = fetchedBookings.filter(b => b.matchDetails && new Date(b.matchDetails.endTime) > new Date());
+      const newAvailabilityData: Record<string, CourtAvailabilityState> = {};
+      for (const booking of upcoming) {
+          if (booking.matchDetails) {
+              const availability = await getCourtAvailabilityForInterval(booking.matchDetails.clubId, new Date(booking.matchDetails.startTime), new Date(booking.matchDetails.endTime));
+              newAvailabilityData[booking.activityId] = availability;
+          }
+      }
+      setAvailabilityData(newAvailabilityData);
+
     } catch (err) {
       console.error("Failed to fetch user match bookings:", err);
       setError("No se pudo cargar tu horario de partidas.");
@@ -209,6 +229,8 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
       const wasBookedWithPoints = booking.bookedWithPoints === true;
       const clubDetails = getMockClubs().find(c => c.id === clubId);
       const isOrganizerOfPrivateMatch = status === 'confirmed_private' && organizerId === currentUser.id;
+      const availability = availabilityData[booking.activityId];
+
 
       let cancellationButtonText = "Cancelar Inscripción";
       let cancellationDialogText = "¿Estás seguro de que quieres cancelar tu inscripción?";
@@ -345,6 +367,16 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                      )}
                  </div>
             </div>
+            {isUpcomingItem && availability && (
+                <div className="pt-2 border-t mt-2">
+                    <CourtAvailabilityIndicator
+                        availableCourts={availability.available}
+                        occupiedCourts={availability.occupied}
+                        totalCourts={availability.total}
+                    />
+                </div>
+            )}
+
 
               <div className="pt-2 border-t mt-2 flex flex-col sm:flex-row sm:items-center sm:justify-end space-y-2 sm:space-y-0 sm:space-x-2">
                   {isOrganizerOfPrivateMatch && isUpcomingItem && (
