@@ -2,58 +2,65 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useTransition } from 'react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Trophy, Calendar, Users, ArrowRight, UserCheck, Handshake, Info, Ticket } from "lucide-react";
-import { getMockCurrentUser, fetchActiveMatchDayEvents, getMatchDayInscriptions, addMatchDayInscription, cancelMatchDayInscription } from '@/lib/mockData';
-import type { MatchDayEvent, User, MatchDayInscription } from '@/types';
-import { format, formatDistanceToNowStrict } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useToast } from '@/hooks/use-toast';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { getInitials } from '@/lib/utils';
-import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { getMockCurrentUser, fetchActiveMatchDayEvents, getMatchDayInscriptions, getMockMatches, addMatchDayInscription, cancelMatchDayInscription } from '@/lib/mockData';
+import type { MatchDayEvent, User, MatchDayInscription, Match } from '@/types';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { Calendar, Users, Trophy, Handshake, UserCheck, UserPlus, Info, ArrowRight } from 'lucide-react';
 import MatchDayInscriptionList from '@/components/match-day/MatchDayInscriptionList';
+import MatchDayDrawResults from '@/components/match-day/MatchDayDrawResults';
 import MatchDayPartnerSelectionDialog from '@/components/match-day/MatchDayPartnerSelectionDialog';
+import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 
 export default function MatchDayPage() {
     const [event, setEvent] = useState<MatchDayEvent | null>(null);
-    const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [inscriptions, setInscriptions] = useState<MatchDayInscription[]>([]);
+    const [matches, setMatches] = useState<Match[]>([]);
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [userInscription, setUserInscription] = useState<MatchDayInscription | null>(null);
     const [loading, setLoading] = useState(true);
     const [isSubmitting, startTransition] = useTransition();
-
     const [isPartnerDialogOpen, setIsPartnerDialogOpen] = useState(false);
-
     const { toast } = useToast();
 
     const loadEventData = useCallback(async () => {
         setLoading(true);
         try {
-            const user = await getMockCurrentUser();
+            const [user] = await Promise.all([
+                getMockCurrentUser()
+            ]);
             setCurrentUser(user);
-
-            const activeEvents = await fetchActiveMatchDayEvents('club-1'); // Assuming a single club for now
-            const nextEvent = activeEvents.sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime())[0] || null;
+            
+            const activeEvents = await fetchActiveMatchDayEvents('club-1');
+            const nextEvent = activeEvents.sort((a,b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime())[0] || null;
             setEvent(nextEvent);
 
-            if (nextEvent && user) {
+            if (nextEvent) {
                 const eventInscriptions = await getMatchDayInscriptions(nextEvent.id);
                 setInscriptions(eventInscriptions);
-                const userInscr = eventInscriptions.find(i => i.userId === user.id) || null;
-                setUserInscription(userInscr);
+
+                if (user) {
+                    const userInscr = eventInscriptions.find(i => i.userId === user.id) || null;
+                    setUserInscription(userInscr);
+                }
+
+                if (nextEvent.matchesGenerated) {
+                    const allMatches = await getMockMatches();
+                    setMatches(allMatches.filter(m => m.eventId === nextEvent.id));
+                }
             }
+
         } catch (error) {
-            console.error("Error loading Match-Day data", error);
-            toast({ title: "Error", description: "No se pudo cargar la información del evento.", variant: "destructive" });
+            console.error("Error loading event details:", error);
         } finally {
             setLoading(false);
         }
-    }, [toast]);
+    }, []);
 
     useEffect(() => {
         loadEventData();
@@ -67,11 +74,11 @@ export default function MatchDayPage() {
                 toast({ title: "Error al Inscribirse", description: result.error, variant: "destructive" });
             } else {
                 toast({ title: `¡Inscripción Confirmada!`, description: `Te has apuntado al ${event.name}. Estado: ${result.status === 'main' ? 'Lista Principal' : 'Lista de Reserva'}`});
-                loadEventData(); // Refresh data
+                loadEventData();
             }
         });
     };
-
+    
     const handleCancelInscription = () => {
         if (!event || !userInscription) return;
         startTransition(async () => {
@@ -80,17 +87,27 @@ export default function MatchDayPage() {
                 toast({ title: "Error al Cancelar", description: result.error, variant: "destructive" });
             } else {
                 toast({ title: "Inscripción Cancelada", description: "Has cancelado tu inscripción al evento." });
-                loadEventData(); // Refresh data
+                loadEventData();
             }
         });
     };
-    
-    if (loading) {
-        return <Skeleton className="h-[500px] w-full max-w-lg mx-auto" />;
-    }
 
-    if (!event) {
+
+    if (loading) {
         return (
+            <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
+                <Skeleton className="h-10 w-2/3" />
+                <Skeleton className="h-6 w-1/3" />
+                <div className="grid md:grid-cols-2 gap-6">
+                    <Skeleton className="h-64 w-full" />
+                    <Skeleton className="h-64 w-full" />
+                </div>
+            </div>
+        );
+    }
+    
+    if (!event) {
+       return (
              <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 items-center justify-center">
                 <Card className="w-full max-w-lg text-center shadow-lg">
                     <CardHeader>
@@ -106,81 +123,65 @@ export default function MatchDayPage() {
             </div>
         );
     }
-    
-    const timeToEvent = formatDistanceToNowStrict(new Date(event.eventDate), { locale: es, addSuffix: true });
+
     const mainListFull = inscriptions.filter(i => i.status === 'main').length >= event.maxPlayers;
-    const reserveListFull = event.reservePlayers ? inscriptions.filter(i => i.status === 'reserve').length >= event.reservePlayers : true;
-    const canSignUp = !mainListFull || !reserveListFull;
-    
+
     return (
-        <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 items-center justify-center">
-            <Card className="w-full max-w-lg text-center shadow-2xl border-2 border-amber-300/50 bg-amber-50/20">
-              <CardHeader>
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/10 text-amber-600 border-4 border-white shadow-md">
-                  <Trophy className="h-8 w-8" />
-                </div>
-                <CardTitle className="mt-4 font-headline text-3xl text-amber-900">{event.name}</CardTitle>
-                <CardDescription className="text-amber-800/80">
-                  Apúntate al evento social. Se crearán partidas por sorteo.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-sm font-semibold text-amber-900/90 flex items-center justify-center gap-4">
-                    <span className="flex items-center"><Calendar className="mr-1.5 h-4 w-4"/>{format(new Date(event.eventDate), "eeee, d MMMM, HH:mm'h'", { locale: es })}</span>
-                    <span className="flex items-center"><Ticket className="mr-1.5 h-4 w-4"/>{event.price ? `${event.price.toFixed(2)}€` : 'Gratis'}</span>
-                </div>
-                
-                 {userInscription ? (
-                    <div className="p-4 rounded-lg bg-green-100 border border-green-300 text-green-800 space-y-3">
-                        <div className="flex items-center gap-3">
-                            <Avatar className="h-12 w-12 border-2 border-white">
-                                <AvatarImage src={currentUser?.profilePictureUrl} />
-                                <AvatarFallback>{getInitials(currentUser?.name || '')}</AvatarFallback>
-                            </Avatar>
-                            <div className="text-left">
-                                <p className="font-bold text-lg">¡Estás dentro!</p>
-                                <Badge variant={userInscription.status === 'main' ? 'default' : 'secondary'} className={userInscription.status === 'main' ? 'bg-green-600' : ''}>
-                                    {userInscription.status === 'main' ? 'Lista Principal' : 'Lista de Reserva'}
-                                </Badge>
-                            </div>
-                        </div>
-                         <Button onClick={handleCancelInscription} variant="destructive" size="sm" className="w-full" disabled={isSubmitting}>Cancelar Inscripción</Button>
-                    </div>
-                ) : (
-                    <>
-                        <p className="font-bold text-lg text-amber-900">El evento empieza {timeToEvent}</p>
-                        <Button onClick={handleSignUp} size="lg" className="w-full bg-amber-600 hover:bg-amber-700 text-white shadow-lg" disabled={isSubmitting || !canSignUp}>
-                            {isSubmitting ? "Procesando..." : (!canSignUp ? "Evento Completo" : "¡Apúntame!")}
-                        </Button>
-                    </>
-                 )}
-
-                 <div className="flex justify-center gap-2 pt-2">
-                     <Dialog>
-                         <DialogTrigger asChild>
-                             <Button variant="outline" size="sm"><Users className="mr-2 h-4 w-4" /> Ver Inscritos ({inscriptions.length})</Button>
-                         </DialogTrigger>
-                         <DialogContent>
-                             <DialogHeader>
-                                 <DialogTitle>Inscritos en {event.name}</DialogTitle>
-                                 <DialogDescription>Lista de jugadores apuntados al evento.</DialogDescription>
-                             </DialogHeader>
+        <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
+            <header>
+                <h1 className="font-headline text-3xl font-semibold">{event.name}</h1>
+                <p className="text-muted-foreground flex items-center gap-4">
+                    <span className="flex items-center"><Calendar className="mr-1.5 h-4 w-4"/>{format(new Date(event.eventDate), "PPPP 'a las' HH:mm'h'", { locale: es })}</span>
+                    <span className="flex items-center"><Users className="mr-1.5 h-4 w-4"/>{event.maxPlayers} Plazas (+{event.reservePlayers} reservas)</span>
+                </p>
+            </header>
+            <main className="grid md:grid-cols-3 gap-8">
+               <div className="md:col-span-2 space-y-6">
+                   <Card>
+                       <CardHeader>
+                           <CardTitle>Estado del Evento</CardTitle>
+                       </CardHeader>
+                       <CardContent>
+                            {event.matchesGenerated ? (
+                                <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-800">
+                                    <p className="font-bold flex items-center"><Trophy className="mr-2 h-4 w-4"/>¡Sorteo Realizado!</p>
+                                    <p className="text-sm mt-1">Las partidas para el evento han sido generadas. ¡Busca la tuya abajo!</p>
+                                </div>
+                            ) : userInscription ? (
+                                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-800">
+                                    <p className="font-bold flex items-center"><UserCheck className="mr-2 h-4 w-4"/>Estás Inscrito</p>
+                                    <p className="text-sm mt-1">Tu estado es: <Badge className={userInscription.status === 'main' ? "bg-blue-600" : ""}>{userInscription.status === 'main' ? 'Lista Principal' : 'Reserva'}</Badge></p>
+                                     <Button onClick={handleCancelInscription} variant="link" className="text-destructive h-auto p-0 mt-2 text-xs" disabled={isSubmitting}>Cancelar inscripción</Button>
+                                </div>
+                            ) : (
+                                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800">
+                                    <p className="font-bold flex items-center"><UserPlus className="mr-2 h-4 w-4"/>Inscripciones Abiertas</p>
+                                    <p className="text-sm mt-1">{mainListFull ? 'La lista principal está llena, pero aún puedes apuntarte a la lista de reserva.' : '¡Todavía hay plazas disponibles!'}</p>
+                                    <Button onClick={handleSignUp} className="mt-2" size="sm" disabled={isSubmitting}>Apuntarme</Button>
+                                </div>
+                            )}
+                       </CardContent>
+                   </Card>
+                   
+                   <MatchDayDrawResults matches={matches} />
+               </div>
+               <div className="md:col-span-1 space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Inscritos ({inscriptions.length})</CardTitle>
+                        </CardHeader>
+                        <CardContent>
                              <MatchDayInscriptionList inscriptions={inscriptions} />
-                         </DialogContent>
-                     </Dialog>
-                    <Button variant="outline" size="sm" onClick={() => setIsPartnerDialogOpen(true)}><Handshake className="mr-2 h-4 w-4" /> Pareja</Button>
-                 </div>
-              </CardContent>
-              <CardFooter className="flex-col gap-2 text-xs text-amber-900/70">
-                 <p className="flex items-center gap-1.5"><Info className="h-4 w-4"/> El sorteo de partidas es automático.</p>
-                 <Link href={`/match-day/${event.id}`} passHref><Button variant="link" size="sm" className="text-amber-700">Ver detalles del evento</Button></Link>
-              </CardFooter>
-            </Card>
-
-             <MatchDayPartnerSelectionDialog
-                isOpen={isPartnerDialogOpen}
-                onOpenChange={setIsPartnerDialogOpen}
-            />
+                        </CardContent>
+                         <CardFooter>
+                           <Button variant="outline" className="w-full" onClick={() => setIsPartnerDialogOpen(true)}>
+                               <Handshake className="mr-2 h-4 w-4"/> Indicar Pareja
+                           </Button>
+                        </CardFooter>
+                    </Card>
+               </div>
+            </main>
+            <MatchDayPartnerSelectionDialog isOpen={isPartnerDialogOpen} onOpenChange={setIsPartnerDialogOpen} />
         </div>
     );
 }
