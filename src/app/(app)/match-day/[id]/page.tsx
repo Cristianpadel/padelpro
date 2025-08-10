@@ -15,8 +15,7 @@ import MatchDayDrawResults from '@/components/match-day/MatchDayDrawResults';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import MatchDayInscriptionList from '@/components/match-day/MatchDayInscriptionList';
-import MatchDayPartnerSelectionDialog from '@/components/match-day/MatchDayPartnerSelectionDialog';
+import MatchDayPlayerGrid from '@/components/match-day/MatchDayPlayerGrid';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,7 +40,6 @@ export default function MatchDayDetailPage() {
     const [userInscription, setUserInscription] = useState<MatchDayInscription | null>(null);
     const [loading, setLoading] = useState(true);
     const [isSubmitting, startTransition] = useTransition();
-    const [isPartnerDialogOpen, setIsPartnerDialogOpen] = useState(false);
     const { toast } = useToast();
     const [allCourts, setAllCourts] = useState<PadelCourt[]>([]);
 
@@ -131,9 +129,8 @@ export default function MatchDayDetailPage() {
             <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
                 <Skeleton className="h-10 w-2/3" />
                 <Skeleton className="h-6 w-1/3" />
-                <div className="grid md:grid-cols-2 gap-6">
+                <div className="grid md:grid-cols-1 gap-6">
                     <Skeleton className="h-96 w-full" />
-                    <Skeleton className="h-64 w-full" />
                 </div>
             </div>
         );
@@ -142,9 +139,9 @@ export default function MatchDayDetailPage() {
     if (!event) {
         notFound();
     }
-
-    const mainListFull = inscriptions.filter(i => i.status === 'main').length >= event.maxPlayers;
+    
     const reservedCourtNumbers = event.courtIds.map(id => allCourts.find(c => c.id === id)?.courtNumber).filter(Boolean).join(', ');
+    const mainListFull = inscriptions.filter(i => i.status === 'main').length >= event.maxPlayers;
 
 
     return (
@@ -154,17 +151,16 @@ export default function MatchDayDetailPage() {
                 <p className="text-muted-foreground flex items-center gap-4 flex-wrap">
                     <span className="flex items-center"><Calendar className="mr-1.5 h-4 w-4"/>{format(new Date(event.eventDate), "PPPP 'a las' HH:mm'h'", { locale: es })}</span>
                     <span className="flex items-center"><Users className="mr-1.5 h-4 w-4"/>{event.maxPlayers} Plazas (+{event.reservePlayers} reservas)</span>
-                     {reservedCourtNumbers && <span className="flex items-center"><HardHat className="mr-1.5 h-4 w-4"/>Pistas: {reservedCourtNumbers}</span>}
+                    {reservedCourtNumbers && <span className="flex items-center"><HardHat className="mr-1.5 h-4 w-4"/>Pistas: {reservedCourtNumbers}</span>}
                 </p>
             </header>
-            <main className="grid md:grid-cols-[70%_30%] gap-6">
-                <div className="md:col-span-1 space-y-6">
-                     <Card>
-                       <CardHeader>
-                           <CardTitle>Estado del Evento</CardTitle>
-                       </CardHeader>
-                       <CardContent>
-                            {event.matchesGenerated ? (
+            <main className="grid grid-cols-1 gap-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Estado del Evento</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {event.matchesGenerated ? (
                                 <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-800">
                                     <p className="font-bold flex items-center"><Trophy className="mr-2 h-4 w-4"/>¡Sorteo Realizado!</p>
                                     <p className="text-sm mt-1">Las partidas para el evento han sido generadas. ¡Busca la tuya abajo!</p>
@@ -192,34 +188,18 @@ export default function MatchDayDetailPage() {
                                     </Button>
                                 </div>
                             )}
-                       </CardContent>
-                   </Card>
+                    </CardContent>
+                </Card>
+
+                <MatchDayPlayerGrid 
+                    event={event}
+                    inscriptions={inscriptions}
+                    currentUser={currentUser}
+                    onSelectPartner={handleSelectPartner}
+                />
                    
-                   <MatchDayDrawResults matches={matches} />
-                </div>
-                 <div className="md:col-span-1">
-                    <Card>
-                         <CardHeader>
-                            <CardTitle>Inscritos</CardTitle>
-                            <CardDescription>
-                                {inscriptions.length} jugador(es) apuntado(s).
-                            </CardDescription>
-                         </CardHeader>
-                         <CardContent className="pt-0">
-                             <MatchDayInscriptionList inscriptions={inscriptions} />
-                         </CardContent>
-                          <CardFooter>
-                            <Button variant="outline" className="w-full" onClick={() => setIsPartnerDialogOpen(true)}>
-                                <Handshake className="mr-2 h-4 w-4"/> Indicar Pareja
-                            </Button>
-                           </CardFooter>
-                    </Card>
-                </div>
+                <MatchDayDrawResults matches={matches} />
             </main>
-             <MatchDayPartnerSelectionDialog
-                isOpen={isPartnerDialogOpen}
-                onOpenChange={setIsPartnerDialogOpen}
-            />
         </div>
     );
 }

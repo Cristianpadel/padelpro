@@ -6,7 +6,7 @@ import { es } from 'date-fns/locale';
 import type { MatchDayEvent, User, MatchDayInscription, PadelCourt, Match } from '@/types';
 import * as state from './index';
 import { v4 as uuidv4 } from 'uuid';
-import { deductCredit, recalculateAndSetBlockedBalances } from './users';
+import { deductCredit, recalculateAndSetBlockedBalances, addUserPointsAndAddTransaction } from './users';
 import { addMatch } from './matches';
 
 
@@ -33,7 +33,7 @@ export const fetchActiveMatchDayEvents = async (clubId: string): Promise<MatchDa
   return state.getMockMatchDayEvents().filter(event => 
     event.clubId === clubId && 
     new Date(event.eventDate) > now
-  );
+  ).sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime());
 };
 
 export const getMatchDayEventById = async (eventId: string): Promise<MatchDayEvent | undefined> => {
@@ -194,7 +194,7 @@ export const fetchMatchDayEventsForDate = async (date: Date, clubId?: string): P
         isSameDay(new Date(event.eventDate), date)
     );
     if(clubId){
-        return events.filter(e => e.id === clubId)
+        return events.filter(e => e.clubId === clubId)
     }
     return events;
 };
@@ -221,8 +221,16 @@ export const selectPreferredPartner = async (userId: string, eventId: string, pa
     if (userInscriptionIndex === -1) {
         return { error: 'Debes estar inscrito para seleccionar un compañero.' };
     }
+    
+    const currentUserInscription = inscriptions[userInscriptionIndex];
 
-    inscriptions[userInscriptionIndex].preferredPartnerId = partnerId;
+    // If clicking on the same partner, deselect them
+    if (currentUserInscription.preferredPartnerId === partnerId) {
+        inscriptions[userInscriptionIndex].preferredPartnerId = undefined;
+    } else {
+        inscriptions[userInscriptionIndex].preferredPartnerId = partnerId;
+    }
+
     state.initializeMockMatchDayInscriptions(inscriptions);
     
     return { success: true };

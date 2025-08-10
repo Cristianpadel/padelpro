@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useTransition } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getMockCurrentUser, fetchActiveMatchDayEvents, getMatchDayInscriptions, getMockMatches, addMatchDayInscription, cancelMatchDayInscription, selectPreferredPartner, getMockPadelCourts } from '@/lib/mockData';
@@ -11,8 +11,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Calendar, Users, Trophy, Handshake, UserCheck, UserPlus, Info, ArrowRight, PartyPopper, Check, HardHat } from 'lucide-react';
 import MatchDayDrawResults from '@/components/match-day/MatchDayDrawResults';
-import MatchDayInscriptionList from '@/components/match-day/MatchDayInscriptionList';
-import MatchDayPartnerSelectionDialog from '@/components/match-day/MatchDayPartnerSelectionDialog';
+import MatchDayPlayerGrid from '@/components/match-day/MatchDayPlayerGrid';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,7 +36,6 @@ export default function MatchDayPage() {
     const [userInscription, setUserInscription] = useState<MatchDayInscription | null>(null);
     const [loading, setLoading] = useState(true);
     const [isSubmitting, startTransition] = useTransition();
-    const [isPartnerDialogOpen, setIsPartnerDialogOpen] = useState(false);
     const { toast } = useToast();
     const [allCourts, setAllCourts] = useState<PadelCourt[]>([]);
 
@@ -126,9 +124,8 @@ export default function MatchDayPage() {
             <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
                 <Skeleton className="h-10 w-2/3" />
                 <Skeleton className="h-6 w-1/3" />
-                <div className="grid md:grid-cols-2 gap-6">
+                <div className="grid md:grid-cols-1 gap-6">
                     <Skeleton className="h-96 w-full" />
-                    <Skeleton className="h-64 w-full" />
                 </div>
             </div>
         );
@@ -151,24 +148,22 @@ export default function MatchDayPage() {
             </div>
         );
     }
-
-    const mainListFull = inscriptions.filter(i => i.status === 'main').length >= event.maxPlayers;
+    
     const reservedCourtNumbers = event.courtIds.map(id => allCourts.find(c => c.id === id)?.courtNumber).filter(Boolean).join(', ');
-
+    const mainListFull = inscriptions.filter(i => i.status === 'main').length >= event.maxPlayers;
 
     return (
         <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
             <header>
                 <h1 className="font-headline text-3xl font-semibold">{event.name}</h1>
-                <p className="text-muted-foreground flex items-center gap-4 flex-wrap">
+                 <p className="text-muted-foreground flex items-center gap-4 flex-wrap">
                     <span className="flex items-center"><Calendar className="mr-1.5 h-4 w-4"/>{format(new Date(event.eventDate), "PPPP 'a las' HH:mm'h'", { locale: es })}</span>
                     <span className="flex items-center"><Users className="mr-1.5 h-4 w-4"/>{event.maxPlayers} Plazas (+{event.reservePlayers} reservas)</span>
                     {reservedCourtNumbers && <span className="flex items-center"><HardHat className="mr-1.5 h-4 w-4"/>Pistas: {reservedCourtNumbers}</span>}
                 </p>
             </header>
-            <main className="grid md:grid-cols-[70%_30%] gap-6">
-                <div className="md:col-span-1 space-y-6">
-                     <Card>
+            <main className="grid grid-cols-1 gap-6">
+                <Card>
                        <CardHeader>
                            <CardTitle>Estado del Evento</CardTitle>
                        </CardHeader>
@@ -204,31 +199,16 @@ export default function MatchDayPage() {
                        </CardContent>
                    </Card>
                    
+                   <MatchDayPlayerGrid 
+                        event={event}
+                        inscriptions={inscriptions}
+                        currentUser={currentUser}
+                        onSelectPartner={handleSelectPartner}
+                   />
+                   
                    <MatchDayDrawResults matches={matches} />
-                </div>
-                 <div className="md:col-span-1">
-                    <Card>
-                         <CardHeader>
-                            <CardTitle>Inscritos</CardTitle>
-                            <CardDescription>
-                                {inscriptions.length} jugador(es) apuntado(s).
-                            </CardDescription>
-                         </CardHeader>
-                         <CardContent className="pt-0">
-                             <MatchDayInscriptionList inscriptions={inscriptions} />
-                         </CardContent>
-                         <CardFooter>
-                           <Button variant="outline" className="w-full" onClick={() => setIsPartnerDialogOpen(true)}>
-                               <Handshake className="mr-2 h-4 w-4"/> Indicar Pareja
-                           </Button>
-                          </CardFooter>
-                    </Card>
-                </div>
             </main>
-             <MatchDayPartnerSelectionDialog
-                isOpen={isPartnerDialogOpen}
-                onOpenChange={setIsPartnerDialogOpen}
-            />
         </div>
     );
 }
+
