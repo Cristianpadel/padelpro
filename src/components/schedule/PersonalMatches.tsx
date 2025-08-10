@@ -232,7 +232,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
     startProcessingTransition(async () => {
         const result = await fillMatchAndMakePrivate(currentUser.id, booking.activityId);
         if ('error' in result) {
-            toast({ title: "Error al Hacer Privada", description: result.error, variant: 'destructive' });
+            toast({ title: "Error al Hacer Privada", description: result.error, variant: "destructive" });
         } else {
             toast({ title: "¡Partida Privada!", description: `Has completado la partida. Coste de plazas restantes: ${result.cost.toFixed(2)}€.`, className: "bg-purple-600 text-white" });
             onBookingActionSuccess();
