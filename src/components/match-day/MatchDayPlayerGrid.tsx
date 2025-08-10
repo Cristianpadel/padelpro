@@ -15,7 +15,7 @@ import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import { getMockPadelCourts } from '@/lib/mockData';
 
-type SimulatedPlayer = MatchDayInscription | { id: string; userName: string; userLevel: string; userProfilePictureUrl?: string; isEmptySlot?: boolean };
+type SimulatedPlayer = MatchDayInscription | { id: string; userName: string; userLevel: string; userProfilePictureUrl?: string; isEmptySlot?: boolean; userId: string; };
 
 type SimulatedTeam = {
   players: SimulatedPlayer[];
@@ -65,12 +65,9 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
         const emptySlotsCount = event.maxPlayers - mainList.length;
         const emptySlots: SimulatedPlayer[] = Array.from({ length: emptySlotsCount }, (_, i) => ({
             id: `empty-slot-${i}`,
-            eventId: event.id,
             userId: `empty-${i}`,
             userName: 'Plaza Libre',
-            userLevel: '0.0', // Assign lowest level
-            status: 'main', 
-            inscriptionTime: new Date(),
+            userLevel: '0.0', 
             isEmptySlot: true,
             userProfilePictureUrl: '/avatar-placeholder.png'
         }));
@@ -81,7 +78,6 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
 
         const processedUserIds = new Set<string>();
 
-        // 1. Find mutual pairs first
         for (const playerA of playersToProcess) {
             if (processedUserIds.has(playerA.userId) || 'isEmptySlot' in playerA) continue;
             
@@ -101,17 +97,14 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
             }
         }
         
-        // 2. The rest are singles
         singles = playersToProcess.filter(p => !processedUserIds.has(p.userId));
 
-        // 3. Sort singles by level (descending)
         singles.sort((a, b) => {
              const levelA = parseFloat(a.userLevel);
              const levelB = parseFloat(b.userLevel);
              return (isNaN(levelB) ? 0 : levelB) - (isNaN(levelA) ? 0 : levelA);
         });
 
-        // 4. Form pairs from singles
         let singlePairs: SimulatedTeam[] = [];
         for (let i = 0; i < singles.length; i += 2) {
              if (singles[i+1]) {
@@ -122,18 +115,15 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                 const teamLevel = Math.min(isNaN(levelA) ? 99 : levelA, isNaN(levelB) ? 99 : levelB);
                 singlePairs.push({ players: [playerA, playerB], teamLevel });
             } else {
-                // Odd one out - create a pair with a placeholder empty slot
                 const playerA = singles[i];
                  const levelA = parseFloat(playerA.userLevel);
                  singlePairs.push({ players: [playerA, {id: 'empty-single', userName: 'Plaza Libre', userLevel: '0.0', isEmptySlot: true, userProfilePictureUrl: '/avatar-placeholder.png', userId:'empty-single-user'}], teamLevel: isNaN(levelA) ? 0 : levelA });
             }
         }
 
-        // 5. Combine all pairs and sort by team level
         let allPairs = [...mutualPairs, ...singlePairs];
         allPairs.sort((a, b) => b.teamLevel - a.teamLevel);
 
-        // 6. Form matches
         const finalMatches: SimulatedTeam[][] = [];
         for (let i = 0; i < allPairs.length; i += 2) {
             if (allPairs[i+1]) {
@@ -287,20 +277,20 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                 </Button>
                             </div>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex flex-wrap justify-center gap-4">
                            {eventCourts.map((court, index) => {
                                 const match = simulatedMatches[index];
                                 return (
-                                    <div key={court.id} className="p-3 border rounded-lg flex flex-col justify-between bg-secondary/20 shadow-sm min-h-[18rem]">
+                                    <div key={court.id} className="p-3 border rounded-lg flex flex-col justify-between bg-secondary/20 shadow-sm min-h-[18rem] w-full max-w-xs">
                                         <div>
-                                            <p className="font-semibold text-sm truncate">{court.name}</p>
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex justify-between items-center">
+                                                <p className="font-semibold text-sm truncate">{court.name}</p>
                                                 <Badge variant="outline" className="text-xs">Pista #{court.courtNumber}</Badge>
-                                                <Badge variant="secondary" className="text-xs">
-                                                    <Clock className="mr-1 h-3 w-3" />
-                                                    {format(new Date(event.eventDate), "HH:mm'h'", { locale: es })}
-                                                </Badge>
                                             </div>
+                                            <Badge variant="secondary" className="text-xs mt-1">
+                                                <Clock className="mr-1 h-3 w-3" />
+                                                {format(new Date(event.eventDate), "HH:mm'h'", { locale: es })}
+                                            </Badge>
                                         </div>
                                         <div className="flex-grow flex items-center justify-center">
                                             {match ? (
