@@ -44,7 +44,19 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
             return;
         }
 
-        const playersToShuffle = [...mainList];
+        const emptySlotsCount = event.maxPlayers - mainList.length;
+        const emptySlots: MatchDayInscription[] = Array.from({ length: emptySlotsCount }, (_, i) => ({
+            id: `empty-slot-${i}`,
+            eventId: event.id,
+            userId: `empty-${i}`,
+            userName: 'Plaza Libre',
+            userLevel: 'abierto',
+            status: 'main', // Treat as main for shuffling
+            inscriptionTime: new Date(),
+        }));
+        
+        const playersToShuffle = [...mainList, ...emptySlots];
+        
         // Fisher-Yates shuffle
         for (let i = playersToShuffle.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));

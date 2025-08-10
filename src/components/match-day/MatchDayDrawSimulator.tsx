@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Dices, Swords, Users, User, Heart } from 'lucide-react';
+import { Dices, Swords, Users, User, Heart, UserPlus } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getInitials } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +23,33 @@ interface MatchDayDrawSimulatorProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   matches: { player1: MatchDayInscription, player2: MatchDayInscription }[][];
+}
+
+const PlayerCard: React.FC<{player: MatchDayInscription}> = ({ player }) => {
+    const isPlaceholder = player.userName === 'Plaza Libre';
+
+    if (isPlaceholder) {
+        return (
+            <div className="flex flex-col items-center">
+                <div className="relative inline-flex items-center justify-center h-12 w-12 rounded-full border-2 border-dashed border-gray-400 bg-white/50 shadow-inner">
+                    <UserPlus className="h-6 w-6 text-gray-500" />
+                </div>
+                <p className="text-xs font-medium mt-1 text-muted-foreground">{player.userName}</p>
+                 <Badge variant="outline" className="text-[10px] mt-0.5 invisible">N/A</Badge>
+            </div>
+        );
+    }
+    
+    return (
+        <div className="flex flex-col items-center">
+            <Avatar className="h-12 w-12">
+                <AvatarImage src={player.userProfilePictureUrl} />
+                <AvatarFallback>{getInitials(player.userName)}</AvatarFallback>
+            </Avatar>
+            <p className="text-xs font-medium mt-1 truncate max-w-[80px]">{player.userName}</p>
+            <Badge variant="outline" className="text-[10px] mt-0.5">N: {player.userLevel}</Badge>
+        </div>
+    );
 }
 
 const MatchDayDrawSimulator: React.FC<MatchDayDrawSimulatorProps> = ({
@@ -54,23 +81,9 @@ const MatchDayDrawSimulator: React.FC<MatchDayDrawSimulatorProps> = ({
                             {matchPairs.map((pair, pairIndex) => (
                                 <div key={`${matchIndex}-${pairIndex}`} className="p-3 bg-background rounded-md shadow-sm border flex flex-col items-center justify-center">
                                     <div className="flex items-center gap-2">
-                                        <div className="flex flex-col items-center">
-                                            <Avatar className="h-12 w-12">
-                                                <AvatarImage src={pair.player1.userProfilePictureUrl} />
-                                                <AvatarFallback>{getInitials(pair.player1.userName)}</AvatarFallback>
-                                            </Avatar>
-                                            <p className="text-xs font-medium mt-1 truncate max-w-[80px]">{pair.player1.userName}</p>
-                                            <Badge variant="outline" className="text-[10px] mt-0.5">N: {pair.player1.userLevel}</Badge>
-                                        </div>
+                                        <PlayerCard player={pair.player1} />
                                         <Swords className="h-5 w-5 text-muted-foreground" />
-                                         <div className="flex flex-col items-center">
-                                            <Avatar className="h-12 w-12">
-                                                <AvatarImage src={pair.player2.userProfilePictureUrl} />
-                                                <AvatarFallback>{getInitials(pair.player2.userName)}</AvatarFallback>
-                                            </Avatar>
-                                            <p className="text-xs font-medium mt-1 truncate max-w-[80px]">{pair.player2.userName}</p>
-                                             <Badge variant="outline" className="text-[10px] mt-0.5">N: {pair.player2.userLevel}</Badge>
-                                        </div>
+                                        <PlayerCard player={pair.player2} />
                                     </div>
                                 </div>
                             ))}
