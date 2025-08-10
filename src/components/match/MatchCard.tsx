@@ -3,7 +3,7 @@
 
 import React, { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
 import type { Match, User, Club, PadelCourt } from '@/types';
-import { getMockStudents, getMockClubs, bookMatch, confirmMatchAsPrivate, joinPrivateMatch, makeMatchPublic, bookCourtForMatchWithPoints, calculateActivityPrice, getCourtAvailabilityForInterval, hasAnyConfirmedActivityForDay, isUserLevelCompatibleWithActivity, isMatchBookableWithPoints } from '@/lib/mockData';
+import { getMockStudents, getMockClubs, bookMatch, confirmMatchAsPrivate, joinPrivateMatch, makeMatchPublic, bookCourtForMatchWithPoints, calculateActivityPrice, getCourtAvailabilityForInterval, isUserLevelCompatibleWithActivity, isMatchBookableWithPoints } from '@/lib/mockData';
 import { displayClassCategory } from '@/types';
 import { format, differenceInMinutes, differenceInDays, startOfDay, parse, getDay } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -20,9 +20,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from '@/components/ui/input';
-import { Clock, Users, Plus, Loader2, Gift, CreditCard, AlertTriangle, Lock, Star, Share2, Hash, Users2, Venus, Mars, BarChartHorizontal, Lightbulb, Euro } from 'lucide-react';
+import { Clock, Users, Plus, Loader2, Gift, CreditCard, AlertTriangle, Lock, Star, Share2, Hash, Users2, Venus, Mars, BarChartHorizontal, Lightbulb, Euro, Trophy, PiggyBank, ThumbsUp, Scissors } from 'lucide-react';
 import { MatchSpotDisplay } from '@/components/match/MatchSpotDisplay';
 import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
+import { hasAnyConfirmedActivityForDay } from '@/lib/mockData';
 
 
 const InfoDialog: React.FC<{
@@ -227,7 +228,7 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
                 <CardHeader className="pb-3 pt-3 px-3">
                     <div className="flex justify-between items-start">
                         <div className="flex items-center space-x-3">
-                            <div className="flex-shrink-0 text-center font-bold bg-white p-1 rounded-md w-14 shadow-lg border border-border/20">
+                             <div className="flex-shrink-0 text-center font-bold bg-white p-1 rounded-md w-14 shadow-lg border border-border/20">
                                 <p className="text-xs uppercase">{format(new Date(currentMatch.startTime), "EEE", { locale: es })}</p>
                                 <p className="text-3xl leading-none">{format(new Date(currentMatch.startTime), "d")}</p>
                                 <p className="text-xs uppercase">{format(new Date(currentMatch.startTime), "MMM", { locale: es })}</p>
@@ -242,7 +243,7 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground"><Share2 className="h-4 w-4"/></Button>
                              {canBookPrivate && (
                                 <button
-                                    className="flex items-center h-12 bg-purple-600 text-white rounded-lg shadow-lg cursor-pointer hover:bg-purple-700 transition-colors disabled:opacity-50"
+                                    className="flex items-center h-10 bg-purple-600 text-white rounded-lg shadow-lg cursor-pointer hover:bg-purple-700 transition-colors disabled:opacity-50"
                                     onClick={() => setIsConfirmPrivateDialogOpen(true)}
                                     disabled={isProcessingPrivateAction}
                                 >
@@ -292,37 +293,61 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
                 </CardContent>
             </Card>
 
-            <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Confirmar Inscripción</AlertDialogTitle>
-                         <AlertDialogDescription asChild>
-                           <div className="text-center text-lg text-foreground space-y-4 py-4">
-                                <div className="space-y-1">
-                                    <div>Te apuntas a una partida de pádel.</div>
-                                    <div className="flex items-center justify-center text-3xl font-bold">
-                                         {dialogContent.isJoiningWithPoints || (currentMatch.gratisSpotAvailable && (currentMatch.bookedPlayers || []).length === 3)
-                                             ? <> <Gift className="h-8 w-8 mr-2 text-yellow-500" /> {dialogContent.pointsCost} <span className="text-lg ml-1">puntos</span> </>
-                                             : <> <Euro className="h-7 w-7 mr-1" /> {dialogContent.price.toFixed(2)} </>
-                                         }
-                                    </div>
-                                     {showPointsBonus && !dialogContent.isJoiningWithPoints && pointsToAward > 0 && (
-                                        <div className="text-sm font-semibold text-amber-600 flex items-center justify-center">
-                                            <Star className="h-4 w-4 mr-1.5 fill-amber-400" />
-                                            ¡Ganarás {pointsToAward} puntos por esta reserva!
-                                        </div>
-                                     )}
-                                  </div>
-                                </div>
-                            </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleConfirmJoin} disabled={isPending}>
-                            {isPending ? <Loader2 className="animate-spin" /> : "Confirmar"}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
+           <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-2xl font-bold flex items-center justify-center">
+                    <Trophy className="h-8 w-8 mr-3 text-primary" /> ¡Únete a la Partida!
+                  </AlertDialogTitle>
+                </AlertDialogHeader>
+                <AlertDialogDescription asChild>
+                  <div className="text-center text-lg text-foreground space-y-4 py-4">
+                      <div className="space-y-1">
+                        <div>Vas a apuntarte a una partida de pádel.</div>
+                        <div className="flex items-center justify-center text-3xl font-bold">
+                              {dialogContent.isJoiningWithPoints || (currentMatch.gratisSpotAvailable && (currentMatch.bookedPlayers || []).length === 3)
+                                  ? <><Gift className="h-8 w-8 mr-2 text-yellow-500" /> {dialogContent.pointsCost} <span className="text-lg ml-1">puntos</span></>
+                                  : <><Euro className="h-7 w-7 mr-1" /> {dialogContent.price.toFixed(2)}</>
+                              }
+                        </div>
+                        {showPointsBonus && !dialogContent.isJoiningWithPoints && pointsToAward > 0 && (
+                            <div className="text-sm font-semibold text-amber-600 flex items-center justify-center">
+                                <Star className="h-4 w-4 mr-1.5 fill-amber-400" />
+                                ¡Ganarás {pointsToAward} puntos por esta reserva!
+                            </div>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-center gap-2 p-2 bg-slate-100 rounded-md">
+                        <PiggyBank className="h-6 w-6 text-slate-500" />
+                        <span className="text-sm">Tu saldo:</span>
+                        <span className="font-bold text-slate-800">{(currentUser.credit ?? 0).toFixed(2)}€</span>
+                        <span className="text-slate-400">/</span>
+                        <Star className="h-5 w-5 text-amber-500"/>
+                        <span className="font-bold text-slate-800">{currentUser?.loyaltyPoints ?? 0}</span>
+                      </div>
+                  </div>
+                </AlertDialogDescription>
+                <div className="text-sm bg-blue-50 text-blue-800 p-3 rounded-lg space-y-2">
+                  <p className="font-bold text-center">¡Recuerda las reglas del juego!</p>
+                  <ul className="space-y-1.5">
+                    <li className="flex items-start"><ThumbsUp className="h-4 w-4 mr-2 mt-0.5 text-blue-500 flex-shrink-0" /><span>Cuando se apuntan 4 jugadores, ¡la partida se confirma!</span></li>
+                    <li className="flex items-start"><Lock className="h-4 w-4 mr-2 mt-0.5 text-blue-500 flex-shrink-0" /><span>Una vez confirmada, tu plaza es definitiva.</span></li>
+                    <li className="flex items-start"><Scissors className="h-4 w-4 mr-2 mt-0.5 text-blue-500 flex-shrink-0" /><span>**Si esta partida se confirma**, tus otras inscripciones del día se anularán solas.</span></li>
+                  </ul>
+                </div>
+                <AlertDialogFooter className="grid grid-cols-2 gap-2 mt-4">
+                  <AlertDialogCancel className="h-12 text-base" disabled={isPending}>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleConfirmJoin}
+                    disabled={isPending}
+                    className="h-12 text-base bg-green-600 text-white hover:bg-green-700" 
+                  >
+                    {isPending
+                      ? <Loader2 className="h-6 w-6 animate-spin" />
+                      : (dialogContent.isJoiningWithPoints ? `Sí, Usar Puntos` : "Sí, ¡Me apunto!")}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
             </AlertDialog>
             
             <AlertDialog open={isConfirmPrivateDialogOpen} onOpenChange={setIsConfirmPrivateDialogOpen}>
