@@ -242,14 +242,14 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground"><Share2 className="h-4 w-4"/></Button>
                              {canBookPrivate && (
                                 <button
-                                    className="flex items-center h-12 bg-purple-600 text-white rounded-l-lg shadow-lg cursor-pointer hover:bg-purple-700 transition-colors disabled:opacity-50"
+                                    className="flex items-center h-12 bg-purple-600 text-white rounded-lg shadow-lg cursor-pointer hover:bg-purple-700 transition-colors disabled:opacity-50"
                                     onClick={() => setIsConfirmPrivateDialogOpen(true)}
                                     disabled={isProcessingPrivateAction}
                                 >
                                     <div className="flex items-center justify-center h-full w-10 bg-purple-700 rounded-l-lg">
-                                        <Plus className="h-5 w-5" />
+                                        {isProcessingPrivateAction ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-5 w-5" />}
                                     </div>
-                                    <div className="px-5 text-center">
+                                    <div className="px-3 text-center">
                                         <p className="text-sm font-bold leading-tight">Reservar</p>
                                         <p className="text-xs leading-tight">Privada</p>
                                     </div>
@@ -261,7 +261,7 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
                 <CardContent className="px-3 pb-3 flex-grow">
                      <div className="flex justify-around items-center gap-1.5 my-2">
                          <InfoButton icon={Users2} text="Cat." onClick={() => handleInfoClick('category')} />
-                         <InfoButton icon={Hash} text="Pista" onClick={() => handleInfoClick('court')} />
+                         <InfoButton icon={Hash} text="# Pista" onClick={() => handleInfoClick('court')} />
                          <InfoButton icon={BarChartHorizontal} text="Nivel" onClick={() => handleInfoClick('level')} />
                      </div>
 
