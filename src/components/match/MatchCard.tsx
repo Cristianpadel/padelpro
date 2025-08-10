@@ -68,7 +68,7 @@ interface MatchCardProps {
 
 const InfoButton = ({ icon: Icon, text, onClick, className }: { icon: React.ElementType, text: string, onClick: () => void, className?: string }) => (
     <Button variant="outline" className={cn("flex-1 h-8 rounded-full shadow-inner bg-slate-50 border-slate-200 capitalize text-xs", className)} onClick={onClick}>
-        <Icon className="mr-1.5 h-3.5 w-3.5"/>{text}
+        <span className="font-bold text-primary mr-1">+</span>{text}
     </Button>
 );
 
@@ -228,7 +228,7 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
                 <CardHeader className="pb-3 pt-3 px-3">
                     <div className="flex justify-between items-start">
                         <div className="flex items-center space-x-3">
-                            <div className="flex-shrink-0 text-center font-bold bg-muted p-1 rounded-md w-14">
+                            <div className="flex-shrink-0 text-center font-bold bg-muted p-1 rounded-md w-14 shadow-lg">
                                 <p className="text-xs uppercase">{format(new Date(currentMatch.startTime), "EEE", { locale: es })}</p>
                                 <p className="text-3xl leading-none">{format(new Date(currentMatch.startTime), "d")}</p>
                                 <p className="text-xs uppercase">{format(new Date(currentMatch.startTime), "MMM", { locale: es })}</p>
@@ -243,15 +243,15 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground"><Share2 className="h-4 w-4"/></Button>
                              {canBookPrivate && (
                                 <button
-                                    className="flex items-center h-10 bg-purple-600 text-white rounded-lg rounded-l-full shadow-lg cursor-pointer hover:bg-purple-700 transition-colors disabled:opacity-50"
+                                    className="flex items-center h-12 bg-purple-600 text-white rounded-r-lg shadow-lg cursor-pointer hover:bg-purple-700 transition-colors disabled:opacity-50"
                                     onClick={() => setIsConfirmPrivateDialogOpen(true)}
                                     disabled={isProcessingPrivateAction}
                                 >
-                                    <div className="flex items-center justify-center h-10 w-10">
+                                    <div className="flex items-center justify-center h-full w-10 bg-purple-700 rounded-l-lg">
                                         <Plus className="h-5 w-5" />
                                     </div>
-                                    <div className="pr-4 pl-1 text-center">
-                                        <p className="text-xs font-bold leading-tight">Reservar</p>
+                                    <div className="px-5 text-center">
+                                        <p className="text-sm font-bold leading-tight">Reservar</p>
                                         <p className="text-xs leading-tight">Privada</p>
                                     </div>
                                 </button>
@@ -261,14 +261,14 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
                 </CardHeader>
                 <CardContent className="px-3 pb-3 flex-grow">
                      <div className="flex justify-around items-center gap-1.5 my-2">
-                        <Button variant="outline" className="flex-1 h-8 rounded-full shadow-inner bg-slate-50 border-slate-200" onClick={() => handleInfoClick('category')}>
-                            + Cat.
-                        </Button>
-                        <Button variant="outline" className="flex-1 h-8 rounded-full shadow-inner bg-slate-50 border-slate-200" onClick={() => handleInfoClick('court')}>
-                           + Pista
-                        </Button>
-                        <Button variant="outline" className="flex-1 h-8 rounded-full shadow-inner bg-slate-50 border-slate-200" onClick={() => handleInfoClick('level')}>
-                           + Nivel
+                         <Button variant="outline" className="flex-1 h-8 rounded-full shadow-inner bg-slate-50 border-slate-200 capitalize text-xs" onClick={() => handleInfoClick('category')}>
+                            <span className="font-bold text-primary mr-1">+</span>{displayClassCategory(matchCategoryToDisplay)}
+                         </Button>
+                         <Button variant="outline" className="flex-1 h-8 rounded-full shadow-inner bg-slate-50 border-slate-200" onClick={() => handleInfoClick('court')}>
+                           <span className="font-bold text-primary mr-1">+</span> {currentMatch.courtNumber ? `Pista ${currentMatch.courtNumber}` : 'Sin Asignar'}
+                         </Button>
+                        <Button variant="outline" className="flex-1 h-8 rounded-full shadow-inner bg-slate-50 border-slate-200 capitalize text-xs" onClick={() => handleInfoClick('level')}>
+                           <span className="font-bold text-primary mr-1">+</span> {matchLevelToDisplay === 'abierto' ? 'Nivel' : matchLevelToDisplay}
                         </Button>
                      </div>
 
