@@ -125,8 +125,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
             workingMatches = workingMatches.filter(match => {
                 if ('isEventCard' in match) return false;
                 const regularMatch = match as Match;
-                const isUserInMatch = (regularMatch.bookedPlayers || []).some(p => p.userId === currentUser.id);
-                 return isUserInMatch && regularMatch.status !== 'confirmed' && regularMatch.status !== 'confirmed_private';
+                return (regularMatch.bookedPlayers || []).some(p => p.userId === currentUser.id);
             });
         } else if (viewPreference === 'myConfirmed') {
              workingMatches = workingMatches.filter(match => {
@@ -200,7 +199,8 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
         }
 
         if(!filterByGratisOnly && !filterByLiberadasOnly && !filterByPuntosOnly) {
-            workingMatches = workingMatches.filter(match => {
+             const clubForCheck = getMockClubs().find(c => c.id === filterByClubId);
+             workingMatches = workingMatches.filter(match => {
                 if ('isEventCard' in match && match.isEventCard) return true;
                 if ((match as Match).isPlaceholder) return true;
                 if ((match as Match).status === 'confirmed' || (match as Match).status === 'confirmed_private') {
