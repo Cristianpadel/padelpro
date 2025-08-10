@@ -271,11 +271,16 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                                 </div>
                                             </div>
                                         </div>
-                                         {!isCurrentUser && userInscription && (
+                                        {!isCurrentUser && userInscription && (
                                             <Button
-                                                variant={isPreferredPartner ? "default" : "secondary"}
+                                                variant={isPreferredPartner ? "default" : "outline"}
                                                 size="sm"
-                                                className="w-full h-7 text-xs"
+                                                className={cn(
+                                                    "w-full h-7 text-xs shadow-md transition-all duration-200",
+                                                    isPreferredPartner
+                                                    ? "bg-green-600 hover:bg-green-700 text-white"
+                                                    : "bg-white hover:bg-gray-100"
+                                                )}
                                                 onClick={() => onSelectPartner(inscription.userId)}
                                             >
                                                 {isPreferredPartner ? <CheckCircle className="mr-1.5 h-3.5 w-3.5" /> : <Handshake className="mr-1.5 h-3.5 w-3.5" />}
