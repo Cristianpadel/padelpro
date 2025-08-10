@@ -35,6 +35,7 @@ import ManagePointBookingSlots from '@/app/(app)/admin/components/ManagePointBoo
 import ManageCancellationPenaltiesForm from './ManageCancellationPenaltiesForm';
 import BookingSimulator from './BookingSimulator';
 import ManageCardStylesPanel from './ManageCardStylesPanel';
+import Link from 'next/link';
 
 
 interface AdminPanelProps {
@@ -169,12 +170,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminClub }) => {
         router.push('/auth/login-club-admin');
     };
     
-    const handleSetView = (view: 'clases' | 'partidas') => {
-        setActivityFilter(view);
-        setActivePanelValue('activityCalendar');
-        setShowPanelContent(true);
-    };
-
     const adminPanelOptions: AdminPanelOption[] = [
         { value: "instructors", label: "Instructores", icon: UserPlus, componentFactory: (props) => (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -230,8 +225,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminClub }) => {
                 <div className="mb-6 p-4 border rounded-lg bg-muted/50">
                     <h3 className="font-semibold text-lg mb-2 flex items-center"><Eye className="mr-2 h-5 w-5 text-primary"/>Filtros de Vista Rápida</h3>
                     <div className="flex gap-2">
-                         <Button onClick={() => handleSetView('clases')}><Activity className="mr-2 h-4 w-4"/>Ver Solo Clases</Button>
-                         <Button onClick={() => handleSetView('partidas')}><Trophy className="mr-2 h-4 w-4"/>Ver Solo Partidas</Button>
+                        <Button asChild>
+                            <Link href="/activities?view=clases" target="_blank">
+                                <Activity className="mr-2 h-4 w-4"/>Ver Solo Clases
+                            </Link>
+                        </Button>
+                        <Button asChild>
+                             <Link href="/activities?view=partidas" target="_blank">
+                                <Trophy className="mr-2 h-4 w-4"/>Ver Solo Partidas
+                            </Link>
+                        </Button>
                     </div>
                 </div>
             )}
