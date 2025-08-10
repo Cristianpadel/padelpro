@@ -25,20 +25,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 
+
 interface CourtAvailabilityState {
     available: PadelCourt[];
     occupied: PadelCourt[];
     total: number;
 }
 
-interface InfoButtonProps {
+const InfoButton: React.FC<{
     icon: React.ElementType;
     text: string;
     onClick: () => void;
     className?: string;
-}
-
-const InfoButton: React.FC<InfoButtonProps> = ({ icon: Icon, text, onClick, className }) => (
+}> = ({ icon: Icon, text, onClick, className }) => (
     <button className="flex-1" onClick={onClick}>
         <Badge variant="outline" className={cn("w-full justify-center text-xs py-1.5 rounded-full capitalize shadow-inner bg-slate-50 border-slate-200 hover:border-slate-300 transition-colors", className)}>
             <Icon className="mr-1.5 h-3 w-3" /> {text}
@@ -77,6 +76,7 @@ const DialogInfo: React.FC<{
     </Dialog>
   );
 };
+
 
 interface BookingListItemProps {
   booking: Booking;
@@ -127,7 +127,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
       startMakePrivateTransition(async () => {
         const result = await fillClassAndMakePrivate(currentUser.id, slotId);
         if('error' in result) {
-            toast({ title: "Error", description: result.error, variant: 'destructive'});
+            toast({ title: "Error", description: result.error, variant: "destructive"});
         } else {
             toast({
                 title: "¡Clase Privada!",
@@ -174,7 +174,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
 
   const levelDisplay = displayClassLevel(level, true);
   const categoryDisplay = displayClassCategory(category, true);
-  const courtDisplay = isCourtAssigned ? `Pista ${courtNumber}` : 'Pista';
+  const courtDisplay = isCourtAssigned ? `Pista ${courtNumber}` : 'Categoría';
 
   const CategoryIcon = category === 'chica' ? Venus : category === 'chico' ? Mars : Users2;
   const classifiedBadgeClass = 'text-blue-700 border-blue-200 bg-blue-100 hover:border-blue-300';
@@ -318,7 +318,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
           </CardFooter>
         </Card>
       </div>
-      <InfoDialog isOpen={infoDialog.open} onOpenChange={(open) => setInfoDialog(prev => ({ ...prev, open }))} title={infoDialog.title} description={infoDialog.description} icon={infoDialog.icon} />
+      <DialogInfo isOpen={infoDialog.open} onOpenChange={(open) => setInfoDialog(prev => ({ ...prev, open }))} title={infoDialog.title} description={infoDialog.description} icon={infoDialog.icon} />
     </>
   );
 };
