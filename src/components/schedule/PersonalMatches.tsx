@@ -222,7 +222,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
   
   const handleMakePrivate = (booking: MatchBooking) => {
     if (!booking.matchDetails) return;
-    setCurrentActionInfo({ type: 'makePrivate', bookingId: booking.id });
+    setCurrentActionInfo({ type: 'makePrivate', bookingId: booking.id, matchId: booking.activityId });
     startProcessingTransition(async () => {
         const result = await fillMatchAndMakePrivate(currentUser.id, booking.activityId);
         if ('error' in result) {
@@ -307,6 +307,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
       const isOrganizerOfPrivateMatch = status === 'confirmed_private' && organizerId === currentUser.id;
       const availability = availabilityData[booking.activityId];
       const pricePerPlayer = calculatePricePerPerson(totalCourtFee || 0, 4);
+      const isUserInMatch = (bookedPlayers || []).some(p => p.userId === currentUser.id);
 
       let cancellationButtonText = "Cancelar Inscripción";
       let cancellationDialogText = "¿Estás seguro de que quieres cancelar tu inscripción?";
@@ -475,25 +476,25 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
             )}
 
 
-              <div className="pt-2 border-t mt-2 flex flex-col sm:flex-row sm:items-center sm:justify-end space-y-2 sm:space-y-0 sm:space-x-2">
+              <div className="pt-2 border-t mt-2 flex flex-col sm:flex-row sm:items-center sm:justify-center space-y-2 sm:space-y-0 sm:space-x-2">
                   {isOrganizerOfPrivateMatch && isUpcomingItem && (
-                      <>
-                         <Button variant="outline" size="sm" className="w-full sm:w-auto text-xs bg-purple-500 text-white border-purple-600 hover:bg-purple-600" onClick={handleSharePrivateMatch} disabled={isProcessingAction}><Share2 className="mr-1.5 h-3.5 w-3.5" /> Compartir</Button>
+                      <div className="flex w-full gap-2">
+                         <Button variant="outline" size="sm" className="flex-1 text-xs bg-purple-500 text-white border-purple-600 hover:bg-purple-600" onClick={handleSharePrivateMatch} disabled={isProcessingAction}><Share2 className="mr-1.5 h-3.5 w-3.5" /> Compartir</Button>
                          <AlertDialog>
-                             <AlertDialogTrigger asChild><Button variant="outline" size="sm" className="w-full sm:w-auto text-xs border-orange-500 text-orange-600 hover:bg-orange-500/10 hover:text-orange-700" disabled={isProcessingAction}>{isProcessingAction ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin"/> : <Unlock className="mr-1.5 h-3.5 w-3.5"/>} Hacer Pública</Button></AlertDialogTrigger>
+                             <AlertDialogTrigger asChild><Button variant="outline" size="sm" className="flex-1 text-xs border-orange-500 text-orange-600 hover:bg-orange-500/10 hover:text-orange-700" disabled={isProcessingAction}>{isProcessingAction ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin"/> : <Unlock className="mr-1.5 h-3.5 w-3.5"/>} Pública</Button></AlertDialogTrigger>
                               <AlertDialogContent>
                                  <AlertDialogHeader><AlertDialogTitle>¿Hacer Pública esta Partida?</AlertDialogTitle><AlertDialogDescription>La partida será visible para todos y podrán unirse nuevos jugadores. No se realizarán reembolsos automáticos.</AlertDialogDescription></AlertDialogHeader>
                                  <AlertDialogFooter><AlertDialogCancel disabled={isProcessingAction}>Cancelar</AlertDialogCancel><AlertDialogAction onClick={handleMakeMatchPublic} disabled={isProcessingAction} className="bg-orange-500 hover:bg-orange-600 text-white">{isProcessingAction ? <Loader2 className="animate-spin h-4 w-4" /> : "Sí, Hacer Pública"}</AlertDialogAction></AlertDialogFooter>
                              </AlertDialogContent>
                          </AlertDialog>
                          <AlertDialog>
-                             <AlertDialogTrigger asChild><Button variant="outline" size="sm" className="w-full sm:w-auto text-xs text-destructive border-destructive hover:bg-destructive/10" disabled={isProcessingAction}><Ban className="mr-1.5 h-3.5 w-3.5" /> Cancelar y Ofrecer</Button></AlertDialogTrigger>
+                             <AlertDialogTrigger asChild><Button variant="outline" size="sm" className="flex-1 text-xs text-destructive border-destructive hover:bg-destructive/10" disabled={isProcessingAction}><Ban className="mr-1.5 h-3.5 w-3.5" /> Ofrecer</Button></AlertDialogTrigger>
                               <AlertDialogContent>
                                  <AlertDialogHeader><AlertDialogTitle>Cancelar y Ofrecer por Puntos</AlertDialogTitle><AlertDialogDescription>Se te reembolsará el coste total de la pista ({totalCourtFee?.toFixed(2)}€). La pista quedará disponible para que otro jugador la reserve únicamente con puntos de fidelidad. ¿Estás seguro?</AlertDialogDescription></AlertDialogHeader>
                                  <AlertDialogFooter><AlertDialogCancel disabled={isProcessingAction}>Cerrar</AlertDialogCancel><AlertDialogAction onClick={() => handleCancelAndReoffer(booking.matchId)} disabled={isProcessingAction} className="bg-destructive hover:bg-destructive/90">{currentActionInfo?.type === 'cancelAndReoffer' && isProcessingAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Sí, Cancelar y Ofrecer"}</AlertDialogAction></AlertDialogFooter>
                              </AlertDialogContent>
                          </AlertDialog>
-                      </>
+                      </div>
                   )}
                  {isUpcomingItem && !isOrganizerOfPrivateMatch && (
                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full justify-center">
@@ -502,7 +503,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                              <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>¿Confirmar Cancelación?</AlertDialogTitle><AlertDialogDescription>{cancellationDialogText}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={isProcessingAction && currentActionInfo?.bookingId === booking.id}>Cerrar</AlertDialogCancel><AlertDialogAction onClick={() => handleCancellationAction(booking)} disabled={isProcessingAction && currentActionInfo?.bookingId === booking.id} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{isProcessingAction && currentActionInfo?.bookingId === booking.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Sí, Cancelar"}</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
                          </AlertDialog>
                          {isMatchFull && isUpcomingItem && (<Button variant="outline" size="sm" className="w-full sm:w-auto text-xs bg-blue-500 text-white border-blue-600 hover:bg-blue-600" onClick={() => handleOpenChatDialog(booking.matchDetails)}><MessageSquare className="mr-1.5 h-3.5 w-3.5" />Chat</Button>)}
-                          {isUpcomingItem && !isMatchFull && (
+                          {isUpcomingItem && isUserInMatch && !isMatchFull && (
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                     <Button size="sm" className="w-full sm:w-auto text-xs bg-purple-600 text-white border-purple-700 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed" disabled={isProcessingAction}>
