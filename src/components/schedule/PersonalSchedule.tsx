@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { displayClassLevel, displayClassCategory } from '@/types';
-import { cancelBooking, fetchUserBookings, addReviewToState } from '@/lib/mockData';
+import { cancelBooking, fetchUserBookings, addReviewToState, getMockStudents } from '@/lib/mockData';
 import { useRouter } from 'next/navigation';
 import { InfoCard } from './InfoCard';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -61,7 +61,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
   const isConfirmed = status === 'confirmed' || status === 'confirmed_private';
 
   return (
-    <div className={cn("p-3 border rounded-md transition-colors w-80 flex flex-col", isUpcoming && isConfirmed && "bg-green-50 border-green-200", isUpcoming && !isConfirmed && "bg-blue-50 border-blue-200", !isUpcoming && "bg-gray-50 border-gray-200")}>
+    <div className={cn("p-3 border rounded-lg shadow-md transition-colors w-80 flex flex-col max-w-md mx-auto", isUpcoming && isConfirmed && "bg-green-50 border-green-200", isUpcoming && !isConfirmed && "bg-blue-50 border-blue-200", !isUpcoming && "bg-gray-50 border-gray-200")}>
        <div className="flex justify-between items-start">
             <div>
                 <p className="font-semibold text-sm">{format(new Date(startTime), "eeee, d 'de' MMMM", { locale: es })}</p>
@@ -81,12 +81,15 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
            <div className="mt-2 pt-2 border-t border-border/30">
                <p className="text-xs font-medium text-muted-foreground mb-1.5">Inscritos:</p>
                <div className="flex items-center gap-1.5">
-                   {bookedPlayers.map(player => (
-                       <Avatar key={player.userId} className="h-7 w-7">
-                           <AvatarImage src={`https://i.pravatar.cc/48?u=${player.userId}`} alt={player.name} data-ai-hint="player avatar small" />
-                           <AvatarFallback className="text-[10px]">{getInitials(player.name || '')}</AvatarFallback>
-                       </Avatar>
-                   ))}
+                   {bookedPlayers.map(player => {
+                       const student = getMockStudents().find(s => s.id === player.userId);
+                       return (
+                           <Avatar key={player.userId} className="h-7 w-7">
+                               <AvatarImage src={student?.profilePictureUrl} alt={player.name} data-ai-hint="player avatar small" />
+                               <AvatarFallback className="text-[10px]">{getInitials(player.name || '')}</AvatarFallback>
+                           </Avatar>
+                       );
+                   })}
                </div>
            </div>
        )}
@@ -133,18 +136,25 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
     try {
       setLoading(true);
       const fetchedBookings = await fetchUserBookings(currentUser.id);
-      const now = new Date();
-      const upcoming = fetchedBookings.filter(b => b.slotDetails && new Date(b.slotDetails.endTime) > now);
-      const past = fetchedBookings.filter(b => b.slotDetails && new Date(b.slotDetails.endTime) <= now);
       
-      upcoming.sort((a, b) => (a.slotDetails?.startTime?.getTime() ?? 0) - (b.slotDetails?.startTime?.getTime() ?? 0));
-      past.sort((a, b) => (b.slotDetails?.startTime?.getTime() ?? 0) - (a.slotDetails?.startTime?.getTime() ?? 0));
+      // Sort bookings: upcoming first, then past, both sorted by date
+      fetchedBookings.sort((a, b) => {
+        if (!a.slotDetails?.startTime || !b.slotDetails?.startTime) return 0;
+        const aIsPast = isPast(new Date(a.slotDetails.startTime));
+        const bIsPast = isPast(new Date(b.slotDetails.startTime));
 
-      setBookings([...upcoming, ...past]);
+        if (aIsPast && !bIsPast) return 1;
+        if (!aIsPast && bIsPast) return -1;
+        
+        // Both are upcoming or both are past, sort by date (most recent first for past, soonest first for upcoming)
+        return new Date(b.slotDetails.startTime).getTime() - new Date(a.slotDetails.startTime).getTime();
+      });
+
+      setBookings(fetchedBookings);
       setError(null);
     } catch (err) {
       console.error("Failed to fetch user bookings:", err);
-      setError("No se pudo cargar tu horario.");
+      setError("No se pudieron cargar tus clases.");
     } finally {
       setLoading(false);
     }
@@ -186,8 +196,8 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
     );
   }
   
-  const upcomingBookings = bookings.filter(b => b.slotDetails && new Date(b.slotDetails.endTime) > new Date());
-  const pastBookings = bookings.filter(b => b.slotDetails && new Date(b.slotDetails.endTime) <= new Date());
+  const upcomingBookings = bookings.filter(b => b.slotDetails && !isPast(new Date(b.slotDetails.endTime)));
+  const pastBookings = bookings.filter(b => b.slotDetails && isPast(new Date(b.slotDetails.endTime)));
   
   if (upcomingBookings.length === 0 && pastBookings.length === 0) {
     return (
