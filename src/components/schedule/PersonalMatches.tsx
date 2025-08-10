@@ -33,7 +33,7 @@ import { displayClassCategory } from '@/types';
 import { InfoCard } from '@/components/schedule/InfoCard'; 
 import { useRouter } from 'next/navigation'; 
 import { Separator } from '../ui/separator';
-import { Tooltip, TooltipProvider, TooltipContent } from "@/components/ui/tooltip";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
 
@@ -414,7 +414,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
 
                     return (
                         <div key={idx} className="flex flex-col items-center group/avatar-wrapper space-y-0.5 relative text-center">
-                             <TooltipProvider delayDuration={150}>
+                             <TooltipProvider key={idx} delayDuration={150}>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <div className={cn(
