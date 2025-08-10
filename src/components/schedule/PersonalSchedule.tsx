@@ -30,6 +30,22 @@ interface CourtAvailabilityState {
     total: number;
 }
 
+interface InfoButtonProps {
+    icon: React.ElementType;
+    text: string;
+    onClick: () => void;
+    className?: string;
+}
+
+const InfoButton: React.FC<InfoButtonProps> = ({ icon: Icon, text, onClick, className }) => (
+    <button className="flex-1" onClick={onClick}>
+        <Badge variant="outline" className={cn("w-full justify-center text-xs py-1.5 rounded-full capitalize shadow-inner bg-slate-50 border-slate-200 hover:border-slate-300 transition-colors", className)}>
+            <Icon className="mr-1.5 h-3 w-3" /> {text}
+        </Badge>
+    </button>
+);
+
+
 const InfoDialog: React.FC<{
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -60,23 +76,6 @@ const InfoDialog: React.FC<{
     </Dialog>
   );
 };
-
-
-interface InfoButtonProps {
-    icon: React.ElementType;
-    text: string;
-    onClick: () => void;
-    className?: string;
-}
-
-const InfoButton: React.FC<InfoButtonProps> = ({ icon: Icon, text, onClick, className }) => (
-    <button className="flex-1" onClick={onClick}>
-        <Badge variant="outline" className={cn("w-full justify-center text-xs py-1.5 rounded-full capitalize shadow-inner bg-slate-50 border-slate-200 hover:border-slate-300 transition-colors", className)}>
-            <Icon className="mr-1.5 h-3 w-3" /> {text}
-        </Badge>
-    </button>
-);
-
 
 interface BookingListItemProps {
   booking: Booking;
@@ -176,44 +175,44 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
     <>
       <div className="w-80 max-w-md mx-auto">
         <Card className={cn("flex flex-col shadow-md border-l-4 h-full", cardBorderColor)}>
-            <CardHeader className="p-3 pb-1 space-y-2">
-                 <div className="flex justify-between items-start">
-                    <div className="flex items-center space-x-3">
-                        <Link href={`/instructors/${instructor.id}`} passHref className="group">
-                            <Avatar className="h-12 w-12">
-                                <AvatarImage src={instructor?.profilePictureUrl} alt={instructor?.name || ''} data-ai-hint="instructor profile photo"/>
-                                <AvatarFallback className="text-xl">{getInitials(instructor?.name || '')}</AvatarFallback>
-                            </Avatar>
-                        </Link>
-                        <div className="flex flex-col">
-                            <Link href={`/instructors/${instructor.id}`} passHref className="group">
-                                <p className="font-semibold text-lg text-gray-800 -mb-0.5 group-hover:underline">{instructorName}</p>
-                            </Link>
-                            {renderStarsDisplay(4.5)}
-                        </div>
-                    </div>
+          <CardHeader className="p-3 pb-1 space-y-2">
+            <div className="flex justify-between items-start">
+              <div className="flex items-center space-x-3">
+                <Link href={`/instructors/${instructor.id}`} passHref className="group">
+                  <Avatar className="h-12 w-12">
+                      <AvatarImage src={instructor?.profilePictureUrl} alt={instructor?.name || ''} data-ai-hint="instructor profile photo"/>
+                      <AvatarFallback className="text-xl">{getInitials(instructor?.name || '')}</AvatarFallback>
+                  </Avatar>
+                </Link>
+                <div className="flex flex-col">
+                    <Link href={`/instructors/${instructor.id}`} passHref className="group">
+                      <p className="font-semibold text-lg text-gray-800 -mb-0.5 group-hover:underline">{instructorName}</p>
+                    </Link>
+                    {renderStarsDisplay(4.5)}
                 </div>
+              </div>
+            </div>
 
-                 <div className="flex justify-center items-center gap-1.5 pt-1">
-                    <InfoButton icon={Lightbulb} text={levelDisplay} onClick={() => handleInfoClick('level')} className={cn(isLevelAssigned && classifiedBadgeClass)} />
-                    <InfoButton icon={CategoryIcon} text={categoryDisplay} onClick={() => handleInfoClick('category')} className={cn(isCategoryAssigned && classifiedBadgeClass)} />
-                    <InfoButton icon={Hash} text={courtDisplay} onClick={() => handleInfoClick('court')} className={cn(isCourtAssigned && classifiedBadgeClass)} />
-                 </div>
+            <div className="flex justify-center items-center gap-1.5 pt-1">
+                <InfoButton icon={Lightbulb} text={levelDisplay} onClick={() => handleInfoClick('level')} className={cn(isLevelAssigned && classifiedBadgeClass)} />
+                <InfoButton icon={CategoryIcon} text={categoryDisplay} onClick={() => handleInfoClick('category')} className={cn(isCategoryAssigned && classifiedBadgeClass)} />
+                <InfoButton icon={Hash} text={courtDisplay} onClick={() => handleInfoClick('court')} className={cn(isCourtAssigned && classifiedBadgeClass)} />
+            </div>
 
-                <div className="flex justify-between items-center border-t border-border pt-1.5 mt-1">
-                    <div className="flex items-center space-x-3">
-                        <div className="flex flex-col items-center justify-center font-bold">
-                            <span className="text-4xl leading-none -mb-1">{format(new Date(startTime), 'd')}</span>
-                            <span className="text-[10px] uppercase leading-none">{format(new Date(startTime), "MMM", { locale: es })}</span>
-                        </div>
-                        <div className="text-sm">
-                            <p className="font-semibold text-foreground uppercase">{format(new Date(startTime), 'eeee HH:mm\'h\'', { locale: es })}</p>
-                            <p className="text-xs text-muted-foreground flex items-center"><Clock className="mr-1 h-3 w-3" />{slotDetails.durationMinutes} min</p>
-                        </div>
-                    </div>
-                    <Button variant="ghost" className="h-auto p-1 text-muted-foreground self-start"><Share2 className="h-5 w-5" /></Button>
-                </div>
-            </CardHeader>
+            <div className="flex justify-between items-center border-t border-border pt-1.5 mt-1">
+              <div className="flex items-center space-x-3">
+                  <div className="flex flex-col items-center justify-center font-bold">
+                      <span className="text-4xl leading-none -mb-1">{format(new Date(startTime), 'd')}</span>
+                      <span className="text-[10px] uppercase leading-none">{format(new Date(startTime), "MMM", { locale: es })}</span>
+                  </div>
+                  <div className="text-sm">
+                      <p className="font-semibold text-foreground uppercase">{format(new Date(startTime), 'eeee HH:mm\'h\'', { locale: es })}</p>
+                      <p className="text-xs text-muted-foreground flex items-center"><Clock className="mr-1 h-3 w-3" />{slotDetails.durationMinutes} min</p>
+                  </div>
+              </div>
+              <Button variant="ghost" className="h-auto p-1 text-muted-foreground self-start"><Share2 className="h-5 w-5" /></Button>
+            </div>
+          </CardHeader>
           <CardContent className="p-3 pt-1 flex-grow">
             <div className="space-y-1">
               {([1, 2, 3, 4] as const).map((optionSize) => {
