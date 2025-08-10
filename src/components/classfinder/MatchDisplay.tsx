@@ -125,7 +125,8 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
             workingMatches = workingMatches.filter(match => {
                 if ('isEventCard' in match) return false;
                 const regularMatch = match as Match;
-                return (regularMatch.bookedPlayers || []).some(p => p.userId === currentUser.id);
+                const isUserInMatch = (regularMatch.bookedPlayers || []).some(p => p.userId === currentUser.id);
+                 return isUserInMatch && regularMatch.status !== 'confirmed' && regularMatch.status !== 'confirmed_private';
             });
         } else if (viewPreference === 'myConfirmed') {
              workingMatches = workingMatches.filter(match => {
@@ -187,7 +188,14 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
             }
             
             if (viewPreference === 'normal' && !filterAlsoConfirmedMatches) {
-                workingMatches = workingMatches.filter(match => ('isEventCard' in match) || ((match as Match).bookedPlayers || []).length < 4);
+                 workingMatches = workingMatches.filter(match => {
+                    if ('isEventCard' in match) return true; // Always show events
+                    const regularMatch = match as Match;
+                    // Show placeholders, forming matches, and matches the user is in.
+                    return regularMatch.isPlaceholder || 
+                           regularMatch.status === 'forming' || 
+                           (regularMatch.bookedPlayers || []).some(p => p.userId === currentUser.id);
+                });
             }
         }
 
