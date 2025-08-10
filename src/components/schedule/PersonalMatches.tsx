@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useTransition, useMemo } from 'react';
 import type { MatchBooking, User, Match, Club, PadelCategoryForSlot, MatchBookingMatchDetails, PadelCourt } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { List, Clock, Users, CalendarCheck, CalendarX, Loader2, Ban, Hash, Trophy, UserCircle, Gift, Info, MessageSquare, Euro, Users2 as CategoryIcon, Venus, Mars, Share2, Unlock, Lock, Repeat, Lightbulb, BarChartHorizontal } from 'lucide-react';
+import { List, Clock, Users, CalendarCheck, CalendarX, Loader2, Ban, Hash, Trophy, UserCircle, Gift, Info, MessageSquare, Euro, Users2 as CategoryIcon, Venus, Mars, Share2, Unlock, Lock, Repeat, Lightbulb, BarChartHorizontal, Plus } from 'lucide-react';
 import { format, differenceInHours } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -101,6 +101,8 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
   const [now, setNow] = useState(new Date());
   const [availabilityData, setAvailabilityData] = useState<Record<string, CourtAvailabilityState>>({});
   const [infoDialog, setInfoDialog] = useState<{ open: boolean, title: string, description: string, icon: React.ElementType }>({ open: false, title: '', description: '', icon: Lightbulb });
+  const [isConfirmPrivateDialogOpen, setIsConfirmPrivateDialogOpen] = useState(false);
+  const [isProcessingPrivateAction, setIsProcessingPrivateAction] = useState(false);
 
 
   const loadData = async () => {
@@ -279,7 +281,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
           );
       }
 
-      const { startTime, endTime, courtNumber, level, category, bookedPlayers, totalCourtFee, clubId, status, organizerId, privateShareCode, isRecurring, nextRecurringMatchId } = booking.matchDetails;
+      const { startTime, endTime, courtNumber, level, category, bookedPlayers, totalCourtFee, clubId, status, organizerId, privateShareCode, isRecurring, nextRecurringMatchId, durationMinutes } = booking.matchDetails;
       const isMatchFull = (bookedPlayers || []).length >= 4;
       const wasBookedWithPoints = booking.bookedWithPoints === true;
       const clubDetails = getMockClubs().find(c => c.id === clubId);
@@ -375,34 +377,39 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
       return (
         <div key={booking.id} className={cn("flex flex-col p-3 rounded-lg shadow-md space-y-2 border-l-4 w-80", cardBorderColor, isUpcomingItem ? 'bg-card border' : 'bg-muted/60 border border-border/50')}>
              <div className="flex items-start justify-between">
-                 <div className="font-semibold text-base text-foreground capitalize flex items-center">
-                     {isUpcomingItem ? <CalendarCheck className="h-4 w-4 mr-1.5 text-primary" /> : <CalendarX className="h-4 w-4 mr-1.5 text-muted-foreground" />}
-                     {format(new Date(startTime), 'eeee, d MMM', { locale: es })}
-                 </div>
-                  <div className="mt-0.5">
+                 <div className="flex items-center space-x-3">
+                     <div className="flex-shrink-0 text-center font-bold bg-white p-1 rounded-md w-14 shadow-lg border border-border/20">
+                        <p className="text-xs uppercase">{format(new Date(startTime), "EEE", { locale: es })}</p>
+                        <p className="text-3xl leading-none">{format(new Date(startTime), "d")}</p>
+                        <p className="text-xs uppercase">{format(new Date(startTime), "MMM", { locale: es })}</p>
+                    </div>
+                     <div className="flex flex-col">
+                        <span className="font-semibold text-lg">{format(new Date(startTime), 'HH:mm')}h</span>
+                        <span className="text-sm text-muted-foreground flex items-center"><Clock className="mr-1 h-3.5 w-3.5"/>{durationMinutes || 90} min</span>
+                        <span className="text-sm text-muted-foreground">{clubDetails?.name || 'Club Padel'}</span>
+                    </div>
+                </div>
+                  <div className="mt-0.5 flex flex-col items-end gap-1.5">
                      {status === 'confirmed_private' && isUpcomingItem && <Badge variant="outline" className="text-xs bg-purple-100 text-purple-700 border-purple-400">Privada</Badge>}
                      {isMatchFull && status !== 'confirmed_private' && isUpcomingItem && <Badge variant="default" className="text-xs bg-red-500">Completa</Badge>}
                       {!isMatchFull && status !== 'confirmed_private' && isUpcomingItem && <Badge variant="outline" className="text-xs bg-blue-100 text-blue-700 border-blue-500">Inscrito</Badge>}
                       {!isUpcomingItem && <Badge variant="outline" className="text-xs">Finalizada</Badge>}
+                       <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground"><Share2 className="h-4 w-4"/></Button>
                   </div>
              </div>
 
-             <div className="flex items-center justify-between text-xs text-muted-foreground border-t border-b border-border/30 py-1">
-                 <div className="flex items-center"><Clock className="h-3.5 w-3.5 mr-1" />{`${format(new Date(startTime), 'HH:mm')}h`}</div>
-                 <div className="flex items-center"><Hash className="h-3.5 w-3.5 mr-1" />Pista {courtNumber || '?'}</div>
-                 <div className="flex items-center"><Trophy className="h-3.5 w-3.5 mr-1" />{levelDisplay}</div>
-             </div>
-             
-             <div className="flex justify-around items-center gap-1.5 my-2">
+              <div className="flex justify-around items-center gap-1.5 my-2">
                  <InfoButton icon={CategoryIcon} text={displayClassCategory(category, true)} onClick={() => handleInfoClick('category', booking.matchDetails!)} />
                  <InfoButton icon={Hash} text={courtNumber ? `# ${courtNumber}` : '# Pista'} onClick={() => handleInfoClick('court', booking.matchDetails!)} />
                  <InfoButton icon={BarChartHorizontal} text={level || "Nivel"} onClick={() => handleInfoClick('level', booking.matchDetails!)} />
              </div>
            
-             <div className="grid grid-cols-4 gap-2 items-start justify-items-center mt-1">
+            <div className="grid grid-cols-4 gap-2 items-start justify-items-center mt-1">
                 {Array.from({ length: 4 }).map((_, idx) => {
                     const player = (bookedPlayers || [])[idx];
                     const fullPlayer = player ? (state.getMockStudents().find(s => s.id === player.userId) || (currentUser?.id === player.userId ? currentUser : null)) : null;
+                    const spotLabel = player ? (player.name || 'Jugador').split(' ')[0] : (pricePerPlayer > 0 ? `${pricePerPlayer.toFixed(2)}€` : "Libre");
+
                     return (
                         <div key={idx} className="flex flex-col items-center group/avatar-wrapper space-y-0.5 relative text-center">
                             <TooltipProvider delayDuration={150}>
@@ -416,9 +423,10 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                                     <TooltipContent side="bottom"><p>{player ? (player.name || 'Tú') : 'Plaza Libre'}</p></TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
-                            <span className={cn("text-[11px] font-medium truncate w-auto max-w-[60px]", player ? "text-foreground" : "text-muted-foreground")}>
-                                {player ? (player.name || 'Tú').split(' ')[0] : 'Libre'}
-                            </span>
+                            <span className={cn(
+                                "text-[11px] font-medium truncate w-auto max-w-[60px]",
+                                player ? "text-foreground" : "text-muted-foreground",
+                            )}>{spotLabel}</span>
                         </div>
                     );
                 })}
