@@ -44,13 +44,13 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                     <div 
                                       key={inscription.id} 
                                       className={cn(
-                                        "p-3 border rounded-lg flex flex-col items-center justify-between text-center bg-background shadow-sm transition-all h-40",
+                                        "p-3 border rounded-lg flex flex-col items-center justify-between text-center bg-background shadow-md transition-all h-40",
                                         isCurrentUser && "bg-blue-50 border-blue-300 ring-2 ring-blue-400",
                                         isPreferredPartner && "bg-purple-50 border-purple-300 ring-2 ring-purple-400"
                                       )}
                                     >
                                         <div className="flex flex-col items-center gap-1 overflow-hidden">
-                                            <Avatar className={cn(
+                                             <Avatar className={cn(
                                                 "h-16 w-16 p-0 overflow-hidden shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.4)]",
                                                 isCurrentUser ? "border-[3px] border-primary shadow-lg" : "border-gray-300"
                                             )}>
@@ -92,23 +92,26 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                     <div>
                         <h4 className="font-semibold mb-2">Lista de Reserva ({reserveList.length} / {event.reservePlayers})</h4>
                         {reserveList.length > 0 ? (
-                             <ScrollArea className="h-32 w-full">
-                                <div className="space-y-2 pr-4">
+                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                                 {reserveList.map((inscription, index) => (
-                                    <div key={inscription.id} className="p-2 border rounded-md flex items-center justify-between bg-muted/50">
-                                         <div className="flex items-center gap-2">
-                                            <span className="font-bold text-sm w-6 text-center text-muted-foreground">{index + 1}.</span>
-                                            <Avatar className="h-8 w-8">
+                                     <div 
+                                      key={inscription.id} 
+                                      className={cn("p-3 border rounded-lg flex flex-col items-center justify-center text-center bg-muted/50 shadow-sm h-40 relative")}
+                                    >
+                                        <div className="absolute top-1 left-2 text-xs font-bold text-muted-foreground">#{index + 1}</div>
+                                        <div className="flex flex-col items-center gap-1 overflow-hidden">
+                                             <Avatar className="h-16 w-16 p-0 overflow-hidden shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.2)] border-gray-300">
                                                 <AvatarImage src={inscription.userProfilePictureUrl} data-ai-hint="player avatar"/>
-                                                <AvatarFallback>{getInitials(inscription.userName)}</AvatarFallback>
+                                                <AvatarFallback className="text-xl">{getInitials(inscription.userName)}</AvatarFallback>
                                             </Avatar>
-                                            <span className="font-medium text-sm">{inscription.userName}</span>
+                                            <div className="flex-1 overflow-hidden mt-1">
+                                                <p className="font-medium text-sm truncate">{inscription.userName}</p>
+                                                <Badge variant="outline" className="text-xs">N: {inscription.userLevel}</Badge>
+                                            </div>
                                         </div>
-                                        <Badge variant="outline">N: {inscription.userLevel}</Badge>
                                     </div>
                                 ))}
-                                </div>
-                            </ScrollArea>
+                            </div>
                         ) : (
                              <div className="p-4 border-2 border-dashed rounded-lg text-center text-muted-foreground">
                                 <p>La lista de reserva está vacía.</p>
