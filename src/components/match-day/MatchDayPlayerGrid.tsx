@@ -255,9 +255,9 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                 return (
                                     <div
                                         key={inscription.id}
-                                        className="p-3 border rounded-lg flex flex-col items-center justify-between text-center bg-background shadow-md h-40"
+                                        className="p-3 border rounded-lg flex flex-col items-center justify-start text-center bg-background shadow-md h-40"
                                     >
-                                        <div className="flex-grow flex flex-col items-center gap-1 overflow-hidden">
+                                        <div className="flex flex-col items-center gap-1 overflow-hidden flex-grow">
                                              <div className="relative">
                                                  <Avatar className={cn(
                                                     "h-16 w-16 p-0 overflow-hidden shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.4)]",
@@ -267,7 +267,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                                     <AvatarFallback className="text-xl">{getInitials(inscription.userName)}</AvatarFallback>
                                                 </Avatar>
                                              </div>
-                                            <div className="flex-1 overflow-hidden mt-1">
+                                            <div className="space-y-1 mt-1">
                                                 <p className="font-medium text-sm truncate">{inscription.userName}</p>
                                                 <Badge variant="outline" className="text-xs">N: {inscription.userLevel}</Badge>
                                             </div>
@@ -276,7 +276,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                             <Button
                                                 variant={isPreferredPartner ? "default" : "secondary"}
                                                 size="sm"
-                                                className="w-full mt-2 h-7 text-xs"
+                                                className="w-full mt-auto h-7 text-xs"
                                                 onClick={() => onSelectPartner(inscription.userId)}
                                             >
                                                 {isPreferredPartner ? <CheckCircle className="mr-1.5 h-3.5 w-3.5" /> : <Handshake className="mr-1.5 h-3.5 w-3.5" />}
@@ -363,7 +363,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                              <div className="flex flex-col items-center gap-1 overflow-hidden">
                                                 <div className="relative">
                                                      <Avatar className={cn(
-                                                        "h-16 w-16 p-0 overflow-hidden shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.2)] border-gray-300",
+                                                        "h-16 w-16 p-0 overflow-hidden shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.4)] border-gray-300",
                                                          isCurrentUser && "border-[3px] border-primary shadow-lg"
                                                     )}>
                                                         <AvatarImage src={inscription.userProfilePictureUrl} data-ai-hint="player avatar"/>
