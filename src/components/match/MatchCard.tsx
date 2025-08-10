@@ -3,7 +3,7 @@
 
 import React, { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
 import type { Match, User, Club, PadelCourt } from '@/types';
-import { getMockStudents, getMockClubs, bookMatch, confirmMatchAsPrivate, joinPrivateMatch, makeMatchPublic, bookCourtForMatchWithPoints, calculateActivityPrice, getCourtAvailabilityForInterval, isMatchBookableWithPoints, isUserLevelCompatibleWithActivity, hasAnyConfirmedActivityForDay } from '@/lib/mockData';
+import { getMockStudents, getMockClubs, bookMatch, confirmMatchAsPrivate, joinPrivateMatch, makeMatchPublic, bookCourtForMatchWithPoints, calculateActivityPrice, getCourtAvailabilityForInterval, isMatchBookableWithPoints, hasAnyConfirmedActivityForDay, isUserLevelCompatibleWithActivity } from '@/lib/mockData';
 import { displayClassCategory } from '@/types';
 import { format, differenceInMinutes, differenceInDays, startOfDay, parse, getDay } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -67,7 +67,7 @@ interface MatchCardProps {
 }
 
 
-const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, currentUser, onBookingSuccess }) => {
+const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, currentUser, onBookingSuccess, showPointsBonus }) => {
     const { toast } = useToast();
     const [isPending, startTransition] = useTransition();
     const [currentMatch, setCurrentMatch] = useState<Match>(initialMatch);
@@ -206,10 +206,16 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
 
     const matchLevelToDisplay = isPlaceholderMatch ? 'abierto' : currentMatch.level || 'abierto';
     const matchCategoryToDisplay = isPlaceholderMatch ? 'abierta' : currentMatch.category || 'abierta';
+    
+    const shadowEffect = clubInfo?.cardShadowEffect;
+    const shadowStyle = shadowEffect?.enabled && shadowEffect.color
+      ? { boxShadow: `0 0 25px ${hexToRgba(shadowEffect.color, shadowEffect.intensity)}` }
+      : {};
+
 
     return (
         <>
-            <Card className="w-full transition-shadow duration-300 flex flex-col bg-card border-l-4 border-l-green-400">
+            <Card className="w-full transition-shadow duration-300 flex flex-col bg-card border-l-4 border-l-green-400" style={shadowStyle}>
                 <CardHeader className="pb-3 pt-3 px-3">
                     <div className="flex justify-between items-start">
                         <div className="flex items-center space-x-3">
@@ -227,9 +233,9 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
                         <div className="flex items-center gap-1.5">
                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground"><Share2 className="h-4 w-4"/></Button>
                              {canBookPrivate && (
-                                <Button className="bg-purple-600 text-white rounded-lg h-9 px-3 flex items-center gap-1 shadow-md hover:bg-purple-700" onClick={() => setIsConfirmPrivateDialogOpen(true)}>
-                                    <div className="flex items-center justify-center h-5 w-5 rounded-full bg-white/20"><Plus className="h-4 w-4"/></div>
-                                    <div className="flex flex-col items-start leading-none -space-y-1">
+                                <Button className="bg-purple-600 text-white rounded-l-full rounded-r-md h-9 px-0 flex items-center gap-1 shadow-md hover:bg-purple-700" onClick={() => setIsConfirmPrivateDialogOpen(true)}>
+                                    <div className="flex items-center justify-center h-full w-9 rounded-full bg-white/20"><Plus className="h-5 w-5"/></div>
+                                    <div className="flex flex-col items-start leading-none -space-y-1 pr-3">
                                          <span className="text-[10px]">Reservar</span>
                                          <span className="font-bold">Privada</span>
                                     </div>
@@ -240,13 +246,13 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
                 </CardHeader>
                 <CardContent className="px-3 pb-3 flex-grow">
                      <div className="flex justify-around items-center gap-1.5 my-2">
-                         <Button variant="outline" className="flex-1 h-8 rounded-full shadow-inner bg-slate-50 border-slate-200 capitalize" onClick={() => handleInfoClick('category')}>
+                         <Button variant="outline" className="flex-1 h-8 rounded-full shadow-inner bg-slate-50 border-slate-200 capitalize text-xs" onClick={() => handleInfoClick('category')}>
                             <Users2 className="mr-1.5 h-4 w-4"/>{displayClassCategory(matchCategoryToDisplay)}
                          </Button>
-                         <Button variant="outline" className="flex-1 h-8 rounded-full shadow-inner bg-slate-50 border-slate-200" onClick={() => handleInfoClick('court')}>
+                         <Button variant="outline" className="flex-1 h-8 rounded-full shadow-inner bg-slate-50 border-slate-200 text-xs" onClick={() => handleInfoClick('court')}>
                             <Hash className="mr-1.5 h-4 w-4"/>{currentMatch.courtNumber ? `Pista ${currentMatch.courtNumber}` : 'Sin Asignar'}
                          </Button>
-                         <Button variant="outline" className="flex-1 h-8 rounded-full shadow-inner bg-slate-50 border-slate-200 capitalize" onClick={() => handleInfoClick('level')}>
+                         <Button variant="outline" className="flex-1 h-8 rounded-full shadow-inner bg-slate-50 border-slate-200 capitalize text-xs" onClick={() => handleInfoClick('level')}>
                             <BarChartHorizontal className="mr-1.5 h-4 w-4"/>{matchLevelToDisplay}
                          </Button>
                      </div>
@@ -266,7 +272,7 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
                                 canJoinThisPrivateMatch={canJoinThisPrivateMatch}
                                 isOrganizer={isOrganizer}
                                 canBookWithPoints={isBookableWithPointsBySchedule}
-                                showPointsBonus={true}
+                                showPointsBonus={showPointsBonus}
                                 pricePerPlayer={pricePerPlayer}
                                 pointsToAward={pointsToAward}
                             />
