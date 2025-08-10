@@ -254,7 +254,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                 
                                 return (
                                     <div key={inscription.id} className="flex flex-col text-center space-y-1.5">
-                                        <div className="p-3 border rounded-lg flex flex-col items-center justify-start bg-background shadow-md h-40">
+                                         <div className="p-3 border rounded-lg flex flex-col items-center justify-start bg-background shadow-md h-40">
                                             <div className="flex flex-col items-center gap-1 overflow-hidden flex-grow">
                                                 <div className="relative">
                                                     <Avatar className={cn(
@@ -272,20 +272,33 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                             </div>
                                         </div>
                                         {!isCurrentUser && userInscription && (
-                                            <Button
-                                                variant={isPreferredPartner ? "default" : "outline"}
-                                                size="sm"
-                                                className={cn(
-                                                    "w-full h-7 text-xs shadow-md transition-all duration-200",
-                                                    isPreferredPartner
-                                                    ? "bg-green-600 hover:bg-green-700 text-white"
-                                                    : "bg-white hover:bg-gray-100"
-                                                )}
-                                                onClick={() => onSelectPartner(inscription.userId)}
-                                            >
-                                                {isPreferredPartner ? <CheckCircle className="mr-1.5 h-3.5 w-3.5" /> : <Handshake className="mr-1.5 h-3.5 w-3.5" />}
-                                                {isPreferredPartner ? "Seleccionado" : "Compañero"}
-                                            </Button>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                     <Button
+                                                        variant={isPreferredPartner ? "default" : "outline"}
+                                                        size="sm"
+                                                        className={cn(
+                                                            "w-full h-7 text-xs shadow-md transition-all duration-200",
+                                                            isPreferredPartner
+                                                            ? "bg-green-600 hover:bg-green-700 text-white"
+                                                            : "bg-white hover:bg-gray-100"
+                                                        )}
+                                                    >
+                                                        {isPreferredPartner ? <CheckCircle className="mr-1.5 h-3.5 w-3.5" /> : <Handshake className="mr-1.5 h-3.5 w-3.5" />}
+                                                        {isPreferredPartner ? "Seleccionado" : "Compañero"}
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Seleccionar Compañero</AlertDialogTitle>
+                                                        <AlertDialogDescription>Tu elección será una preferencia en el sorteo. Si tu compañero también te elige, ¡seréis pareja asegurada!</AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Volver</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => onSelectPartner(inscription.userId)}>Confirmar Preferencia</AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
                                         )}
                                     </div>
                                 );
