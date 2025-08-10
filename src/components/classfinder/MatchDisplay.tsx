@@ -192,12 +192,12 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
              const clubForCheck = getMockClubs().find(c => c.id === filterByClubId);
              workingMatches = workingMatches.filter(match => {
                 if ('isEventCard' in match && match.isEventCard) return true;
+                // Keep the logic to show placeholders
                 if ((match as Match).isPlaceholder) return true;
-                if ((match as Match).status === 'confirmed' || (match as Match).status === 'confirmed_private') {
-                    return true;
-                }
-                const hasCourt = !!findAvailableCourt(match.clubId, new Date(match.startTime), new Date((match as Match).endTime));
-                return hasCourt;
+                // If it's not a placeholder, check if there are any players. If so, show it.
+                if ((match as Match).bookedPlayers && (match as Match).bookedPlayers.length > 0) return true;
+
+                return false;
             });
         }
 
