@@ -9,7 +9,7 @@ import { format, differenceInMinutes, differenceInDays, startOfDay, parse, getDa
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import { cn, getInitials, getPlaceholderUserName, calculatePricePerPerson, hexToRgba } from '@/lib/utils';
-
+import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -277,22 +277,24 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Confirmar Inscripción</AlertDialogTitle>
-                        <AlertDialogDescription className="text-center text-lg text-foreground space-y-4 py-4">
-                             <div className="space-y-1">
-                                <div>Te apuntas a una partida de pádel.</div>
-                                <div className="flex items-center justify-center text-3xl font-bold">
-                                     {dialogContent.isJoiningWithPoints || (currentMatch.gratisSpotAvailable && currentMatch.bookedPlayers.length === 3)
-                                         ? <> <Gift className="h-8 w-8 mr-2 text-yellow-500" /> {dialogContent.pointsCost} <span className="text-lg ml-1">puntos</span> </>
-                                         : <> <Euro className="h-7 w-7 mr-1" /> {dialogContent.price.toFixed(2)} </>
-                                     }
-                                </div>
-                                 {!dialogContent.isJoiningWithPoints && pointsToAward > 0 && (
-                                    <div className="text-sm font-semibold text-amber-600 flex items-center justify-center">
-                                        <Star className="h-4 w-4 mr-1.5 fill-amber-400" />
-                                        ¡Ganarás {pointsToAward} puntos por esta reserva!
+                        <AlertDialogDescription asChild>
+                            <div className="text-center text-lg text-foreground space-y-4 py-4">
+                                <div className="space-y-1">
+                                    <div>Te apuntas a una partida de pádel.</div>
+                                    <div className="flex items-center justify-center text-3xl font-bold">
+                                         {dialogContent.isJoiningWithPoints || (currentMatch.gratisSpotAvailable && currentMatch.bookedPlayers.length === 3)
+                                             ? <> <Gift className="h-8 w-8 mr-2 text-yellow-500" /> {dialogContent.pointsCost} <span className="text-lg ml-1">puntos</span> </>
+                                             : <> <Euro className="h-7 w-7 mr-1" /> {dialogContent.price.toFixed(2)} </>
+                                         }
                                     </div>
-                                 )}
-                              </div>
+                                     {!dialogContent.isJoiningWithPoints && pointsToAward > 0 && (
+                                        <div className="text-sm font-semibold text-amber-600 flex items-center justify-center">
+                                            <Star className="h-4 w-4 mr-1.5 fill-amber-400" />
+                                            ¡Ganarás {pointsToAward} puntos por esta reserva!
+                                        </div>
+                                     )}
+                                  </div>
+                            </div>
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -327,5 +329,3 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
 });
 MatchCard.displayName = 'MatchCard';
 export default MatchCard;
-
-    
