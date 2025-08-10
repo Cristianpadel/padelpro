@@ -438,6 +438,7 @@ export const displayClassCategory = (category: PadelCategoryForSlot, short = fal
     if (short) {
         if (option.value === 'chica') return 'Chicas';
         if (option.value === 'chico') return 'Chicos';
+        return 'Cat.';
     }
     return option.label.replace(' (Informativo)', '');
 };
