@@ -91,6 +91,10 @@ export const simulateBookings = async (options: {
     if (activityType === 'clases') {
         targetActivities = state.getMockTimeSlots().filter(slot => {
             if (slot.clubId !== clubId) return false;
+            // IMPORTANT FIX: Only target proposal slots (empty pre-registration)
+            if (slot.status !== 'pre_registration' || (slot.bookedPlayers && slot.bookedPlayers.length > 0)) {
+                return false;
+            }
             const slotDate = new Date(slot.startTime);
             const slotDay = slotDate.getDay();
             const slotHour = slotDate.getHours();
