@@ -2,19 +2,18 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import type { MatchDayEvent, MatchDayInscription, User, PadelCourt } from '@/types';
+import type { MatchDayEvent, MatchDayInscription, User, PadelCourt, Match } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getInitials } from '@/lib/utils';
-import { UserPlus, PlusCircle, CheckCircle, Hourglass, Handshake, Dices, Swords, HardHat } from 'lucide-react';
+import { UserPlus, PlusCircle, CheckCircle, Hourglass, Handshake, Dices, Swords, HardHat, RefreshCw } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
-import MatchDayDrawSimulator from './MatchDayDrawSimulator';
 import { getMockPadelCourts } from '@/lib/mockData';
 
 
@@ -31,9 +30,8 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
     const userInscription = inscriptions.find(i => i.userId === currentUser?.id);
     const userPreferredPartnerId = userInscription?.preferredPartnerId;
     const { toast } = useToast();
-    const [isSimulationVisible, setIsSimulationVisible] = useState(false);
-    const [simulatedMatches, setSimulatedMatches] = useState<{ player1: MatchDayInscription, player2: MatchDayInscription }[][]>([]);
     const [eventCourts, setEventCourts] = useState<PadelCourt[]>([]);
+    const [simulatedMatches, setSimulatedMatches] = useState<Match[]>([]);
 
 
     useEffect(() => {
@@ -70,33 +68,44 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
             inscriptionTime: new Date(),
         }));
         
-        const playersToShuffle = [...mainList, ...emptySlots];
+        let playersToShuffle = [...mainList, ...emptySlots];
         
         for (let i = playersToShuffle.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [playersToShuffle[i], playersToShuffle[j]] = [playersToShuffle[j], playersToShuffle[i]];
         }
+        
+        const generatedMatches: Match[] = [];
+        let courtIndex = 0;
 
-        const pairs: { player1: MatchDayInscription, player2: MatchDayInscription }[] = [];
-        for (let i = 0; i < playersToShuffle.length; i += 2) {
-            if (playersToShuffle[i + 1]) {
-                pairs.push({ player1: playersToShuffle[i], player2: playersToShuffle[i + 1] });
+        for (let i = 0; i < playersToShuffle.length; i += 4) {
+            if (courtIndex >= eventCourts.length) break; 
+
+            const matchPlayers = playersToShuffle.slice(i, i + 4);
+            if (matchPlayers.length === 4) {
+                const court = eventCourts[courtIndex];
+                generatedMatches.push({
+                    id: `sim-match-${court.id}`,
+                    clubId: event.clubId,
+                    startTime: event.eventDate,
+                    endTime: event.eventEndTime || event.eventDate,
+                    durationMinutes: 90,
+                    courtNumber: court.courtNumber,
+                    level: 'abierto',
+                    category: 'abierta',
+                    status: 'confirmed',
+                    bookedPlayers: matchPlayers.map(p => ({userId: p.userId, name: p.userName})),
+                });
+                courtIndex++;
             }
         }
-
-        const matches: { player1: MatchDayInscription, player2: MatchDayInscription }[][] = [];
-        for (let i = 0; i < pairs.length; i += 2) {
-             if (pairs[i+1]) {
-                matches.push([pairs[i], pairs[i+1]]);
-             } else {
-                 matches.push([pairs[i]]);
-             }
-        }
         
-        setSimulatedMatches(matches);
-        setIsSimulationVisible(true);
+        setSimulatedMatches(generatedMatches);
     };
 
+    const handleResetSimulation = () => {
+        setSimulatedMatches([]);
+    }
 
     return (
         <>
@@ -225,31 +234,49 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
 
                  {!event.matchesGenerated && eventCourts.length > 0 && (
                     <div className="mt-6">
-                        <h4 className="font-semibold mb-3">Pistas Reservadas para el Evento</h4>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                            {eventCourts.map(court => (
-                                <div key={court.id} className="p-3 border rounded-lg flex flex-col items-center justify-center text-center bg-background shadow-md h-40">
-                                    <div className="flex flex-col items-center gap-1">
-                                        <div className="relative inline-flex items-center justify-center h-16 w-16 rounded-full border-2 border-gray-300 bg-gray-100 shadow-inner">
-                                            <HardHat className="h-8 w-8 text-gray-500" />
-                                        </div>
-                                        <div className="flex-1 overflow-hidden mt-1">
-                                            <p className="font-medium text-sm truncate">{court.name}</p>
+                        <div className="flex items-center justify-between mb-3">
+                            <h4 className="font-semibold">Pistas Reservadas para el Evento</h4>
+                             {simulatedMatches.length > 0 && (
+                                <Button variant="ghost" size="sm" onClick={handleResetSimulation}>
+                                    <RefreshCw className="mr-2 h-4 w-4" /> Resetear
+                                </Button>
+                            )}
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            {eventCourts.map((court, index) => {
+                                const simulatedMatch = simulatedMatches[index];
+                                return (
+                                    <div key={court.id} className="p-3 border rounded-lg flex flex-col justify-between bg-background shadow-md min-h-40">
+                                        <div>
+                                            <p className="font-semibold text-sm truncate">{court.name}</p>
                                             <Badge variant="outline" className="text-xs">Pista #{court.courtNumber}</Badge>
                                         </div>
+                                        <div className="flex-grow flex items-center justify-center">
+                                            {simulatedMatch ? (
+                                                <div className="grid grid-cols-2 gap-2 mt-2">
+                                                    {simulatedMatch.bookedPlayers.map(player => (
+                                                        <div key={player.userId} className="flex flex-col items-center text-center">
+                                                            <Avatar className="h-8 w-8">
+                                                                <AvatarFallback>{getInitials(player.name || '')}</AvatarFallback>
+                                                            </Avatar>
+                                                            <p className="text-[10px] mt-1 truncate max-w-[50px]">{player.name}</p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <div className="relative inline-flex items-center justify-center h-16 w-16 rounded-full border-2 border-gray-300 bg-gray-100 shadow-inner">
+                                                    <HardHat className="h-8 w-8 text-gray-400" />
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 )}
             </CardContent>
         </Card>
-        <MatchDayDrawSimulator
-            isOpen={isSimulationVisible}
-            onOpenChange={setIsSimulationVisible}
-            matches={simulatedMatches}
-        />
         </>
     );
 };
