@@ -186,22 +186,6 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                     workingMatches = workingMatches.filter(match => !('isEventCard' in match) && ((match as Match).level === selectedLevel || (match as Match).level === 'abierto'));
                 }
             }
-            
-             if (viewPreference === 'normal' && !filterAlsoConfirmedMatches) {
-                // When in normal view, we typically want to see things we can join.
-                // This includes placeholders and matches that are still forming.
-                // We keep this filter but ensure it doesn't wrongly exclude matches with players.
-                workingMatches = workingMatches.filter(match => {
-                    if ('isEventCard' in match) return true; // Always show events
-                    const regularMatch = match as Match;
-                    
-                    // Show if it's a placeholder, still forming, or if the user is already in it.
-                    // This covers all active, non-full scenarios correctly.
-                    return regularMatch.isPlaceholder || 
-                           regularMatch.status === 'forming' ||
-                           (regularMatch.bookedPlayers || []).some(p => p.userId === currentUser.id);
-                });
-            }
         }
 
         if(!filterByGratisOnly && !filterByLiberadasOnly && !filterByPuntosOnly) {
@@ -251,11 +235,11 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
     
     setFilteredMatches(finalMatches); 
     setCurrentPage(1); // Reset page when filters change
-  }, [allMatches, currentUser, filterByClubId, filterByGratisOnly, filterByLiberadasOnly, filterByPuntosOnly, selectedDate, timeSlotFilter, selectedLevel, filterAlsoConfirmedMatches, sortBy, viewPreference, matchIdFilter, matchShareCode, matchDayEvents]);
+  }, [allMatches, currentUser, filterByClubId, filterByGratisOnly, filterByLiberadasOnly, filterByPuntosOnly, selectedDate, timeSlotFilter, selectedLevel, viewPreference, matchIdFilter, matchShareCode, matchDayEvents]);
   
   useEffect(() => {
     applyMatchFilters();
-  }, [applyMatchFilters, refreshKey, selectedDate, timeSlotFilter, selectedLevel, viewPreference, filterAlsoConfirmedMatches, sortBy]);
+  }, [applyMatchFilters, refreshKey, selectedDate, timeSlotFilter, selectedLevel, viewPreference, sortBy]);
 
   useEffect(() => {
     setDisplayedMatches(filteredMatches.slice(0, ITEMS_PER_PAGE * currentPage));
