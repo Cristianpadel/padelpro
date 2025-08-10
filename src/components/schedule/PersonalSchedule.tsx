@@ -22,7 +22,7 @@ import { calculatePricePerPerson } from '@/lib/utils';
 import Link from 'next/link';
 import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogFooter } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 
 
@@ -174,7 +174,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
 
   const levelDisplay = displayClassLevel(level, true);
   const categoryDisplay = displayClassCategory(category, true);
-  const courtDisplay = isCourtAssigned ? `Pista ${courtNumber}` : 'Categoría';
+  const courtDisplay = isCourtAssigned ? `Pista ${courtNumber}` : 'Pista';
 
   const CategoryIcon = category === 'chica' ? Venus : category === 'chico' ? Mars : Users2;
   const classifiedBadgeClass = 'text-blue-700 border-blue-200 bg-blue-100 hover:border-blue-300';
@@ -197,20 +197,20 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
         <Card className={cn("flex flex-col shadow-md border-l-4 h-full", cardBorderColor)}>
           <CardHeader className="p-3 pb-1 space-y-2">
             <div className="flex justify-between items-start">
-              <div className="flex items-center space-x-3">
-                <Link href={`/instructors/${instructor.id}`} passHref className="group">
-                  <Avatar className="h-12 w-12">
-                      <AvatarImage src={instructor?.profilePictureUrl} alt={instructor?.name || ''} data-ai-hint="instructor profile photo"/>
-                      <AvatarFallback className="text-xl">{getInitials(instructor?.name || '')}</AvatarFallback>
-                  </Avatar>
-                </Link>
-                <div className="flex flex-col">
-                    <Link href={`/instructors/${instructor.id}`} passHref className="group">
-                      <p className="font-semibold text-lg text-gray-800 -mb-0.5 group-hover:underline">{instructorName}</p>
-                    </Link>
-                    {renderStarsDisplay(4.5)}
+                <div className="flex items-center space-x-3">
+                   <Link href={`/instructors/${instructor.id}`} passHref className="group">
+                     <Avatar className="h-12 w-12">
+                        <AvatarImage src={instructor?.profilePictureUrl} alt={instructor?.name || ''} data-ai-hint="instructor profile photo"/>
+                        <AvatarFallback className="text-xl">{getInitials(instructor?.name || '')}</AvatarFallback>
+                    </Avatar>
+                   </Link>
+                   <div className="flex flex-col">
+                      <Link href={`/instructors/${instructor.id}`} passHref className="group">
+                        <p className="font-semibold text-lg text-gray-800 -mb-0.5 group-hover:underline">{instructorName}</p>
+                      </Link>
+                      {renderStarsDisplay(4.5)}
+                   </div>
                 </div>
-              </div>
             </div>
 
             <div className="flex justify-center items-center gap-1.5 pt-1">
@@ -292,7 +292,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
                            <AlertDialogContent>
                             <AlertDialogHeader>
                                 <AlertDialogTitle>Hacer Clase Privada</AlertDialogTitle>
-                                <AlertDialogDescription>Pagarás las plazas restantes para completar la clase y asegurarla. Se te cobrará el coste correspondiente. ¿Continuar?</AlertDialogDescription>
+                                <AlertDialogDescription>Pagarás las plazas restantes para completar la clase y asegurarla. Se te cobrará el coste correspondiente.</AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                                 <AlertDialogCancel disabled={isMakingPrivate}>Cancelar</AlertDialogCancel>
@@ -461,6 +461,7 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
             </ScrollArea>
         </div>
       )}
+      {hasUpcomingBookings && hasPastBookings && <Separator />}
       {pastBookings.length > 0 && (
         <div>
            <h4 className="text-base font-semibold mb-3 text-muted-foreground flex items-center"><CheckCircle className="mr-2 h-4 w-4" /> Historial</h4>
@@ -489,3 +490,4 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
 };
 
 export default PersonalSchedule;
+    
