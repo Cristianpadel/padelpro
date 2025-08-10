@@ -1,9 +1,9 @@
 // src/components/match/MatchCard.tsx
 "use client";
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
 import type { Match, User, Club, PadelCourt } from '@/types';
-import { getMockStudents, getMockClubs, bookMatch, confirmMatchAsPrivate, joinPrivateMatch, makeMatchPublic, bookCourtForMatchWithPoints, calculateActivityPrice, getCourtAvailabilityForInterval, isMatchBookableWithPoints, hasAnyConfirmedActivityForDay, isUserLevelCompatibleWithActivity } from '@/lib/mockData';
+import { getMockStudents, getMockClubs, bookMatch, confirmMatchAsPrivate, joinPrivateMatch, makeMatchPublic, bookCourtForMatchWithPoints, calculateActivityPrice, getCourtAvailabilityForInterval, hasAnyConfirmedActivityForDay, isUserLevelCompatibleWithActivity, isMatchBookableWithPoints } from '@/lib/mockData';
 import { displayClassCategory } from '@/types';
 import { format, differenceInMinutes, differenceInDays, startOfDay, parse, getDay } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -21,7 +21,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from '@/components/ui/input';
 import { Clock, Users, Plus, Loader2, Gift, CreditCard, AlertTriangle, Lock, Star, Share2, Hash, Users2, Venus, Mars, BarChartHorizontal, Lightbulb, Euro } from 'lucide-react';
-import { useTransition } from 'react';
 import { MatchSpotDisplay } from '@/components/match/MatchSpotDisplay';
 import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
 
@@ -64,17 +63,16 @@ interface MatchCardProps {
   onBookingSuccess: () => void;
   onMatchUpdate: (updatedMatch: Match) => void;
   matchShareCode?: string | null;
-  showPointsBonus: boolean;
 }
 
-const InfoButton = ({ text, onClick, className }: { text: string, onClick: () => void, className?: string }) => (
+const InfoButton = ({ icon: Icon, text, onClick, className }: { icon: React.ElementType, text: string, onClick: () => void, className?: string }) => (
     <Button variant="outline" className={cn("flex-1 h-8 rounded-full shadow-inner bg-slate-50 border-slate-200 capitalize text-xs", className)} onClick={onClick}>
-        <Plus className="mr-1 h-3.5 w-3.5"/>{text}
+        <Icon className="mr-1.5 h-3.5 w-3.5"/>{text}
     </Button>
 );
 
 
-const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, currentUser, onBookingSuccess, showPointsBonus }) => {
+const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, currentUser, onBookingSuccess }) => {
     const { toast } = useToast();
     const [isPending, startTransition] = useTransition();
     const [currentMatch, setCurrentMatch] = useState<Match>(initialMatch);
@@ -120,14 +118,14 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
     }, [clubInfo, currentMatch.startTime]);
 
     const pointsToAward = useMemo(() => {
-        if (!isPlaceholderMatch || isUserBooked || !showPointsBonus) return 0;
+        if (!isPlaceholderMatch || isUserBooked) return 0;
         const clubPointSettings = clubInfo?.pointSettings;
         if (!clubPointSettings) return 0;
         const basePoints = clubPointSettings.firstToJoinMatch || 0;
         const daysInAdvance = differenceInDays(startOfDay(new Date(currentMatch.startTime)), startOfDay(new Date()));
         const anticipationPoints = Math.max(0, daysInAdvance);
         return basePoints + anticipationPoints;
-    }, [isPlaceholderMatch, isUserBooked, currentMatch.startTime, clubInfo, showPointsBonus]);
+    }, [isPlaceholderMatch, isUserBooked, currentMatch.startTime, clubInfo]);
 
     
     const handleJoinClick = (spotIndex: number, isJoiningWithPoints = false) => {
@@ -240,38 +238,36 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
                                 <span className="text-sm text-muted-foreground">{clubInfo?.name || 'Club Padel'}</span>
                             </div>
                         </div>
-                        <div className="flex items-center gap-1.5">
+                         <div className="flex items-center gap-1.5">
                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground"><Share2 className="h-4 w-4"/></Button>
                              {canBookPrivate && (
-                                <Button
-                                  size="sm"
-                                  className="bg-purple-600 text-white rounded-lg h-auto py-1 px-3 flex flex-col items-center leading-none shadow-md hover:bg-purple-700"
-                                  onClick={() => setIsConfirmPrivateDialogOpen(true)}
+                                <div
+                                    className="flex items-center h-10 bg-purple-600 text-white rounded-lg rounded-l-full shadow-lg cursor-pointer hover:bg-purple-700 transition-colors"
+                                    onClick={() => setIsConfirmPrivateDialogOpen(true)}
                                 >
-                                  <div className="flex items-center gap-1.5">
-                                    <Plus className="h-4 w-4" />
-                                    <span className="font-bold">Reservar</span>
-                                  </div>
-                                  <span className="text-xs font-normal">Privada</span>
-                                </Button>
+                                    <div className="flex items-center justify-center h-10 w-10">
+                                        <Plus className="h-5 w-5" />
+                                    </div>
+                                    <div className="pr-3 pl-1 text-center">
+                                        <p className="text-xs font-bold leading-tight">Reservar</p>
+                                        <p className="text-xs leading-tight">Privada</p>
+                                    </div>
+                                </div>
                              )}
                         </div>
                     </div>
                 </CardHeader>
                 <CardContent className="px-3 pb-3 flex-grow">
                      <div className="flex justify-around items-center gap-1.5 my-2">
-                         <InfoButton 
-                             text={`Cat: ${displayClassCategory(matchCategoryToDisplay)}`}
-                             onClick={() => handleInfoClick('category')}
-                         />
-                         <InfoButton 
-                             text={`Pista: ${currentMatch.courtNumber || '?'}`}
-                             onClick={() => handleInfoClick('court')}
-                         />
-                         <InfoButton 
-                             text={`Nivel: ${matchLevelToDisplay}`}
-                             onClick={() => handleInfoClick('level')}
-                         />
+                         <Button variant="outline" className="flex-1 h-8 rounded-full shadow-inner bg-slate-50 border-slate-200" onClick={() => handleInfoClick('category')}>
+                            + Cat.
+                         </Button>
+                         <Button variant="outline" className="flex-1 h-8 rounded-full shadow-inner bg-slate-50 border-slate-200" onClick={() => handleInfoClick('court')}>
+                            + Pista
+                         </Button>
+                         <Button variant="outline" className="flex-1 h-8 rounded-full shadow-inner bg-slate-50 border-slate-200" onClick={() => handleInfoClick('level')}>
+                           + Nivel
+                         </Button>
                      </div>
 
                     <div className="grid grid-cols-4 gap-2 items-start justify-items-center mt-3">
@@ -289,7 +285,7 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
                                 canJoinThisPrivateMatch={canJoinThisPrivateMatch}
                                 isOrganizer={isOrganizer}
                                 canBookWithPoints={isBookableWithPointsBySchedule}
-                                showPointsBonus={showPointsBonus}
+                                showPointsBonus={true}
                                 pricePerPlayer={pricePerPlayer}
                                 pointsToAward={pointsToAward}
                             />
@@ -305,25 +301,25 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Confirmar Inscripción</AlertDialogTitle>
-                        <AlertDialogDescription asChild>
-                            <div className="text-center text-lg text-foreground space-y-4 py-4">
-                               <div className="space-y-1">
-                                <div>Te apuntas a una partida de pádel.</div>
-                                <div className="flex items-center justify-center text-3xl font-bold">
-                                     {dialogContent.isJoiningWithPoints || (currentMatch.gratisSpotAvailable && (currentMatch.bookedPlayers || []).length === 3)
-                                         ? <> <Gift className="h-8 w-8 mr-2 text-yellow-500" /> {dialogContent.pointsCost} <span className="text-lg ml-1">puntos</span> </>
-                                         : <> <Euro className="h-7 w-7 mr-1" /> {dialogContent.price.toFixed(2)} </>
-                                     }
-                                </div>
-                                 {showPointsBonus && !dialogContent.isJoiningWithPoints && pointsToAward > 0 && (
-                                    <div className="text-sm font-semibold text-amber-600 flex items-center justify-center">
-                                        <Star className="h-4 w-4 mr-1.5 fill-amber-400" />
-                                        ¡Ganarás {pointsToAward} puntos por esta reserva!
+                         <AlertDialogDescription asChild>
+                           <div className="text-center text-lg text-foreground space-y-4 py-4">
+                                <div className="space-y-1">
+                                    <div>Te apuntas a una partida de pádel.</div>
+                                    <div className="flex items-center justify-center text-3xl font-bold">
+                                         {dialogContent.isJoiningWithPoints || (currentMatch.gratisSpotAvailable && (currentMatch.bookedPlayers || []).length === 3)
+                                             ? <> <Gift className="h-8 w-8 mr-2 text-yellow-500" /> {dialogContent.pointsCost} <span className="text-lg ml-1">puntos</span> </>
+                                             : <> <Euro className="h-7 w-7 mr-1" /> {dialogContent.price.toFixed(2)} </>
+                                         }
                                     </div>
-                                 )}
-                              </div>
-                            </div>
-                        </AlertDialogDescription>
+                                     {true && !dialogContent.isJoiningWithPoints && pointsToAward > 0 && (
+                                        <div className="text-sm font-semibold text-amber-600 flex items-center justify-center">
+                                            <Star className="h-4 w-4 mr-1.5 fill-amber-400" />
+                                            ¡Ganarás {pointsToAward} puntos por esta reserva!
+                                        </div>
+                                     )}
+                                  </div>
+                                </div>
+                            </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
