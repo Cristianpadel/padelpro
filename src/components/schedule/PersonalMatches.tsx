@@ -33,7 +33,7 @@ import { displayClassCategory } from '@/types';
 import { InfoCard } from '@/components/schedule/InfoCard'; 
 import { useRouter } from 'next/navigation'; 
 import { Separator } from '../ui/separator';
-import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
 
@@ -475,9 +475,9 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                       </>
                   )}
                  {isUpcomingItem && !isOrganizerOfPrivateMatch && (
-                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto justify-end">
+                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto justify-center">
                          <AlertDialog>
-                             <AlertDialogTrigger asChild><Button variant={buttonVariant} size="sm" className={cn("w-full sm:w-auto text-xs", buttonVariant === "destructive" && "bg-card text-destructive border-destructive hover:bg-destructive/10 hover:text-destructive", buttonVariant === "outline" && cancellationButtonText.includes("Bonificada") && "bg-green-500 text-white border-green-600 hover:bg-green-600", "disabled:opacity-50 disabled:cursor-not-allowed")} disabled={isProcessingAction && currentActionInfo?.bookingId === booking.id}>{isProcessingAction && currentActionInfo?.bookingId === booking.id ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Ban className="mr-1.5 h-3.5 w-3.5" />}{cancellationButtonText}</Button></AlertDialogTrigger>
+                             <AlertDialogTrigger asChild><Button variant={buttonVariant} size="sm" className={cn("w-full sm:w-auto text-xs shadow-md border-red-500", buttonVariant === "destructive" && "bg-card text-destructive border-destructive hover:bg-destructive/10 hover:text-destructive", buttonVariant === "outline" && cancellationButtonText.includes("Bonificada") && "bg-green-500 text-white border-green-600 hover:bg-green-600", "disabled:opacity-50 disabled:cursor-not-allowed")} disabled={isProcessingAction && currentActionInfo?.bookingId === booking.id}>{isProcessingAction && currentActionInfo?.bookingId === booking.id ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Ban className="mr-1.5 h-3.5 w-3.5" />}{cancellationButtonText}</Button></AlertDialogTrigger>
                              <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>¿Confirmar Cancelación?</AlertDialogTitle><AlertDialogDescription>{cancellationDialogText}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={isProcessingAction && currentActionInfo?.bookingId === booking.id}>Cerrar</AlertDialogCancel><AlertDialogAction onClick={() => handleCancellationAction(booking)} disabled={isProcessingAction && currentActionInfo?.bookingId === booking.id} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{isProcessingAction && currentActionInfo?.bookingId === booking.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Sí, Cancelar"}</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
                          </AlertDialog>
                          {isMatchFull && isUpcomingItem && (<Button variant="outline" size="sm" className="w-full sm:w-auto text-xs bg-blue-500 text-white border-blue-600 hover:bg-blue-600" onClick={() => handleOpenChatDialog(booking.matchDetails)}><MessageSquare className="mr-1.5 h-3.5 w-3.5" />Chat</Button>)}
