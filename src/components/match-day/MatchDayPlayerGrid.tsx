@@ -354,7 +354,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                         <div>
                                             <div className="flex justify-between items-center">
                                                 <p className="font-semibold text-sm truncate">{court.name}</p>
-                                                 <Badge variant="outline" className="text-xs">
+                                                <Badge variant="outline" className="text-xs">
                                                     <Clock className="mr-1 h-3 w-3" />
                                                     {format(new Date(event.eventDate), "HH:mm'h'", { locale: es })}
                                                 </Badge>
