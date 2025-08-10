@@ -22,7 +22,7 @@ import { calculatePricePerPerson } from '@/lib/utils';
 import Link from 'next/link';
 import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogFooter as AlertDialogFooterComponent } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
@@ -128,7 +128,7 @@ const RateClassDialog: React.FC<{
 
 
 interface BookingListItemProps {
-  booking: Booking;
+  bookingsForSlot: Booking[]; // Now accepts multiple bookings for the same slot
   isUpcoming: boolean;
   onRateClass: (bookingId: string, instructorId: string, instructorName: string, rating: number, comment?: string) => void;
   currentUser: User;
@@ -137,27 +137,25 @@ interface BookingListItemProps {
   availability: CourtAvailabilityState;
 }
 
-const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, onRateClass, currentUser, onBookingCancelledOrCeded, instructor, availability }) => {
+const BookingListItem: React.FC<BookingListItemProps> = ({ bookingsForSlot, isUpcoming, onRateClass, currentUser, onBookingCancelledOrCeded, instructor, availability }) => {
   const { toast } = useToast();
   const [isCancelling, setIsCancelling] = useState(false);
   const [isMakingPrivate, startMakePrivateTransition] = useTransition();
   const [infoDialog, setInfoDialog] = useState<{ open: boolean, title: string, description: string, icon: React.ElementType }>({ open: false, title: '', description: '', icon: Lightbulb });
   const [isRatingDialogOpen, setIsRatingDialogOpen] = useState(false);
 
-  
-  if (!booking.slotDetails || !instructor) return null;
+  const primaryBooking = bookingsForSlot[0];
+  if (!primaryBooking || !primaryBooking.slotDetails || !instructor) return null;
 
   const {
-    id: bookingId,
     slotDetails,
-    bookedWithPoints,
-  } = booking;
+  } = primaryBooking;
 
   const {
       id: slotId, startTime, endTime, instructorName, level, category, totalPrice, bookedPlayers, status, courtNumber, durationMinutes
   } = slotDetails;
 
-  const handleCancel = async () => {
+  const handleCancel = async (bookingId: string) => {
     setIsCancelling(true);
     const result = await cancelBooking(currentUser.id, bookingId);
     if ('error' in result) {
@@ -190,7 +188,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
   };
   
   const handleRatingSubmit = (rating: number, comment: string) => {
-    onRateClass(bookingId, instructor.id, instructorName, rating, comment);
+    onRateClass(primaryBooking.id, instructor.id, instructorName, rating, comment);
     setIsRatingDialogOpen(false);
   };
 
@@ -229,12 +227,12 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
 
   const levelDisplay = displayClassLevel(level, true);
   const categoryDisplay = displayClassCategory(category, true);
-  const courtDisplay = isCourtAssigned ? `Pista ${courtNumber}` : 'Pista';
+  const courtDisplay = isCourtAssigned ? `Pista ${courtNumber}` : 'Clasificando';
 
   const CategoryIcon = category === 'chica' ? Venus : category === 'chico' ? Mars : Users2;
   const classifiedBadgeClass = 'text-blue-700 border-blue-200 bg-blue-100 hover:border-blue-300';
   
-  const canMakePrivate = isUpcoming && !isSlotCompleted && status === 'pre_registration' && !!booking.groupSize && booking.groupSize > 1;
+  const canMakePrivate = isUpcoming && !isSlotCompleted && status === 'pre_registration' && bookingsForSlot.some(b => b.groupSize > 1);
 
   const renderStarsDisplay = (rating: number) => {
         const fullStars = Math.round(rating);
@@ -289,7 +287,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
           <CardContent className="p-3 pt-1 flex-grow">
             <div className="space-y-1">
               {([1, 2, 3, 4] as const).map((optionSize) => {
-                const isUserBookedInThisOption = booking.groupSize === optionSize;
+                const isUserBookedInThisOption = bookingsForSlot.some(b => b.groupSize === optionSize);
                 const playersInThisOption = bookingsByGroupSize[optionSize] || [];
 
                 return (
@@ -318,7 +316,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
                       })}
                     </div>
                     <div className="text-xs font-semibold flex items-center">
-                      {bookedWithPoints ? <><Gift className="mr-1.5 h-4 w-4 text-purple-600" />Gratis</> : <><Euro className="mr-1.5 h-4 w-4 text-green-600" />{(totalPrice! / booking.groupSize).toFixed(2)}</>}
+                      {primaryBooking.bookedWithPoints ? <><Gift className="mr-1.5 h-4 w-4 text-purple-600" />Gratis</> : <><Euro className="mr-1.5 h-4 w-4 text-green-600" />{(totalPrice! / optionSize).toFixed(2)}</>}
                     </div>
                   </div>
                 )
@@ -347,16 +345,27 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
                                 <AlertDialogTitle>Hacer Clase Privada</AlertDialogTitle>
                                 <AlertDialogDescription>Pagarás las plazas restantes para completar la clase y asegurarla. Se te cobrará el coste correspondiente.</AlertDialogDescription>
                             </AlertDialogHeader>
-                            <AlertDialogFooterComponent>
+                            <AlertDialogFooter>
                                 <AlertDialogCancel disabled={isMakingPrivate}>Cancelar</AlertDialogCancel>
                                 <AlertDialogAction onClick={handleMakePrivate} disabled={isMakingPrivate} className="bg-purple-600 text-white hover:bg-purple-700">{isMakingPrivate ? <Loader2 className="animate-spin h-4 w-4"/> : "Sí, Hacer Privada"}</AlertDialogAction>
-                            </AlertDialogFooterComponent>
+                            </AlertDialogFooter>
                            </AlertDialogContent>
                         </AlertDialog>
                     )}
-                    <Button size="sm" variant="destructive" className="flex-1" onClick={handleCancel} disabled={isCancelling}>
-                        {isCancelling ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Cancelando...</> : <><Ban className="mr-1.5 h-3.5 w-3.5" />Cancelar</>}
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button size="sm" variant="destructive" className="flex-1" disabled={isCancelling}>
+                          {isCancelling ? <><Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />Cancelando...</> : <><Ban className="mr-1.5 h-3.5 w-3.5" />Cancelar</>}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader><AlertDialogTitle>Confirmar Cancelación</AlertDialogTitle><AlertDialogDescription>¿Estás seguro que quieres cancelar tu inscripción? Se te podría aplicar una penalización.</AlertDialogDescription></AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Volver</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleCancel(primaryBooking.id)} className="bg-destructive hover:bg-destructive/90">Sí, Cancelar</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                 </>
               ) : (
                 <Button onClick={() => setIsRatingDialogOpen(true)} variant="outline" className="w-full">
@@ -464,6 +473,22 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
     onBookingActionSuccess();
   };
 
+  // Group bookings by activityId
+  const groupedBookings = useMemo(() => {
+      const groups: { [key: string]: Booking[] } = {};
+      bookings.forEach(booking => {
+          if (groups[booking.activityId]) {
+              groups[booking.activityId].push(booking);
+          } else {
+              groups[booking.activityId] = [booking];
+          }
+      });
+      return Object.values(groups);
+  }, [bookings]);
+  
+  const upcomingBookings = useMemo(() => groupedBookings.filter(group => group[0].slotDetails && !isPast(new Date(group[0].slotDetails.endTime))), [groupedBookings]);
+  const pastBookings = useMemo(() => groupedBookings.filter(group => group[0].slotDetails && isPast(new Date(group[0].slotDetails.endTime))), [groupedBookings]);
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -482,9 +507,6 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
     );
   }
   
-  const upcomingBookings = bookings.filter(b => b.slotDetails && !isPast(new Date(b.slotDetails.endTime)));
-  const pastBookings = bookings.filter(b => b.slotDetails && isPast(new Date(b.slotDetails.endTime)));
-  
   const hasUpcomingBookings = upcomingBookings.length > 0;
   const hasPastBookings = pastBookings.length > 0;
   
@@ -501,6 +523,22 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
     );
   }
 
+  const renderBookingGroup = (bookingGroup: Booking[], isUpcoming: boolean) => {
+      const firstBooking = bookingGroup[0];
+      return (
+         <BookingListItem
+            key={firstBooking.activityId}
+            bookingsForSlot={bookingGroup}
+            isUpcoming={isUpcoming}
+            onRateClass={handleRateClass}
+            currentUser={currentUser}
+            onBookingCancelledOrCeded={handleBookingUpdate}
+            instructor={instructors.find(i => i.id === firstBooking.slotDetails?.instructorId) || null}
+            availability={availabilityData[firstBooking.activityId] || { available: [], occupied: [], total: 0 }}
+          />
+      )
+  };
+
   return (
     <div className="space-y-6">
        { (hasUpcomingBookings || hasPastBookings) &&
@@ -511,18 +549,7 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
           <h4 className="text-base font-semibold mb-3 text-foreground flex items-center"><Clock className="mr-2 h-4 w-4" /> Próximas</h4>
            <ScrollArea>
               <div className="flex space-x-4 pb-4">
-                {upcomingBookings.map(booking => (
-                  <BookingListItem
-                    key={booking.id}
-                    booking={booking}
-                    isUpcoming={true}
-                    onRateClass={handleRateClass}
-                    currentUser={currentUser}
-                    onBookingCancelledOrCeded={handleBookingUpdate}
-                    instructor={instructors.find(i => i.id === booking.slotDetails?.instructorId) || null}
-                    availability={availabilityData[booking.activityId] || { available: [], occupied: [], total: 0 }}
-                  />
-                ))}
+                {upcomingBookings.map(group => renderBookingGroup(group, true))}
               </div>
               <ScrollBar orientation="horizontal" />
             </ScrollArea>
@@ -534,18 +561,7 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
            <h4 className="text-base font-semibold mb-3 text-muted-foreground flex items-center"><CheckCircle className="mr-2 h-4 w-4" /> Historial</h4>
             <ScrollArea>
               <div className="flex space-x-4 pb-4">
-                {pastBookings.map(booking => (
-                  <BookingListItem
-                    key={booking.id}
-                    booking={booking}
-                    isUpcoming={false}
-                    onRateClass={handleRateClass}
-                    currentUser={currentUser}
-                    onBookingCancelledOrCeded={handleBookingUpdate}
-                    instructor={instructors.find(i => i.id === booking.slotDetails?.instructorId) || null}
-                    availability={availabilityData[booking.activityId] || { available: [], occupied: [], total: 0 }}
-                  />
-                ))}
+                {pastBookings.map(group => renderBookingGroup(group, false))}
               </div>
               <ScrollBar orientation="horizontal" />
             </ScrollArea>
