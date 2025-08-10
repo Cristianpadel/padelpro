@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
@@ -176,10 +177,10 @@ const ClassDisplay: React.FC<ClassDisplayProps> = ({
             if (isUserInA && !isUserInB) return -1;
             if (!isUserInA && isUserInB) return 1;
 
-            const isAProposal = checkIsProposalSlot(a);
-            const isBProposal = checkIsProposalSlot(b);
-            if (isAProposal && !isBProposal) return 1;
-            if (!isAProposal && isBProposal) return -1;
+            const aHasPlayers = (a.bookedPlayers || []).length > 0;
+            const bHasPlayers = (b.bookedPlayers || []).length > 0;
+            if (aHasPlayers && !bHasPlayers) return -1;
+            if (!aHasPlayers && bHasPlayers) return 1;
 
             const dateA = new Date(a.startTime).getTime();
             const dateB = new Date(b.startTime).getTime();
