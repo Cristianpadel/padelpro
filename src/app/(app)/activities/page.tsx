@@ -141,7 +141,7 @@ export default function ActivitiesPage() {
             updateUrlFilter('view', type);
         }
         handleDateChange(date);
-        handleViewPrefChange(pref);
+        handleViewPrefChange(pref, type);
     };
     
       const handleConfirmLogout = () => {
@@ -212,7 +212,7 @@ export default function ActivitiesPage() {
                             isLoading={isLoading}
                             dateStripIndicators={dateStripIndicators}
                             dateStripDates={dateStripDates}
-                            onViewPrefChange={onViewPrefChange}
+                            onViewPrefChange={(pref, type) => onViewPrefChange(selectedDate!, pref, type)}
                             showPointsBonus={showPointsBonus}
                             filterByGratisOnly={filterByGratisOnly}
                             filterByLiberadasOnly={filterByLiberadasOnly}
@@ -234,7 +234,7 @@ export default function ActivitiesPage() {
                             isLoading={isLoading}
                             dateStripIndicators={dateStripIndicators}
                             dateStripDates={dateStripDates}
-                            onViewPrefChange={onViewPrefChange}
+                            onViewPrefChange={(pref, type) => onViewPrefChange(selectedDate!, pref, type)}
                             showPointsBonus={showPointsBonus}
                             matchDayEvents={matchDayEvents}
                             filterByGratisOnly={filterByGratisOnly}
