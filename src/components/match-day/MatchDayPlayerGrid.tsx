@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getInitials } from '@/lib/utils';
-import { UserPlus, CheckCircle, Handshake, Dices, Swords, HardHat, RefreshCw, Clock, Loader2 } from 'lucide-react';
+import { UserPlus, CheckCircle, Handshake, Dices, Swords, HardHat, RefreshCw, Clock, Loader2, Euro } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -27,9 +27,10 @@ interface MatchDayPlayerGridProps {
     inscriptions: MatchDayInscription[];
     currentUser: User | null;
     onSelectPartner: (partnerId: string) => void;
+    onSignUp: () => void;
 }
 
-const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscriptions, currentUser, onSelectPartner }) => {
+const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscriptions, currentUser, onSelectPartner, onSignUp }) => {
     const mainList = inscriptions.filter(i => i.status === 'main');
     const reserveList = inscriptions.filter(i => i.status === 'reserve');
     const userInscription = inscriptions.find(i => i.userId === currentUser?.id);
@@ -272,12 +273,12 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                             }
                             // Render empty slot
                             return (
-                                <div key={`empty-${index}`} className="p-3 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-muted-foreground bg-secondary/30 h-40 shadow-sm">
+                                <button key={`empty-${index}`} disabled={isMainListFull || !!userInscription} onClick={onSignUp} className="p-3 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-muted-foreground bg-secondary/30 h-40 shadow-sm transition-colors hover:bg-secondary/60 disabled:cursor-not-allowed disabled:opacity-50">
                                     <div className="relative inline-flex items-center justify-center h-16 w-16 rounded-full border-[3px] border-dashed border-gray-400 bg-white/50 shadow-inner">
                                         <UserPlus className="h-8 w-8" />
                                     </div>
-                                    <p className="text-xs font-medium mt-2">Plaza Libre</p>
-                                </div>
+                                    <p className="text-sm font-semibold mt-2 flex items-center">{event.price?.toFixed(2)}€</p>
+                                </button>
                             );
                         })}
                     </div>
@@ -317,12 +318,12 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                 }
                                 // Render empty reserve slot
                                 return (
-                                     <div key={`empty-reserve-${index}`} className={cn("p-3 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-muted-foreground h-40 shadow-sm", isMainListFull ? "bg-secondary/30" : "bg-gray-100 opacity-60")}>
+                                     <button key={`empty-reserve-${index}`} disabled={!isMainListFull || !!userInscription} onClick={onSignUp} className={cn("p-3 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-muted-foreground h-40 shadow-sm transition-colors", isMainListFull ? "bg-secondary/30 hover:bg-secondary/60" : "bg-gray-100 opacity-60", 'disabled:cursor-not-allowed disabled:opacity-50')}>
                                         <div className="relative inline-flex items-center justify-center h-16 w-16 rounded-full border-[3px] border-dashed border-gray-400 bg-white/50 shadow-inner">
                                             <UserPlus className="h-8 w-8 opacity-50" />
                                         </div>
                                         <p className="text-xs font-medium mt-2">Plaza Reserva</p>
-                                    </div>
+                                    </button>
                                 );
                             })}
                         </div>
@@ -332,7 +333,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                  {!event.matchesGenerated && eventCourts.length > 0 && (
                     <div className="mt-6">
                         <div className="flex items-center justify-between mb-3">
-                            <h4 className="font-semibold">Pistas Reservadas para el Evento</h4>
+                            <h4 className="font-semibold flex items-center"><Swords className="mr-2 h-5 w-5"/>Pistas Reservadas para el Evento</h4>
                              <div className="flex items-center gap-2">
                                 {isSimulating ? (
                                     <Button variant="ghost" size="sm" onClick={handleResetSimulation}>

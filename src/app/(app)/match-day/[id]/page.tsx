@@ -161,6 +161,7 @@ export default function MatchDayDetailPage() {
                     inscriptions={inscriptions}
                     currentUser={currentUser}
                     onSelectPartner={handleSelectPartner}
+                    onSignUp={handleSignUp}
                 />
                    
                 <MatchDayDrawResults matches={matches} />
