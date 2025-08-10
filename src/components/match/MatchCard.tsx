@@ -3,7 +3,7 @@
 
 import React, { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
 import type { Match, User, Club, PadelCourt } from '@/types';
-import { getMockStudents, getMockClubs, bookMatch, confirmMatchAsPrivate, joinPrivateMatch, makeMatchPublic, bookCourtForMatchWithPoints, calculateActivityPrice, getCourtAvailabilityForInterval, isMatchBookableWithPoints } from '@/lib/mockData';
+import { getMockStudents, getMockClubs, bookMatch, confirmMatchAsPrivate, joinPrivateMatch, makeMatchPublic, bookCourtForMatchWithPoints, calculateActivityPrice, getCourtAvailabilityForInterval, isMatchBookableWithPoints, isUserLevelCompatibleWithActivity, hasAnyConfirmedActivityForDay } from '@/lib/mockData';
 import { displayClassCategory } from '@/types';
 import { format, differenceInMinutes, differenceInDays, startOfDay, parse, getDay } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -23,7 +23,6 @@ import { Input } from '@/components/ui/input';
 import { Clock, Users, Plus, Loader2, Gift, CreditCard, AlertTriangle, Lock, Star, Share2, Hash, Users2, Venus, Mars, BarChartHorizontal, Lightbulb, Euro } from 'lucide-react';
 import { MatchSpotDisplay } from '@/components/match/MatchSpotDisplay';
 import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
-import { isUserLevelCompatibleWithActivity } from '@/lib/mockData';
 
 
 const InfoDialog: React.FC<{
@@ -99,6 +98,10 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
     const isPlaceholderMatch = currentMatch.isPlaceholder === true;
     const isPrivateMatch = currentMatch.status === 'confirmed_private';
     const canJoinThisPrivateMatch = isPrivateMatch && !isUserBooked;
+    const userHasOtherConfirmedActivityToday = useMemo(() => {
+        if (!currentUser) return false;
+        return hasAnyConfirmedActivityForDay(currentUser.id, new Date(currentMatch.startTime));
+    }, [currentUser, currentMatch.startTime]);
 
 
     const pricePerPlayer = useMemo(() => {
@@ -258,7 +261,7 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
                                 onJoin={handleJoinClick}
                                 onJoinPrivate={handleJoinPrivate}
                                 isPending={isPending && dialogContent.spotIndex === index}
-                                userHasOtherConfirmedActivityToday={hasAnyConfirmedActivityForDay(currentUser.id, new Date(currentMatch.startTime))}
+                                userHasOtherConfirmedActivityToday={userHasOtherConfirmedActivityToday}
                                 isUserLevelCompatible={isUserLevelCompatibleWithActivity(matchLevelToDisplay, currentUser.level, isPlaceholderMatch)}
                                 canJoinThisPrivateMatch={canJoinThisPrivateMatch}
                                 isOrganizer={isOrganizer}
