@@ -22,7 +22,7 @@ import { calculatePricePerPerson } from '@/lib/utils';
 import Link from 'next/link';
 import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogFooter as AlertDialogFooterComponent } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
@@ -227,7 +227,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ bookingsForSlot, isUp
 
   const levelDisplay = displayClassLevel(level, true);
   const categoryDisplay = displayClassCategory(category, true);
-  const courtDisplay = isCourtAssigned ? `Pista ${courtNumber}` : '# Pista';
+  const courtDisplay = isCourtAssigned ? `Pista ${courtNumber}` : 'Pista';
 
   const CategoryIcon = category === 'chica' ? Venus : category === 'chico' ? Mars : Users2;
   const classifiedBadgeClass = 'text-blue-700 border-blue-200 bg-blue-100 hover:border-blue-300';
@@ -246,8 +246,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ bookingsForSlot, isUp
 
   return (
     <>
-      <div className="w-80 flex flex-col max-w-md mx-auto">
-        <Card className={cn("flex flex-col shadow-md border-l-4 h-full", cardBorderColor)}>
+      <Card className={cn("w-80 flex flex-col shadow-md border-l-4 h-full", cardBorderColor)}>
           <CardHeader className="p-3 pb-1 space-y-2">
             <div className="flex justify-between items-start">
               <div className="flex items-center space-x-3">
@@ -345,10 +344,10 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ bookingsForSlot, isUp
                                 <AlertDialogTitle>Hacer Clase Privada</AlertDialogTitle>
                                 <AlertDialogDescription>Pagarás las plazas restantes para completar la clase y asegurarla. Se te cobrará el coste correspondiente.</AlertDialogDescription>
                             </AlertDialogHeader>
-                            <AlertDialogFooterComponent>
+                            <AlertDialogFooter>
                                 <AlertDialogCancel disabled={isMakingPrivate}>Cancelar</AlertDialogCancel>
                                 <AlertDialogAction onClick={handleMakePrivate} disabled={isMakingPrivate} className="bg-purple-600 text-white hover:bg-purple-700">{isMakingPrivate ? <Loader2 className="animate-spin h-4 w-4"/> : "Sí, Hacer Privada"}</AlertDialogAction>
-                            </AlertDialogFooterComponent>
+                            </AlertDialogFooter>
                            </AlertDialogContent>
                         </AlertDialog>
                     )}
@@ -360,7 +359,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ bookingsForSlot, isUp
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader><AlertDialogTitle>Confirmar Cancelación</AlertDialogTitle><AlertDialogDescription>¿Estás seguro que quieres cancelar tu inscripción? Se te podría aplicar una penalización.</AlertDialogDescription></AlertDialogHeader>
-                        <AlertDialogFooterComponent><AlertDialogCancel>Volver</AlertDialogCancel><AlertDialogAction onClick={() => handleCancel(primaryBooking.id)} className="bg-destructive hover:bg-destructive/90">Sí, Cancelar</AlertDialogAction></AlertDialogFooterComponent>
+                        <AlertDialogFooter><AlertDialogCancel>Volver</AlertDialogCancel><AlertDialogAction onClick={() => handleCancel(primaryBooking.id)} className="bg-destructive hover:bg-destructive/90">Sí, Cancelar</AlertDialogAction></AlertDialogFooter>
                       </AlertDialogContent>
                     </AlertDialog>
                 </>
@@ -372,7 +371,6 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ bookingsForSlot, isUp
             </div>
           </CardFooter>
         </Card>
-      </div>
       <DialogInfo isOpen={infoDialog.open} onOpenChange={(open) => setInfoDialog(prev => ({ ...prev, open }))} title={infoDialog.title} description={infoDialog.description} icon={infoDialog.icon} />
        <RateClassDialog 
         isOpen={isRatingDialogOpen} 
