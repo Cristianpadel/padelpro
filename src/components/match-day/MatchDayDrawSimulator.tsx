@@ -62,7 +62,7 @@ const MatchDayDrawSimulator: React.FC<MatchDayDrawSimulatorProps> = ({
                                             <p className="text-xs font-medium mt-1 truncate max-w-[80px]">{pair.player1.userName}</p>
                                             <Badge variant="outline" className="text-[10px] mt-0.5">N: {pair.player1.userLevel}</Badge>
                                         </div>
-                                        <Heart className="h-5 w-5 text-destructive" />
+                                        <Swords className="h-5 w-5 text-muted-foreground" />
                                          <div className="flex flex-col items-center">
                                             <Avatar className="h-12 w-12">
                                                 <AvatarImage src={pair.player2.userProfilePictureUrl} />
