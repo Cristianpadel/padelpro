@@ -23,7 +23,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent as InfoDialogContent, DialogHeader as InfoDialogHeader, DialogTitle as InfoDialogTitle, DialogFooter as InfoDialogFooter, DialogClose as InfoDialogClose } from '@/components/ui/dialog';
+import { Dialog as InfoDialog, DialogContent as InfoDialogContent, DialogHeader as InfoDialogHeader, DialogTitle as InfoDialogTitle, DialogFooter as InfoDialogFooter, DialogClose as InfoDialogClose } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials, getPlaceholderUserName, calculatePricePerPerson } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -33,7 +33,7 @@ import { displayClassCategory } from '@/types';
 import { InfoCard } from '@/components/schedule/InfoCard'; 
 import { useRouter } from 'next/navigation'; 
 import { Separator } from '../ui/separator';
-import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { Tooltip, TooltipProvider, TooltipContent } from "@/components/ui/tooltip";
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
 
@@ -56,7 +56,7 @@ const InfoButton = ({ icon: Icon, text, onClick, className }: { icon: React.Elem
     </Button>
 );
 
-const InfoDialog: React.FC<{
+const DialogInfo: React.FC<{
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
@@ -64,7 +64,8 @@ const InfoDialog: React.FC<{
   icon: React.ElementType;
 }> = ({ isOpen, onOpenChange, title, description, icon: Icon }) => {
   return (
-    <InfoDialogContent>
+    <InfoDialog open={isOpen} onOpenChange={onOpenChange}>
+      <InfoDialogContent>
         <InfoDialogHeader>
           <InfoDialogTitle className="flex items-center text-xl">
             <Icon className="mr-3 h-6 w-6 text-primary" />
@@ -81,7 +82,8 @@ const InfoDialog: React.FC<{
             <Button className="w-full">¡Entendido!</Button>
           </InfoDialogClose>
         </InfoDialogFooter>
-    </InfoDialogContent>
+      </InfoDialogContent>
+    </InfoDialog>
   );
 };
 
@@ -412,13 +414,22 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
 
                     return (
                         <div key={idx} className="flex flex-col items-center group/avatar-wrapper space-y-0.5 relative text-center">
-                            <TooltipProvider delayDuration={150}>
+                             <TooltipProvider delayDuration={150}>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <Avatar className="h-10 w-10">
-                                            <AvatarImage src={fullPlayer?.profilePictureUrl} data-ai-hint="player avatar small"/>
-                                            <AvatarFallback className="text-sm bg-muted text-muted-foreground">{player ? getInitials(player.name || 'P') : '?'}</AvatarFallback>
-                                        </Avatar>
+                                        <div className={cn(
+                                            "relative flex items-center justify-center h-12 w-12 rounded-full border-[3px] transition-all shadow-inner",
+                                            player ? "border-green-500 bg-green-100" : "border-dashed border-green-400 bg-green-50/50"
+                                        )}>
+                                            {player && fullPlayer ? (
+                                                <Avatar className="h-full w-full">
+                                                    <AvatarImage src={fullPlayer.profilePictureUrl} data-ai-hint="player avatar small" />
+                                                    <AvatarFallback className="text-sm bg-muted text-muted-foreground">{getInitials(fullPlayer.name || 'P')}</AvatarFallback>
+                                                </Avatar>
+                                            ) : (
+                                                <Plus className="h-5 w-5 text-green-600 opacity-60" />
+                                            )}
+                                        </div>
                                     </TooltipTrigger>
                                     <TooltipContent side="bottom"><p>{player ? (player.name || 'Tú') : 'Plaza Libre'}</p></TooltipContent>
                                 </Tooltip>
@@ -510,9 +521,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
               </div>
           )}
       </div>
-      <Dialog open={infoDialog.open} onOpenChange={(open) => setInfoDialog(prev => ({ ...prev, open }))}>
-        <InfoDialog isOpen={infoDialog.open} onOpenChange={(open) => setInfoDialog(prev => ({ ...prev, open }))} title={infoDialog.title} description={infoDialog.description} icon={infoDialog.icon} />
-      </Dialog>
+      <DialogInfo isOpen={infoDialog.open} onOpenChange={(open) => setInfoDialog(prev => ({ ...prev, open }))} title={infoDialog.title} description={infoDialog.description} icon={infoDialog.icon} />
       {selectedMatchForChat && (
           <MatchChatDialog
               isOpen={isChatDialogOpen}
