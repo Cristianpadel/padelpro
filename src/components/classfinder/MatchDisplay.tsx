@@ -45,7 +45,7 @@ interface MatchDisplayProps {
   matchDayEvents: MatchDayEvent[]; // Changed to array
   dateStripIndicators: Record<string, UserActivityStatusForDay>;
   dateStripDates: Date[];
-  onViewPrefChange: (date: Date, pref: 'myInscriptions' | 'myConfirmed', type: 'class' | 'match') => void;
+  onViewPrefChange: (pref: 'myInscriptions' | 'myConfirmed', type: 'class' | 'match' | 'event', eventId?: string) => void;
   showPointsBonus: boolean;
 }
 
@@ -359,10 +359,10 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                                  {/* INDICATOR SECTION */}
                                  <div className="h-10 w-8 flex flex-col items-center justify-center relative space-y-0.5">
                                         {indicators.activityStatus === 'confirmed' && (
-                                             <button onClick={() => onViewPrefChange(day, 'myConfirmed', 'match')} title="Ver actividad confirmada" className="h-6 w-6 flex items-center justify-center bg-destructive text-destructive-foreground rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">R</button>
+                                             <button onClick={() => onViewPrefChange('myConfirmed', indicators.activityType || 'match')} title="Ver actividad confirmada" className="h-6 w-6 flex items-center justify-center bg-destructive text-destructive-foreground rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">R</button>
                                         )}
                                         {indicators.activityStatus === 'inscribed' && (
-                                             <button onClick={() => onViewPrefChange(day, 'myInscriptions', indicators.activityType || 'match')} title="Ver pre-inscripción" className="h-6 w-6 flex items-center justify-center bg-blue-500 text-white rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">I</button>
+                                             <button onClick={() => onViewPrefChange('myInscriptions', indicators.activityType || 'match', indicators.eventId)} title="Ver pre-inscripción" className="h-6 w-6 flex items-center justify-center bg-blue-500 text-white rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">I</button>
                                         )}
                                         {indicators.hasEvent && indicators.activityStatus === 'none' && (
                                             <Link href={`/match-day/${indicators.eventId}`} passHref>

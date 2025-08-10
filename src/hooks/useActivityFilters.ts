@@ -114,8 +114,19 @@ export function useActivityFilters(
     }
   };
   
-  const handleViewPrefChange = (pref: 'normal' | 'myInscriptions' | 'myConfirmed') => {
-      updateUrlFilter('viewPref', pref);
+ const handleViewPrefChange = (
+    pref: 'normal' | 'myInscriptions' | 'myConfirmed',
+    type?: 'class' | 'match' | 'event',
+    eventId?: string
+  ) => {
+    if (type === 'event' && eventId) {
+        router.push(`/match-day/${eventId}`);
+        return;
+    }
+    if (type) {
+        updateUrlFilter('view', type);
+    }
+    updateUrlFilter('viewPref', pref);
   };
 
 
