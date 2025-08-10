@@ -1,7 +1,7 @@
 // src/components/schedule/PersonalSchedule.tsx
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useTransition } from 'react';
 import type { Booking, User, Review, TimeSlot, PadelCourt, Instructor } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -22,7 +22,7 @@ import { calculatePricePerPerson } from '@/lib/utils';
 import Link from 'next/link';
 import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogFooter } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogFooter as AlertDialogFooterComponent } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
@@ -347,10 +347,10 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
                                 <AlertDialogTitle>Hacer Clase Privada</AlertDialogTitle>
                                 <AlertDialogDescription>Pagarás las plazas restantes para completar la clase y asegurarla. Se te cobrará el coste correspondiente.</AlertDialogDescription>
                             </AlertDialogHeader>
-                            <AlertDialogFooter>
+                            <AlertDialogFooterComponent>
                                 <AlertDialogCancel disabled={isMakingPrivate}>Cancelar</AlertDialogCancel>
                                 <AlertDialogAction onClick={handleMakePrivate} disabled={isMakingPrivate} className="bg-purple-600 text-white hover:bg-purple-700">{isMakingPrivate ? <Loader2 className="animate-spin h-4 w-4"/> : "Sí, Hacer Privada"}</AlertDialogAction>
-                            </AlertDialogFooter>
+                            </AlertDialogFooterComponent>
                            </AlertDialogContent>
                         </AlertDialog>
                     )}
@@ -441,7 +441,7 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
   }, [loadData, refreshKey]);
 
   const handleRateClass = (bookingId: string, instructorId: string, instructorName: string, rating: number, comment?: string) => {
-    addReview({
+    addReviewToState({
       id: `review-${bookingId}`,
       activityId: bookingId,
       activityType: 'class',
@@ -503,7 +503,7 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
 
   return (
     <div className="space-y-6">
-       { (upcomingBookings.length > 0 || pastBookings.length > 0) &&
+       { (hasUpcomingBookings || hasPastBookings) &&
          <h3 className="text-lg font-semibold text-blue-600 flex items-center"><Activity className="mr-2 h-5 w-5" /> Mis Clases</h3>
        }
       {hasUpcomingBookings && (
@@ -516,7 +516,6 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
                     key={booking.id}
                     booking={booking}
                     isUpcoming={true}
-                    ratedBookings={ratedBookings}
                     onRateClass={handleRateClass}
                     currentUser={currentUser}
                     onBookingCancelledOrCeded={handleBookingUpdate}
@@ -540,7 +539,6 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
                     key={booking.id}
                     booking={booking}
                     isUpcoming={false}
-                    ratedBookings={ratedBookings}
                     onRateClass={handleRateClass}
                     currentUser={currentUser}
                     onBookingCancelledOrCeded={handleBookingUpdate}
