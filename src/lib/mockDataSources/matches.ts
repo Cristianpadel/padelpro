@@ -842,9 +842,14 @@ export const fillMatchAndMakePrivate = async (userId: string, matchId: string): 
   const pricePerPlayer = calculatePricePerPerson(calculateActivityPrice(club, new Date(match.startTime)), 4);
   const totalCost = emptySpots * pricePerPlayer;
 
-  if ((user.credit ?? 0) < totalCost) {
+  if (((user.credit ?? 0) - (user.blockedCredit ?? 0)) < totalCost) {
     return { error: `Saldo insuficiente. Necesitas ${totalCost.toFixed(2)}€.` };
   }
+  
+  const availableCourt = findAvailableCourt(match.clubId, new Date(match.startTime), new Date(match.endTime));
+    if (!availableCourt) {
+        return { error: "No hay pistas disponibles en este momento para confirmar la partida." };
+    }
 
   // Deduct credit for the remaining spots
   deductCredit(userId, totalCost, match, 'Partida');
@@ -853,8 +858,11 @@ export const fillMatchAndMakePrivate = async (userId: string, matchId: string): 
   match.status = 'confirmed_private';
   match.organizerId = userId; // The user who pays becomes the organizer
   match.privateShareCode = `privmatch-${matchId.slice(-6)}-${Date.now().toString().slice(-6)}`;
+  match.courtNumber = availableCourt.courtNumber;
   
   state.updateMatchInState(matchId, match);
+  _annulConflictingActivities(match);
 
   return { updatedMatch: match, cost: totalCost };
 };
+    
