@@ -24,6 +24,9 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
     const reserveList = inscriptions.filter(i => i.status === 'reserve');
     const userInscription = inscriptions.find(i => i.userId === currentUser?.id);
     const userPreferredPartnerId = userInscription?.preferredPartnerId;
+    
+    const isMainListFull = mainList.length >= event.maxPlayers;
+
 
     return (
         <Card>
@@ -50,13 +53,15 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                       )}
                                     >
                                         <div className="flex flex-col items-center gap-1 overflow-hidden">
-                                             <Avatar className={cn(
-                                                "h-16 w-16 p-0 overflow-hidden shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.4)]",
-                                                isCurrentUser ? "border-[3px] border-primary shadow-lg" : "border-gray-300"
-                                            )}>
-                                                <AvatarImage src={inscription.userProfilePictureUrl} data-ai-hint="player avatar"/>
-                                                <AvatarFallback className="text-xl">{getInitials(inscription.userName)}</AvatarFallback>
-                                            </Avatar>
+                                             <div className="relative">
+                                                 <Avatar className={cn(
+                                                    "h-16 w-16 p-0 overflow-hidden shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.4)]",
+                                                    isCurrentUser ? "border-[3px] border-primary shadow-lg" : "border-gray-300"
+                                                )}>
+                                                    <AvatarImage src={inscription.userProfilePictureUrl} data-ai-hint="player avatar"/>
+                                                    <AvatarFallback className="text-xl">{getInitials(inscription.userName)}</AvatarFallback>
+                                                </Avatar>
+                                             </div>
                                             <div className="flex-1 overflow-hidden mt-1">
                                                 <p className="font-medium text-sm truncate">{inscription.userName}</p>
                                                 <Badge variant="outline" className="text-xs">N: {inscription.userLevel}</Badge>
@@ -77,8 +82,8 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                             }
                             // Render empty slot
                             return (
-                                <div key={`empty-${index}`} className="p-3 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-muted-foreground bg-secondary/30 h-40">
-                                     <div className="relative inline-flex items-center justify-center h-16 w-16 rounded-full border-[3px] border-dashed border-gray-400 bg-white/50 shadow-inner">
+                                <div key={`empty-${index}`} className="p-3 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-muted-foreground bg-secondary/30 h-40 shadow-sm">
+                                    <div className="relative inline-flex items-center justify-center h-16 w-16 rounded-full border-[3px] border-dashed border-gray-400 bg-white/50 shadow-inner">
                                         <UserPlus className="h-8 w-8" />
                                     </div>
                                     <p className="text-xs font-medium mt-2">Plaza Libre</p>
@@ -90,33 +95,47 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
 
                 {event.reservePlayers > 0 && (
                     <div>
-                        <h4 className="font-semibold mb-2">Lista de Reserva ({reserveList.length} / {event.reservePlayers})</h4>
-                        {reserveList.length > 0 ? (
-                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                                {reserveList.map((inscription, index) => (
-                                     <div 
-                                      key={inscription.id} 
-                                      className={cn("p-3 border rounded-lg flex flex-col items-center justify-center text-center bg-muted/50 shadow-sm h-40 relative")}
-                                    >
-                                        <div className="absolute top-1 left-2 text-xs font-bold text-muted-foreground">#{index + 1}</div>
-                                        <div className="flex flex-col items-center gap-1 overflow-hidden">
-                                             <Avatar className="h-16 w-16 p-0 overflow-hidden shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.2)] border-gray-300">
-                                                <AvatarImage src={inscription.userProfilePictureUrl} data-ai-hint="player avatar"/>
-                                                <AvatarFallback className="text-xl">{getInitials(inscription.userName)}</AvatarFallback>
-                                            </Avatar>
-                                            <div className="flex-1 overflow-hidden mt-1">
-                                                <p className="font-medium text-sm truncate">{inscription.userName}</p>
-                                                <Badge variant="outline" className="text-xs">N: {inscription.userLevel}</Badge>
+                        <h4 className="font-semibold mb-3">Lista de Reserva ({reserveList.length} / {event.reservePlayers})</h4>
+                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                            {Array.from({ length: event.reservePlayers }).map((_, index) => {
+                                const inscription = reserveList[index];
+                                if (inscription) {
+                                     const isCurrentUser = inscription.userId === currentUser?.id;
+                                    return (
+                                        <div 
+                                        key={inscription.id} 
+                                        className={cn("p-3 border rounded-lg flex flex-col items-center justify-center text-center bg-muted/50 shadow-sm h-40 relative",  isCurrentUser && "bg-blue-50 border-blue-300 ring-2 ring-blue-400")}
+                                        >
+                                            <div className="absolute top-1 left-2 text-xs font-bold text-muted-foreground">#{index + 1}</div>
+                                             <div className="flex flex-col items-center gap-1 overflow-hidden">
+                                                <div className="relative">
+                                                     <Avatar className={cn(
+                                                        "h-16 w-16 p-0 overflow-hidden shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.2)] border-gray-300",
+                                                         isCurrentUser && "border-[3px] border-primary shadow-lg"
+                                                    )}>
+                                                        <AvatarImage src={inscription.userProfilePictureUrl} data-ai-hint="player avatar"/>
+                                                        <AvatarFallback className="text-xl">{getInitials(inscription.userName)}</AvatarFallback>
+                                                    </Avatar>
+                                                </div>
+                                                <div className="flex-1 overflow-hidden mt-1">
+                                                    <p className="font-medium text-sm truncate">{inscription.userName}</p>
+                                                    <Badge variant="outline" className="text-xs">N: {inscription.userLevel}</Badge>
+                                                </div>
                                             </div>
                                         </div>
+                                    );
+                                }
+                                // Render empty reserve slot
+                                return (
+                                     <div key={`empty-reserve-${index}`} className={cn("p-3 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-muted-foreground h-40 shadow-sm", isMainListFull ? "bg-secondary/30" : "bg-gray-100 opacity-60")}>
+                                        <div className="relative inline-flex items-center justify-center h-16 w-16 rounded-full border-[3px] border-dashed border-gray-400 bg-white/50 shadow-inner">
+                                            <Hourglass className="h-8 w-8" />
+                                        </div>
+                                        <p className="text-xs font-medium mt-2">Plaza Reserva</p>
                                     </div>
-                                ))}
-                            </div>
-                        ) : (
-                             <div className="p-4 border-2 border-dashed rounded-lg text-center text-muted-foreground">
-                                <p>La lista de reserva está vacía.</p>
-                            </div>
-                        )}
+                                );
+                            })}
+                        </div>
                     </div>
                 )}
             </CardContent>
