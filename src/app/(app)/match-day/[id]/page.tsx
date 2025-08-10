@@ -10,7 +10,7 @@ import { getMockCurrentUser, getMatchDayEventById, getMatchDayInscriptions, getM
 import type { MatchDayEvent, User, MatchDayInscription, Match } from '@/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar, Users, Trophy, Handshake, UserCheck, UserPlus, Info } from 'lucide-react';
+import { Calendar, Users, Trophy, Handshake, UserCheck, UserPlus, Info, PartyPopper, ArrowRight } from 'lucide-react';
 import MatchDayInscriptionList from '@/components/match-day/MatchDayInscriptionList';
 import MatchDayDrawResults from '@/components/match-day/MatchDayDrawResults';
 import MatchDayPartnerSelectionDialog from '@/components/match-day/MatchDayPartnerSelectionDialog';

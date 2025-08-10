@@ -9,7 +9,7 @@ import { getMockCurrentUser, fetchActiveMatchDayEvents, getMatchDayInscriptions,
 import type { MatchDayEvent, User, MatchDayInscription, Match } from '@/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar, Users, Trophy, Handshake, UserCheck, UserPlus, Info, ArrowRight } from 'lucide-react';
+import { Calendar, Users, Trophy, Handshake, UserCheck, UserPlus, Info, ArrowRight, PartyPopper } from 'lucide-react';
 import MatchDayInscriptionList from '@/components/match-day/MatchDayInscriptionList';
 import MatchDayDrawResults from '@/components/match-day/MatchDayDrawResults';
 import MatchDayPartnerSelectionDialog from '@/components/match-day/MatchDayPartnerSelectionDialog';
@@ -109,14 +109,14 @@ export default function MatchDayPage() {
     if (!event) {
        return (
              <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 items-center justify-center">
-                <Card className="w-full max-w-lg text-center shadow-lg">
+                <Card className="w-full max-w-lg text-center shadow-lg border-2 border-dashed border-muted-foreground/30">
                     <CardHeader>
-                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-                            <Trophy className="h-6 w-6" />
+                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+                            <PartyPopper className="h-8 w-8" />
                         </div>
-                        <CardTitle className="mt-4 font-headline text-2xl">Match-Day</CardTitle>
+                        <CardTitle className="mt-4 font-headline text-2xl">Eventos Match-Day</CardTitle>
                         <CardDescription>
-                            No hay eventos Match-Day programados por el momento. ¡Vuelve pronto!
+                            No hay eventos Match-Day programados por el momento. ¡Vuelve pronto para más diversión y competición!
                         </CardDescription>
                     </CardHeader>
                 </Card>
