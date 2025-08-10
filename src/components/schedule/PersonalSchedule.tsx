@@ -2,10 +2,10 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import type { Booking, User, Review, TimeSlot, PadelCategoryForSlot, Instructor, PadelCourt } from '@/types';
+import type { Booking, User, Review, TimeSlot, PadelCourt, Instructor } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { List, Star, Activity, CheckCircle, CalendarX, Ban, UserCircle as UserIcon, Clock, Hash, Euro, Gift } from 'lucide-react';
+import { List, Star, Activity, CheckCircle, CalendarX, Ban, UserCircle as UserIcon, Clock, Hash, Euro, Gift, Lightbulb, BarChartHorizontal, Users2, Venus, Mars } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { isPast, format, differenceInHours } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -22,13 +22,53 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { calculatePricePerPerson } from '@/lib/utils';
 import Link from 'next/link';
 import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
-
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 
 interface CourtAvailabilityState {
     available: PadelCourt[];
     occupied: PadelCourt[];
     total: number;
 }
+
+const InfoDialog: React.FC<{
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description: string;
+  icon: React.ElementType;
+}> = ({ isOpen, onOpenChange, title, description, icon: Icon }) => {
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center text-xl">
+            <Icon className="mr-3 h-6 w-6 text-primary" />
+            {title}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="py-4 text-base text-muted-foreground leading-relaxed whitespace-pre-line">
+            {description.split('\n').map((item, key) => (
+                <p key={key} className="mb-2">{`• ${item}`}</p>
+            ))}
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button className="w-full">¡Entendido!</Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+
+const InfoButton = ({ icon: Icon, text, onClick, className }: { icon: React.ElementType, text: string, onClick: () => void, className?: string }) => (
+    <button onClick={onClick} className="flex-1">
+        <Badge variant="outline" className={cn("w-full justify-center text-xs py-1.5 rounded-full capitalize shadow-inner bg-slate-50 border-slate-200 hover:border-slate-300 transition-colors", className)}>
+            <Icon className="mr-1.5 h-3 w-3" /> {text}
+        </Badge>
+    </button>
+);
 
 
 interface BookingListItemProps {
@@ -45,6 +85,7 @@ interface BookingListItemProps {
 const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, ratedBookings, onRateClass, currentUser, onBookingCancelledOrCeded, instructor, availability }) => {
   const { toast } = useToast();
   const [isCancelling, setIsCancelling] = useState(false);
+  const [infoDialog, setInfoDialog] = useState<{ open: boolean, title: string, description: string, icon: React.ElementType }>({ open: false, title: '', description: '', icon: Lightbulb });
   
   if (!booking.slotDetails || !instructor) return null;
 
@@ -74,6 +115,23 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
     setIsCancelling(false);
   };
   
+  const handleInfoClick = (type: 'level' | 'court' | 'category') => {
+        let dialogData;
+        const CategoryIcon = category === 'chica' ? Venus : category === 'chico' ? Mars : Users2;
+        switch (type) {
+            case 'level':
+                 dialogData = { title: 'Nivel de la Clase', description: 'Este es el rango de nivel para esta clase. Se ajusta según el primer jugador inscrito para asegurar que sea competitiva.', icon: Lightbulb };
+                 break;
+            case 'court':
+                 dialogData = { title: 'Asignación de Pista', description: 'La pista se asigna automáticamente solo cuando la clase está completa.\nRecibirás una notificación con el número de pista cuando se confirme.', icon: Hash };
+                 break;
+            case 'category':
+                 dialogData = { title: 'Categoría de la Clase', description: 'La categoría (chicos/chicas) la sugiere el primer jugador que se apunta.\nNo es una regla estricta, solo una guía para los demás.', icon: CategoryIcon };
+                 break;
+        }
+        setInfoDialog({ open: true, ...dialogData });
+    };
+
   const isConfirmed = status === 'confirmed' || status === 'confirmed_private';
   const { completed: isSlotCompleted, size: completedGroupSize } = isSlotEffectivelyCompleted(slotDetails);
   
@@ -85,38 +143,60 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
   const cardBorderColor = isUpcoming && isConfirmed ? 'border-l-green-500' 
                         : isUpcoming && !isConfirmed ? 'border-l-blue-500' 
                         : 'border-l-gray-400';
+  
+  const isLevelAssigned = level !== 'abierto';
+  const isCategoryAssigned = category !== 'abierta';
+  const isCourtAssigned = !!courtNumber;
+
+  const levelDisplay = displayClassLevel(level, true);
+  const categoryDisplay = displayClassCategory(category, true);
+  const courtDisplay = isCourtAssigned ? `Pista ${courtNumber}` : 'Pista';
+
+  const CategoryIcon = category === 'chica' ? Venus : category === 'chico' ? Mars : Users2;
+  const classifiedBadgeClass = 'text-blue-700 border-blue-200 bg-blue-100 hover:border-blue-300';
 
   return (
+    <>
     <div className="w-80 max-w-md mx-auto">
       <Card className={cn("flex flex-col shadow-md border-l-4 h-full", cardBorderColor)}>
         <CardHeader className="p-3">
           <div className="flex justify-between items-start">
             <div className="flex items-center space-x-3">
-              <div className="flex-shrink-0 text-center font-bold bg-white p-1 rounded-md w-14 shadow-lg border border-border/20">
-                <p className="text-xs uppercase">{format(new Date(startTime), "EEE", { locale: es })}</p>
-                <p className="text-3xl leading-none">{format(new Date(startTime), "d")}</p>
-                <p className="text-xs uppercase">{format(new Date(startTime), "MMM", { locale: es })}</p>
-              </div>
+              <Link href={`/instructors/${instructor.id}`} passHref className="group">
+                <Avatar className="h-12 w-12">
+                  <AvatarImage src={instructor.profilePictureUrl} alt={instructorName} data-ai-hint="instructor profile photo" />
+                  <AvatarFallback>{getInitials(instructorName)}</AvatarFallback>
+                </Avatar>
+              </Link>
               <div className="flex flex-col">
-                <p className="font-semibold text-sm -mb-0.5">{format(new Date(startTime), "eeee, HH:mm'h'", { locale: es })}</p>
-                <p className="text-xs text-muted-foreground capitalize">con {instructorName}</p>
+                <p className="font-semibold text-lg text-gray-800 -mb-0.5">{instructorName}</p>
+                <p className="text-xs text-muted-foreground capitalize">{format(new Date(startTime), "eeee, d 'de' MMMM, HH:mm'h'", { locale: es })}</p>
               </div>
             </div>
             {isUpcoming && isConfirmed && <Badge variant="default" className="text-xs bg-green-600">Confirmada</Badge>}
             {isUpcoming && !isConfirmed && <Badge variant="secondary" className="text-xs">Pendiente</Badge>}
             {!isUpcoming && <Badge variant="outline" className="text-xs">Finalizada</Badge>}
           </div>
-          <div className="mt-2 flex items-center gap-2">
-            <Link href={`/instructors/${instructor.id}`} passHref className="group">
-              <Avatar className="h-9 w-9">
-                <AvatarImage src={instructor.profilePictureUrl} alt={instructorName} data-ai-hint="instructor profile photo" />
-                <AvatarFallback>{getInitials(instructorName)}</AvatarFallback>
-              </Avatar>
-            </Link>
-            <div className="flex items-center gap-1">
-              {isConfirmed && courtNumber && <Badge variant="outline" className="text-xs">Pista {courtNumber}</Badge>}
-              <Badge variant="outline" className="text-xs">{displayClassLevel(level)}</Badge>
-            </div>
+
+           <div className="flex justify-center items-center gap-1.5 pt-2">
+              <InfoButton 
+                  icon={Lightbulb} 
+                  text={levelDisplay} 
+                  onClick={() => handleInfoClick('level')}
+                  className={cn(isLevelAssigned && classifiedBadgeClass)}
+              />
+              <InfoButton 
+                  icon={CategoryIcon} 
+                  text={categoryDisplay} 
+                  onClick={() => handleInfoClick('category')} 
+                  className={cn(isCategoryAssigned && classifiedBadgeClass)}
+              />
+              <InfoButton 
+                  icon={Hash} 
+                  text={courtDisplay} 
+                  onClick={() => handleInfoClick('court')} 
+                  className={cn(isCourtAssigned && classifiedBadgeClass)}
+              />
           </div>
         </CardHeader>
         <CardContent className="p-3 pt-1 flex-grow">
@@ -133,7 +213,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
                       const isCurrentUserInSpot = playerInSpot?.userId === currentUser.id;
                       const student = playerInSpot ? getMockStudents().find(s => s.id === playerInSpot.userId) : null;
                       return (
-                        <Avatar key={index} className={cn("h-8 w-8", isCurrentUserInSpot && "border-2 border-primary")}>
+                        <Avatar key={index} className={cn("h-10 w-10", isCurrentUserInSpot && "border-2 border-primary")}>
                           {playerInSpot && student ? (
                             <>
                               <AvatarImage src={student.profilePictureUrl} alt={student.name} data-ai-hint="student avatar small" />
@@ -178,6 +258,8 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
         </CardFooter>
       </Card>
     </div>
+    <InfoDialog isOpen={infoDialog.open} onOpenChange={(open) => setInfoDialog(prev => ({ ...prev, open }))} title={infoDialog.title} description={infoDialog.description} icon={infoDialog.icon} />
+    </>
   );
 };
 
@@ -262,8 +344,8 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
       <div className="space-y-4">
          <Skeleton className="h-8 w-3/4" />
          <div className="flex space-x-4">
-            <Skeleton className="h-80 w-80" />
-            <Skeleton className="h-80 w-80" />
+            <Skeleton className="h-96 w-80" />
+            <Skeleton className="h-96 w-80" />
          </div>
       </div>
     );
