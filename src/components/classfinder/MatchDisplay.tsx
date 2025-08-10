@@ -125,8 +125,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
             workingMatches = workingMatches.filter(match => {
                 if ('isEventCard' in match) return false;
                 const regularMatch = match as Match;
-                const isUserInMatch = (regularMatch.bookedPlayers || []).some(p => p.userId === currentUser.id);
-                return isUserInMatch && !isPast(new Date(regularMatch.endTime));
+                return (regularMatch.bookedPlayers || []).some(p => p.userId === currentUser.id);
             });
         } else if (viewPreference === 'myConfirmed') {
              workingMatches = workingMatches.filter(match => {
@@ -281,8 +280,17 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
         const limit = addDays(today, 30); // Search up to 30 days in the future
 
         while (currentDateToCheck <= limit) {
-            const hasMatches = allMatches.some(match => isSameDay(new Date(match.startTime), currentDateToCheck));
-            if (hasMatches) {
+             const hasActivity = allMatches.some(match => {
+                if (isSameDay(new Date(match.startTime), currentDateToCheck)) {
+                    if (viewPreference === 'myInscriptions') {
+                        return (match.bookedPlayers || []).some(p => p.userId === currentUser?.id);
+                    }
+                    return true;
+                }
+                return false;
+            });
+
+            if (hasActivity) {
                 return currentDateToCheck;
             }
             currentDateToCheck = addDays(currentDateToCheck, 1);
@@ -296,8 +304,8 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
             onDateChange(nextDay);
         } else {
             toast({
-                title: "No hay partidas futuras",
-                description: "No se encontraron partidas disponibles en los próximos 30 días.",
+                title: viewPreference === 'myInscriptions' ? "No tienes más inscripciones" : "No hay partidas futuras",
+                description: viewPreference === 'myInscriptions' ? "No estás apuntado a más partidas en los próximos 30 días." : "No se encontraron partidas disponibles en los próximos 30 días.",
             });
         }
     };
@@ -384,7 +392,8 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                     {viewPreference === 'myInscriptions' ? "No estás apuntado/a a ninguna partida para este día." : "Prueba a cambiar las fechas o ajusta los filtros."}
                 </p>
                 <Button onClick={handleNextAvailableClick} className="mt-4">
-                    Próximo día con partidas disponibles <ArrowRight className="ml-2 h-4 w-4" />
+                    {viewPreference === 'myInscriptions' ? 'Próximo día con inscripciones' : 'Próximo día con partidas'}
+                    <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
             </div>
         )}
