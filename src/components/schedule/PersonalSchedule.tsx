@@ -227,7 +227,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ bookingsForSlot, isUp
 
   const levelDisplay = displayClassLevel(level, true);
   const categoryDisplay = displayClassCategory(category, true);
-  const courtDisplay = isCourtAssigned ? `Pista ${courtNumber}` : 'Pista';
+  const courtDisplay = isCourtAssigned ? `Pista ${courtNumber}` : '# Pista';
 
   const CategoryIcon = category === 'chica' ? Venus : category === 'chico' ? Mars : Users2;
   const classifiedBadgeClass = 'text-blue-700 border-blue-200 bg-blue-100 hover:border-blue-300';
@@ -323,7 +323,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ bookingsForSlot, isUp
               })}
             </div>
           </CardContent>
-          <CardFooter className="p-2 pt-1 flex flex-col items-stretch space-y-1 border-t">
+          <CardFooter className="p-2 pt-1 flex-col items-stretch space-y-1 border-t">
             <CourtAvailabilityIndicator
               availableCourts={availability.available}
               occupiedCourts={availability.occupied}
@@ -374,7 +374,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ bookingsForSlot, isUp
         </Card>
       </div>
       <DialogInfo isOpen={infoDialog.open} onOpenChange={(open) => setInfoDialog(prev => ({ ...prev, open }))} title={infoDialog.title} description={infoDialog.description} icon={infoDialog.icon} />
-      <RateClassDialog 
+       <RateClassDialog 
         isOpen={isRatingDialogOpen} 
         onOpenChange={setIsRatingDialogOpen}
         onSubmit={handleRatingSubmit}
@@ -545,7 +545,7 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
         <div>
           <h4 className="text-base font-semibold mb-3 text-foreground flex items-center"><Clock className="mr-2 h-4 w-4" /> Próximas</h4>
            <ScrollArea>
-              <div className="flex space-x-1 pb-4">
+              <div className="flex justify-start space-x-1 pb-4">
                 {upcomingBookings.map(group => renderBookingGroup(group, true))}
               </div>
               <ScrollBar orientation="horizontal" />
@@ -557,7 +557,7 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
         <div>
            <h4 className="text-base font-semibold mb-3 text-muted-foreground flex items-center"><CheckCircle className="mr-2 h-4 w-4" /> Historial</h4>
             <ScrollArea>
-              <div className="flex space-x-1 pb-4">
+              <div className="flex justify-start space-x-1 pb-4">
                 {pastBookings.map(group => renderBookingGroup(group, false))}
               </div>
               <ScrollBar orientation="horizontal" />
