@@ -1,11 +1,12 @@
 // src/lib/mockDataSources/matchDay.ts
 "use client";
 
+import { addHours, setHours, setMinutes, startOfDay, format, isSameDay, addDays, addMinutes, areIntervalsOverlapping, parseISO, differenceInHours, differenceInMinutes, getDay, parse } from 'date-fns';
+import { es } from 'date-fns/locale';
 import type { MatchDayEvent, User, MatchDayInscription, PadelCourt, Match } from '@/types';
-import * as state from './state';
+import * as state from './index';
 import { v4 as uuidv4 } from 'uuid';
-import { addMinutes, setHours, setMinutes, isSameDay } from 'date-fns';
-import { deductCredit } from './users';
+import { deductCredit, recalculateAndSetBlockedBalances } from './users';
 import { addMatch } from './matches';
 
 
@@ -63,10 +64,10 @@ export const addMatchDayInscription = async (eventId: string, userId: string): P
     
     // Block credit if there is a price
     if(event.price && event.price > 0) {
-        if((user.credit ?? 0) < event.price) {
+        const availableCredit = (user.credit ?? 0) - (user.blockedCredit ?? 0);
+        if(availableCredit < event.price) {
             return { error: `Saldo insuficiente. Necesitas ${event.price.toFixed(2)}€.`};
         }
-        deductCredit(userId, event.price, event as any, 'Evento Match-Day');
     }
 
     const newInscription: MatchDayInscription = {
@@ -82,6 +83,10 @@ export const addMatchDayInscription = async (eventId: string, userId: string): P
     };
 
     state.addMatchDayInscriptionToState(newInscription);
+    
+    // After adding, recalculate blocked credit for the user
+    await recalculateAndSetBlockedBalances(userId);
+
     return newInscription;
 }
 
@@ -114,19 +119,10 @@ export const cancelMatchDayInscription = async (eventId: string, userId: string)
             state.updateMatchDayInscriptionInState(promotedPlayerInscription.id, { ...promotedPlayerInscription, status: 'main' });
         }
     }
+    
+    await recalculateAndSetBlockedBalances(userId);
 
-    // Refund logic
-    let refundedAmount = 0;
-    if (inscription.amountBlocked && inscription.amountBlocked > 0) {
-        const user = state.getMockUserDatabase().find(u => u.id === userId);
-        if (user) {
-            const newBalance = (user.credit ?? 0) + inscription.amountBlocked;
-            state.updateUserInUserDatabaseState(userId, { credit: newBalance });
-            refundedAmount = inscription.amountBlocked;
-        }
-    }
-
-    return { success: true, refundedAmount };
+    return { success: true };
 };
 
 
@@ -215,4 +211,19 @@ export const fetchUserMatchDayInscriptions = async (userId: string): Promise<(Ma
             eventDetails: eventDetails ? { ...eventDetails } : undefined,
         };
     }).sort((a, b) => new Date(a.eventDetails?.eventDate || 0).getTime() - new Date(b.eventDetails?.eventDate || 0).getTime());
+};
+
+export const selectPreferredPartner = async (userId: string, eventId: string, partnerId: string): Promise<{ success: true } | { error: string }> => {
+    await new Promise(resolve => setTimeout(resolve, 50));
+    const inscriptions = state.getMockMatchDayInscriptions();
+    const userInscriptionIndex = inscriptions.findIndex(i => i.eventId === eventId && i.userId === userId);
+
+    if (userInscriptionIndex === -1) {
+        return { error: 'Debes estar inscrito para seleccionar un compañero.' };
+    }
+
+    inscriptions[userInscriptionIndex].preferredPartnerId = partnerId;
+    state.initializeMockMatchDayInscriptions(inscriptions);
+    
+    return { success: true };
 };

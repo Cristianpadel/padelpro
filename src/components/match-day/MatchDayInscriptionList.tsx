@@ -19,7 +19,7 @@ const MatchDayInscriptionList: React.FC<MatchDayInscriptionListProps> = ({ inscr
     return (
         <div className="space-y-4">
             <div>
-                <h4 className="font-semibold text-lg mb-2">Lista Principal ({mainList.length})</h4>
+                <h4 className="font-semibold text-base mb-2">Lista Principal ({mainList.length})</h4>
                 {mainList.length > 0 ? (
                     <ScrollArea className="h-48">
                         <div className="space-y-2 pr-4">
@@ -32,7 +32,7 @@ const MatchDayInscriptionList: React.FC<MatchDayInscriptionListProps> = ({ inscr
                                         </Avatar>
                                         <span className="font-medium text-sm">{inscription.userName}</span>
                                     </div>
-                                    <Badge variant="outline">N: {inscription.userLevel}</Badge>
+                                    <Badge variant="outline" className="text-xs">N: {inscription.userLevel}</Badge>
                                 </div>
                             ))}
                         </div>
@@ -42,13 +42,13 @@ const MatchDayInscriptionList: React.FC<MatchDayInscriptionListProps> = ({ inscr
 
             {reserveList.length > 0 && (
                  <div>
-                    <h4 className="font-semibold text-lg mb-2">Lista de Reserva ({reserveList.length})</h4>
+                    <h4 className="font-semibold text-base mb-2">Lista de Reserva ({reserveList.length})</h4>
                      <ScrollArea className="h-32">
                         <div className="space-y-2 pr-4">
                             {reserveList.map((inscription, index) => (
                                 <div key={inscription.id} className="flex items-center justify-between p-2 bg-secondary/50 rounded-md">
                                     <div className="flex items-center gap-2">
-                                        <span className="font-bold text-sm w-6 text-center">{index + 1}.</span>
+                                        <span className="font-bold text-sm w-6 text-center text-muted-foreground">{index + 1}.</span>
                                         <Avatar className="h-8 w-8">
                                             <AvatarImage src={inscription.userProfilePictureUrl} data-ai-hint="player avatar"/>
                                             <AvatarFallback>{getInitials(inscription.userName)}</AvatarFallback>
