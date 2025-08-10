@@ -22,8 +22,9 @@ import { calculatePricePerPerson } from '@/lib/utils';
 import Link from 'next/link';
 import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogFooter } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogFooter } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
+import { Separator } from '@/components/ui/separator';
 
 
 interface CourtAvailabilityState {
@@ -40,7 +41,8 @@ const InfoButton: React.FC<{
 }> = ({ icon: Icon, text, onClick, className }) => (
     <button className="flex-1" onClick={onClick}>
         <Badge variant="outline" className={cn("w-full justify-center text-xs py-1.5 rounded-full capitalize shadow-inner bg-slate-50 border-slate-200 hover:border-slate-300 transition-colors", className)}>
-            <Icon className="mr-1.5 h-3 w-3" /> {text}
+            <Icon className="mr-1.5 h-3 w-3 text-slate-500" /> 
+            <span className="font-medium text-slate-700">{text}</span>
         </Badge>
     </button>
 );
@@ -174,7 +176,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
 
   const levelDisplay = displayClassLevel(level, true);
   const categoryDisplay = displayClassCategory(category, true);
-  const courtDisplay = isCourtAssigned ? `Pista ${courtNumber}` : 'Pista';
+  const courtDisplay = isCourtAssigned ? `Pista ${courtNumber}` : 'Clasificando';
 
   const CategoryIcon = category === 'chica' ? Venus : category === 'chico' ? Mars : Users2;
   const classifiedBadgeClass = 'text-blue-700 border-blue-200 bg-blue-100 hover:border-blue-300';
@@ -196,7 +198,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
       <div className="w-80 flex flex-col max-w-md mx-auto">
         <Card className={cn("flex flex-col shadow-md border-l-4 h-full", cardBorderColor)}>
           <CardHeader className="p-3 pb-1 space-y-2">
-            <div className="flex justify-between items-start">
+           <div className="flex justify-between items-start">
                 <div className="flex items-center space-x-3">
                    <Link href={`/instructors/${instructor.id}`} passHref className="group">
                      <Avatar className="h-12 w-12">
@@ -212,8 +214,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
                    </div>
                 </div>
             </div>
-
-            <div className="flex justify-center items-center gap-1.5 pt-1">
+             <div className="flex justify-around items-center gap-1.5 pt-1">
                 <InfoButton icon={Lightbulb} text={levelDisplay} onClick={() => handleInfoClick('level')} className={cn(isLevelAssigned && classifiedBadgeClass)} />
                 <InfoButton icon={CategoryIcon} text={categoryDisplay} onClick={() => handleInfoClick('category')} className={cn(isCategoryAssigned && classifiedBadgeClass)} />
                 <InfoButton icon={Hash} text={courtDisplay} onClick={() => handleInfoClick('court')} className={cn(isCourtAssigned && classifiedBadgeClass)} />
@@ -419,6 +420,8 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
   
   const upcomingBookings = bookings.filter(b => b.slotDetails && !isPast(new Date(b.slotDetails.endTime)));
   const pastBookings = bookings.filter(b => b.slotDetails && isPast(new Date(b.slotDetails.endTime)));
+  const hasUpcomingBookings = upcomingBookings.length > 0;
+  const hasPastBookings = pastBookings.length > 0;
   
   if (upcomingBookings.length === 0 && pastBookings.length === 0) {
     return (
@@ -490,4 +493,3 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
 };
 
 export default PersonalSchedule;
-    
