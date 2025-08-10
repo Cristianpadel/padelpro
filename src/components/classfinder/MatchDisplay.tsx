@@ -125,7 +125,8 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
             workingMatches = workingMatches.filter(match => {
                 if ('isEventCard' in match) return false;
                 const regularMatch = match as Match;
-                return (regularMatch.bookedPlayers || []).some(p => p.userId === currentUser.id) && !isPast(new Date(regularMatch.endTime));
+                const isUserInMatch = (regularMatch.bookedPlayers || []).some(p => p.userId === currentUser.id);
+                return isUserInMatch && !isPast(new Date(regularMatch.endTime));
             });
         } else if (viewPreference === 'myConfirmed') {
              workingMatches = workingMatches.filter(match => {
@@ -377,10 +378,10 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
             <div className="text-center py-16">
                 <SearchX className="h-20 w-20 text-muted-foreground mx-auto mb-6 opacity-50" />
                 <h2 className="text-2xl font-semibold text-foreground mb-3">
-                    No se encontraron partidas
+                    {viewPreference === 'myInscriptions' ? 'No tienes próximas partidas' : 'No se encontraron partidas'}
                 </h2>
                 <p className="text-muted-foreground max-w-md mx-auto">
-                    Prueba a cambiar las fechas o ajusta los filtros.
+                    {viewPreference === 'myInscriptions' ? "No estás apuntado/a a ninguna partida para este día." : "Prueba a cambiar las fechas o ajusta los filtros."}
                 </p>
                 <Button onClick={handleNextAvailableClick} className="mt-4">
                     Próximo día con partidas disponibles <ArrowRight className="ml-2 h-4 w-4" />
