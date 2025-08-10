@@ -141,7 +141,7 @@ export default function MatchDayDetailPage() {
                             ) : userInscription ? (
                                 <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-800">
                                     <p className="font-bold flex items-center"><UserCheck className="mr-2 h-4 w-4"/>Estás Inscrito</p>
-                                    <p className="text-sm mt-1">Tu estado es: <Badge className={userInscription.status === 'main' ? "bg-blue-600" : ""}>{userInscription.status === 'main' ? 'Lista Principal' : 'Reserva'}</Badge></p>
+                                    <div className="text-sm mt-1">Tu estado es: <Badge className={userInscription.status === 'main' ? "bg-blue-600" : ""}>{userInscription.status === 'main' ? 'Lista Principal' : 'Reserva'}</Badge></div>
                                      <Button onClick={handleCancelInscription} variant="link" className="text-destructive h-auto p-0 mt-2 text-xs" disabled={isSubmitting}>Cancelar inscripción</Button>
                                 </div>
                             ) : (
