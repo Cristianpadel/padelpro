@@ -34,14 +34,16 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
         <Card>
             <CardHeader>
                 <div className="flex items-start justify-between gap-4">
-                    <div className="flex-grow">
-                        <CardTitle>Jugadores Inscritos</CardTitle>
-                        <CardDescription>Aquí puedes ver quién se ha apuntado y elegir tu pareja preferida para el sorteo.</CardDescription>
-                    </div>
-                     <div className="flex-shrink-0 text-center font-bold bg-white p-2 rounded-lg w-auto shadow-lg border border-border/20">
-                        <p className="text-xs uppercase text-muted-foreground">{format(new Date(event.eventDate), "EEEE", { locale: es })}</p>
-                        <p className="text-4xl leading-none text-primary">{format(new Date(event.eventDate), "d")}</p>
-                        <p className="text-xs uppercase text-muted-foreground">{format(new Date(event.eventDate), "MMMM", { locale: es })}</p>
+                     <div className="flex items-start gap-4">
+                         <div className="flex-shrink-0 text-center font-bold bg-white p-2 rounded-lg w-auto shadow-lg border border-border/20">
+                            <p className="text-xs uppercase text-muted-foreground">{format(new Date(event.eventDate), "EEEE", { locale: es })}</p>
+                            <p className="text-5xl leading-none text-foreground font-bold">{format(new Date(event.eventDate), "d")}</p>
+                            <p className="text-xs uppercase text-muted-foreground">{format(new Date(event.eventDate), "MMMM", { locale: es })}</p>
+                        </div>
+                        <div className="flex-grow pt-1">
+                            <CardTitle>Jugadores Inscritos</CardTitle>
+                            <CardDescription>Aquí puedes ver quién se ha apuntado y elegir tu pareja preferida para el sorteo.</CardDescription>
+                        </div>
                     </div>
                 </div>
             </CardHeader>
@@ -115,7 +117,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                     return (
                                         <div 
                                         key={inscription.id} 
-                                        className={cn("p-3 border rounded-lg flex flex-col items-center justify-center text-center bg-muted/50 shadow-sm h-40 relative",  isCurrentUser && "bg-blue-50 border-blue-300 ring-2 ring-blue-400")}
+                                        className={cn("p-3 border rounded-lg flex flex-col items-center justify-center text-center bg-background shadow-md h-40 relative",  isCurrentUser && "bg-blue-50 border-blue-300 ring-2 ring-blue-400")}
                                         >
                                             <div className="absolute top-1 left-2 text-xs font-bold text-muted-foreground">#{index + 1}</div>
                                              <div className="flex flex-col items-center gap-1 overflow-hidden">
