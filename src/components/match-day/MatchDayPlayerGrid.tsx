@@ -339,7 +339,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                         <RefreshCw className="mr-2 h-4 w-4" /> Resetear ({countdown}s)
                                     </Button>
                                 ) : (
-                                    <Button onClick={handleStartSimulation} size="lg" className="bg-purple-600 text-white hover:bg-purple-700 sm:w-auto" disabled={!userInscription}>
+                                    <Button onClick={handleStartSimulation} size="lg" className="bg-purple-600 text-white hover:bg-purple-700" disabled={!userInscription}>
                                         <Dices className="mr-2 h-4 w-4" />
                                         Simular Sorteo
                                     </Button>
