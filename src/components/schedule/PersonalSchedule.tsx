@@ -229,7 +229,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
 
   const levelDisplay = displayClassLevel(level, true);
   const categoryDisplay = displayClassCategory(category, true);
-  const courtDisplay = isCourtAssigned ? `Pista ${courtNumber}` : 'Clasificando';
+  const courtDisplay = isCourtAssigned ? `Pista ${courtNumber}` : 'Pista';
 
   const CategoryIcon = category === 'chica' ? Venus : category === 'chico' ? Mars : Users2;
   const classifiedBadgeClass = 'text-blue-700 border-blue-200 bg-blue-100 hover:border-blue-300';
