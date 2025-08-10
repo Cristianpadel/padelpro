@@ -30,7 +30,7 @@ import {
   getMockShopProducts as shopProducts,
 } from './state';
 import { generateDynamicTimeSlots, generateDynamicMatches, simulateBookings } from './system';
-import { startOfDay, addDays, setHours, setMinutes, addMinutes } from 'date-fns';
+import { startOfDay, addDays, setHours, setMinutes, addMinutes, nextSunday } from 'date-fns';
 import { v4 as uuidv4 } from 'uuid';
 import { defaultPointSettings } from '../config';
 
@@ -115,6 +115,19 @@ export function performInitialization() {
      { id: 'user-3', name: 'Carlos Fernández', email: 'carlos.fernandez@email.com', hashedPassword: 'hashed_password123', level: '4.5', credit: 25.00, loyaltyPoints: 800, profilePictureUrl: 'https://randomuser.me/api/portraits/men/45.jpg', genderCategory: 'masculino', createdAt: new Date(), clubId: 'club-1', },
      { id: 'user-4', name: 'Diana Martínez', email: 'diana.martinez@email.com', hashedPassword: 'hashed_password123', level: '2.5', credit: 150.00, loyaltyPoints: 120, profilePictureUrl: 'https://randomuser.me/api/portraits/women/46.jpg', genderCategory: 'femenino', createdAt: new Date(), clubId: 'club-1', },
      { id: 'user-5', name: 'Eduardo Ruiz', email: 'eduardo.ruiz@email.com', hashedPassword: 'hashed_password123', level: '3.0', credit: 10.00, loyaltyPoints: 300, profilePictureUrl: 'https://randomuser.me/api/portraits/men/47.jpg', genderCategory: 'masculino', createdAt: new Date(), clubId: 'club-1', },
+     { id: 'user-6', name: 'Fátima Jiménez', email: 'fatima.jimenez@email.com', hashedPassword: 'hashed_password123', level: '2.0', credit: 200.00, loyaltyPoints: 50, profilePictureUrl: 'https://randomuser.me/api/portraits/women/48.jpg', genderCategory: 'femenino', createdAt: new Date(), clubId: 'club-1', },
+     { id: 'user-7', name: 'Gustavo Herrero', email: 'gustavo.herrero@email.com', hashedPassword: 'hashed_password123', level: '5.0', credit: 5.00, loyaltyPoints: 1000, profilePictureUrl: 'https://randomuser.me/api/portraits/men/49.jpg', genderCategory: 'masculino', createdAt: new Date(), clubId: 'club-1', },
+     { id: 'user-8', name: 'Helena Moreno', email: 'helena.moreno@email.com', hashedPassword: 'hashed_password123', level: '4.0', credit: 55.00, loyaltyPoints: 220, profilePictureUrl: 'https://randomuser.me/api/portraits/women/50.jpg', genderCategory: 'femenino', createdAt: new Date(), clubId: 'club-1', },
+     { id: 'user-9', name: 'Iván Navarro', email: 'ivan.navarro@email.com', hashedPassword: 'hashed_password123', level: '3.5', credit: 75.00, loyaltyPoints: 150, profilePictureUrl: 'https://randomuser.me/api/portraits/men/51.jpg', genderCategory: 'masculino', createdAt: new Date(), clubId: 'club-1', },
+     { id: 'user-10', name: 'Juana Peña', email: 'juana.pena@email.com', hashedPassword: 'hashed_password123', level: '1.5', credit: 120.00, loyaltyPoints: 75, profilePictureUrl: 'https://randomuser.me/api/portraits/women/52.jpg', genderCategory: 'femenino', createdAt: new Date(), clubId: 'club-1', },
+     { id: 'user-11', name: 'Kevin Sáez', email: 'kevin.saez@email.com', hashedPassword: 'hashed_password123', level: '4.5', credit: 30.00, loyaltyPoints: 400, profilePictureUrl: 'https://randomuser.me/api/portraits/men/53.jpg', genderCategory: 'masculino', createdAt: new Date(), clubId: 'club-1', },
+     { id: 'user-12', name: 'Laura Vidal', email: 'laura.vidal@email.com', hashedPassword: 'hashed_password123', level: '3.0', credit: 90.00, loyaltyPoints: 180, profilePictureUrl: 'https://randomuser.me/api/portraits/women/54.jpg', genderCategory: 'femenino', createdAt: new Date(), clubId: 'club-1', },
+     { id: 'user-13', name: 'Marcos Ibáñez', email: 'marcos.ibanez@email.com', hashedPassword: 'hashed_password123', level: '2.5', credit: 40.00, loyaltyPoints: 90, profilePictureUrl: 'https://randomuser.me/api/portraits/men/55.jpg', genderCategory: 'masculino', createdAt: new Date(), clubId: 'club-1', },
+     { id: 'user-14', name: 'Nerea Campos', email: 'nerea.campos@email.com', hashedPassword: 'hashed_password123', level: '4.0', credit: 60.00, loyaltyPoints: 330, profilePictureUrl: 'https://randomuser.me/api/portraits/women/56.jpg', genderCategory: 'femenino', createdAt: new Date(), clubId: 'club-1', },
+     { id: 'user-15', name: 'Óscar Romero', email: 'oscar.romero@email.com', hashedPassword: 'hashed_password123', level: '5.5', credit: 15.00, loyaltyPoints: 600, profilePictureUrl: 'https://randomuser.me/api/portraits/men/57.jpg', genderCategory: 'masculino', createdAt: new Date(), clubId: 'club-1', },
+     { id: 'user-16', name: 'Patricia Soler', email: 'patricia.soler@email.com', hashedPassword: 'hashed_password123', level: '3.5', credit: 85.00, loyaltyPoints: 250, profilePictureUrl: 'https://randomuser.me/api/portraits/women/58.jpg', genderCategory: 'femenino', createdAt: new Date(), clubId: 'club-1', },
+     { id: 'user-17', name: 'Rubén Pascual', email: 'ruben.pascual@email.com', hashedPassword: 'hashed_password123', level: '4.0', credit: 45.00, loyaltyPoints: 190, profilePictureUrl: 'https://randomuser.me/api/portraits/men/59.jpg', genderCategory: 'masculino', createdAt: new Date(), clubId: 'club-1', },
+     { id: 'user-18', name: 'Sara Fuentes', email: 'sara.fuentes@email.com', hashedPassword: 'hashed_password123', level: '2.5', credit: 110.00, loyaltyPoints: 110, profilePictureUrl: 'https://randomuser.me/api/portraits/women/60.jpg', genderCategory: 'femenino', createdAt: new Date(), clubId: 'club-1', },
   ];
   initializeMockUserDatabase(initialUserDatabase);
   
@@ -174,10 +187,49 @@ export function performInitialization() {
   initializeMockUserBookings([]);
   initializeMockUserMatchBookings([]);
 
+  // --- Initialize Match-Day Event ---
+  const nextSundayDate = nextSunday(new Date());
+  const eventStartTime = setMinutes(setHours(nextSundayDate, 10), 30);
+  const eventEndTime = setMinutes(setHours(nextSundayDate, 12), 0);
+  
+  const matchDayEventId = 'match-day-event-1';
+  const initialMatchDayEvents = [
+    {
+      id: matchDayEventId,
+      name: "Sunday Match-Day Special",
+      clubId: 'club-1',
+      eventDate: eventStartTime,
+      eventEndTime: eventEndTime,
+      courtIds: ['court-1', 'court-2', 'court-3', 'court-4'],
+      maxPlayers: 16,
+      reservePlayers: 2,
+      price: 5,
+      matchesGenerated: false,
+    },
+  ];
+  initializeMockMatchDayEvents(initialMatchDayEvents);
+  
+  // --- Initialize Match-Day Inscriptions ---
+  const inscribedUsers = initialUserDatabase.slice(0, 18);
+  const initialMatchDayInscriptions = inscribedUsers.map((user, index) => {
+      const status = index < 16 ? 'main' : 'reserve';
+      return {
+          id: `md-insc-${user.id}`,
+          eventId: matchDayEventId,
+          userId: user.id,
+          userName: user.name || 'Unknown',
+          userLevel: user.level || 'abierto',
+          userProfilePictureUrl: user.profilePictureUrl,
+          status: status,
+          inscriptionTime: addMinutes(new Date(), index),
+          amountBlocked: 5.00,
+      };
+  });
+  initializeMockMatchDayInscriptions(initialMatchDayInscriptions);
+
   // ... Initialize other states ...
   initializeMockPointTransactions([]);
-  initializeMockMatchDayEvents([]);
-  initializeMockMatchDayInscriptions([]);
+  
   
 
   // --- Simulate some initial activity to make the app look alive ---
