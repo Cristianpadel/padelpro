@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { getInitials } from '@/lib/utils';
 import { UserPlus, PlusCircle, CheckCircle, Hourglass } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 interface MatchDayPlayerGridProps {
     event: MatchDayEvent;
@@ -40,7 +41,14 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                 const isCurrentUser = inscription.userId === currentUser?.id;
                                 const isPreferredPartner = userPreferredPartnerId === inscription.userId;
                                 return (
-                                    <div key={inscription.id} className="p-3 border rounded-lg flex items-center justify-between bg-background shadow-sm">
+                                    <div 
+                                      key={inscription.id} 
+                                      className={cn(
+                                        "p-3 border rounded-lg flex items-center justify-between bg-background shadow-sm transition-all",
+                                        isCurrentUser && "bg-blue-50 border-blue-300 border-2",
+                                        isPreferredPartner && "bg-purple-50 border-purple-300 border-2"
+                                      )}
+                                    >
                                         <div className="flex items-center gap-2 overflow-hidden">
                                             <Avatar className="h-9 w-9">
                                                 <AvatarImage src={inscription.userProfilePictureUrl} data-ai-hint="player avatar"/>
@@ -56,7 +64,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                                 size="sm" 
                                                 variant={isPreferredPartner ? "default" : "secondary"}
                                                 onClick={() => onSelectPartner(inscription.userId)}
-                                                className="h-8 text-xs"
+                                                className={cn("h-8 text-xs", isPreferredPartner && "bg-purple-600 hover:bg-purple-700")}
                                             >
                                                 {isPreferredPartner ? <CheckCircle className="h-4 w-4"/> : <PlusCircle className="h-4 w-4"/>}
                                             </Button>
