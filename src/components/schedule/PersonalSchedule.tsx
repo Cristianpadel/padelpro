@@ -22,7 +22,7 @@ import { calculatePricePerPerson } from '@/lib/utils';
 import Link from 'next/link';
 import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogFooter } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogFooter, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 
@@ -152,7 +152,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
                  dialogData = { title: 'Asignación de Pista', description: 'La pista se asigna automáticamente solo cuando la clase está completa.\nRecibirás una notificación con el número de pista cuando se confirme.', icon: Hash };
                  break;
             case 'category':
-                 dialogData = { title: 'Categoría de la Clase', description: 'La categoría (chicos/chicas) la sugiere el primer jugador que se apunta.\nNo es una regla estricta, solo una guía para los demás.', icon: CategoryIcon };
+                 dialogData = { title: 'Categoría de la Clase', description: `La categoría (chicos/chicas) la sugiere el primer jugador que se apunta.\nNo es una regla estricta, solo una guía para los demás.`, icon: CategoryIcon };
                  break;
         }
         setInfoDialog({ open: true, ...dialogData });
@@ -423,7 +423,7 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
   const hasUpcomingBookings = upcomingBookings.length > 0;
   const hasPastBookings = pastBookings.length > 0;
   
-  if (upcomingBookings.length === 0 && pastBookings.length === 0) {
+  if (!hasUpcomingBookings && !hasPastBookings) {
     return (
        <InfoCard
           icon={Activity}
@@ -441,7 +441,7 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
        { (upcomingBookings.length > 0 || pastBookings.length > 0) &&
          <h3 className="text-lg font-semibold text-blue-600 flex items-center"><Activity className="mr-2 h-5 w-5" /> Mis Clases</h3>
        }
-      {upcomingBookings.length > 0 && (
+      {hasUpcomingBookings && (
         <div>
           <h4 className="text-base font-semibold mb-3 text-foreground flex items-center"><Clock className="mr-2 h-4 w-4" /> Próximas</h4>
            <ScrollArea>
@@ -465,7 +465,7 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
         </div>
       )}
       {hasUpcomingBookings && hasPastBookings && <Separator />}
-      {pastBookings.length > 0 && (
+      {hasPastBookings && (
         <div>
            <h4 className="text-base font-semibold mb-3 text-muted-foreground flex items-center"><CheckCircle className="mr-2 h-4 w-4" /> Historial</h4>
             <ScrollArea>
