@@ -75,6 +75,7 @@ export const timeSlotFilterOptions: { value: TimeOfDayFilterType, label: string 
     { value: 'evening', label: 'Tardes (18-22h)' },
 ];
 
+export type ViewPreference = 'normal' | 'myInscriptions' | 'myConfirmed' | 'withPlayers';
 
 // --- Interfaces & Rich Types ---
 

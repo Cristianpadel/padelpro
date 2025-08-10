@@ -12,7 +12,7 @@ import ClassCard from '@/components/class/ClassCard';
 import { isProposalSlot as checkIsProposalSlot } from '@/lib/mockDataSources/classProposals';
 import PageSkeleton from '@/components/layout/PageSkeleton';
 import { fetchTimeSlots, getMockCurrentUser, isSlotEffectivelyCompleted, findAvailableCourt, isSlotGratisAndAvailable, fetchMatchDayEventsForDate, getUserActivityStatusForDay } from '@/lib/mockData';
-import type { TimeSlot, User, Booking, MatchPadelLevel, SortOption, Instructor, MatchDayEvent, UserActivityStatusForDay } from '@/types';
+import type { TimeSlot, User, Booking, MatchPadelLevel, SortOption, Instructor, MatchDayEvent, UserActivityStatusForDay, ViewPreference } from '@/types';
 import { format, isSameDay, addDays, startOfDay, isAfter } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn, isUserLevelCompatibleWithActivity } from '@/lib/utils';
@@ -36,14 +36,14 @@ interface ClassDisplayProps {
   sortBy: SortOption;
   filterAlsoConfirmedClasses: boolean;
   filterByFavoriteInstructors: boolean;
-  viewPreference: 'normal' | 'myInscriptions' | 'myConfirmed';
+  viewPreference: ViewPreference;
   proposalView: 'join' | 'propose';
   refreshKey: number;
   allClasses: TimeSlot[];
   isLoading: boolean;
   dateStripIndicators: Record<string, UserActivityStatusForDay>;
   dateStripDates: Date[];
-  onViewPrefChange: (pref: 'myInscriptions' | 'myConfirmed', type: 'class' | 'match' | 'event', eventId?: string) => void;
+  onViewPrefChange: (pref: ViewPreference, type: 'class' | 'match' | 'event', eventId?: string) => void;
   showPointsBonus: boolean; // New prop for visibility
 }
 
@@ -156,6 +156,12 @@ const ClassDisplay: React.FC<ClassDisplayProps> = ({
                     
                     const { completed } = isSlotEffectivelyCompleted(cls);
                     return completed;
+                });
+            } else if (viewPreference === 'withPlayers') {
+                workingClasses = workingClasses.filter(cls => {
+                    const hasPlayers = (cls.bookedPlayers || []).length > 0;
+                    const { completed } = isSlotEffectivelyCompleted(cls);
+                    return hasPlayers && !completed;
                 });
             } else { 
                  if (!filterAlsoConfirmedClasses) {

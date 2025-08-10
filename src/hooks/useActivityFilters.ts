@@ -5,7 +5,7 @@
 import { useState, useEffect, useCallback, useTransition, useMemo } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { startOfDay, format, isSameDay, addDays, differenceInDays } from 'date-fns';
-import type { User, MatchPadelLevel, TimeOfDayFilterType, MatchDayEvent, UserActivityStatusForDay } from '@/types';
+import type { User, MatchPadelLevel, TimeOfDayFilterType, MatchDayEvent, UserActivityStatusForDay, ViewPreference } from '@/types';
 import { updateUserFavoriteInstructors, getUserActivityStatusForDay, fetchMatchDayEventsForDate } from '@/lib/mockData';
 
 export function useActivityFilters(
@@ -21,7 +21,7 @@ export function useActivityFilters(
   const timeSlotFilter = (searchParams.get('time') as TimeOfDayFilterType) || 'all';
   const selectedLevel = (searchParams.get('level') as MatchPadelLevel | 'all') || 'all';
   const filterByFavorites = searchParams.get('favorites') === 'true';
-  const viewPreference = (searchParams.get('viewPref') as 'normal' | 'myInscriptions' | 'myConfirmed') || 'normal';
+  const viewPreference = (searchParams.get('viewPref') as ViewPreference) || 'normal';
   const matchShareCode = searchParams.get('code');
   const matchIdFilter = searchParams.get('matchId');
   const filterByGratisOnly = searchParams.get('filter') === 'gratis';
@@ -129,7 +129,7 @@ export function useActivityFilters(
   };
   
  const handleViewPrefChange = (
-    pref: 'normal' | 'myInscriptions' | 'myConfirmed',
+    pref: ViewPreference,
     type?: 'class' | 'match' | 'event',
     eventId?: string
   ) => {

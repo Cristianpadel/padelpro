@@ -215,6 +215,9 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                              <Button variant={viewPreference === 'normal' ? "secondary" : "ghost"} className={cn("w-full justify-start text-sm h-10 rounded-full", viewPreference === 'normal' && "font-semibold")} onClick={() => handleViewPrefChange('normal')}>
                                 <Eye className="mr-3 h-4 w-4" /> Disponibles
                             </Button>
+                            <Button variant={viewPreference === 'withPlayers' ? "secondary" : "ghost"} className={cn("w-full justify-start text-sm h-10 rounded-full", viewPreference === 'withPlayers' && "font-semibold")} onClick={() => handleViewPrefChange('withPlayers')}>
+                                <Users className="mr-3 h-4 w-4" /> En Juego
+                            </Button>
                             <Button variant={viewPreference === 'myInscriptions' ? 'secondary' : 'ghost'} className={cn('w-full justify-start text-sm h-10 rounded-full', viewPreference === 'myInscriptions' && 'font-semibold')} onClick={() => handleViewPrefChange('myInscriptions')}>
                                 <ClipboardList className="mr-3 h-4 w-4" /> Mis Inscripciones
                             </Button>

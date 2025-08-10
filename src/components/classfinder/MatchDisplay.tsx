@@ -4,7 +4,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import type { Match, User, MatchBooking, MatchPadelLevel, PadelCategoryForSlot, SortOption, TimeOfDayFilterType, MatchDayEvent, UserActivityStatusForDay } from '@/types';
+import type { Match, User, MatchBooking, MatchPadelLevel, PadelCategoryForSlot, SortOption, TimeOfDayFilterType, MatchDayEvent, UserActivityStatusForDay, ViewPreference } from '@/types';
 import { matchPadelLevels, timeSlotFilterOptions } from '@/types';
 import MatchCard from '@/components/match/MatchCard';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -38,7 +38,7 @@ interface MatchDisplayProps {
   selectedLevel: MatchPadelLevel | 'all';
   sortBy: SortOption;
   filterAlsoConfirmedMatches: boolean;
-  viewPreference: 'normal' | 'myInscriptions' | 'myConfirmed';
+  viewPreference: ViewPreference;
   proposalView: 'join' | 'propose';
   refreshKey: number;
   allMatches: Match[];
@@ -46,7 +46,7 @@ interface MatchDisplayProps {
   matchDayEvents: MatchDayEvent[]; // Changed to array
   dateStripIndicators: Record<string, UserActivityStatusForDay>;
   dateStripDates: Date[];
-  onViewPrefChange: (pref: 'myInscriptions' | 'myConfirmed', type: 'class' | 'match' | 'event', eventId?: string) => void;
+  onViewPrefChange: (pref: ViewPreference, type: 'class' | 'match' | 'event', eventId?: string) => void;
   showPointsBonus: boolean;
 }
 
@@ -136,6 +136,14 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                 if (!isUserInMatch) return false;
                 return regularMatch.status === 'confirmed' || regularMatch.status === 'confirmed_private';
             });
+        } else if (viewPreference === 'withPlayers') {
+            workingMatches = workingMatches.filter(match => {
+                if ('isEventCard' in match) return false;
+                const regularMatch = match as Match;
+                const hasPlayers = (regularMatch.bookedPlayers || []).length > 0;
+                const isFull = (regularMatch.bookedPlayers || []).length >= 4;
+                return hasPlayers && !isFull;
+            });
         }
         
         // --- Special Filters (Gratis, Liberadas, Puntos) ---
@@ -187,20 +195,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                 }
             }
         }
-
-        if(!filterByGratisOnly && !filterByLiberadasOnly && !filterByPuntosOnly) {
-             const clubForCheck = getMockClubs().find(c => c.id === filterByClubId);
-             workingMatches = workingMatches.filter(match => {
-                if ('isEventCard' in match && match.isEventCard) return true;
-                // Keep the logic to show placeholders
-                if ((match as Match).isPlaceholder) return true;
-                // If it's not a placeholder, check if there are any players. If so, show it.
-                if ((match as Match).bookedPlayers && (match as Match).bookedPlayers.length > 0) return true;
-
-                return false;
-            });
-        }
-
+        
         workingMatches.sort((a, b) => {
             const isUserInA = !('isEventCard' in a) && (a as Match).bookedPlayers?.some(p => p.userId === currentUser.id);
             const isUserInB = !('isEventCard' in b) && (b as Match).bookedPlayers?.some(p => p.userId === currentUser.id);
