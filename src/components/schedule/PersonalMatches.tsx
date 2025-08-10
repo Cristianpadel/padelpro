@@ -32,7 +32,7 @@ import { displayClassCategory } from '@/types';
 import { InfoCard } from '@/components/schedule/InfoCard'; 
 import { useRouter } from 'next/navigation'; 
 import { Separator } from '../ui/separator';
-import { Tooltip, TooltipProvider, TooltipContent } from "@/components/ui/tooltip";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
 
@@ -339,32 +339,35 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                  <div className="flex items-center"><Trophy className="h-3.5 w-3.5 mr-1" />{levelDisplay}</div>
              </div>
            
-            <div className="grid grid-cols-4 gap-2 items-start justify-items-center mt-3">
+             <div className="flex justify-between items-center gap-2 mt-3">
                 {Array.from({ length: 4 }).map((_, idx) => {
                     const player = (bookedPlayers || [])[idx];
                     const fullPlayer = player ? (state.getMockStudents().find(s => s.id === player.userId) || (currentUser?.id === player.userId ? currentUser : null)) : null;
-                    const priceText = pricePerPlayer > 0 ? `${pricePerPlayer.toFixed(2)}€` : "Gratis";
-                    const spotLabel = player ? (player.name || 'Jugador').split(' ')[0] : priceText;
-
+                    
                     return (
-                         <TooltipProvider key={idx} delayDuration={150}>
-                             <Tooltip>
-                                 <TooltipTrigger asChild>
-                                     <div className="flex flex-col items-center group/avatar-wrapper space-y-0.5 relative">
+                        <TooltipProvider key={idx} delayDuration={150}>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <div className="flex flex-col items-center group/avatar-wrapper space-y-0.5 relative">
                                         <Avatar className="h-10 w-10">
                                             <AvatarImage src={fullPlayer?.profilePictureUrl} data-ai-hint="player avatar small"/>
                                             <AvatarFallback className="text-sm bg-muted text-muted-foreground">{player ? getInitials(player.name || 'P') : '?'}</AvatarFallback>
                                         </Avatar>
-                                         <span className="text-[11px] font-medium truncate w-auto max-w-[60px] text-center text-muted-foreground">{spotLabel}</span>
-                                     </div>
-                                 </TooltipTrigger>
-                                 <TooltipContent side="bottom" className="text-xs p-1.5">
-                                     <p>{player ? (fullPlayer?.name || 'Jugador') : 'Plaza Libre'}</p>
-                                 </TooltipContent>
-                             </Tooltip>
-                         </TooltipProvider>
+                                    </div>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom"><p>{player ? (player.name || 'Tú') : 'Plaza Libre'}</p></TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                     )
                 })}
+            </div>
+
+            <div className="text-center text-sm font-semibold text-muted-foreground mt-2">
+                {wasBookedWithPoints ? (
+                    <span className="flex items-center justify-center"><Gift className="h-4 w-4 mr-1 text-purple-600"/>{pointsCostForThisBooking} Puntos</span>
+                ) : (
+                    <span className="flex items-center justify-center"><Euro className="h-4 w-4 mr-1 text-green-600"/>{euroCostForThisBooking.toFixed(2)}€</span>
+                )}
             </div>
 
             {isUpcomingItem && availability && (
