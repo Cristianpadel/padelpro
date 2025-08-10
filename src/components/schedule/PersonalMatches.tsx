@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useTransition, useMemo } from 'react';
 import type { MatchBooking, User, Match, Club, PadelCategoryForSlot, MatchBookingMatchDetails } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { List, Clock, Users, CalendarCheck, CalendarX, Loader2, Ban, Hash, Trophy, UserCircle, Gift, Info, MessageSquare, Euro, Users2 as CategoryIcon, Venus, Mars, Share2, Unlock, Lock, Repeat, Lightbulb } from 'lucide-react'; // Added Repeat and Lightbulb
+import { List, Clock, Users, CalendarCheck, CalendarX, Loader2, Ban, Hash, Trophy, UserCircle, Gift, Info, MessageSquare, Euro, Users2 as CategoryIcon, Venus, Mars, Share2, Unlock, Lock, Repeat, Lightbulb } from 'lucide-react';
 import { format, differenceInHours } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -28,16 +28,13 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import MatchChatDialog from '@/components/chat/MatchChatDialog';
 import { displayClassCategory } from '@/types';
-import { InfoCard } from '@/components/schedule/InfoCard'; // Import InfoCard
-import { useRouter } from 'next/navigation'; // Import useRouter
+import { InfoCard } from '@/components/schedule/InfoCard'; 
+import { useRouter } from 'next/navigation'; 
 import { Separator } from '../ui/separator';
-import {
-  Tooltip,
-  TooltipProvider,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
-import * as state from '@/lib/mockDataSources/state'; // Fix: Import the state module
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import * as state from '@/lib/mockDataSources/state';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+
 
 interface PersonalMatchesProps {
   currentUser: User;
@@ -165,8 +162,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
     return (
       <div className="space-y-4">
          <Skeleton className="h-8 w-3/4" />
-         <Skeleton className="h-20 w-full" />
-         <Skeleton className="h-20 w-full" />
+         <Skeleton className="h-40 w-full" />
       </div>
     );
   }
@@ -196,7 +192,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
   const renderBookingItem = (booking: MatchBooking, isUpcomingItem: boolean) => {
       if (!booking.matchDetails) {
           return (
-            <div key={booking.id} className="flex items-start space-x-3 p-3 sm:p-4 rounded-md bg-muted/30 opacity-50">
+            <div key={booking.id} className="flex items-start space-x-3 p-3 sm:p-4 rounded-md bg-muted/30 opacity-50 w-80">
                <div className="flex-shrink-0 mt-1">
                  <CalendarX className="h-5 w-5 text-muted-foreground" />
                </div>
@@ -300,7 +296,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
       }
 
       return (
-        <div key={booking.id} className={cn("flex flex-col p-3 rounded-lg shadow-md space-y-2 border-l-4", cardBorderColor, isUpcomingItem ? 'bg-card border' : 'bg-muted/60 border border-border/50')}>
+        <div key={booking.id} className={cn("flex flex-col p-3 rounded-lg shadow-md space-y-2 border-l-4 w-80", cardBorderColor, isUpcomingItem ? 'bg-card border' : 'bg-muted/60 border border-border/50')}>
              <div className="flex items-start justify-between">
                  <div className="font-semibold text-base text-foreground capitalize flex items-center">
                      {isUpcomingItem ? <CalendarCheck className="h-4 w-4 mr-1.5 text-primary" /> : <CalendarX className="h-4 w-4 mr-1.5 text-muted-foreground" />}
@@ -396,18 +392,24 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
           {hasUpcomingBookings && (
               <div>
                 <h3 className="text-lg font-semibold mb-3 text-primary flex items-center"><Trophy className="mr-2 h-5 w-5" /> Partidas Regulares</h3>
-                  <div className="space-y-4">
-                      {upcomingBookings.map(b => renderBookingItem(b, true))}
-                  </div>
+                  <ScrollArea>
+                    <div className="flex space-x-4 pb-4">
+                        {upcomingBookings.map(b => renderBookingItem(b, true))}
+                    </div>
+                    <ScrollBar orientation="horizontal" />
+                  </ScrollArea>
               </div>
           )}
           {hasUpcomingBookings && hasPastBookings && <Separator />}
           {hasPastBookings && (
               <div>
                 <h3 className="text-lg font-semibold mb-3 text-muted-foreground flex items-center"><CalendarX className="mr-2 h-5 w-5" /> Partidas Pasadas</h3>
-                  <div className="space-y-4">
+                 <ScrollArea>
+                    <div className="flex space-x-4 pb-4">
                       {pastBookings.map(b => renderBookingItem(b, false))}
-                  </div>
+                    </div>
+                    <ScrollBar orientation="horizontal" />
+                  </ScrollArea>
               </div>
           )}
       </div>
