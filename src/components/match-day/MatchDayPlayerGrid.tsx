@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getInitials } from '@/lib/utils';
-import { UserPlus, CheckCircle, Handshake, Dices, Swords, HardHat, RefreshCw } from 'lucide-react';
+import { UserPlus, CheckCircle, Handshake, Dices, Swords, HardHat, RefreshCw, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -275,7 +275,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                     <div className="mt-6">
                         <div className="flex items-center justify-between mb-3">
                             <h4 className="font-semibold">Pistas Reservadas para el Evento</h4>
-                             <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2">
                                 {simulatedMatches.length > 0 && (
                                     <Button variant="ghost" size="sm" onClick={handleResetSimulation}>
                                         <RefreshCw className="mr-2 h-4 w-4" /> Resetear
@@ -294,7 +294,13 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                     <div key={court.id} className="p-3 border rounded-lg flex flex-col justify-between bg-secondary/20 shadow-sm min-h-[18rem]">
                                         <div>
                                             <p className="font-semibold text-sm truncate">{court.name}</p>
-                                            <Badge variant="outline" className="text-xs">Pista #{court.courtNumber}</Badge>
+                                            <div className="flex items-center gap-2">
+                                                <Badge variant="outline" className="text-xs">Pista #{court.courtNumber}</Badge>
+                                                <Badge variant="secondary" className="text-xs">
+                                                    <Clock className="mr-1 h-3 w-3" />
+                                                    {format(new Date(event.eventDate), "HH:mm'h'", { locale: es })}
+                                                </Badge>
+                                            </div>
                                         </div>
                                         <div className="flex-grow flex items-center justify-center">
                                             {match ? (
