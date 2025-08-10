@@ -1,7 +1,7 @@
 // src/components/match-day/MatchDayPlayerGrid.tsx
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { MatchDayEvent, MatchDayInscription, User, PadelCourt, Match } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -39,6 +39,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
     const [simulatedMatches, setSimulatedMatches] = useState<SimulatedTeam[][]>([]);
     const [isSimulating, setIsSimulating] = useState(false);
     const [countdown, setCountdown] = useState(30);
+    const simulationResetTimer = useRef<NodeJS.Timeout | null>(null);
 
 
     useEffect(() => {
@@ -51,6 +52,15 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
         };
         fetchCourts();
     }, [event]);
+
+    // Cleanup timer on component unmount
+    useEffect(() => {
+        return () => {
+            if (simulationResetTimer.current) {
+                clearTimeout(simulationResetTimer.current);
+            }
+        };
+    }, []);
 
     const isMainListFull = mainList.length >= event.maxPlayers;
     
@@ -162,6 +172,10 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                     clearInterval(timer);
                     handleSimulateDraw(); // Run the actual draw logic
                     setIsSimulating(false);
+                    // Set a timer to reset the simulation after 30 seconds
+                    simulationResetTimer.current = setTimeout(() => {
+                        handleResetSimulation();
+                    }, 30000);
                     return 0;
                 }
                 return prev - 1;
@@ -171,6 +185,10 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
 
 
     const handleResetSimulation = () => {
+        if (simulationResetTimer.current) {
+            clearTimeout(simulationResetTimer.current);
+            simulationResetTimer.current = null;
+        }
         setSimulatedMatches([]);
     }
 
@@ -327,7 +345,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                         <div>
                                             <div className="flex justify-between items-center">
                                                 <p className="font-semibold text-sm truncate">{court.name}</p>
-                                                <Badge variant="outline" className="text-xs">
+                                                 <Badge variant="outline" className="text-xs">
                                                     <Clock className="mr-1 h-3 w-3" />
                                                     {format(new Date(event.eventDate), "HH:mm'h'", { locale: es })}
                                                 </Badge>
