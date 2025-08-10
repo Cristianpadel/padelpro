@@ -253,30 +253,29 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                 const isPreferredPartner = userPreferredPartnerId === inscription.userId;
                                 
                                 return (
-                                    <div
-                                        key={inscription.id}
-                                        className="p-3 border rounded-lg flex flex-col items-center justify-start text-center bg-background shadow-md h-40"
-                                    >
-                                        <div className="flex flex-col items-center gap-1 overflow-hidden flex-grow">
-                                             <div className="relative">
-                                                 <Avatar className={cn(
-                                                    "h-16 w-16 p-0 overflow-hidden shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.4)]",
-                                                    isCurrentUser ? "border-[3px] border-primary shadow-lg" : "border-gray-300"
-                                                )}>
-                                                    <AvatarImage src={inscription.userProfilePictureUrl} data-ai-hint="player avatar"/>
-                                                    <AvatarFallback className="text-xl">{getInitials(inscription.userName)}</AvatarFallback>
-                                                </Avatar>
-                                             </div>
-                                            <div className="space-y-1 mt-1">
-                                                <p className="font-medium text-sm truncate">{inscription.userName}</p>
-                                                <Badge variant="outline" className="text-xs">N: {inscription.userLevel}</Badge>
+                                    <div key={inscription.id} className="flex flex-col text-center space-y-1.5">
+                                        <div className="p-3 border rounded-lg flex flex-col items-center justify-start bg-background shadow-md h-40">
+                                            <div className="flex flex-col items-center gap-1 overflow-hidden flex-grow">
+                                                <div className="relative">
+                                                    <Avatar className={cn(
+                                                        "h-16 w-16 p-0 overflow-hidden shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.4)]",
+                                                        isCurrentUser ? "border-[3px] border-primary shadow-lg" : "border-gray-300"
+                                                    )}>
+                                                        <AvatarImage src={inscription.userProfilePictureUrl} data-ai-hint="player avatar"/>
+                                                        <AvatarFallback className="text-xl">{getInitials(inscription.userName)}</AvatarFallback>
+                                                    </Avatar>
+                                                </div>
+                                                <div className="space-y-1 mt-1">
+                                                    <p className="font-medium text-sm truncate">{inscription.userName}</p>
+                                                    <Badge variant="outline" className="text-xs">N: {inscription.userLevel}</Badge>
+                                                </div>
                                             </div>
                                         </div>
                                          {!isCurrentUser && userInscription && (
                                             <Button
                                                 variant={isPreferredPartner ? "default" : "secondary"}
                                                 size="sm"
-                                                className="w-full mt-auto h-7 text-xs"
+                                                className="w-full h-7 text-xs"
                                                 onClick={() => onSelectPartner(inscription.userId)}
                                             >
                                                 {isPreferredPartner ? <CheckCircle className="mr-1.5 h-3.5 w-3.5" /> : <Handshake className="mr-1.5 h-3.5 w-3.5" />}
