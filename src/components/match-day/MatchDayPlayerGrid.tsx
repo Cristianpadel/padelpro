@@ -126,10 +126,6 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                         <div className="flex-grow pt-1">
                             <CardTitle>Jugadores Inscritos</CardTitle>
                             <CardDescription>Aquí puedes ver quién se ha apuntado y elegir tu pareja preferida para el sorteo.</CardDescription>
-                             <Button onClick={handleSimulateDraw} size="lg" className="mt-2 w-full bg-purple-600 text-white hover:bg-purple-700" disabled={!userInscription}>
-                                <Dices className="mr-2 h-4 w-4" />
-                                Simular Sorteo
-                            </Button>
                         </div>
                     </div>
                 </div>
@@ -236,7 +232,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                         </div>
                     </div>
                 )}
-
+                 
                  {!event.matchesGenerated && eventCourts.length > 0 && (
                     <div className="mt-6">
                         <div className="flex items-center justify-between mb-3">
@@ -246,6 +242,12 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                     <RefreshCw className="mr-2 h-4 w-4" /> Resetear
                                 </Button>
                             )}
+                        </div>
+                         <div className="mb-4">
+                            <Button onClick={handleSimulateDraw} size="lg" className="w-full bg-purple-600 text-white hover:bg-purple-700 sm:w-auto" disabled={!userInscription}>
+                                <Dices className="mr-2 h-4 w-4" />
+                                Simular Sorteo
+                            </Button>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             {eventCourts.map((court, index) => {
@@ -261,7 +263,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                                 <div className="grid grid-cols-2 gap-2 mt-2">
                                                     {simulatedMatch.bookedPlayers.map(player => (
                                                         <div key={player.userId} className="flex flex-col items-center text-center">
-                                                             <Avatar className="h-8 w-8">
+                                                             <Avatar className="h-10 w-10">
                                                                 <AvatarImage src={(player as any).profilePictureUrl} data-ai-hint="player avatar small" />
                                                                 <AvatarFallback>{getInitials(player.name || '')}</AvatarFallback>
                                                             </Avatar>
