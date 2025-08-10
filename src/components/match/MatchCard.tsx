@@ -243,12 +243,16 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
                         <div className="flex items-center gap-1.5">
                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground"><Share2 className="h-4 w-4"/></Button>
                              {canBookPrivate && (
-                                <Button className="bg-purple-600 text-white rounded-l-full rounded-r-md h-9 px-0 flex items-center gap-1 shadow-md hover:bg-purple-700" onClick={() => setIsConfirmPrivateDialogOpen(true)}>
-                                    <div className="flex items-center justify-center h-full w-9 rounded-full bg-white/20"><Plus className="h-5 w-5"/></div>
-                                    <div className="flex flex-col items-start leading-none -space-y-1 pr-3">
-                                         <span className="text-[10px]">Reservar</span>
-                                         <span className="font-bold">Privada</span>
-                                    </div>
+                                <Button
+                                  size="sm"
+                                  className="bg-purple-600 text-white rounded-lg h-auto py-1 px-3 flex flex-col items-center leading-none shadow-md hover:bg-purple-700"
+                                  onClick={() => setIsConfirmPrivateDialogOpen(true)}
+                                >
+                                  <div className="flex items-center gap-1.5">
+                                    <Plus className="h-4 w-4" />
+                                    <span className="font-bold">Reservar</span>
+                                  </div>
+                                  <span className="text-xs font-normal">Privada</span>
                                 </Button>
                              )}
                         </div>
@@ -257,15 +261,15 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
                 <CardContent className="px-3 pb-3 flex-grow">
                      <div className="flex justify-around items-center gap-1.5 my-2">
                          <InfoButton 
-                             text="Cat"
+                             text={`Cat: ${displayClassCategory(matchCategoryToDisplay)}`}
                              onClick={() => handleInfoClick('category')}
                          />
                          <InfoButton 
-                             text="Pista"
+                             text={`Pista: ${currentMatch.courtNumber || '?'}`}
                              onClick={() => handleInfoClick('court')}
                          />
                          <InfoButton 
-                             text="Nivel"
+                             text={`Nivel: ${matchLevelToDisplay}`}
                              onClick={() => handleInfoClick('level')}
                          />
                      </div>
