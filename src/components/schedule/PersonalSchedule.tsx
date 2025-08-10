@@ -61,7 +61,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
   const isConfirmed = status === 'confirmed' || status === 'confirmed_private';
 
   return (
-    <div className={cn("p-3 border rounded-md transition-colors", isUpcoming && isConfirmed && "bg-green-50 border-green-200", isUpcoming && !isConfirmed && "bg-blue-50 border-blue-200", !isUpcoming && "bg-gray-50 border-gray-200")}>
+    <div className={cn("p-3 border rounded-md transition-colors w-full max-w-md mx-auto", isUpcoming && isConfirmed && "bg-green-50 border-green-200", isUpcoming && !isConfirmed && "bg-blue-50 border-blue-200", !isUpcoming && "bg-gray-50 border-gray-200")}>
        <div className="flex justify-between items-start">
             <div>
                 <p className="font-semibold text-sm">{format(new Date(startTime), "eeee, d 'de' MMMM", { locale: es })}</p>
