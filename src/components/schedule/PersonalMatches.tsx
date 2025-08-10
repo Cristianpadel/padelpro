@@ -9,6 +9,7 @@ import { format, differenceInHours } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
 import { fetchUserMatchBookings, cancelMatchBooking, getMockClubs, makeMatchPublic, cancelPrivateMatchAndReofferWithPoints, getMockMatches, renewRecurringMatch, getCourtAvailabilityForInterval } from '@/lib/mockData';
+import * as state from '@/lib/mockDataSources/state';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -32,7 +33,6 @@ import { InfoCard } from '@/components/schedule/InfoCard';
 import { useRouter } from 'next/navigation'; 
 import { Separator } from '../ui/separator';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import * as state from '@/lib/mockDataSources/state';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
 
@@ -230,6 +230,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
       const clubDetails = getMockClubs().find(c => c.id === clubId);
       const isOrganizerOfPrivateMatch = status === 'confirmed_private' && organizerId === currentUser.id;
       const availability = availabilityData[booking.activityId];
+      const pricePerPlayer = calculatePricePerPerson(totalCourtFee || 0, 4);
 
 
       let cancellationButtonText = "Cancelar Inscripción";
@@ -334,39 +335,31 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
 
              <div className="flex items-center justify-between text-xs text-muted-foreground border-t border-b border-border/30 py-1">
                  <div className="flex items-center"><Clock className="h-3.5 w-3.5 mr-1" />{`${format(new Date(startTime), 'HH:mm')}h`}</div>
-                 <div className="flex items-center"><Hash className="h-3.5 w-3.5 mr-1" />Pista {courtNumber}</div>
+                 <div className="flex items-center"><Hash className="h-3.5 w-3.5 mr-1" />Pista {courtNumber || '?'}</div>
                  <div className="flex items-center"><Trophy className="h-3.5 w-3.5 mr-1" />{levelDisplay}</div>
              </div>
            
-             <div className="flex items-center justify-between">
-                <div className="flex items-center -space-x-2">
-                    {Array.from({ length: 4 }).map((_, idx) => {
-                        const player = (bookedPlayers || [])[idx];
-                        const fullPlayer = player ? (state.getMockStudents().find(s => s.id === player.userId) || (currentUser?.id === player.userId ? currentUser : null)) : null;
+             <div className="space-y-1">
+                {Array.from({ length: 4 }).map((_, idx) => {
+                     const player = (bookedPlayers || [])[idx];
+                     const fullPlayer = player ? (state.getMockStudents().find(s => s.id === player.userId) || (currentUser?.id === player.userId ? currentUser : null)) : null;
 
-                        return (
-                            <TooltipProvider key={idx} delayDuration={150}>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Avatar className="h-8 w-8 border-2 border-background">
-                                            <AvatarImage src={fullPlayer?.profilePictureUrl} data-ai-hint="player avatar"/>
-                                            <AvatarFallback className="text-xs">{player ? getInitials(player.name || 'U') : '?'}</AvatarFallback>
-                                        </Avatar>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="bottom"><p>{player ? (player.name || 'Tú') : 'Plaza Libre'}</p></TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        )
-                    })}
-                </div>
-                 <div className={cn("font-semibold flex items-center", wasBookedWithPoints ? "text-purple-600" : "text-green-600")}>
-                     {wasBookedWithPoints ? (
-                         <> <Gift className="h-4 w-4 mr-1.5" /> {pointsCostForThisBooking} Pts </>
-                     ) : (
-                         <> <Euro className="h-4 w-4 mr-1.5" /> {euroCostForThisBooking.toFixed(2)}€ </>
-                     )}
-                 </div>
-            </div>
+                     return (
+                        <div key={idx} className="flex items-center justify-between text-sm p-1 bg-secondary/30 rounded-md">
+                           <div className="flex items-center gap-2">
+                             <Avatar className="h-8 w-8">
+                                <AvatarImage src={fullPlayer?.profilePictureUrl} data-ai-hint="player avatar small"/>
+                                <AvatarFallback className="text-xs">{player ? getInitials(player.name || 'U') : '?'}</AvatarFallback>
+                             </Avatar>
+                             <span className="font-medium">{player ? (fullPlayer?.name || 'Jugador') : 'Plaza Libre'}</span>
+                           </div>
+                           <div className="text-xs font-semibold text-muted-foreground">
+                                {pricePerPlayer > 0 ? `${pricePerPlayer.toFixed(2)}€` : 'Gratis'}
+                           </div>
+                        </div>
+                     )
+                 })}
+             </div>
             {isUpcomingItem && availability && (
                 <div className="pt-2 border-t mt-2">
                     <CourtAvailabilityIndicator
