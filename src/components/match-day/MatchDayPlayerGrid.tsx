@@ -94,7 +94,12 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                     level: 'abierto',
                     category: 'abierta',
                     status: 'confirmed',
-                    bookedPlayers: matchPlayers.map(p => ({userId: p.userId, name: p.userName})),
+                    bookedPlayers: matchPlayers.map(p => ({
+                        userId: p.userId, 
+                        name: p.userName,
+                        // Add profile picture URL to the player object for rendering
+                        profilePictureUrl: p.userProfilePictureUrl 
+                    })),
                 });
                 courtIndex++;
             }
@@ -256,7 +261,8 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                                 <div className="grid grid-cols-2 gap-2 mt-2">
                                                     {simulatedMatch.bookedPlayers.map(player => (
                                                         <div key={player.userId} className="flex flex-col items-center text-center">
-                                                            <Avatar className="h-8 w-8">
+                                                             <Avatar className="h-8 w-8">
+                                                                <AvatarImage src={(player as any).profilePictureUrl} data-ai-hint="player avatar small" />
                                                                 <AvatarFallback>{getInitials(player.name || '')}</AvatarFallback>
                                                             </Avatar>
                                                             <p className="text-[10px] mt-1 truncate max-w-[50px]">{player.name}</p>
