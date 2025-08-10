@@ -113,7 +113,12 @@ export default function MatchDayPage() {
              if ('error' in result) {
                  toast({ title: 'Error', description: result.error, variant: 'destructive' });
              } else {
-                toast({ title: 'Preferencia Guardada', description: 'Has seleccionado a tu compañero preferido.', className: 'bg-primary text-primary-foreground' });
+                toast({ 
+                    title: 'Preferencia Guardada', 
+                    description: 'Tu elección será una preferencia en el sorteo. Si tu compañero también te elige, ¡seréis pareja asegurada!',
+                    className: 'bg-primary text-primary-foreground',
+                    duration: 6000
+                });
                 loadEventData();
              }
         });
@@ -170,6 +175,7 @@ export default function MatchDayPage() {
                         currentUser={currentUser}
                         onSelectPartner={handleSelectPartner}
                         onSignUp={handleSignUp}
+                        isSubmitting={isSubmitting}
                    />
                    
                    <MatchDayDrawResults matches={matches} />
