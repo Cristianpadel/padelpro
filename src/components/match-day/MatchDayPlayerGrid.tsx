@@ -39,6 +39,8 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
     const [simulatedMatches, setSimulatedMatches] = useState<SimulatedTeam[][]>([]);
     const [isSimulating, setIsSimulating] = useState(false);
     const simulationResetTimer = useRef<NodeJS.Timeout | null>(null);
+    const [countdown, setCountdown] = useState(30);
+    const countdownTimerRef = useRef<NodeJS.Timeout | null>(null);
 
 
     useEffect(() => {
@@ -57,6 +59,9 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
         return () => {
             if (simulationResetTimer.current) {
                 clearTimeout(simulationResetTimer.current);
+            }
+             if (countdownTimerRef.current) {
+                clearInterval(countdownTimerRef.current);
             }
         };
     }, []);
@@ -161,9 +166,19 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
         }
 
         setIsSimulating(true);
-        handleSimulateDraw(); // Run the actual draw logic immediately
+        handleSimulateDraw();
+        setCountdown(30);
+
+        countdownTimerRef.current = setInterval(() => {
+            setCountdown(prev => {
+                if (prev <= 1) {
+                    if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
         
-        // Set a timer to reset the simulation after 30 seconds
         simulationResetTimer.current = setTimeout(() => {
             handleResetSimulation();
         }, 30000);
@@ -174,6 +189,10 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
         if (simulationResetTimer.current) {
             clearTimeout(simulationResetTimer.current);
             simulationResetTimer.current = null;
+        }
+        if (countdownTimerRef.current) {
+            clearInterval(countdownTimerRef.current);
+            countdownTimerRef.current = null;
         }
         setSimulatedMatches([]);
         setIsSimulating(false);
@@ -303,10 +322,10 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                     <div className="mt-6">
                         <div className="flex items-center justify-between mb-3">
                             <h4 className="font-semibold">Pistas Reservadas para el Evento</h4>
-                            <div className="flex items-center gap-2">
+                             <div className="flex items-center gap-2">
                                 {isSimulating ? (
                                     <Button variant="ghost" size="sm" onClick={handleResetSimulation}>
-                                        <RefreshCw className="mr-2 h-4 w-4" /> Resetear
+                                        <RefreshCw className="mr-2 h-4 w-4" /> Resetear ({countdown}s)
                                     </Button>
                                 ) : (
                                     <Button onClick={handleStartSimulation} size="lg" className="bg-purple-600 text-white hover:bg-purple-700" disabled={!userInscription}>
