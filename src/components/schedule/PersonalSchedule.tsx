@@ -22,7 +22,7 @@ import { calculatePricePerPerson } from '@/lib/utils';
 import Link from 'next/link';
 import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogDescription } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogFooter } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger, AlertDialogFooter as AlertDialogFooterComponent } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
@@ -227,7 +227,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ bookingsForSlot, isUp
 
   const levelDisplay = displayClassLevel(level, true);
   const categoryDisplay = displayClassCategory(category, true);
-  const courtDisplay = isCourtAssigned ? `Pista ${courtNumber}` : 'Clasificando';
+  const courtDisplay = isCourtAssigned ? `Pista ${courtNumber}` : 'Pista';
 
   const CategoryIcon = category === 'chica' ? Venus : category === 'chico' ? Mars : Users2;
   const classifiedBadgeClass = 'text-blue-700 border-blue-200 bg-blue-100 hover:border-blue-300';
@@ -345,10 +345,10 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ bookingsForSlot, isUp
                                 <AlertDialogTitle>Hacer Clase Privada</AlertDialogTitle>
                                 <AlertDialogDescription>Pagarás las plazas restantes para completar la clase y asegurarla. Se te cobrará el coste correspondiente.</AlertDialogDescription>
                             </AlertDialogHeader>
-                            <AlertDialogFooter>
+                            <AlertDialogFooterComponent>
                                 <AlertDialogCancel disabled={isMakingPrivate}>Cancelar</AlertDialogCancel>
                                 <AlertDialogAction onClick={handleMakePrivate} disabled={isMakingPrivate} className="bg-purple-600 text-white hover:bg-purple-700">{isMakingPrivate ? <Loader2 className="animate-spin h-4 w-4"/> : "Sí, Hacer Privada"}</AlertDialogAction>
-                            </AlertDialogFooter>
+                            </AlertDialogFooterComponent>
                            </AlertDialogContent>
                         </AlertDialog>
                     )}
@@ -360,7 +360,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ bookingsForSlot, isUp
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader><AlertDialogTitle>Confirmar Cancelación</AlertDialogTitle><AlertDialogDescription>¿Estás seguro que quieres cancelar tu inscripción? Se te podría aplicar una penalización.</AlertDialogDescription></AlertDialogHeader>
-                        <AlertDialogFooter><AlertDialogCancel>Volver</AlertDialogCancel><AlertDialogAction onClick={() => handleCancel(primaryBooking.id)} className="bg-destructive hover:bg-destructive/90">Sí, Cancelar</AlertDialogAction></AlertDialogFooter>
+                        <AlertDialogFooterComponent><AlertDialogCancel>Volver</AlertDialogCancel><AlertDialogAction onClick={() => handleCancel(primaryBooking.id)} className="bg-destructive hover:bg-destructive/90">Sí, Cancelar</AlertDialogAction></AlertDialogFooterComponent>
                       </AlertDialogContent>
                     </AlertDialog>
                 </>
@@ -490,7 +490,7 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
     return (
       <div className="space-y-4">
          <Skeleton className="h-8 w-3/4" />
-         <div className="flex space-x-2">
+         <div className="flex space-x-1">
             <Skeleton className="h-96 w-80" />
             <Skeleton className="h-96 w-80" />
          </div>
@@ -545,7 +545,7 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
         <div>
           <h4 className="text-base font-semibold mb-3 text-foreground flex items-center"><Clock className="mr-2 h-4 w-4" /> Próximas</h4>
            <ScrollArea>
-              <div className="flex space-x-2 pb-4">
+              <div className="flex space-x-1 pb-4">
                 {upcomingBookings.map(group => renderBookingGroup(group, true))}
               </div>
               <ScrollBar orientation="horizontal" />
@@ -557,7 +557,7 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
         <div>
            <h4 className="text-base font-semibold mb-3 text-muted-foreground flex items-center"><CheckCircle className="mr-2 h-4 w-4" /> Historial</h4>
             <ScrollArea>
-              <div className="flex space-x-2 pb-4">
+              <div className="flex space-x-1 pb-4">
                 {pastBookings.map(group => renderBookingGroup(group, false))}
               </div>
               <ScrollBar orientation="horizontal" />
