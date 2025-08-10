@@ -15,8 +15,10 @@ import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 import { getMockPadelCourts } from '@/lib/mockData';
 
+type SimulatedPlayer = MatchDayInscription | { id: string; userName: string; userLevel: string; userProfilePictureUrl?: string; isEmptySlot?: boolean };
+
 type SimulatedTeam = {
-  players: (MatchDayInscription | { id: string; userName: string; userLevel: string; userProfilePictureUrl?: string, isEmptySlot?: boolean })[];
+  players: SimulatedPlayer[];
   teamLevel: number;
 };
 
@@ -61,7 +63,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
         }
 
         const emptySlotsCount = event.maxPlayers - mainList.length;
-        const emptySlots: MatchDayInscription[] = Array.from({ length: emptySlotsCount }, (_, i) => ({
+        const emptySlots: SimulatedPlayer[] = Array.from({ length: emptySlotsCount }, (_, i) => ({
             id: `empty-slot-${i}`,
             eventId: event.id,
             userId: `empty-${i}`,
@@ -69,22 +71,24 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
             userLevel: '0.0', // Assign lowest level
             status: 'main', 
             inscriptionTime: new Date(),
+            isEmptySlot: true,
+            userProfilePictureUrl: '/avatar-placeholder.png'
         }));
         
-        let playersToProcess = [...mainList, ...emptySlots];
+        let playersToProcess: SimulatedPlayer[] = [...mainList, ...emptySlots];
         let mutualPairs: SimulatedTeam[] = [];
-        let singles: (MatchDayInscription | { id: string; userName: string; userLevel: string; userProfilePictureUrl?: string, isEmptySlot?: boolean })[] = [];
+        let singles: SimulatedPlayer[] = [];
 
         const processedUserIds = new Set<string>();
 
         // 1. Find mutual pairs first
         for (const playerA of playersToProcess) {
-            if (processedUserIds.has(playerA.userId) || playerA.userName === 'Plaza Libre') continue;
+            if (processedUserIds.has(playerA.userId) || 'isEmptySlot' in playerA) continue;
             
-            const partnerId = playerA.preferredPartnerId;
+            const partnerId = (playerA as MatchDayInscription).preferredPartnerId;
             if (!partnerId) continue;
             
-            const playerB = playersToProcess.find(p => p.userId === partnerId);
+            const playerB = playersToProcess.find(p => p.userId === partnerId) as MatchDayInscription | undefined;
 
             if (playerB && playerB.preferredPartnerId === playerA.userId) {
                 const levelA = parseFloat(playerA.userLevel);
@@ -118,10 +122,10 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                 const teamLevel = Math.min(isNaN(levelA) ? 99 : levelA, isNaN(levelB) ? 99 : levelB);
                 singlePairs.push({ players: [playerA, playerB], teamLevel });
             } else {
-                // Odd one out - create a pair with an empty slot
+                // Odd one out - create a pair with a placeholder empty slot
                 const playerA = singles[i];
                  const levelA = parseFloat(playerA.userLevel);
-                 singlePairs.push({ players: [playerA, {id: 'empty-single', userName: 'Plaza Libre', userLevel: '0.0', isEmptySlot: true}], teamLevel: isNaN(levelA) ? 0 : levelA });
+                 singlePairs.push({ players: [playerA, {id: 'empty-single', userName: 'Plaza Libre', userLevel: '0.0', isEmptySlot: true, userProfilePictureUrl: '/avatar-placeholder.png', userId:'empty-single-user'}], teamLevel: isNaN(levelA) ? 0 : levelA });
             }
         }
 
@@ -135,7 +139,6 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
             if (allPairs[i+1]) {
                 finalMatches.push([allPairs[i], allPairs[i+1]]);
             } else {
-                // Handle the case of an odd number of pairs if necessary
                 finalMatches.push([allPairs[i]]);
             }
         }
@@ -285,26 +288,38 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                             </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {eventCourts.map((court, index) => {
+                           {eventCourts.map((court, index) => {
                                 const match = simulatedMatches[index];
                                 return (
-                                    <div key={court.id} className="p-3 border rounded-lg flex flex-col justify-between bg-secondary/20 shadow-sm min-h-40">
+                                    <div key={court.id} className="p-3 border rounded-lg flex flex-col justify-between bg-secondary/20 shadow-sm min-h-[18rem]">
                                         <div>
                                             <p className="font-semibold text-sm truncate">{court.name}</p>
                                             <Badge variant="outline" className="text-xs">Pista #{court.courtNumber}</Badge>
                                         </div>
                                         <div className="flex-grow flex items-center justify-center">
                                             {match ? (
-                                                <div className="w-full max-w-[150px] aspect-[2/3] bg-green-500 rounded-md p-2 flex flex-col justify-between items-center relative shadow-lg border-2 border-white/50">
+                                                <div className="w-full max-w-[200px] aspect-[10/14] bg-green-500 rounded-md p-2 flex flex-col justify-between items-center relative shadow-lg border-2 border-white/50">
                                                     {/* Top side players */}
                                                     <div className="w-full flex justify-around">
-                                                       {match[0].players.map(p => <Avatar key={p.id} className="h-8 w-8 border-2 border-white"><AvatarImage src={p.userProfilePictureUrl} data-ai-hint="player avatar"/><AvatarFallback>{getInitials(p.userName || '')}</AvatarFallback></Avatar>)}
+                                                        {match[0].players.map(p => (
+                                                            <div key={p.id} className="flex flex-col items-center text-center">
+                                                                <Avatar className="h-12 w-12 border-2 border-white"><AvatarImage src={p.userProfilePictureUrl} data-ai-hint="player avatar"/><AvatarFallback>{getInitials(p.userName || '')}</AvatarFallback></Avatar>
+                                                                <p className="text-[10px] text-white font-semibold mt-0.5 truncate w-14">{p.userName}</p>
+                                                                <p className="text-[9px] text-white/80">N: {p.userLevel}</p>
+                                                            </div>
+                                                        ))}
                                                     </div>
                                                     {/* Net */}
                                                     <div className="h-0.5 w-full bg-white/50 my-1"></div>
                                                     {/* Bottom side players */}
                                                     <div className="w-full flex justify-around">
-                                                         {match[1].players.map(p => <Avatar key={p.id} className="h-8 w-8 border-2 border-white"><AvatarImage src={p.userProfilePictureUrl} data-ai-hint="player avatar"/><AvatarFallback>{getInitials(p.userName || '')}</AvatarFallback></Avatar>)}
+                                                         {match[1].players.map(p => (
+                                                            <div key={p.id} className="flex flex-col items-center text-center">
+                                                                <Avatar className="h-12 w-12 border-2 border-white"><AvatarImage src={p.userProfilePictureUrl} data-ai-hint="player avatar"/><AvatarFallback>{getInitials(p.userName || '')}</AvatarFallback></Avatar>
+                                                                <p className="text-[10px] text-white font-semibold mt-0.5 truncate w-14">{p.userName}</p>
+                                                                <p className="text-[9px] text-white/80">N: {p.userLevel}</p>
+                                                            </div>
+                                                        ))}
                                                     </div>
                                                 </div>
                                             ) : (
