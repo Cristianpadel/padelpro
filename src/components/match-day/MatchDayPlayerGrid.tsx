@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getInitials } from '@/lib/utils';
-import { UserPlus, CheckCircle, Handshake, Dices, Swords, HardHat, RefreshCw, Clock, Loader2, Euro, Info } from 'lucide-react';
+import { UserPlus, CheckCircle, Handshake, Dices, Swords, HardHat, RefreshCw, Clock, Loader2, Euro, Info, PartyPopper, Rocket, PiggyBank, Star, ThumbsUp, Lock, Scissors } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -180,7 +180,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
 
         setIsSimulating(true);
         handleSimulateDraw();
-        
+
         simulationResetTimer.current = setTimeout(() => {
             handleResetSimulation();
         }, 30000);
@@ -210,6 +210,8 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
         setSimulatedMatches([]);
         setIsSimulating(false);
     }
+    
+    const availableCredit = (currentUser?.credit ?? 0) - (currentUser?.blockedCredit ?? 0);
 
     return (
         <>
@@ -298,18 +300,43 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                             <p className="text-sm font-semibold mt-2 flex items-center">{event.price?.toFixed(2)}€</p>
                                         </button>
                                     </AlertDialogTrigger>
-                                    <AlertDialogContent>
+                                     <AlertDialogContent>
                                         <AlertDialogHeader>
-                                        <AlertDialogTitle>¡Hola! ¿Quieres Jugar?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            Vamos a jugar una partida muy chula. Cuesta unas poquitas monedas. Si dices que sí, ¡es para siempre y no puedes borrarte! ¿Te apuntas?
-                                        </AlertDialogDescription>
+                                            <AlertDialogTitle className="text-2xl font-bold flex items-center justify-center">
+                                                <Rocket className="h-8 w-8 mr-3 text-blue-500" /> ¡Casi dentro!
+                                            </AlertDialogTitle>
                                         </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                        <AlertDialogCancel disabled={isSubmitting}>Mejor no</AlertDialogCancel>
-                                        <AlertDialogAction onClick={onSignUp} disabled={isSubmitting} className="bg-primary hover:bg-primary/90">
-                                            {isSubmitting ? <Loader2 className="animate-spin" /> : "¡Sí, a jugar!"}
-                                        </AlertDialogAction>
+                                        <AlertDialogDescription asChild>
+                                            <div className="text-center text-lg text-foreground space-y-4 py-4">
+                                                <div className="space-y-1">
+                                                    <div>Te apuntas al evento: <br/><span className="font-semibold">{event.name}</span></div>
+                                                    <div className="flex items-center justify-center text-3xl font-bold">
+                                                        <Euro className="h-7 w-7 mr-1" /> {event.price?.toFixed(2)}
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center justify-center gap-2 p-2 bg-slate-100 rounded-md">
+                                                    <PiggyBank className="h-6 w-6 text-slate-500" />
+                                                    <span className="text-sm">Tu hucha tiene:</span>
+                                                    <span className="font-bold text-slate-800">{availableCredit.toFixed(2)}€</span>
+                                                    <span className="text-slate-400">/</span>
+                                                    <Star className="h-5 w-5 text-amber-500"/>
+                                                    <span className="font-bold text-slate-800">{currentUser?.loyaltyPoints ?? 0}</span>
+                                                </div>
+                                            </div>
+                                        </AlertDialogDescription>
+                                        <div className="text-sm bg-blue-50 text-blue-800 p-3 rounded-lg space-y-2">
+                                            <p className="font-bold text-center">¡Recuerda las reglas del juego!</p>
+                                            <ul className="space-y-1.5">
+                                                <li className="flex items-start"><ThumbsUp className="h-4 w-4 mr-2 mt-0.5 text-blue-500 flex-shrink-0" /><span>Una vez realizado el sorteo, la plaza es definitiva.</span></li>
+                                                <li className="flex items-start"><Lock className="h-4 w-4 mr-2 mt-0.5 text-blue-500 flex-shrink-0" /><span>Tu saldo será bloqueado hasta que se juegue el evento.</span></li>
+                                                <li className="flex items-start"><Scissors className="h-4 w-4 mr-2 mt-0.5 text-blue-500 flex-shrink-0" /><span>**Si este evento se confirma**, tus otras inscripciones del día se anularán solas.</span></li>
+                                            </ul>
+                                        </div>
+                                        <AlertDialogFooter className="grid grid-cols-2 gap-2 mt-4">
+                                            <AlertDialogCancel className="h-12 text-base" disabled={isSubmitting}>Cancelar</AlertDialogCancel>
+                                            <AlertDialogAction onClick={onSignUp} disabled={isSubmitting} className="h-12 text-base bg-green-600 text-white hover:bg-green-700">
+                                                {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : "Sí, ¡Me apunto!"}
+                                            </AlertDialogAction>
                                         </AlertDialogFooter>
                                     </AlertDialogContent>
                                 </AlertDialog>
@@ -400,7 +427,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                         <RefreshCw className="mr-2 h-4 w-4" /> Resetear ({countdown})
                                     </Button>
                                 ) : (
-                                    <Button onClick={handleStartSimulation} size="lg" className="bg-purple-600 text-white hover:bg-purple-700 sm:w-auto w-full" disabled={!userInscription}>
+                                    <Button onClick={handleStartSimulation} size="lg" className="bg-purple-600 text-white hover:bg-purple-700" disabled={!userInscription}>
                                         <Dices className="mr-2 h-4 w-4" />
                                         Simular Sorteo
                                     </Button>
