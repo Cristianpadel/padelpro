@@ -5,7 +5,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { Booking, User, Review, TimeSlot, PadelCategoryForSlot, Instructor } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { List, Star, Activity, CheckCircle, CalendarX, Ban, UserCircle as UserIcon, Clock, Hash, Euro, Gift, Lightbulb } from 'lucide-react';
+import { List, Star, Activity, CheckCircle, CalendarX, Ban, UserCircle as UserIcon, Clock, Hash, Euro, Gift } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { isPast, format, differenceInHours } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -77,15 +77,14 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
     <div className={cn("p-3 border rounded-lg shadow-md transition-colors w-80 flex flex-col max-w-md mx-auto", isUpcoming && isConfirmed && "bg-green-50 border-green-200", isUpcoming && !isConfirmed && "bg-blue-50 border-blue-200", !isUpcoming && "bg-gray-50 border-gray-200")}>
        <div className="flex justify-between items-start">
              <div className="flex items-center space-x-3">
-               <Link href={`/instructors/${slotDetails.instructorId}`} passHref className="group">
-                 <Avatar className="h-10 w-10">
-                    <AvatarImage src={instructor?.profilePictureUrl} alt={instructorName} data-ai-hint="instructor avatar"/>
-                    <AvatarFallback className="text-base">{getInitials(instructorName)}</AvatarFallback>
-                </Avatar>
-               </Link>
+                 <div className="flex-shrink-0 text-center font-bold bg-white p-1 rounded-md w-14 shadow-lg border border-border/20">
+                    <p className="text-xs uppercase">{format(new Date(startTime), "EEE", { locale: es })}</p>
+                    <p className="text-3xl leading-none">{format(new Date(startTime), "d")}</p>
+                    <p className="text-xs uppercase">{format(new Date(startTime), "MMM", { locale: es })}</p>
+                </div>
                <div className="flex flex-col">
-                   <p className="font-semibold text-sm -mb-0.5">{instructorName}</p>
-                   <p className="text-xs text-muted-foreground capitalize">{format(new Date(startTime), "eeee, d 'de' MMMM", { locale: es })}</p>
+                   <p className="font-semibold text-sm -mb-0.5">{format(new Date(startTime), "eeee, HH:mm'h'", { locale: es })}</p>
+                   <p className="text-xs text-muted-foreground capitalize">con {instructorName}</p>
                </div>
             </div>
             {isUpcoming && isConfirmed && <Badge variant="default" className="text-xs bg-green-600">Confirmada</Badge>}
