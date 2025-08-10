@@ -155,42 +155,7 @@ export default function MatchDayDetailPage() {
                 </p>
             </header>
             <main className="grid grid-cols-1 gap-6">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Estado del Evento</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {event.matchesGenerated ? (
-                                <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-800">
-                                    <p className="font-bold flex items-center"><Trophy className="mr-2 h-4 w-4"/>¡Sorteo Realizado!</p>
-                                    <p className="text-sm mt-1">Las partidas para el evento han sido generadas. ¡Busca la tuya abajo!</p>
-                                </div>
-                            ) : userInscription ? (
-                                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-800">
-                                    <p className="font-bold flex items-center"><UserCheck className="mr-2 h-4 w-4"/>Estás Inscrito</p>
-                                    <div className="text-sm mt-1">Tu estado es: <Badge className={userInscription.status === 'main' ? "bg-blue-600" : ""}>{userInscription.status === 'main' ? 'Lista Principal' : 'Reserva'}</Badge></div>
-                                     <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                             <Button variant="link" className="text-destructive h-auto p-0 mt-2 text-xs" disabled={isSubmitting}>Cancelar inscripción</Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader><AlertDialogTitle>¿Confirmar Cancelación?</AlertDialogTitle><AlertDialogDescription>Si cancelas tu inscripción, tu plaza podría ser ocupada por alguien en la lista de reserva.</AlertDialogDescription></AlertDialogHeader>
-                                            <AlertDialogFooter><AlertDialogCancel>Volver</AlertDialogCancel><AlertDialogAction onClick={handleCancelInscription} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Sí, Cancelar</AlertDialogAction></AlertDialogFooter>
-                                        </AlertDialogContent>
-                                     </AlertDialog>
-                                </div>
-                            ) : (
-                                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800">
-                                    <p className="font-bold flex items-center"><UserPlus className="mr-2 h-4 w-4"/>Inscripciones Abiertas</p>
-                                    <p className="text-sm mt-1">{mainListFull ? 'La lista principal está llena, pero aún puedes apuntarte a la lista de reserva.' : '¡Todavía hay plazas disponibles!'}</p>
-                                    <Button onClick={handleSignUp} className="mt-2" size="sm" disabled={isSubmitting}>
-                                       {isSubmitting ? <Check className="animate-spin" /> : null} Apuntarme
-                                    </Button>
-                                </div>
-                            )}
-                    </CardContent>
-                </Card>
-
+                
                 <MatchDayPlayerGrid 
                     event={event}
                     inscriptions={inscriptions}
