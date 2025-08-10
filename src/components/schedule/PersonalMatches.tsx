@@ -1,3 +1,4 @@
+// src/components/schedule/PersonalMatches.tsx
 "use client";
 
 import React, { useState, useEffect, useTransition, useMemo } from 'react';
@@ -30,6 +31,12 @@ import { displayClassCategory } from '@/types';
 import { InfoCard } from '@/components/schedule/InfoCard'; // Import InfoCard
 import { useRouter } from 'next/navigation'; // Import useRouter
 import { Separator } from '../ui/separator';
+import {
+  Tooltip,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
 
 interface PersonalMatchesProps {
   currentUser: User;
@@ -232,41 +239,19 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
             }
       }
 
-      const CategoryIconDisplay = category === 'chica' ? Venus : category === 'chico' ? Mars : CategoryIcon;
-      const categoryColorClass =
-        category === 'chica' ? 'bg-pink-100 text-pink-700 border-pink-300' :
-        category === 'chico' ? 'bg-sky-100 text-sky-700 border-sky-300' :
-        'bg-indigo-100 text-indigo-700 border-indigo-300'; 
-
       let levelDisplay: string;
-      let levelColorClass = "border-border";
-      if (clubDetails && clubDetails.levelRanges && level !== 'abierto') {
+      if (level === 'abierto') {
+          levelDisplay = 'Nivel Abierto';
+      } else if (clubDetails && clubDetails.levelRanges) {
           const numericLevel = parseFloat(level);
           const matchingRange = clubDetails.levelRanges.find(range => {
               const min = parseFloat(range.min);
               const max = parseFloat(range.max);
               return !isNaN(min) && !isNaN(max) && numericLevel >= min && numericLevel <= max;
           });
-
-          if (matchingRange) {
-              levelDisplay = `${matchingRange.name} (${matchingRange.min}-${matchingRange.max})`;
-              const rangeIndex = clubDetails.levelRanges.findIndex(r => r.name === matchingRange.name);
-              const colors = [
-                  "border-green-300 bg-green-50 text-green-800",
-                  "border-blue-300 bg-blue-50 text-blue-800",
-                  "border-orange-300 bg-orange-50 text-orange-800",
-                  "border-red-300 bg-red-50 text-red-800",
-                  "border-purple-300 bg-purple-50 text-purple-800"
-              ];
-              levelColorClass = colors[rangeIndex % colors.length] || "border-border";
-          } else {
-              levelDisplay = `Nivel: ${level}`;
-          }
-      } else if (level === 'abierto') {
-          levelDisplay = 'Nivel Abierto';
-          levelColorClass = "border-gray-300 bg-gray-50 text-gray-800";
+          levelDisplay = matchingRange ? `${matchingRange.name} (${level})` : `Nivel ${level}`;
       } else {
-          levelDisplay = `Nivel: ${level}`;
+          levelDisplay = `Nivel ${level}`;
       }
 
       const pointsCostForThisBooking = wasBookedWithPoints ? calculatePricePerPerson(totalCourtFee || 0, 4) : 0;
@@ -314,157 +299,72 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
       }
 
       return (
-        <div key={booking.id} className={cn("flex flex-col p-3 sm:p-4 rounded-lg shadow-md space-y-3 border-l-4", cardBorderColor, isUpcomingItem ? 'bg-card border border-border' : 'bg-muted/60 border border-border/50')}>
-             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
-                 <div className="font-semibold text-lg text-foreground capitalize flex items-center">
-                     {isUpcomingItem ? <CalendarCheck className="h-5 w-5 mr-2 text-primary" /> : <CalendarX className="h-5 w-5 mr-2 text-muted-foreground" />}
-                     {format(new Date(startTime), 'eeee, d MMM yyyy', { locale: es })}
+        <div key={booking.id} className={cn("flex flex-col p-3 rounded-lg shadow-md space-y-2 border-l-4", cardBorderColor, isUpcomingItem ? 'bg-card border' : 'bg-muted/60 border border-border/50')}>
+             <div className="flex items-start justify-between">
+                 <div className="font-semibold text-base text-foreground capitalize flex items-center">
+                     {isUpcomingItem ? <CalendarCheck className="h-4 w-4 mr-1.5 text-primary" /> : <CalendarX className="h-4 w-4 mr-1.5 text-muted-foreground" />}
+                     {format(new Date(startTime), 'eeee, d MMM', { locale: es })}
                  </div>
-                  <div className="mt-1 sm:mt-0">
-                     {status === 'confirmed_private' && isUpcomingItem && (
-                         <Badge variant="outline" className="text-xs bg-purple-100 text-purple-700 border-purple-400 hover:bg-purple-200">
-                             <Lock className="h-3 w-3 mr-1" /> Partida Privada (4p)
-                         </Badge>
-                     )}
-                     {isMatchFull && status !== 'confirmed_private' && isUpcomingItem && (
-                          <Badge variant="default" className="text-xs bg-red-500 text-white border-red-700 hover:bg-red-600">Partida Completa</Badge>
-                     )}
-                      {!isMatchFull && status !== 'confirmed_private' && isUpcomingItem && (
-                         <Badge variant="outline" className="text-xs bg-blue-100 text-blue-700 border-blue-500 hover:bg-blue-200">
-                             <Info className="mr-1 h-3 w-3"/>Inscrito
-                         </Badge>
-                     )}
-                      {!isUpcomingItem && (
-                         <Badge variant="outline" className="text-xs bg-gray-200 text-gray-700 border-gray-400">Finalizada</Badge>
-                      )
-                     }
+                  <div className="mt-0.5">
+                     {status === 'confirmed_private' && isUpcomingItem && <Badge variant="outline" className="text-xs bg-purple-100 text-purple-700 border-purple-400">Privada</Badge>}
+                     {isMatchFull && status !== 'confirmed_private' && isUpcomingItem && <Badge variant="default" className="text-xs bg-red-500">Completa</Badge>}
+                      {!isMatchFull && status !== 'confirmed_private' && isUpcomingItem && <Badge variant="outline" className="text-xs bg-blue-100 text-blue-700 border-blue-500">Inscrito</Badge>}
+                      {!isUpcomingItem && <Badge variant="outline" className="text-xs">Finalizada</Badge>}
                   </div>
              </div>
 
-             <div className="flex flex-col space-y-1 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between text-sm text-muted-foreground">
-                 <div className="flex items-center">
-                     <Clock className="h-4 w-4 mr-1.5" />
-                     {`${format(new Date(startTime), 'HH:mm', { locale: es })} - ${format(new Date(endTime), 'HH:mm', { locale: es })}`}
-                 </div>
-                 <div className="flex items-center">
-                      <Badge className="bg-primary/10 text-primary border-primary/30 px-2 py-0.5 text-xs">
-                         <Hash className="h-3 w-3 mr-1" /> Pista {courtNumber}
-                      </Badge>
-                 </div>
-                 <div className="flex items-center">
-                     <Badge variant="outline" className={cn("capitalize text-xs px-2 py-0.5", levelColorClass)}>{levelDisplay}</Badge>
-                 </div>
+             <div className="flex items-center justify-between text-xs text-muted-foreground border-t border-b border-border/30 py-1">
+                 <div className="flex items-center"><Clock className="h-3.5 w-3.5 mr-1" />{`${format(new Date(startTime), 'HH:mm')}h`}</div>
+                 <div className="flex items-center"><Hash className="h-3.5 w-3.5 mr-1" />Pista {courtNumber}</div>
+                 <div className="flex items-center"><Trophy className="h-3.5 w-3.5 mr-1" />{levelDisplay}</div>
              </div>
            
-             {clubDetails && (
-                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm space-y-1 sm:space-y-0 pt-1 border-t border-border/30 mt-2">
-                     <p className="text-xs text-muted-foreground pt-1">Club: {clubDetails.name}</p>
-                     <div className={cn("font-semibold flex items-center pt-1", wasBookedWithPoints ? "text-purple-600" : "text-green-600")}>
-                         {wasBookedWithPoints ? (
-                             <> <Gift className="h-4 w-4 mr-1.5" /> {pointsCostForThisBooking} Puntos </>
-                         ) : (
-                             <> <Euro className="h-4 w-4 mr-1.5" /> {euroCostForThisBooking.toFixed(2)}€ </>
-                         )}
-                     </div>
+             <div className="flex items-center justify-between">
+                <div className="flex items-center -space-x-2">
+                    {Array.from({ length: 4 }).map((_, idx) => {
+                        const player = (bookedPlayers || [])[idx];
+                        const fullPlayer = player ? (state.getMockStudents().find(s => s.id === player.userId) || (currentUser?.id === player.userId ? currentUser : null)) : null;
+
+                        return (
+                            <TooltipProvider key={idx} delayDuration={150}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Avatar className="h-8 w-8 border-2 border-background">
+                                            <AvatarImage src={fullPlayer?.profilePictureUrl} data-ai-hint="player avatar"/>
+                                            <AvatarFallback className="text-xs">{player ? getInitials(player.name || 'U') : '?'}</AvatarFallback>
+                                        </Avatar>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom"><p>{player ? (player.name || 'Tú') : 'Plaza Libre'}</p></TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        )
+                    })}
+                </div>
+                 <div className={cn("font-semibold flex items-center", wasBookedWithPoints ? "text-purple-600" : "text-green-600")}>
+                     {wasBookedWithPoints ? (
+                         <> <Gift className="h-4 w-4 mr-1.5" /> {pointsCostForThisBooking} Pts </>
+                     ) : (
+                         <> <Euro className="h-4 w-4 mr-1.5" /> {euroCostForThisBooking.toFixed(2)}€ </>
+                     )}
                  </div>
-             )}
+            </div>
 
-
-             <div className="mt-2 p-3 bg-secondary/30 rounded-md border border-border/50">
-                 <p className="text-xs font-medium text-secondary-foreground mb-2">Jugadores ({(bookedPlayers || []).length}/4):</p>
-                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                     {Array.from({ length: 4 }).map((_, idx) => {
-                         const player = (bookedPlayers || [])[idx];
-                         const isCurrentUserInThisSpot = player?.userId === currentUser.id;
-                         return (
-                             <div key={idx} className="flex flex-col items-center text-center space-y-1 py-1">
-                                 <Avatar className={cn(
-                                     "h-10 w-10 shadow-[inset_0_2px_4px_0_rgba(0,0,0,0.2)]", 
-                                     player ? "border-gray-300" : "border-2 border-dashed border-muted-foreground/30",
-                                     isCurrentUserInThisSpot && "ring-2 ring-offset-2 ring-primary"
-                                 )}>
-                                     <AvatarImage
-                                         src={player ? `https://randomuser.me/api/portraits/men/${simpleHash(player.userId) % 100}.jpg` : undefined}
-                                         alt={player?.name || 'Libre'}
-                                         data-ai-hint="player avatar medium"
-                                     />
-                                     <AvatarFallback className={cn("text-sm", !player && "bg-transparent text-muted-foreground/60")}>
-                                         {player ? getInitials(player.name || 'U') : <UserCircle className="h-5 w-5"/>}
-                                     </AvatarFallback>
-                                 </Avatar>
-                                 <span className={cn("text-[11px] truncate w-full", player ? "text-foreground font-medium" : "text-muted-foreground italic")}>
-                                     {player ? (player.name || getPlaceholderUserName(player.userId, currentUser.id, currentUser.name)) : 'Libre'}
-                                 </span>
-                             </div>
-                         );
-                     })}
-                 </div>
-             </div>
-
-              <div className="pt-3 flex flex-col sm:flex-row sm:items-center sm:justify-end space-y-2 sm:space-y-0 sm:space-x-2">
+              <div className="pt-2 border-t mt-2 flex flex-col sm:flex-row sm:items-center sm:justify-end space-y-2 sm:space-y-0 sm:space-x-2">
                   {isOrganizerOfPrivateMatch && isUpcomingItem && (
                       <>
-                         <Button
-                             variant="outline" size="sm"
-                             className="w-full sm:w-auto px-3 py-1.5 h-auto text-xs bg-purple-500 text-white border-purple-600 hover:bg-purple-600 flex items-center justify-center"
-                             onClick={handleSharePrivateMatch}
-                             disabled={isProcessingAction}
-                         >
-                             <Share2 className="mr-1.5 h-3.5 w-3.5" /> Compartir Partida
-                         </Button>
+                         <Button variant="outline" size="sm" className="w-full sm:w-auto text-xs bg-purple-500 text-white border-purple-600 hover:bg-purple-600" onClick={handleSharePrivateMatch} disabled={isProcessingAction}><Share2 className="mr-1.5 h-3.5 w-3.5" /> Compartir</Button>
                          <AlertDialog>
-                             <AlertDialogTrigger asChild>
-                                 <Button
-                                     variant="outline" size="sm"
-                                     className="w-full sm:w-auto px-3 py-1.5 h-auto text-xs border-orange-500 text-orange-600 hover:bg-orange-500/10 hover:text-orange-700 flex items-center justify-center"
-                                     disabled={isProcessingAction}
-                                 >
-                                     {isProcessingAction ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin"/> : <Unlock className="mr-1.5 h-3.5 w-3.5"/>} Hacer Pública
-                                 </Button>
-                             </AlertDialogTrigger>
+                             <AlertDialogTrigger asChild><Button variant="outline" size="sm" className="w-full sm:w-auto text-xs border-orange-500 text-orange-600 hover:bg-orange-500/10 hover:text-orange-700" disabled={isProcessingAction}>{isProcessingAction ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin"/> : <Unlock className="mr-1.5 h-3.5 w-3.5"/>} Hacer Pública</Button></AlertDialogTrigger>
                               <AlertDialogContent>
-                                 <AlertDialogHeader>
-                                     <AlertDialogTitle>¿Hacer Pública esta Partida?</AlertDialogTitle>
-                                     <AlertDialogDescription>
-                                         La partida volverá a ser visible para todos y podrán unirse nuevos jugadores.
-                                         No se realizarán reembolsos automáticos. Deberás gestionar cualquier pago pendiente con tus amigos directamente.
-                                     </AlertDialogDescription>
-                                 </AlertDialogHeader>
-                                 <AlertDialogFooter>
-                                     <AlertDialogCancel disabled={isProcessingAction}>Cancelar</AlertDialogCancel>
-                                     <AlertDialogAction onClick={handleMakeMatchPublic} disabled={isProcessingAction} className="bg-orange-500 hover:bg-orange-600 text-white">
-                                         {isProcessingAction ? <Loader2 className="animate-spin h-4 w-4" /> : "Sí, Hacer Pública"}
-                                     </AlertDialogAction>
-                                 </AlertDialogFooter>
+                                 <AlertDialogHeader><AlertDialogTitle>¿Hacer Pública esta Partida?</AlertDialogTitle><AlertDialogDescription>La partida será visible para todos y podrán unirse nuevos jugadores. No se realizarán reembolsos automáticos.</AlertDialogDescription></AlertDialogHeader>
+                                 <AlertDialogFooter><AlertDialogCancel disabled={isProcessingAction}>Cancelar</AlertDialogCancel><AlertDialogAction onClick={handleMakeMatchPublic} disabled={isProcessingAction} className="bg-orange-500 hover:bg-orange-600 text-white">{isProcessingAction ? <Loader2 className="animate-spin h-4 w-4" /> : "Sí, Hacer Pública"}</AlertDialogAction></AlertDialogFooter>
                              </AlertDialogContent>
                          </AlertDialog>
                          <AlertDialog>
-                             <AlertDialogTrigger asChild>
-                                 <Button
-                                     variant="outline" size="sm"
-                                     className="w-full sm:w-auto px-3 py-1.5 h-auto text-xs text-destructive border-destructive hover:bg-destructive/10 flex items-center justify-center"
-                                     disabled={isProcessingAction}
-                                 >
-                                     <Ban className="mr-1.5 h-3.5 w-3.5" /> Cancelar y Ofrecer por Puntos
-                                 </Button>
-                             </AlertDialogTrigger>
+                             <AlertDialogTrigger asChild><Button variant="outline" size="sm" className="w-full sm:w-auto text-xs text-destructive border-destructive hover:bg-destructive/10" disabled={isProcessingAction}><Ban className="mr-1.5 h-3.5 w-3.5" /> Cancelar y Ofrecer</Button></AlertDialogTrigger>
                               <AlertDialogContent>
-                                 <AlertDialogHeader>
-                                     <AlertDialogTitle>Cancelar y Ofrecer por Puntos</AlertDialogTitle>
-                                     <AlertDialogDescription>
-                                         Se te reembolsará el coste total de la pista ({totalCourtFee?.toFixed(2)}€). La pista quedará disponible para que otro jugador la reserve únicamente con puntos de fidelidad. ¿Estás seguro?
-                                     </AlertDialogDescription>
-                                 </AlertDialogHeader>
-                                 <AlertDialogFooter>
-                                     <AlertDialogCancel disabled={isProcessingAction}>Cerrar</AlertDialogCancel>
-                                     <AlertDialogAction
-                                         onClick={() => handleCancelAndReoffer(booking.matchId)}
-                                         disabled={isProcessingAction}
-                                         className="bg-destructive hover:bg-destructive/90"
-                                     >
-                                         {currentActionInfo?.type === 'cancelAndReoffer' && isProcessingAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Sí, Cancelar y Ofrecer"}
-                                     </AlertDialogAction>
-                                 </AlertDialogFooter>
+                                 <AlertDialogHeader><AlertDialogTitle>Cancelar y Ofrecer por Puntos</AlertDialogTitle><AlertDialogDescription>Se te reembolsará el coste total de la pista ({totalCourtFee?.toFixed(2)}€). La pista quedará disponible para que otro jugador la reserve únicamente con puntos de fidelidad. ¿Estás seguro?</AlertDialogDescription></AlertDialogHeader>
+                                 <AlertDialogFooter><AlertDialogCancel disabled={isProcessingAction}>Cerrar</AlertDialogCancel><AlertDialogAction onClick={() => handleCancelAndReoffer(booking.matchId)} disabled={isProcessingAction} className="bg-destructive hover:bg-destructive/90">{currentActionInfo?.type === 'cancelAndReoffer' && isProcessingAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Sí, Cancelar y Ofrecer"}</AlertDialogAction></AlertDialogFooter>
                              </AlertDialogContent>
                          </AlertDialog>
                       </>
@@ -472,62 +372,16 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                  {isUpcomingItem && !isOrganizerOfPrivateMatch && (
                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto justify-end">
                          <AlertDialog>
-                             <AlertDialogTrigger asChild>
-                             <Button
-                                 variant={buttonVariant}
-                                 size="sm"
-                                 className={cn(
-                                     "w-full sm:w-auto px-3 py-1.5 h-auto text-xs flex items-center justify-center",
-                                     buttonVariant === "destructive" && "bg-card text-destructive border-destructive hover:bg-destructive/10 hover:text-destructive",
-                                     buttonVariant === "outline" && cancellationButtonText.includes("Bonificada") && "bg-green-500 text-white border-green-600 hover:bg-green-600",
-                                     "disabled:opacity-50 disabled:cursor-not-allowed"
-                                 )}
-                                 disabled={isProcessingAction && currentActionInfo?.bookingId === booking.id}
-                                 aria-label={cancellationButtonText}
-                             >
-                                 {isProcessingAction && currentActionInfo?.bookingId === booking.id ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Ban className="mr-1.5 h-3.5 w-3.5" />}
-                                 {cancellationButtonText}
-                             </Button>
-                             </AlertDialogTrigger>
-                             <AlertDialogContent>
-                             <AlertDialogHeader>
-                                 <AlertDialogTitle>¿Confirmar Cancelación?</AlertDialogTitle>
-                                 <AlertDialogDescription>
-                                     {cancellationDialogText}
-                                 </AlertDialogDescription>
-                             </AlertDialogHeader>
-                             <AlertDialogFooter>
-                                 <AlertDialogCancel disabled={isProcessingAction && currentActionInfo?.bookingId === booking.id}>Cerrar</AlertDialogCancel>
-                                 <AlertDialogAction
-                                 onClick={() => handleCancellationAction(booking)}
-                                 disabled={isProcessingAction && currentActionInfo?.bookingId === booking.id}
-                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                 >
-                                 {isProcessingAction && currentActionInfo?.bookingId === booking.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Sí, Cancelar"}
-                                 </AlertDialogAction>
-                             </AlertDialogFooter>
-                             </AlertDialogContent>
+                             <AlertDialogTrigger asChild><Button variant={buttonVariant} size="sm" className={cn("w-full sm:w-auto text-xs", buttonVariant === "destructive" && "bg-card text-destructive border-destructive hover:bg-destructive/10 hover:text-destructive", buttonVariant === "outline" && cancellationButtonText.includes("Bonificada") && "bg-green-500 text-white border-green-600 hover:bg-green-600", "disabled:opacity-50 disabled:cursor-not-allowed")} disabled={isProcessingAction && currentActionInfo?.bookingId === booking.id}>{isProcessingAction && currentActionInfo?.bookingId === booking.id ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Ban className="mr-1.5 h-3.5 w-3.5" />}{cancellationButtonText}</Button></AlertDialogTrigger>
+                             <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>¿Confirmar Cancelación?</AlertDialogTitle><AlertDialogDescription>{cancellationDialogText}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={isProcessingAction && currentActionInfo?.bookingId === booking.id}>Cerrar</AlertDialogCancel><AlertDialogAction onClick={() => handleCancellationAction(booking)} disabled={isProcessingAction && currentActionInfo?.bookingId === booking.id} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{isProcessingAction && currentActionInfo?.bookingId === booking.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Sí, Cancelar"}</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
                          </AlertDialog>
-                         {isMatchFull && isUpcomingItem && (
-                              <Button
-                                 variant="outline"
-                                 size="sm"
-                                 className="w-full sm:w-auto px-3 py-1.5 h-auto text-xs bg-blue-500 text-white border-blue-600 hover:bg-blue-600 flex items-center"
-                                 onClick={() => handleOpenChatDialog(booking.matchDetails)}
-                                 aria-label="Abrir chat de la partida"
-                             >
-                                 <MessageSquare className="mr-1.5 h-3.5 w-3.5" />
-                                 Chat
-                             </Button>
-                         )}
+                         {isMatchFull && isUpcomingItem && (<Button variant="outline" size="sm" className="w-full sm:w-auto text-xs bg-blue-500 text-white border-blue-600 hover:bg-blue-600" onClick={() => handleOpenChatDialog(booking.matchDetails)}><MessageSquare className="mr-1.5 h-3.5 w-3.5" />Chat</Button>)}
                      </div>
                  )}
                   {!isUpcomingItem && provisionalMatch && !isRenewalExpired && (
                     <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-2 p-2 bg-blue-50 border-t border-blue-200">
                         <span className="text-xs text-blue-700 font-medium">Renovar para la próxima semana (expira en {renewalTimeLeft}):</span>
-                        <Button onClick={() => handleRenew(booking.matchId)} size="sm" className="h-8 bg-blue-600 hover:bg-blue-700" disabled={isProcessingAction}>
-                             {isProcessingAction && currentActionInfo?.type === 'renew' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Repeat className="mr-2 h-4 w-4"/>} Renovar Reserva
-                        </Button>
+                        <Button onClick={() => handleRenew(booking.matchId)} size="sm" className="h-8 bg-blue-600 hover:bg-blue-700" disabled={isProcessingAction}>{isProcessingAction && currentActionInfo?.type === 'renew' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Repeat className="mr-2 h-4 w-4"/>} Renovar Reserva</Button>
                     </div>
                 )}
              </div>
