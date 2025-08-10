@@ -18,6 +18,7 @@ import {
   initializeMockPointTransactions,
   initializeMockMatchDayEvents,
   initializeMockMatchDayInscriptions,
+  initializeMockMatchDayCancelledInscriptions,
   initializeMockShopProducts,
   getMockClubs as clubs,
   getMockPadelCourts as padelCourts,
@@ -210,9 +211,9 @@ export function performInitialization() {
   initializeMockMatchDayEvents(initialMatchDayEvents);
   
   // --- Initialize Match-Day Inscriptions ---
-  const inscribedUsers = initialUserDatabase.slice(0, 16);
+  const inscribedUsers = initialUserDatabase.slice(0, 14); // Inscribe 14 users to leave 2 spots
   const initialMatchDayInscriptions = inscribedUsers.map((user, index) => {
-      const status = index < 14 ? 'main' : 'reserve';
+      // All 14 are on the main list
       return {
           id: `md-insc-${user.id}`,
           eventId: matchDayEventId,
@@ -220,7 +221,7 @@ export function performInitialization() {
           userName: user.name || 'Unknown',
           userLevel: user.level || 'abierto',
           userProfilePictureUrl: user.profilePictureUrl,
-          status: status,
+          status: 'main',
           inscriptionTime: addMinutes(new Date(), index),
           amountBlocked: 5.00,
       };
