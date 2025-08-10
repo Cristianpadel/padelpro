@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import type { Booking, User, Review, TimeSlot, PadelCategoryForSlot } from '@/types';
+import type { Booking, User, Review, TimeSlot, PadelCategoryForSlot, Instructor } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { List, Star, Activity, CheckCircle, CalendarX, Ban, UserCircle as UserIcon, Clock, Hash, Euro, Gift, Lightbulb } from 'lucide-react';
@@ -13,12 +13,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { displayClassLevel, displayClassCategory } from '@/types';
-import { cancelBooking, fetchUserBookings, addReviewToState, getMockStudents } from '@/lib/mockData';
+import { cancelBooking, fetchUserBookings, addReviewToState, getMockStudents, getMockInstructors, isSlotEffectivelyCompleted } from '@/lib/mockData';
 import { useRouter } from 'next/navigation';
 import { InfoCard } from './InfoCard';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from '@/lib/utils';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { calculatePricePerPerson } from '@/lib/utils';
+import Link from 'next/link';
 
 
 interface BookingListItemProps {
@@ -28,9 +30,10 @@ interface BookingListItemProps {
   onRateClass: (bookingId: string, instructorName: string, rating: number) => void;
   currentUser: User;
   onBookingCancelledOrCeded: () => void;
+  instructor: Instructor | null;
 }
 
-const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, ratedBookings, onRateClass, currentUser, onBookingCancelledOrCeded }) => {
+const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, ratedBookings, onRateClass, currentUser, onBookingCancelledOrCeded, instructor }) => {
   const { toast } = useToast();
   const [isCancelling, setIsCancelling] = useState(false);
   
@@ -38,9 +41,13 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
 
   const {
     id: bookingId,
-    slotDetails: { id: slotId, startTime, endTime, instructorName, level, category, totalPrice, bookedPlayers, status, courtNumber },
+    slotDetails,
     bookedWithPoints,
   } = booking;
+
+  const {
+      id: slotId, startTime, endTime, instructorName, level, category, totalPrice, bookedPlayers, status, courtNumber
+  } = slotDetails;
 
   const handleCancel = async () => {
     setIsCancelling(true);
@@ -59,42 +66,68 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
   };
   
   const isConfirmed = status === 'confirmed' || status === 'confirmed_private';
+  const { completed: isSlotCompleted, size: completedGroupSize } = isSlotEffectivelyCompleted(slotDetails);
+
+   const bookingsByGroupSize: Record<number, { userId: string; groupSize: 1 | 2 | 3 | 4 }[]> = { 1: [], 2: [], 3: [], 4: [] };
+    (bookedPlayers || []).forEach(p => {
+        if (bookingsByGroupSize[p.groupSize]) bookingsByGroupSize[p.groupSize].push(p);
+    });
 
   return (
     <div className={cn("p-3 border rounded-lg shadow-md transition-colors w-80 flex flex-col max-w-md mx-auto", isUpcoming && isConfirmed && "bg-green-50 border-green-200", isUpcoming && !isConfirmed && "bg-blue-50 border-blue-200", !isUpcoming && "bg-gray-50 border-gray-200")}>
        <div className="flex justify-between items-start">
-            <div>
-                <p className="font-semibold text-sm">{format(new Date(startTime), "eeee, d 'de' MMMM", { locale: es })}</p>
-                <p className="text-xs text-muted-foreground">{instructorName}</p>
+             <div className="flex items-center space-x-3">
+               <Link href={`/instructors/${slotDetails.instructorId}`} passHref className="group">
+                 <Avatar className="h-10 w-10">
+                    <AvatarImage src={instructor?.profilePictureUrl} alt={instructorName} data-ai-hint="instructor avatar"/>
+                    <AvatarFallback className="text-base">{getInitials(instructorName)}</AvatarFallback>
+                </Avatar>
+               </Link>
+               <div className="flex flex-col">
+                   <p className="font-semibold text-sm -mb-0.5">{instructorName}</p>
+                   <p className="text-xs text-muted-foreground capitalize">{format(new Date(startTime), "eeee, d 'de' MMMM", { locale: es })}</p>
+               </div>
             </div>
             {isUpcoming && isConfirmed && <Badge variant="default" className="text-xs bg-green-600">Confirmada</Badge>}
             {isUpcoming && !isConfirmed && <Badge variant="secondary" className="text-xs">Pendiente</Badge>}
             {!isUpcoming && <Badge variant="outline" className="text-xs">Finalizada</Badge>}
        </div>
-        <div className="mt-2 text-xs text-muted-foreground space-y-1 flex-grow">
-            <p className="flex items-center"><Clock className="mr-1.5 h-3.5 w-3.5" />{`${format(new Date(startTime), 'HH:mm')} - ${format(new Date(endTime), 'HH:mm')}`}</p>
-            <p className="flex items-center"><UserIcon className="mr-1.5 h-3.5 w-3.5" />Clase de {booking.groupSize} personas</p>
-            {courtNumber && <p className="flex items-center"><Hash className="mr-1.5 h-3.5 w-3.5" />Pista {courtNumber}</p>}
-       </div>
 
-       {bookedPlayers && bookedPlayers.length > 0 && (
-           <div className="mt-2 pt-2 border-t border-border/30">
-               <p className="text-xs font-medium text-muted-foreground mb-1.5">Inscritos:</p>
-               <div className="flex items-center gap-1.5">
-                   {bookedPlayers.map(player => {
-                       const student = getMockStudents().find(s => s.id === player.userId);
-                       return (
-                           <Avatar key={player.userId} className="h-7 w-7">
-                               <AvatarImage src={student?.profilePictureUrl} alt={player.name} data-ai-hint="player avatar small" />
-                               <AvatarFallback className="text-[10px]">{getInitials(player.name || '')}</AvatarFallback>
-                           </Avatar>
-                       );
-                   })}
-               </div>
-           </div>
-       )}
+        <div className="mt-2 pt-2 border-t border-border/30 space-y-1">
+             {([1,2,3,4] as const).map((optionSize) => {
+                 const isUserBookedInThisOption = booking.groupSize === optionSize;
+                 const playersInThisOption = bookingsByGroupSize[optionSize] || [];
 
-       <div className="mt-3 flex justify-between items-center">
+                 return (
+                     <div key={optionSize} className={cn("flex items-center justify-between p-1 rounded-md transition-all border border-transparent min-h-[44px]", isUserBookedInThisOption && "bg-blue-100/70 border-blue-200")}>
+                         <div className="flex items-center gap-1">
+                            {Array.from({ length: optionSize }).map((_, index) => {
+                                const playerInSpot = playersInThisOption[index];
+                                const isCurrentUserInSpot = playerInSpot?.userId === currentUser.id;
+                                const student = playerInSpot ? getMockStudents().find(s => s.id === playerInSpot.userId) : null;
+                                return (
+                                    <Avatar key={index} className={cn("h-8 w-8", isCurrentUserInSpot && "border-2 border-primary")}>
+                                        {playerInSpot && student ? (
+                                            <>
+                                                <AvatarImage src={student.profilePictureUrl} alt={student.name} data-ai-hint="student avatar small" />
+                                                <AvatarFallback className="text-xs">{getInitials(student.name || '')}</AvatarFallback>
+                                            </>
+                                        ) : (
+                                            <AvatarFallback className="bg-muted"><UserIcon className="h-4 w-4 text-muted-foreground"/></AvatarFallback>
+                                        )}
+                                    </Avatar>
+                                );
+                            })}
+                         </div>
+                         <div className="text-xs font-semibold flex items-center">
+                            {bookedWithPoints ? <><Gift className="mr-1.5 h-4 w-4 text-purple-600"/>Gratis</> : <><Euro className="mr-1.5 h-4 w-4 text-green-600"/>{(totalPrice! / booking.groupSize).toFixed(2)}</>}
+                        </div>
+                     </div>
+                 )
+             })}
+        </div>
+
+       <div className="mt-3 flex justify-between items-center pt-2 border-t border-border/30">
             {isUpcoming ? (
                 <Button size="xs" variant="destructive" onClick={handleCancel} disabled={isCancelling}>
                     {isCancelling ? <><List className="mr-1.5 h-3.5 w-3.5 animate-spin" />Cancelando...</> : <><Ban className="mr-1.5 h-3.5 w-3.5" />Cancelar</>}
@@ -108,9 +141,9 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
                     ))}
                 </div>
             )}
-            <div className="text-xs font-semibold flex items-center">
-                {bookedWithPoints ? <><Gift className="mr-1.5 h-4 w-4 text-purple-600"/>Plaza Gratis</> : <><Euro className="mr-1.5 h-4 w-4 text-green-600"/>{(totalPrice! / booking.groupSize).toFixed(2)}€</>}
-            </div>
+             <Link href={`/clases/${slotId}`} passHref>
+                <Button variant="outline" size="xs">Ver Detalles</Button>
+            </Link>
        </div>
     </div>
   );
@@ -128,16 +161,21 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [ratedBookings, setRatedBookings] = useState<Record<string, number>>({});
+  const [instructors, setInstructors] = useState<Instructor[]>([]);
   const { toast } = useToast();
   const router = useRouter();
 
 
-  const loadBookings = useCallback(async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const fetchedBookings = await fetchUserBookings(currentUser.id);
+      const [fetchedBookings, fetchedInstructors] = await Promise.all([
+          fetchUserBookings(currentUser.id),
+          getMockInstructors()
+      ]);
       
-      // Sort bookings: upcoming first, then past, both sorted by date
+      setInstructors(fetchedInstructors);
+      
       fetchedBookings.sort((a, b) => {
         if (!a.slotDetails?.startTime || !b.slotDetails?.startTime) return 0;
         const aIsPast = isPast(new Date(a.slotDetails.startTime));
@@ -146,7 +184,6 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
         if (aIsPast && !bIsPast) return 1;
         if (!aIsPast && bIsPast) return -1;
         
-        // Both are upcoming or both are past, sort by date (most recent first for past, soonest first for upcoming)
         return new Date(b.slotDetails.startTime).getTime() - new Date(a.slotDetails.startTime).getTime();
       });
 
@@ -161,8 +198,8 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
   }, [currentUser.id]);
 
   useEffect(() => {
-    loadBookings();
-  }, [loadBookings, refreshKey]);
+    loadData();
+  }, [loadData, refreshKey]);
 
   const handleRateClass = (bookingId: string, instructorName: string, rating: number) => {
     setRatedBookings(prev => ({ ...prev, [bookingId]: rating }));
@@ -229,6 +266,7 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
                     onRateClass={handleRateClass}
                     currentUser={currentUser}
                     onBookingCancelledOrCeded={handleBookingUpdate}
+                    instructor={instructors.find(i => i.id === booking.slotDetails?.instructorId) || null}
                   />
                 ))}
               </div>
@@ -250,6 +288,7 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
                     onRateClass={handleRateClass}
                     currentUser={currentUser}
                     onBookingCancelledOrCeded={handleBookingUpdate}
+                    instructor={instructors.find(i => i.id === booking.slotDetails?.instructorId) || null}
                   />
                 ))}
               </div>
