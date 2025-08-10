@@ -47,7 +47,7 @@ const InfoButton: React.FC<InfoButtonProps> = ({ icon: Icon, text, onClick, clas
 );
 
 
-const InfoDialog: React.FC<{
+const DialogInfo: React.FC<{
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
@@ -104,7 +104,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
   } = booking;
 
   const {
-      id: slotId, startTime, endTime, instructorName, level, category, totalPrice, bookedPlayers, status, courtNumber
+      id: slotId, startTime, endTime, instructorName, level, category, totalPrice, bookedPlayers, status, courtNumber, durationMinutes
   } = slotDetails;
 
   const handleCancel = async () => {
@@ -179,7 +179,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
   const CategoryIcon = category === 'chica' ? Venus : category === 'chico' ? Mars : Users2;
   const classifiedBadgeClass = 'text-blue-700 border-blue-200 bg-blue-100 hover:border-blue-300';
   
-  const canMakePrivate = isUpcoming && !isSlotCompleted && status === 'pre_registration' && booking.groupSize > 1;
+  const canMakePrivate = isUpcoming && !isSlotCompleted && status === 'pre_registration' && !!booking.groupSize && booking.groupSize > 1;
 
   const renderStarsDisplay = (rating: number) => {
         const fullStars = Math.round(rating);
@@ -193,7 +193,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
 
   return (
     <>
-      <div className={cn("w-80 flex flex-col max-w-md mx-auto")}>
+      <div className="w-80 flex flex-col max-w-md mx-auto">
         <Card className={cn("flex flex-col shadow-md border-l-4 h-full", cardBorderColor)}>
           <CardHeader className="p-3 pb-1 space-y-2">
             <div className="flex justify-between items-start">
@@ -227,7 +227,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
                   </div>
                   <div className="text-sm">
                       <p className="font-semibold text-foreground uppercase">{format(new Date(startTime), 'eeee HH:mm\'h\'', { locale: es })}</p>
-                      <p className="text-xs text-muted-foreground flex items-center"><Clock className="mr-1 h-3 w-3" />{slotDetails.durationMinutes} min</p>
+                      <p className="text-xs text-muted-foreground flex items-center"><Clock className="mr-1 h-3 w-3" />{durationMinutes} min</p>
                   </div>
               </div>
               <Button variant="ghost" className="h-auto p-1 text-muted-foreground self-start"><Share2 className="h-5 w-5" /></Button>
@@ -435,7 +435,9 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
 
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-blue-600 flex items-center"><Activity className="mr-2 h-5 w-5" /> Mis Clases</h3>
+       { (upcomingBookings.length > 0 || pastBookings.length > 0) &&
+         <h3 className="text-lg font-semibold text-blue-600 flex items-center"><Activity className="mr-2 h-5 w-5" /> Mis Clases</h3>
+       }
       {upcomingBookings.length > 0 && (
         <div>
           <h4 className="text-base font-semibold mb-3 text-foreground flex items-center"><Clock className="mr-2 h-4 w-4" /> Próximas</h4>
