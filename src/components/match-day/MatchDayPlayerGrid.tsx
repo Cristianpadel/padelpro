@@ -56,24 +56,24 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                             if (inscription) {
                                 const isCurrentUser = inscription.userId === currentUser?.id;
                                 const isPreferredPartner = userPreferredPartnerId === inscription.userId;
+                                
+                                const PlayerCardWrapper = isCurrentUser || !userInscription ? 'div' : 'button';
+
                                 return (
-                                    <div 
-                                      key={inscription.id} 
-                                      className={cn(
-                                        "p-3 border rounded-lg flex flex-col items-center justify-center text-center bg-background shadow-md transition-all h-40 relative",
-                                        isCurrentUser && "bg-blue-50 border-blue-300 ring-2 ring-blue-400",
-                                        isPreferredPartner && "bg-purple-50 border-purple-300 ring-2 ring-purple-400"
-                                      )}
+                                    <PlayerCardWrapper
+                                        key={inscription.id}
+                                        onClick={!isCurrentUser && userInscription ? () => onSelectPartner(inscription.userId) : undefined}
+                                        className={cn(
+                                            "p-3 border rounded-lg flex flex-col items-center justify-center text-center bg-background shadow-md transition-all h-40 relative focus:outline-none focus:ring-2 focus:ring-offset-2",
+                                            isCurrentUser ? "bg-blue-50 border-blue-300 ring-2 ring-blue-400" :
+                                            isPreferredPartner ? "bg-purple-50 border-purple-300 ring-2 ring-purple-400" :
+                                            !isCurrentUser && userInscription ? "hover:bg-muted/80 cursor-pointer focus:ring-purple-500" : "cursor-default"
+                                        )}
                                     >
-                                        {!isCurrentUser && userInscription && (
-                                            <Button 
-                                                size="icon" 
-                                                variant={isPreferredPartner ? "default" : "secondary"}
-                                                onClick={() => onSelectPartner(inscription.userId)}
-                                                className={cn("absolute top-1 right-1 h-7 w-7 rounded-full shadow-md", isPreferredPartner && "bg-purple-600 hover:bg-purple-700")}
-                                            >
-                                                {isPreferredPartner ? <CheckCircle className="h-4 w-4"/> : <Handshake className="h-4 w-4"/>}
-                                            </Button>
+                                        {isPreferredPartner && (
+                                            <div className="absolute top-1 right-1 h-7 w-7 flex items-center justify-center rounded-full shadow-md bg-purple-600 text-white">
+                                                <CheckCircle className="h-4 w-4"/>
+                                            </div>
                                         )}
                                         <div className="flex flex-col items-center gap-1 overflow-hidden">
                                              <div className="relative">
@@ -90,7 +90,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                                 <Badge variant="outline" className="text-xs">N: {inscription.userLevel}</Badge>
                                             </div>
                                         </div>
-                                    </div>
+                                    </PlayerCardWrapper>
                                 );
                             }
                             // Render empty slot
