@@ -36,7 +36,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
+import * as state from '@/lib/mockDataSources/state'; // Fix: Import the state module
 
 interface PersonalMatchesProps {
   currentUser: User;
@@ -420,16 +420,5 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
     </>
   );
 };
-
-// Helper function
-function simpleHash(str: string) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash |= 0; // Convert to 32bit integer
-  }
-  return Math.abs(hash);
-}
 
 export default PersonalMatches;
