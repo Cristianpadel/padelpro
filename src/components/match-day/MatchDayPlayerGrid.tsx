@@ -1,7 +1,7 @@
 // src/components/match-day/MatchDayPlayerGrid.tsx
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import type { MatchDayEvent, MatchDayInscription, User } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
+import MatchDayDrawSimulator from './MatchDayDrawSimulator';
 
 interface MatchDayPlayerGridProps {
     event: MatchDayEvent;
@@ -28,11 +29,13 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
     const userInscription = inscriptions.find(i => i.userId === currentUser?.id);
     const userPreferredPartnerId = userInscription?.preferredPartnerId;
     const { toast } = useToast();
-    
-    const isMainListFull = mainList.length >= event.maxPlayers;
+    const [isSimulationVisible, setIsSimulationVisible] = useState(false);
+    const [simulatedMatches, setSimulatedMatches] = useState<{ player1: MatchDayInscription, player2: MatchDayInscription }[][]>([]);
 
+    const isMainListFull = mainList.length >= event.maxPlayers;
+    
     const handleSimulateDraw = () => {
-        if (!currentUser || !userInscription) {
+        if (!userInscription) {
             toast({
                 title: "Inscripción Requerida",
                 description: "Debes estar inscrito para simular el sorteo.",
@@ -40,27 +43,38 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
             });
             return;
         }
-        
-        const otherPlayers = mainList.filter(p => p.userId !== currentUser.id);
-        if (otherPlayers.length === 0) {
-             toast({
-                title: "Faltan Jugadores",
-                description: "No hay otros jugadores para simular el sorteo.",
-            });
-            return;
+
+        const playersToShuffle = [...mainList];
+        // Fisher-Yates shuffle
+        for (let i = playersToShuffle.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [playersToShuffle[i], playersToShuffle[j]] = [playersToShuffle[j], playersToShuffle[i]];
         }
 
-        const shuffledPlayers = [...otherPlayers].sort(() => 0.5 - Math.random());
-        const simulatedPartner = shuffledPlayers[0];
+        const pairs: { player1: MatchDayInscription, player2: MatchDayInscription }[] = [];
+        for (let i = 0; i < playersToShuffle.length; i += 2) {
+            if (playersToShuffle[i + 1]) {
+                pairs.push({ player1: playersToShuffle[i], player2: playersToShuffle[i + 1] });
+            }
+        }
 
-        toast({
-            title: "Simulación de Sorteo",
-            description: `En el sorteo, tu compañero sería ${simulatedPartner.userName}.`,
-        });
+        const matches: { player1: MatchDayInscription, player2: MatchDayInscription }[][] = [];
+        for (let i = 0; i < pairs.length; i += 2) {
+             if (pairs[i+1]) {
+                matches.push([pairs[i], pairs[i+1]]);
+             } else {
+                 // Handle leftover pair if odd number of pairs
+                 matches.push([pairs[i]]);
+             }
+        }
+        
+        setSimulatedMatches(matches);
+        setIsSimulationVisible(true);
     };
 
 
     return (
+        <>
         <Card>
             <CardHeader>
                 <div className="flex items-start justify-between gap-4">
@@ -187,6 +201,12 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                 )}
             </CardContent>
         </Card>
+        <MatchDayDrawSimulator
+            isOpen={isSimulationVisible}
+            onOpenChange={setIsSimulationVisible}
+            matches={simulatedMatches}
+        />
+        </>
     );
 };
 
