@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getInitials } from '@/lib/utils';
-import { UserPlus, CheckCircle, Handshake, Dices, Swords, HardHat, RefreshCw, Clock } from 'lucide-react';
+import { UserPlus, CheckCircle, Handshake, Dices, Swords, HardHat, RefreshCw, Clock, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -37,6 +37,8 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
     const { toast } = useToast();
     const [eventCourts, setEventCourts] = useState<PadelCourt[]>([]);
     const [simulatedMatches, setSimulatedMatches] = useState<SimulatedTeam[][]>([]);
+    const [isSimulating, setIsSimulating] = useState(false);
+    const [countdown, setCountdown] = useState(30);
 
 
     useEffect(() => {
@@ -53,15 +55,6 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
     const isMainListFull = mainList.length >= event.maxPlayers;
     
     const handleSimulateDraw = () => {
-        if (!userInscription) {
-            toast({
-                title: "Inscripción Requerida",
-                description: "Debes estar inscrito para simular el sorteo.",
-                variant: "destructive",
-            });
-            return;
-        }
-
         const emptySlotsCount = event.maxPlayers - mainList.length;
         const emptySlots: SimulatedPlayer[] = Array.from({ length: emptySlotsCount }, (_, i) => ({
             id: `empty-slot-${i}`,
@@ -75,9 +68,9 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
         let playersToProcess: SimulatedPlayer[] = [...mainList, ...emptySlots];
         let mutualPairs: SimulatedTeam[] = [];
         let singles: SimulatedPlayer[] = [];
-
         const processedUserIds = new Set<string>();
 
+        // 1. Process mutual pairs first
         for (const playerA of playersToProcess) {
             if (processedUserIds.has(playerA.userId) || 'isEmptySlot' in playerA) continue;
             
@@ -97,14 +90,17 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
             }
         }
         
+        // 2. Collect all remaining single players
         singles = playersToProcess.filter(p => !processedUserIds.has(p.userId));
 
+        // 3. Sort singles by level (descending)
         singles.sort((a, b) => {
              const levelA = parseFloat(a.userLevel);
              const levelB = parseFloat(b.userLevel);
              return (isNaN(levelB) ? 0 : levelB) - (isNaN(levelA) ? 0 : levelA);
         });
 
+        // 4. Form pairs from sorted singles
         let singlePairs: SimulatedTeam[] = [];
         for (let i = 0; i < singles.length; i += 2) {
              if (singles[i+1]) {
@@ -115,25 +111,62 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                 const teamLevel = Math.min(isNaN(levelA) ? 99 : levelA, isNaN(levelB) ? 99 : levelB);
                 singlePairs.push({ players: [playerA, playerB], teamLevel });
             } else {
+                // If there's an odd player left, pair them with an empty slot
                 const playerA = singles[i];
                  const levelA = parseFloat(playerA.userLevel);
                  singlePairs.push({ players: [playerA, {id: 'empty-single', userName: 'Plaza Libre', userLevel: '0.0', isEmptySlot: true, userProfilePictureUrl: '/avatar-placeholder.png', userId:'empty-single-user'}], teamLevel: isNaN(levelA) ? 0 : levelA });
             }
         }
 
+        // 5. Combine all pairs and sort them by level (descending)
         let allPairs = [...mutualPairs, ...singlePairs];
         allPairs.sort((a, b) => b.teamLevel - a.teamLevel);
 
+        // 6. Form matches by taking two pairs at a time
         const finalMatches: SimulatedTeam[][] = [];
         for (let i = 0; i < allPairs.length; i += 2) {
             if (allPairs[i+1]) {
                 finalMatches.push([allPairs[i], allPairs[i+1]]);
             } else {
-                finalMatches.push([allPairs[i]]);
+                // Handle the case of an odd number of teams
+                const placeholderTeam: SimulatedTeam = {
+                    players: [
+                        { id: 'empty-team-1', userName: 'Plaza Libre', userLevel: '0.0', isEmptySlot: true, userProfilePictureUrl: '/avatar-placeholder.png', userId: 'empty-team-user-1'},
+                        { id: 'empty-team-2', userName: 'Plaza Libre', userLevel: '0.0', isEmptySlot: true, userProfilePictureUrl: '/avatar-placeholder.png', userId: 'empty-team-user-2'}
+                    ],
+                    teamLevel: 0
+                };
+                finalMatches.push([allPairs[i], placeholderTeam]);
             }
         }
         
         setSimulatedMatches(finalMatches);
+    };
+
+    const handleStartSimulation = () => {
+        if (!userInscription) {
+            toast({
+                title: "Inscripción Requerida",
+                description: "Debes estar inscrito para simular el sorteo.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        setIsSimulating(true);
+        setCountdown(30);
+
+        const timer = setInterval(() => {
+            setCountdown(prev => {
+                if (prev <= 1) {
+                    clearInterval(timer);
+                    handleSimulateDraw(); // Run the actual draw logic
+                    setIsSimulating(false);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
     };
 
 
@@ -271,9 +304,18 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                         <RefreshCw className="mr-2 h-4 w-4" /> Resetear
                                     </Button>
                                 )}
-                                <Button onClick={handleSimulateDraw} size="lg" className="w-full bg-purple-600 text-white hover:bg-purple-700 sm:w-auto" disabled={!userInscription}>
-                                    <Dices className="mr-2 h-4 w-4" />
-                                    Simular Sorteo
+                                <Button onClick={handleStartSimulation} size="lg" className="w-full bg-purple-600 text-white hover:bg-purple-700 sm:w-auto" disabled={isSimulating || !userInscription}>
+                                    {isSimulating ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            Simulando en {countdown}s...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Dices className="mr-2 h-4 w-4" />
+                                            Simular Sorteo
+                                        </>
+                                    )}
                                 </Button>
                             </div>
                         </div>
@@ -285,12 +327,12 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                         <div>
                                             <div className="flex justify-between items-center">
                                                 <p className="font-semibold text-sm truncate">{court.name}</p>
-                                                <Badge variant="outline" className="text-xs">Pista #{court.courtNumber}</Badge>
+                                                <Badge variant="outline" className="text-xs">
+                                                    <Clock className="mr-1 h-3 w-3" />
+                                                    {format(new Date(event.eventDate), "HH:mm'h'", { locale: es })}
+                                                </Badge>
                                             </div>
-                                            <Badge variant="secondary" className="text-xs mt-1">
-                                                <Clock className="mr-1 h-3 w-3" />
-                                                {format(new Date(event.eventDate), "HH:mm'h'", { locale: es })}
-                                            </Badge>
+                                             <p className="text-xs text-muted-foreground">Pista #{court.courtNumber}</p>
                                         </div>
                                         <div className="flex-grow flex items-center justify-center">
                                             {match ? (
