@@ -214,7 +214,6 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
     const availableCredit = (currentUser?.credit ?? 0) - (currentUser?.blockedCredit ?? 0);
 
     return (
-        <>
         <Card>
             <CardHeader>
                 <div className="flex items-start justify-between gap-4">
@@ -290,12 +289,27 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                                 </AlertDialogTrigger>
                                                 <AlertDialogContent>
                                                     <AlertDialogHeader>
-                                                        <AlertDialogTitle>Seleccionar Compañero</AlertDialogTitle>
-                                                        <AlertDialogDescription>Tu elección será una preferencia en el sorteo. Si tu compañero también te elige, ¡seréis pareja asegurada!</AlertDialogDescription>
+                                                        <AlertDialogTitle className="text-2xl font-bold flex items-center justify-center">
+                                                            <Handshake className="h-8 w-8 mr-3 text-blue-500" />
+                                                            ¡Elige a tu compi!
+                                                        </AlertDialogTitle>
                                                     </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel>Volver</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={() => onSelectPartner(inscription.userId)}>Confirmar Preferencia</AlertDialogAction>
+                                                    <AlertDialogDescription asChild>
+                                                        <div className="text-center text-lg text-foreground space-y-4 py-4">
+                                                            <p>Has elegido a <span className="font-bold">{inscription.userName}</span> como tu pareja ideal.</p>
+                                                        </div>
+                                                    </AlertDialogDescription>
+                                                     <div className="text-sm bg-blue-50 text-blue-800 p-3 rounded-lg space-y-2">
+                                                        <p className="font-bold text-center">¡Así funciona!</p>
+                                                        <ul className="space-y-1.5">
+                                                            <li className="flex items-start"><ThumbsUp className="h-4 w-4 mr-2 mt-0.5 text-blue-500 flex-shrink-0" /><span>Tu elección es una preferencia para el sorteo.</span></li>
+                                                            <li className="flex items-start"><Lock className="h-4 w-4 mr-2 mt-0.5 text-blue-500 flex-shrink-0" /><span>Si os elegís mutuamente, ¡jugaréis juntos seguro!</span></li>
+                                                            <li className="flex items-start"><Scissors className="h-4 w-4 mr-2 mt-0.5 text-blue-500 flex-shrink-0" /><span>Puedes cambiar de opinión cuando quieras antes del sorteo.</span></li>
+                                                        </ul>
+                                                    </div>
+                                                    <AlertDialogFooter className="grid grid-cols-2 gap-2 mt-4">
+                                                        <AlertDialogCancel className="h-12 text-base">Cancelar</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => onSelectPartner(inscription.userId)} className="h-12 text-base bg-green-600 text-white hover:bg-green-700">Confirmar Elección</AlertDialogAction>
                                                     </AlertDialogFooter>
                                                 </AlertDialogContent>
                                             </AlertDialog>
@@ -507,7 +521,6 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                 )}
             </CardContent>
         </Card>
-        </>
     );
 }
 
