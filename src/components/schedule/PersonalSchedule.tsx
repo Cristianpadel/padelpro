@@ -7,7 +7,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { List, Star, Activity, CheckCircle, CalendarX, Ban, UserCircle as UserIcon, Clock, Hash, Euro, Gift, Lightbulb } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { isPast, format, differenceInHours } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
@@ -19,6 +18,7 @@ import { useRouter } from 'next/navigation';
 import { InfoCard } from './InfoCard';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from '@/lib/utils';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 
 interface BookingListItemProps {
@@ -61,7 +61,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
   const isConfirmed = status === 'confirmed' || status === 'confirmed_private';
 
   return (
-    <div className={cn("p-3 border rounded-md transition-colors w-full max-w-md mx-auto", isUpcoming && isConfirmed && "bg-green-50 border-green-200", isUpcoming && !isConfirmed && "bg-blue-50 border-blue-200", !isUpcoming && "bg-gray-50 border-gray-200")}>
+    <div className={cn("p-3 border rounded-md transition-colors w-80 flex flex-col", isUpcoming && isConfirmed && "bg-green-50 border-green-200", isUpcoming && !isConfirmed && "bg-blue-50 border-blue-200", !isUpcoming && "bg-gray-50 border-gray-200")}>
        <div className="flex justify-between items-start">
             <div>
                 <p className="font-semibold text-sm">{format(new Date(startTime), "eeee, d 'de' MMMM", { locale: es })}</p>
@@ -71,7 +71,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ booking, isUpcoming, 
             {isUpcoming && !isConfirmed && <Badge variant="secondary" className="text-xs">Pendiente</Badge>}
             {!isUpcoming && <Badge variant="outline" className="text-xs">Finalizada</Badge>}
        </div>
-        <div className="mt-2 text-xs text-muted-foreground space-y-1">
+        <div className="mt-2 text-xs text-muted-foreground space-y-1 flex-grow">
             <p className="flex items-center"><Clock className="mr-1.5 h-3.5 w-3.5" />{`${format(new Date(startTime), 'HH:mm')} - ${format(new Date(endTime), 'HH:mm')}`}</p>
             <p className="flex items-center"><UserIcon className="mr-1.5 h-3.5 w-3.5" />Clase de {booking.groupSize} personas</p>
             {courtNumber && <p className="flex items-center"><Hash className="mr-1.5 h-3.5 w-3.5" />Pista {courtNumber}</p>}
@@ -171,8 +171,11 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
     return (
       <div className="space-y-4">
          <Skeleton className="h-8 w-3/4" />
-         <Skeleton className="h-20 w-full" />
-         <Skeleton className="h-20 w-full" />
+         <div className="flex space-x-4">
+            <Skeleton className="h-48 w-80" />
+            <Skeleton className="h-48 w-80" />
+            <Skeleton className="h-48 w-80" />
+         </div>
       </div>
     );
   }
@@ -205,37 +208,43 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
       {upcomingBookings.length > 0 && (
         <div>
           <h4 className="text-base font-semibold mb-3 text-foreground flex items-center"><Clock className="mr-2 h-4 w-4" /> Próximas</h4>
-          <div className="space-y-4">
-            {upcomingBookings.map(booking => (
-              <BookingListItem
-                key={booking.id}
-                booking={booking}
-                isUpcoming={true}
-                ratedBookings={ratedBookings}
-                onRateClass={handleRateClass}
-                currentUser={currentUser}
-                onBookingCancelledOrCeded={handleBookingUpdate}
-              />
-            ))}
-          </div>
+           <ScrollArea>
+              <div className="flex space-x-4 pb-4">
+                {upcomingBookings.map(booking => (
+                  <BookingListItem
+                    key={booking.id}
+                    booking={booking}
+                    isUpcoming={true}
+                    ratedBookings={ratedBookings}
+                    onRateClass={handleRateClass}
+                    currentUser={currentUser}
+                    onBookingCancelledOrCeded={handleBookingUpdate}
+                  />
+                ))}
+              </div>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
         </div>
       )}
       {pastBookings.length > 0 && (
         <div>
            <h4 className="text-base font-semibold mb-3 text-muted-foreground flex items-center"><CheckCircle className="mr-2 h-4 w-4" /> Historial</h4>
-          <div className="space-y-4">
-            {pastBookings.map(booking => (
-              <BookingListItem
-                key={booking.id}
-                booking={booking}
-                isUpcoming={false}
-                ratedBookings={ratedBookings}
-                onRateClass={handleRateClass}
-                currentUser={currentUser}
-                onBookingCancelledOrCeded={handleBookingUpdate}
-              />
-            ))}
-          </div>
+            <ScrollArea>
+              <div className="flex space-x-4 pb-4">
+                {pastBookings.map(booking => (
+                  <BookingListItem
+                    key={booking.id}
+                    booking={booking}
+                    isUpcoming={false}
+                    ratedBookings={ratedBookings}
+                    onRateClass={handleRateClass}
+                    currentUser={currentUser}
+                    onBookingCancelledOrCeded={handleBookingUpdate}
+                  />
+                ))}
+              </div>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
         </div>
       )}
     </div>
