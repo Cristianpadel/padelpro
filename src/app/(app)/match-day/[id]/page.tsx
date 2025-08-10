@@ -45,7 +45,7 @@ export default function MatchDayDetailPage() {
                 return;
             }
             setEvent(eventData);
-            setCurrentUser(user);
+setCurrentUser(user);
             
             const eventInscriptions = await getMatchDayInscriptions(id);
             setInscriptions(eventInscriptions);
