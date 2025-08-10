@@ -97,7 +97,6 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                     bookedPlayers: matchPlayers.map(p => ({
                         userId: p.userId, 
                         name: p.userName,
-                        // Add profile picture URL to the player object for rendering
                         profilePictureUrl: p.userProfilePictureUrl 
                     })),
                 });
@@ -237,17 +236,17 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                     <div className="mt-6">
                         <div className="flex items-center justify-between mb-3">
                             <h4 className="font-semibold">Pistas Reservadas para el Evento</h4>
-                             {simulatedMatches.length > 0 && (
-                                <Button variant="ghost" size="sm" onClick={handleResetSimulation}>
-                                    <RefreshCw className="mr-2 h-4 w-4" /> Resetear
+                            <div className="flex items-center gap-2">
+                                {simulatedMatches.length > 0 && (
+                                    <Button variant="ghost" size="sm" onClick={handleResetSimulation}>
+                                        <RefreshCw className="mr-2 h-4 w-4" /> Resetear
+                                    </Button>
+                                )}
+                                <Button onClick={handleSimulateDraw} size="lg" className="bg-purple-600 text-white hover:bg-purple-700 sm:w-auto" disabled={!userInscription}>
+                                    <Dices className="mr-2 h-4 w-4" />
+                                    Simular Sorteo
                                 </Button>
-                            )}
-                        </div>
-                         <div className="mb-4">
-                            <Button onClick={handleSimulateDraw} size="lg" className="w-full bg-purple-600 text-white hover:bg-purple-700 sm:w-auto" disabled={!userInscription}>
-                                <Dices className="mr-2 h-4 w-4" />
-                                Simular Sorteo
-                            </Button>
+                            </div>
                         </div>
                         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                             {eventCourts.map((court, index) => {
@@ -264,7 +263,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                                     {simulatedMatch.bookedPlayers.map(player => (
                                                         <div key={player.userId} className="flex flex-col items-center text-center">
                                                              <Avatar className="h-10 w-10">
-                                                                <AvatarImage src={(player as any).profilePictureUrl} data-ai-hint="player avatar small" />
+                                                                <AvatarImage src={player.profilePictureUrl} data-ai-hint="player avatar small" />
                                                                 <AvatarFallback>{getInitials(player.name || '')}</AvatarFallback>
                                                             </Avatar>
                                                             <p className="text-[10px] mt-1 truncate max-w-[50px]">{player.name}</p>
