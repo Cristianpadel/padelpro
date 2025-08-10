@@ -23,7 +23,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
 type SimulatedPlayer = MatchDayInscription | { id: string; userName: string; userLevel: string; userProfilePictureUrl?: string; isEmptySlot?: boolean; userId: string; };
@@ -178,13 +177,13 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
             return;
         }
 
-        setIsSimulating(true);
         handleSimulateDraw();
+        setIsSimulating(true);
 
         simulationResetTimer.current = setTimeout(() => {
             handleResetSimulation();
         }, 30000);
-
+        
         setCountdown(30);
         countdownTimerRef.current = setInterval(() => {
             setCountdown(prev => {
@@ -253,21 +252,11 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                 const isPreferredPartner = userPreferredPartnerId === inscription.userId;
                                 
                                 return (
-                                    <button
+                                    <div
                                         key={inscription.id}
-                                        onClick={!isCurrentUser && userInscription ? () => onSelectPartner(inscription.userId) : undefined}
-                                        disabled={isCurrentUser || !userInscription}
-                                        className={cn(
-                                            "p-3 border rounded-lg flex flex-col items-center justify-center text-center bg-background shadow-md transition-all h-40 relative focus:outline-none focus:ring-2 focus:ring-offset-2",
-                                            !isCurrentUser && userInscription ? "hover:bg-muted/80 cursor-pointer focus:ring-purple-500" : "cursor-default"
-                                        )}
+                                        className="p-3 border rounded-lg flex flex-col items-center justify-between text-center bg-background shadow-md h-40"
                                     >
-                                        {isPreferredPartner && (
-                                            <div className="absolute top-1 right-1 h-7 w-7 flex items-center justify-center rounded-full shadow-md bg-purple-600 text-white">
-                                                <CheckCircle className="h-4 w-4"/>
-                                            </div>
-                                        )}
-                                        <div className="flex flex-col items-center gap-1 overflow-hidden">
+                                        <div className="flex-grow flex flex-col items-center gap-1 overflow-hidden">
                                              <div className="relative">
                                                  <Avatar className={cn(
                                                     "h-16 w-16 p-0 overflow-hidden shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.4)]",
@@ -282,7 +271,18 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                                 <Badge variant="outline" className="text-xs">N: {inscription.userLevel}</Badge>
                                             </div>
                                         </div>
-                                    </button>
+                                         {!isCurrentUser && userInscription && (
+                                            <Button
+                                                variant={isPreferredPartner ? "default" : "secondary"}
+                                                size="sm"
+                                                className="w-full mt-2 h-7 text-xs"
+                                                onClick={() => onSelectPartner(inscription.userId)}
+                                            >
+                                                {isPreferredPartner ? <CheckCircle className="mr-1.5 h-3.5 w-3.5" /> : <Handshake className="mr-1.5 h-3.5 w-3.5" />}
+                                                {isPreferredPartner ? "Seleccionado" : "Compañero"}
+                                            </Button>
+                                        )}
+                                    </div>
                                 );
                             }
                             // Render empty slot
