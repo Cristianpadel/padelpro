@@ -11,6 +11,8 @@ import { getInitials } from '@/lib/utils';
 import { UserPlus, PlusCircle, CheckCircle, Hourglass, Handshake } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 interface MatchDayPlayerGridProps {
     event: MatchDayEvent;
@@ -31,8 +33,17 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Jugadores Inscritos</CardTitle>
-                <CardDescription>Aquí puedes ver quién se ha apuntado y elegir tu pareja preferida para el sorteo.</CardDescription>
+                <div className="flex items-start justify-between gap-4">
+                    <div className="flex-grow">
+                        <CardTitle>Jugadores Inscritos</CardTitle>
+                        <CardDescription>Aquí puedes ver quién se ha apuntado y elegir tu pareja preferida para el sorteo.</CardDescription>
+                    </div>
+                     <div className="flex-shrink-0 text-center font-bold bg-white p-2 rounded-lg w-auto shadow-lg border border-border/20">
+                        <p className="text-xs uppercase text-muted-foreground">{format(new Date(event.eventDate), "EEEE", { locale: es })}</p>
+                        <p className="text-4xl leading-none text-primary">{format(new Date(event.eventDate), "d")}</p>
+                        <p className="text-xs uppercase text-muted-foreground">{format(new Date(event.eventDate), "MMMM", { locale: es })}</p>
+                    </div>
+                </div>
             </CardHeader>
             <CardContent className="space-y-6">
                 <div>
