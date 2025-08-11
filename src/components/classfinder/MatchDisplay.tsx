@@ -1,3 +1,4 @@
+
 // src/components/classfinder/MatchDisplay.tsx
 "use client";
 
@@ -192,7 +193,6 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
 
             if (selectedLevel && selectedLevel !== 'all') {
                 const club = getMockClubs().find(c => c.id === filterByClubId);
-                const range = club?.levelRanges?.find(r => r.name === selectedLevel);
                 
                 workingMatches = workingMatches.filter(m => {
                     if('isEventCard' in m) return false; // Match-Day events don't have level filtering
@@ -202,9 +202,12 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                         return selectedLevel === 'abierto';
                     }
 
-                    if (range) {
-                        const matchNumericLevel = parseFloat(match.level);
-                        return matchNumericLevel >= parseFloat(range.min) && matchNumericLevel <= parseFloat(range.max);
+                    if (selectedLevel !== 'abierto') {
+                        const range = club?.levelRanges?.find(r => r.name === selectedLevel);
+                        if (range) {
+                           const matchNumericLevel = parseFloat(match.level);
+                           return matchNumericLevel >= parseFloat(range.min) && matchNumericLevel <= parseFloat(range.max);
+                        }
                     }
                     
                     return false;
@@ -455,9 +458,9 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                                     <div className="text-sm font-medium text-muted-foreground">
                                         {activity.inscriptions.length} / {activity.maxPlayers} inscritos
                                     </div>
-                                     <Button variant="link" size="sm" className="h-auto p-0 text-orange-600">
+                                     <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white rounded-full font-semibold">
                                         Ver Evento
-                                        <ArrowRight className="ml-1 h-4 w-4" />
+                                        <ArrowRight className="ml-2 h-4 w-4" />
                                     </Button>
                                 </div>
                             </div>
@@ -492,5 +495,3 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
 };
 
 export default MatchDisplay;
-
-    
