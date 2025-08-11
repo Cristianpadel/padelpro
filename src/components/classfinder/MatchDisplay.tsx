@@ -1,5 +1,3 @@
-
-
 // src/components/classfinder/MatchDisplay.tsx
 "use client";
 
@@ -442,12 +440,14 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                                      {allSpots.map((_, index) => {
                                         const inscription = activity.inscriptions[index];
                                         return (
-                                            <Avatar key={inscription?.id || `empty-${index}`} className="h-12 w-12 border-2 border-white">
-                                                <AvatarImage src={inscription?.userProfilePictureUrl} data-ai-hint="player avatar small" />
-                                                <AvatarFallback className={cn("text-xs", inscription ? "bg-primary text-primary-foreground" : "bg-muted")}>
-                                                    {inscription ? getInitials(inscription.userName) : ''}
-                                                </AvatarFallback>
-                                            </Avatar>
+                                            <div key={inscription?.id || `empty-${index}`} className="relative inline-flex items-center justify-center h-12 w-12 rounded-full border-[3px] z-0 transition-all shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.2)] bg-slate-100 border-slate-300">
+                                                <Avatar className="h-[calc(100%-4px)] w-[calc(100%-4px)]">
+                                                    <AvatarImage src={inscription?.userProfilePictureUrl} data-ai-hint="player avatar small" />
+                                                    <AvatarFallback className={cn("text-xs", inscription ? "bg-primary text-primary-foreground" : "bg-muted")}>
+                                                        {inscription ? getInitials(inscription.userName) : ''}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                            </div>
                                         );
                                      })}
                                 </div>
@@ -492,3 +492,5 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
 };
 
 export default MatchDisplay;
+
+    
