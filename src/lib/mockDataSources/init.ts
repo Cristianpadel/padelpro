@@ -268,35 +268,35 @@ export function performInitialization() {
                     const [hour, minute] = time.split(':').map(Number);
                     const targetTime = setMinutes(setHours(date, hour), minute);
 
-                    // Book a class
-                    const classTarget = timeSlots().find(s =>
-                        s.clubId === club.id &&
-                        new Date(s.startTime).getTime() === targetTime.getTime() &&
-                        (s.bookedPlayers || []).length === 0
-                    );
-                    if (classTarget) {
-                        const studentForClass = students.find(st => {
-                            const studentLevel = parseFloat(st.level || '0');
-                            return studentLevel >= parseFloat(levelRange.min) && studentLevel <= parseFloat(levelRange.max);
-                        });
-                        if (studentForClass) {
-                            await bookClass(studentForClass.id, classTarget.id, 4, 0);
-                        }
-                    }
+                    // --- Corrected Logic ---
+                    // Find an appropriate student ONCE per level range
+                    const studentForBooking = students.find(st => {
+                        if (!st.level || st.level === 'abierto') return false;
+                        const studentLevel = parseFloat(st.level);
+                        return studentLevel >= parseFloat(levelRange.min) && studentLevel <= parseFloat(levelRange.max);
+                    });
 
-                    // Book a match
-                    const matchTarget = matches().find(m =>
-                        m.clubId === club.id &&
-                        new Date(m.startTime).getTime() === targetTime.getTime() &&
-                        m.isPlaceholder
-                    );
-                    if (matchTarget) {
-                        const studentForMatch = students.find(st => {
-                             const studentLevel = parseFloat(st.level || '0');
-                            return studentLevel >= parseFloat(levelRange.min) && studentLevel <= parseFloat(levelRange.max);
-                        });
-                        if (studentForMatch) {
-                            await bookMatch(studentForMatch.id, matchTarget.id);
+                    if (studentForBooking) {
+                        // Find an available CLASS proposal at the target time
+                        const classTarget = timeSlots().find(s =>
+                            s.clubId === club.id &&
+                            new Date(s.startTime).getTime() === targetTime.getTime() &&
+                            (s.bookedPlayers || []).length === 0
+                        );
+                        if (classTarget) {
+                            // Book the class with the found student
+                            await bookClass(studentForBooking.id, classTarget.id, 4, 0); 
+                        }
+
+                        // Find an available MATCH placeholder at the target time
+                        const matchTarget = matches().find(m =>
+                            m.clubId === club.id &&
+                            new Date(m.startTime).getTime() === targetTime.getTime() &&
+                            m.isPlaceholder
+                        );
+                        if (matchTarget) {
+                            // Book the match with the found student
+                            await bookMatch(studentForBooking.id, matchTarget.id);
                         }
                     }
                 }
