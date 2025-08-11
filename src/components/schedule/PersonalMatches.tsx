@@ -265,7 +265,10 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
     return (
       <div className="space-y-4">
          <Skeleton className="h-8 w-3/4" />
-         <Skeleton className="h-40 w-full" />
+         <div className="flex space-x-1">
+            <Skeleton className="h-96 w-80" />
+            <Skeleton className="h-96 w-80" />
+         </div>
       </div>
     );
   }
@@ -455,7 +458,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                             <TooltipProvider key={idx} delayDuration={150}>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
-                                        <div className="flex flex-col items-center space-y-1">
+                                        <button className="flex flex-col items-center space-y-1" disabled={!player} onClick={() => player && toast({title: `Nivel de ${player.name || 'Jugador'}`, description: `Nivel de juego: ${fullPlayer?.level || 'No especificado'}`})}>
                                             <Avatar className={cn(
                                                 "h-12 w-12 border-[3px] transition-all shadow-inner",
                                                 player ? "border-green-500 bg-green-100" : "border-dashed border-green-400 bg-green-50/50"
@@ -475,7 +478,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                                                 "text-[11px] font-medium truncate w-auto max-w-[60px]",
                                                 player ? "text-foreground" : "text-muted-foreground"
                                             )}>{player ? (player.name || 'Jugador').split(' ')[0] : (pricePerPlayer > 0 ? `${pricePerPlayer.toFixed(2)}€` : "Libre")}</span>
-                                        </div>
+                                        </button>
                                     </TooltipTrigger>
                                     <TooltipContent side="bottom"><p>{player ? (player.name || 'Tú') : 'Plaza Libre'}</p></TooltipContent>
                                 </Tooltip>
