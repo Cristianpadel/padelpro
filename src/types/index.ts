@@ -1,3 +1,4 @@
+
 // types/index.ts
 
 // --- Core Enums & Constants ---
@@ -442,7 +443,7 @@ export const displayClassCategory = (category: PadelCategoryForSlot, short = fal
         if (option.value === 'chico') return 'Chicos';
         return 'Cat.';
     }
-    return option.label.replace(' (Informativo)', '');
+    return option.label.replace(' (Mixto)', '');
 };
 
 

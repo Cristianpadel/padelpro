@@ -186,10 +186,16 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
             }
 
             if (selectedLevel !== 'all') {
-                if (selectedLevel === 'abierto') {
-                    workingMatches = workingMatches.filter(match => !('isEventCard' in match) && (match as Match).level === 'abierto');
-                } else {
-                    workingMatches = workingMatches.filter(match => !('isEventCard' in match) && ((match as Match).level === selectedLevel || (match as Match).level === 'abierto'));
+                const club = getMockClubs().find(c => c.id === filterByClubId);
+                const range = club?.levelRanges?.find(r => r.name === selectedLevel);
+                if (range) {
+                    workingMatches = workingMatches.filter(m => {
+                        if('isEventCard' in m) return false;
+                        const match = m as Match;
+                        if (match.level === 'abierto') return true; // Abierto matches are shown for any range filter
+                        const matchNumericLevel = parseFloat(match.level);
+                        return matchNumericLevel >= parseFloat(range.min) && matchNumericLevel <= parseFloat(range.max);
+                    });
                 }
             }
         }

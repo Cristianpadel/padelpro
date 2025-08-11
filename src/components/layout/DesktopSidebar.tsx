@@ -23,6 +23,8 @@ import { useActivityFilters } from '@/hooks/useActivityFilters';
 import { useToast } from '@/hooks/use-toast';
 import ManageFavoriteInstructorsDialog from '@/components/schedule/ManageFavoriteInstructorsDialog';
 import { Separator } from '../ui/separator';
+import LevelFilterDialog from '../classfinder/LevelFilterDialog';
+
 
 interface DesktopSidebarProps {
     currentUser: User | null;
@@ -52,6 +54,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     const router = useRouter();
     const pathname = usePathname();
     const [isManageFavoritesOpen, setIsManageFavoritesOpen] = useState(false);
+    const [isLevelFilterOpen, setIsLevelFilterOpen] = useState(false);
     const [currentUser, setCurrentUser] = useState(initialCurrentUser);
 
     const {
@@ -77,7 +80,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     }, [initialCurrentUser]);
 
     const isActivitiesPage = pathname.startsWith('/activities');
-    const levelFilterLabel = selectedLevel === 'all' ? 'Todos los niveles' : selectedLevel === 'abierto' ? 'Nivel Abierto' : `Nivel ${selectedLevel}`;
+    const levelFilterLabel = selectedLevel === 'all' ? 'Todos los niveles' : selectedLevel === 'abierto' ? 'Nivel Abierto' : `${selectedLevel}`;
 
     const handleFavoritesClick = () => {
         if (filterByFavorites) {
@@ -87,7 +90,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
         }
     };
     
-    if (!currentUser) {
+    if (!currentUser || !clubInfo) {
          return (
             <Card className="p-4 flex flex-col gap-4 sticky top-6 h-fit w-72">
                 {clubInfo && (
@@ -126,143 +129,153 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
       : {};
 
     return (
-        <Card className="p-4 flex flex-col gap-4 sticky top-6 h-fit w-72" style={shadowStyle}>
-             {clubInfo && (
-                <div className="flex flex-col items-center text-center gap-2">
-                    <Avatar className="h-20 w-20 rounded-md">
-                         <AvatarImage src={clubInfo.logoUrl} alt={clubInfo.name} data-ai-hint="club logo" />
-                         <AvatarFallback className="rounded-md bg-muted">
-                             <Building className="h-10 w-10" />
-                         </AvatarFallback>
-                    </Avatar>
-                    <div>
-                        <h2 className="font-bold text-lg">{clubInfo.name}</h2>
-                        <p className="text-xs text-muted-foreground">{clubInfo.location}</p>
-                    </div>
-                </div>
-            )}
-            
-            <Separator />
-            
-             <Link href="/profile" className="w-full text-left p-2 rounded-lg hover:bg-muted transition-colors">
-                <div className="flex items-center gap-3">
-                    <Avatar className="h-12 w-12">
-                         <AvatarImage src={currentUser.profilePictureUrl} alt={currentUser.name} data-ai-hint="user profile picture" />
-                         <AvatarFallback>{getInitials(currentUser.name)}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-grow">
-                        <p className="font-semibold text-base">{currentUser.name}</p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <div className="flex items-center"><Wallet className="h-3 w-3 mr-1"/> {(currentUser.credit ?? 0).toFixed(2)}€</div>
-                            <div className="flex items-center"><Star className="h-3 w-3 mr-1"/> {currentUser.loyaltyPoints ?? 0} Pts</div>
+        <>
+            <Card className="p-4 flex flex-col gap-4 sticky top-6 h-fit w-72" style={shadowStyle}>
+                {clubInfo && (
+                    <div className="flex flex-col items-center text-center gap-2">
+                        <Avatar className="h-20 w-20 rounded-md">
+                            <AvatarImage src={clubInfo.logoUrl} alt={clubInfo.name} data-ai-hint="club logo" />
+                            <AvatarFallback className="rounded-md bg-muted">
+                                <Building className="h-10 w-10" />
+                            </AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <h2 className="font-bold text-lg">{clubInfo.name}</h2>
+                            <p className="text-xs text-muted-foreground">{clubInfo.location}</p>
                         </div>
                     </div>
-                </div>
-            </Link>
-
-
-            <Separator />
-
-            <div className="p-1 space-y-1">
-                 <Link href="/dashboard" className="w-full">
-                    <Button variant={pathname.startsWith('/dashboard') || pathname.startsWith('/schedule') ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md">
-                        <ClipboardList className="mr-3 h-5 w-5" /> Agenda
-                    </Button>
-                </Link>
-                <Link href="/activities?view=clases" className="w-full">
-                    <Button variant={isActivitiesPage && activeView === 'clases' ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md">
-                        <Activity className="mr-3 h-5 w-5" /> Clases
-                    </Button>
-                </Link>
-                <Link href="/activities?view=partidas" className="w-full">
-                    <Button variant={isActivitiesPage && activeView === 'partidas' ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md">
-                        <Users className="mr-3 h-5 w-5" /> Partidas
-                    </Button>
-                </Link>
-                 {clubInfo?.isMatchDayEnabled && (
-                  <Link href="/match-day" className="w-full">
-                      <Button variant={pathname.startsWith('/match-day') ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md">
-                          <PartyPopper className="mr-3 h-5 w-5" /> Match-Day
-                      </Button>
-                  </Link>
                 )}
-                 <Link href="/store" className="w-full">
-                    <Button variant={pathname.startsWith('/store') ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md">
-                        <ShoppingBag className="mr-3 h-5 w-5" /> Tienda
-                    </Button>
+                
+                <Separator />
+                
+                <Link href="/profile" className="w-full text-left p-2 rounded-lg hover:bg-muted transition-colors">
+                    <div className="flex items-center gap-3">
+                        <Avatar className="h-12 w-12">
+                            <AvatarImage src={currentUser.profilePictureUrl} alt={currentUser.name} data-ai-hint="user profile picture" />
+                            <AvatarFallback>{getInitials(currentUser.name)}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-grow">
+                            <p className="font-semibold text-base">{currentUser.name}</p>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <div className="flex items-center"><Wallet className="h-3 w-3 mr-1"/> {(currentUser.credit ?? 0).toFixed(2)}€</div>
+                                <div className="flex items-center"><Star className="h-3 w-3 mr-1"/> {currentUser.loyaltyPoints ?? 0} Pts</div>
+                            </div>
+                        </div>
+                    </div>
                 </Link>
-            </div>
-            
-            {isActivitiesPage && (
-                <>
-                    <div className="border-t border-border/50 my-2"></div>
-                    <div className="space-y-1 p-1">
-                        <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase">Filtros</h3>
-                        {timeSlotFilterOptions.map(opt => (
-                            <Button 
-                                key={opt.value}
-                                variant={timeSlotFilter === opt.value ? "secondary" : "ghost"}
-                                className={cn("w-full justify-start text-sm h-10 rounded-full", timeSlotFilter === opt.value && "font-semibold")}
-                                onClick={() => handleTimeFilterChange(opt.value)}
-                            >
-                                <Clock className="mr-3 h-4 w-4" /> {opt.label}
-                            </Button>
-                        ))}
-                         <Button variant={selectedLevel !== 'all' ? "secondary" : "ghost"} className={cn("w-full justify-start text-sm h-10 rounded-full", selectedLevel !== 'all' && "font-semibold")}>
-                            <BarChartHorizontal className="mr-3 h-4 w-4" /> {levelFilterLabel}
+
+
+                <Separator />
+
+                <div className="p-1 space-y-1">
+                    <Link href="/dashboard" className="w-full">
+                        <Button variant={pathname.startsWith('/dashboard') || pathname.startsWith('/schedule') ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md">
+                            <ClipboardList className="mr-3 h-5 w-5" /> Agenda
                         </Button>
-                        <div className="space-y-1 pt-2">
-                             <Button variant={viewPreference === 'normal' ? "secondary" : "ghost"} className={cn("w-full justify-start text-sm h-10 rounded-full", viewPreference === 'normal' && "font-semibold")} onClick={() => handleViewPrefChange('normal')}>
-                                <Eye className="mr-3 h-4 w-4" /> Disponibles
+                    </Link>
+                    <Link href="/activities?view=clases" className="w-full">
+                        <Button variant={isActivitiesPage && activeView === 'clases' ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md">
+                            <Activity className="mr-3 h-5 w-5" /> Clases
+                        </Button>
+                    </Link>
+                    <Link href="/activities?view=partidas" className="w-full">
+                        <Button variant={isActivitiesPage && activeView === 'partidas' ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md">
+                            <Users className="mr-3 h-5 w-5" /> Partidas
+                        </Button>
+                    </Link>
+                    {clubInfo?.isMatchDayEnabled && (
+                    <Link href="/match-day" className="w-full">
+                        <Button variant={pathname.startsWith('/match-day') ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md">
+                            <PartyPopper className="mr-3 h-5 w-5" /> Match-Day
+                        </Button>
+                    </Link>
+                    )}
+                    <Link href="/store" className="w-full">
+                        <Button variant={pathname.startsWith('/store') ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md">
+                            <ShoppingBag className="mr-3 h-5 w-5" /> Tienda
+                        </Button>
+                    </Link>
+                </div>
+                
+                {isActivitiesPage && (
+                    <>
+                        <div className="border-t border-border/50 my-2"></div>
+                        <div className="space-y-1 p-1">
+                            <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase">Filtros</h3>
+                            {timeSlotFilterOptions.map(opt => (
+                                <Button 
+                                    key={opt.value}
+                                    variant={timeSlotFilter === opt.value ? "secondary" : "ghost"}
+                                    className={cn("w-full justify-start text-sm h-10 rounded-full", timeSlotFilter === opt.value && "font-semibold")}
+                                    onClick={() => handleTimeFilterChange(opt.value)}
+                                >
+                                    <Clock className="mr-3 h-4 w-4" /> {opt.label}
+                                </Button>
+                            ))}
+                            <Button variant={selectedLevel !== 'all' ? "secondary" : "ghost"} className={cn("w-full justify-start text-sm h-10 rounded-full", selectedLevel !== 'all' && "font-semibold")} onClick={() => setIsLevelFilterOpen(true)}>
+                                <BarChartHorizontal className="mr-3 h-4 w-4" /> {levelFilterLabel}
                             </Button>
-                            <Button variant={viewPreference === 'withPlayers' ? "secondary" : "ghost"} className={cn("w-full justify-start text-sm h-10 rounded-full", viewPreference === 'withPlayers' && "font-semibold")} onClick={() => handleViewPrefChange('withPlayers')}>
-                                <Users className="mr-3 h-4 w-4" /> En Juego
-                            </Button>
-                            <Button variant={viewPreference === 'myInscriptions' ? 'secondary' : 'ghost'} className={cn('w-full justify-start text-sm h-10 rounded-full', viewPreference === 'myInscriptions' && 'font-semibold')} onClick={() => handleViewPrefChange('myInscriptions')}>
-                                <ClipboardList className="mr-3 h-4 w-4" /> Mis Inscripciones
-                            </Button>
-                            <Button variant={viewPreference === 'myConfirmed' ? 'secondary' : 'ghost'} className={cn('w-full justify-start text-sm h-10 rounded-full', viewPreference === 'myConfirmed' && 'font-semibold')} onClick={() => handleViewPrefChange('myConfirmed')}>
-                                <CheckCircle className="mr-3 h-4 w-4" /> Mis Reservas
+                            <div className="space-y-1 pt-2">
+                                <Button variant={viewPreference === 'normal' ? "secondary" : "ghost"} className={cn("w-full justify-start text-sm h-10 rounded-full", viewPreference === 'normal' && "font-semibold")} onClick={() => handleViewPrefChange('normal')}>
+                                    <Eye className="mr-3 h-4 w-4" /> Disponibles
+                                </Button>
+                                <Button variant={viewPreference === 'withPlayers' ? "secondary" : "ghost"} className={cn("w-full justify-start text-sm h-10 rounded-full", viewPreference === 'withPlayers' && "font-semibold")} onClick={() => handleViewPrefChange('withPlayers')}>
+                                    <Users className="mr-3 h-4 w-4" /> En Juego
+                                </Button>
+                                <Button variant={viewPreference === 'myInscriptions' ? 'secondary' : 'ghost'} className={cn('w-full justify-start text-sm h-10 rounded-full', viewPreference === 'myInscriptions' && 'font-semibold')} onClick={() => handleViewPrefChange('myInscriptions')}>
+                                    <ClipboardList className="mr-3 h-4 w-4" /> Mis Inscripciones
+                                </Button>
+                                <Button variant={viewPreference === 'myConfirmed' ? 'secondary' : 'ghost'} className={cn('w-full justify-start text-sm h-10 rounded-full', viewPreference === 'myConfirmed' && 'font-semibold')} onClick={() => handleViewPrefChange('myConfirmed')}>
+                                    <CheckCircle className="mr-3 h-4 w-4" /> Mis Reservas
+                                </Button>
+                            </div>
+                            {activeView === 'clases' && (
+                                <Button 
+                                    variant={filterByFavorites ? "secondary" : "ghost"} 
+                                    className={cn("w-full justify-start text-sm h-10 rounded-full", filterByFavorites && "font-semibold")} 
+                                    onClick={handleFavoritesClick}
+                                >
+                                    <Heart className={cn("mr-3 h-4 w-4", filterByFavorites && "fill-current text-destructive")} /> Favoritos
+                                </Button>
+                            )}
+                            <Button 
+                                variant={showPointsBonus ? "secondary" : "ghost"} 
+                                className={cn("w-full justify-start text-sm h-10 rounded-full", showPointsBonus && "font-semibold")} 
+                                onClick={handleTogglePointsBonus}
+                            >
+                                <Sparkles className="mr-3 h-4 w-4 text-amber-500" /> + Puntos
                             </Button>
                         </div>
-                        {activeView === 'clases' && (
-                            <Button 
-                                variant={filterByFavorites ? "secondary" : "ghost"} 
-                                className={cn("w-full justify-start text-sm h-10 rounded-full", filterByFavorites && "font-semibold")} 
-                                onClick={handleFavoritesClick}
-                            >
-                                <Heart className={cn("mr-3 h-4 w-4", filterByFavorites && "fill-current text-destructive")} /> Favoritos
-                            </Button>
-                        )}
-                        <Button 
-                            variant={showPointsBonus ? "secondary" : "ghost"} 
-                            className={cn("w-full justify-start text-sm h-10 rounded-full", showPointsBonus && "font-semibold")} 
-                            onClick={handleTogglePointsBonus}
-                        >
-                            <Sparkles className="mr-3 h-4 w-4 text-amber-500" /> + Puntos
-                        </Button>
-                    </div>
-                </>
-            )}
+                    </>
+                )}
 
-            <div className="border-t border-border/50 my-2"></div>
-            
-            <div className="space-y-1 mt-auto">
-                 <Button variant="outline" className="w-full justify-start text-base h-12 rounded-full" onClick={onProfessionalAccessClick}>
-                    <Briefcase className="mr-3 h-4 w-4" /> Acceso Profesional
-                </Button>
-                <Button variant="outline" className="w-full justify-start text-base h-12 rounded-full" onClick={onLogoutClick}>
-                    <LogOut className="mr-3 h-4 w-4" /> Salir
-                </Button>
-            </div>
-            
-             <ManageFavoriteInstructorsDialog
-                isOpen={isManageFavoritesOpen}
-                onOpenChange={setIsManageFavoritesOpen}
-                currentUser={currentUser}
-                onApplyFavorites={handleApplyFavorites}
+                <div className="border-t border-border/50 my-2"></div>
+                
+                <div className="space-y-1 mt-auto">
+                    <Button variant="outline" className="w-full justify-start text-base h-12 rounded-full" onClick={onProfessionalAccessClick}>
+                        <Briefcase className="mr-3 h-4 w-4" /> Acceso Profesional
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start text-base h-12 rounded-full" onClick={onLogoutClick}>
+                        <LogOut className="mr-3 h-4 w-4" /> Salir
+                    </Button>
+                </div>
+                
+                <ManageFavoriteInstructorsDialog
+                    isOpen={isManageFavoritesOpen}
+                    onOpenChange={setIsManageFavoritesOpen}
+                    currentUser={currentUser}
+                    onApplyFavorites={handleApplyFavorites}
+                />
+            </Card>
+
+            <LevelFilterDialog 
+                isOpen={isLevelFilterOpen}
+                onOpenChange={setIsLevelFilterOpen}
+                currentValue={selectedLevel}
+                onSelect={handleLevelChange}
+                clubId={clubInfo.id}
             />
-        </Card>
+        </>
     );
 };
 

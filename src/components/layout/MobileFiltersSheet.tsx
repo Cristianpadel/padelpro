@@ -1,26 +1,26 @@
+
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Heart, SlidersHorizontal, Eye, ClipboardList, CheckCircle, Sparkles, Star, Clock, BarChartHorizontal, X } from 'lucide-react';
 import { timeSlotFilterOptions } from '@/types';
-import type { TimeOfDayFilterType, MatchPadelLevel } from '@/types';
+import type { TimeOfDayFilterType, MatchPadelLevel, ClubLevelRange } from '@/types';
 import { cn } from '@/lib/utils';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { matchPadelLevels } from '@/types';
+import { getMockClubs } from '@/lib/mockData';
 
 interface MobileFiltersSheetProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   timeSlotFilter: TimeOfDayFilterType;
   selectedLevel: MatchPadelLevel | 'all';
-  viewPreference: 'normal' | 'myInscriptions' | 'myConfirmed';
+  viewPreference: 'normal' | 'myInscriptions' | 'myConfirmed' | 'withPlayers';
   filterByFavorites: boolean;
   showPointsBonus: boolean;
   onTimeFilterChange: (value: TimeOfDayFilterType) => void;
   onLevelChange: (value: MatchPadelLevel | 'all') => void;
-  onViewPreferenceChange: (value: 'normal' | 'myInscriptions' | 'myConfirmed') => void;
+  onViewPreferenceChange: (value: 'normal' | 'myInscriptions' | 'myConfirmed' | 'withPlayers') => void;
   onFavoritesClick: () => void;
   onTogglePointsBonus: () => void;
   onClearFilters: () => void;
@@ -59,6 +59,10 @@ export function MobileFiltersSheet({
     onClearFilters,
 }: MobileFiltersSheetProps) {
 
+    const club = getMockClubs()[0]; // Assuming single club for now
+    const levelRanges: (ClubLevelRange | {name: string, min: string, max: string})[] = [{name: 'Todos', min: 'all', max: 'all'}, ...(club?.levelRanges || [])];
+
+
     return (
         <Sheet open={isOpen} onOpenChange={onOpenChange}>
             <SheetContent side="bottom" className="rounded-t-lg h-auto flex flex-col p-0">
@@ -80,19 +84,23 @@ export function MobileFiltersSheet({
 
                     <div>
                         <h4 className="font-semibold mb-2 text-sm text-muted-foreground">Nivel</h4>
-                        <Select value={selectedLevel} onValueChange={(value: MatchPadelLevel | 'all') => onLevelChange(value)}>
-                            <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Elige un nivel..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Todos los Niveles</SelectItem>
-                                {matchPadelLevels.map(level => (
-                                    <SelectItem key={level} value={level} className="capitalize">
-                                        {level === 'abierto' ? 'Nivel Abierto' : `Nivel ${level}`}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <div className="grid grid-cols-2 gap-2">
+                            {levelRanges.map(range => {
+                                const valueToSelect = range.name === 'Todos' ? 'all' : range.name;
+                                const isSelected = selectedLevel === valueToSelect;
+                                return (
+                                    <Button 
+                                        key={range.name}
+                                        variant={isSelected ? 'secondary' : 'outline'}
+                                        onClick={() => onLevelChange(valueToSelect as MatchPadelLevel | 'all')}
+                                        className={cn("h-auto py-2 flex flex-col text-xs text-center", isSelected && 'border-primary')}
+                                    >
+                                        <span className="font-bold">{range.name}</span>
+                                        {range.min !== 'all' && <span className="font-normal opacity-80">{range.min}-{range.max}</span>}
+                                    </Button>
+                                )
+                            })}
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
@@ -100,6 +108,7 @@ export function MobileFiltersSheet({
                             <h4 className="font-semibold mb-2 text-sm text-muted-foreground">Vista</h4>
                             <div className="space-y-1">
                                 <Button variant={viewPreference === 'normal' ? 'secondary' : 'outline'} onClick={() => onViewPreferenceChange('normal')} className={cn("h-auto w-full py-2 justify-start font-semibold", viewPreference === 'normal' && "border-primary")}><Eye className="mr-2 h-4 w-4"/> Disponibles</Button>
+                                <Button variant={viewPreference === 'withPlayers' ? "secondary" : "outline"} onClick={() => onViewPreferenceChange('withPlayers')} className={cn("h-auto w-full py-2 justify-start font-semibold", viewPreference === 'withPlayers' && 'border-primary text-primary')}><Users className="mr-2 h-4 w-4" /> En Juego</Button>
                                 <Button variant={viewPreference === 'myInscriptions' ? 'secondary' : 'outline'} onClick={() => onViewPreferenceChange('myInscriptions')} className={cn("h-auto w-full py-2 justify-start font-semibold", viewPreference === 'myInscriptions' && "border-primary")}><ClipboardList className="mr-2 h-4 w-4"/> Inscripciones</Button>
                                 <Button variant={viewPreference === 'myConfirmed' ? 'secondary' : 'outline'} onClick={() => onViewPreferenceChange('myConfirmed')} className={cn("h-auto w-full py-2 justify-start font-semibold", viewPreference === 'myConfirmed' && "border-primary")}><CheckCircle className="mr-2 h-4 w-4"/> Reservas</Button>
                             </div>

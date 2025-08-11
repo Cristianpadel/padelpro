@@ -148,9 +148,17 @@ export function useActivityFilters(
 
   // --- Effects to Sync State with URL/User ---
   useEffect(() => {
-    if (!currentUser?.level || searchParams.has('level')) return;
-    updateUrlFilter('level', currentUser.level);
-  }, [currentUser?.level, searchParams, updateUrlFilter]);
+    const clubLevelRanges = currentUser && (currentUser as any).club?.levelRanges; // A bit of a hack to check for club data
+    if (!currentUser?.level && !clubLevelRanges && !searchParams.has('level')) {
+        updateUrlFilter('level', 'all'); // Default to all if no user level and no ranges
+    } else if (currentUser?.level && !searchParams.has('level') && clubLevelRanges) {
+        const userRange = clubLevelRanges.find((r: any) => parseFloat(currentUser.level!) >= parseFloat(r.min) && parseFloat(currentUser.level!) <= parseFloat(r.max));
+        updateUrlFilter('level', userRange ? userRange.name : 'all');
+    } else if (!searchParams.has('level')) {
+        updateUrlFilter('level', 'all');
+    }
+  }, [currentUser, searchParams, updateUrlFilter]);
+
 
   useEffect(() => {
     if (filterByGratisOnly || filterByLiberadasOnly || filterByPuntosOnly || matchIdFilter || matchShareCode) {
