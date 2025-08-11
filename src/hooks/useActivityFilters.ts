@@ -127,20 +127,17 @@ export function useActivityFilters(
     type: 'class' | 'match',
     date?: Date | null,
   ) => {
-    const newSearchParams = new URLSearchParams(searchParams.toString());
+    const newSearchParams = new URLSearchParams();
+    // Set the primary view (clases/partidas)
     newSearchParams.set('view', type);
+    // Set the preference filter
     newSearchParams.set('viewPref', pref);
 
-    if(date){
-        // This is a special case to handle the date strip clicks correctly.
-        // We defer the date change to the page component.
+    if (date) {
+        // Since this handler is called from an indicator click,
+        // we defer setting the date to the page component to ensure sync.
         handleDateChange(date);
     }
-    
-    // Clear other filters that conflict with view preferences
-    newSearchParams.delete('filter');
-    newSearchParams.delete('code');
-    newSearchParams.delete('matchId');
 
     router.replace(`${pathname}?${newSearchParams.toString()}`, { scroll: false });
   };
