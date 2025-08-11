@@ -129,8 +129,10 @@ export const countUserUnconfirmedInscriptions = (userId: string): number => {
 export const getUserActivityStatusForDay = (userId: string, date: Date): UserActivityStatusForDay => {
     const todayStart = startOfDay(date);
     const now = new Date();
+    
     let result: UserActivityStatusForDay = {
         activityStatus: 'none',
+        activityTypes: [],
         hasEvent: false,
         anticipationPoints: Math.max(0, differenceInDays(date, now))
     };
@@ -143,66 +145,63 @@ export const getUserActivityStatusForDay = (userId: string, date: Date): UserAct
         const userEventInscription = state.getMockMatchDayInscriptions().find(i => i.userId === userId && i.eventId === result.eventId);
         if (userEventInscription) {
             result.activityStatus = 'inscribed';
-            result.activityType = 'event';
+            result.activityTypes.push('event');
         }
     }
     
-    // Check confirmed matches first as they are a higher priority than inscriptions
-    for (const booking of state.getMockUserMatchBookings()) {
-        if (booking.userId !== userId) continue;
-        const match = state.getMockMatches().find(m => m.id === booking.activityId);
-        if (match && isSameDay(new Date(match.startTime), todayStart)) {
-            if (match.status === 'confirmed' || match.status === 'confirmed_private') {
-                result.activityStatus = 'confirmed';
-                result.activityType = 'match';
-                return result; // Highest priority, return immediately
-            }
-        }
-    }
-
     // Check confirmed classes
-    for (const booking of state.getMockUserBookings()) {
-        if (booking.userId !== userId) continue;
-        const slot = state.getMockTimeSlots().find(s => s.id === booking.activityId);
-        if (slot && isSameDay(new Date(slot.startTime), todayStart)) {
-             if (isSlotEffectivelyCompleted(slot).completed) {
-                result.activityStatus = 'confirmed';
-                result.activityType = 'class';
-                return result; // Highest priority, return immediately
-            }
-        }
+    const hasConfirmedClass = state.getMockUserBookings().some(b => {
+        if (b.userId !== userId) return false;
+        const slot = state.getMockTimeSlots().find(s => s.id === b.activityId);
+        return slot && isSameDay(new Date(slot.startTime), todayStart) && isSlotEffectivelyCompleted(slot).completed;
+    });
+
+    if (hasConfirmedClass) {
+        result.activityStatus = 'confirmed';
+        result.activityTypes.push('class');
+    }
+
+    // Check confirmed matches
+    const hasConfirmedMatch = state.getMockUserMatchBookings().some(b => {
+        if (b.userId !== userId) return false;
+        const match = state.getMockMatches().find(m => m.id === b.activityId);
+        return match && isSameDay(new Date(match.startTime), todayStart) && (match.status === 'confirmed' || match.status === 'confirmed_private');
+    });
+
+    if (hasConfirmedMatch) {
+        result.activityStatus = 'confirmed';
+        result.activityTypes.push('match');
+    }
+
+    // If there are confirmed activities, we don't need to check for inscriptions
+    if (result.activityStatus === 'confirmed') {
+        return result;
+    }
+
+    // Check inscribed classes
+    const hasInscribedClass = state.getMockUserBookings().some(b => {
+        if (b.userId !== userId) return false;
+        const slot = state.getMockTimeSlots().find(s => s.id === b.activityId);
+        return slot && isSameDay(new Date(slot.startTime), todayStart) && slot.status === 'pre_registration';
+    });
+
+    if (hasInscribedClass) {
+        result.activityStatus = 'inscribed';
+        result.activityTypes.push('class');
+    }
+
+    // Check inscribed matches
+    const hasInscribedMatch = state.getMockUserMatchBookings().some(b => {
+        if (b.userId !== userId) return false;
+        const match = state.getMockMatches().find(m => m.id === b.activityId);
+        return match && isSameDay(new Date(match.startTime), todayStart) && match.status === 'forming';
+    });
+    
+    if (hasInscribedMatch) {
+        result.activityStatus = 'inscribed';
+        result.activityTypes.push('match');
     }
     
-    // If no confirmed activity, check for inscriptions (matches first)
-    if (result.activityStatus !== 'inscribed') { // Check only if not already inscribed in an event
-        for (const booking of state.getMockUserMatchBookings()) {
-            if (booking.userId !== userId) continue;
-            const match = state.getMockMatches().find(m => m.id === booking.activityId);
-            if (match && isSameDay(new Date(match.startTime), todayStart)) {
-                if (match.status === 'forming') {
-                    result.activityStatus = 'inscribed';
-                    result.activityType = 'match';
-                    return result; // Match inscription found
-                }
-            }
-        }
-    }
-
-     if (result.activityStatus !== 'inscribed') {
-        for (const booking of state.getMockUserBookings()) {
-            if (booking.userId !== userId) continue;
-            const slot = state.getMockTimeSlots().find(s => s.id === booking.activityId);
-            if (slot && isSameDay(new Date(slot.startTime), todayStart)) {
-                if (slot.status === 'pre_registration') {
-                    result.activityStatus = 'inscribed';
-                    result.activityType = 'class';
-                    return result; // Class inscription found
-                }
-            }
-        }
-    }
-
-
     return result;
 };
 

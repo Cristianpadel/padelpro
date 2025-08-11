@@ -25,6 +25,8 @@ import { cn } from '@/lib/utils';
 import DesktopSidebar from '@/components/layout/DesktopSidebar';
 import LogoutConfirmationDialog from '@/components/layout/LogoutConfirmationDialog';
 import ProfessionalAccessDialog from '@/components/layout/ProfessionalAccessDialog';
+import ActivityTypeSelectionDialog from './components/ActivityTypeSelectionDialog';
+
 
 export default function ActivitiesPage() {
     const router = useRouter();
@@ -41,6 +43,14 @@ export default function ActivitiesPage() {
     const [isMobileFilterSheetOpen, setIsMobileFilterSheetOpen] = useState(false);
     const [isLogoutConfimOpen, setIsLogoutConfirmOpen] = React.useState(false);
     const [isProfessionalAccessOpen, setIsProfessionalAccessOpen] = React.useState(false);
+
+    // New state for the activity type selection dialog
+    const [activitySelection, setActivitySelection] = useState<{
+        isOpen: boolean;
+        date: Date | null;
+        preference: ViewPreference | null;
+        types: ('class' | 'match')[];
+    }>({ isOpen: false, date: null, preference: null, types: [] });
 
     const {
         activeView,
@@ -136,11 +146,22 @@ export default function ActivitiesPage() {
         return () => clearInterval(intervalId);
     }, [currentUser, refreshKey]);
 
-    const onViewPrefChange = (date: Date, pref: ViewPreference, type: 'class' | 'match' | 'event', eventId?: string) => {
-        handleDateChange(date);
-        setTimeout(() => {
-            handleViewPrefChange(pref, type, eventId);
-        }, 0);
+    const onViewPrefChange = (date: Date, pref: ViewPreference, types: ('class' | 'match' | 'event')[], eventId?: string) => {
+        const relevantTypes = types.filter(t => t !== 'event') as ('class' | 'match')[];
+
+        if (relevantTypes.length > 1) {
+            handleDateChange(date); // Change date first
+            setTimeout(() => {
+              setActivitySelection({ isOpen: true, date, preference: pref, types: relevantTypes });
+            }, 0);
+        } else if (relevantTypes.length === 1) {
+             handleDateChange(date);
+            setTimeout(() => {
+              handleViewPrefChange(pref, relevantTypes[0], eventId);
+            }, 0);
+        } else if (types.includes('event') && eventId) {
+            router.push(`/match-day/${eventId}`);
+        }
     };
     
       const handleConfirmLogout = () => {
@@ -149,6 +170,13 @@ export default function ActivitiesPage() {
         setIsLogoutConfirmOpen(false);
         router.push('/');
       }
+
+    const handleActivityTypeSelect = (type: 'class' | 'match') => {
+        if (activitySelection.date && activitySelection.preference) {
+            handleViewPrefChange(activitySelection.preference, type);
+        }
+        setActivitySelection({ isOpen: false, date: null, preference: null, types: [] });
+    };
 
     return (
         <div className="flex h-full bg-muted/50">
@@ -266,6 +294,11 @@ export default function ActivitiesPage() {
                 <ProfessionalAccessDialog 
                     isOpen={isProfessionalAccessOpen}
                     onOpenChange={setIsProfessionalAccessOpen}
+                />
+                <ActivityTypeSelectionDialog
+                    isOpen={activitySelection.isOpen}
+                    onOpenChange={(isOpen) => setActivitySelection(prev => ({ ...prev, isOpen }))}
+                    onSelect={handleActivityTypeSelect}
                 />
             </div>
         </div>

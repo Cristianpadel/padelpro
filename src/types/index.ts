@@ -418,7 +418,7 @@ export interface CourtGridBooking {
 
 export interface UserActivityStatusForDay {
     activityStatus: 'confirmed' | 'inscribed' | 'none';
-    activityType?: 'class' | 'match' | 'event';
+    activityTypes: ('class' | 'match' | 'event')[];
     hasEvent: boolean;
     eventId?: string;
     anticipationPoints: number;

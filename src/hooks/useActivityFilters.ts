@@ -52,17 +52,11 @@ export function useActivityFilters(
 
       for (const date of dateStripDates) {
         const dateKey = format(date, 'yyyy-MM-dd');
-        const [statusResult, events] = await Promise.all([
-          getUserActivityStatusForDay(currentUser.id, date),
-          fetchMatchDayEventsForDate(date, clubIdFromParams || undefined)
-        ]);
+        const statusResult = await getUserActivityStatusForDay(currentUser.id, date);
         const anticipationPoints = differenceInDays(date, today);
 
         newIndicators[dateKey] = {
-          activityStatus: statusResult.activityStatus,
-          activityType: statusResult.activityType,
-          hasEvent: events.length > 0,
-          eventId: events.length > 0 ? events[0].id : undefined,
+          ...statusResult,
           anticipationPoints: Math.max(0, anticipationPoints)
         };
       }
@@ -130,7 +124,7 @@ export function useActivityFilters(
   
  const handleViewPrefChange = (
     pref: ViewPreference,
-    type?: 'class' | 'match' | 'event',
+    type: 'class' | 'match' | 'event',
     eventId?: string
   ) => {
     if (type === 'event' && eventId) {
@@ -140,7 +134,7 @@ export function useActivityFilters(
     
     // Use the new batch update function
     setUrlFilters({
-        view: type || activeView, // Ensure 'view' is maintained
+        view: type,
         viewPref: pref,
     });
   };
