@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Heart, SlidersHorizontal, Eye, ClipboardList, CheckCircle, Sparkles, Star, Clock, BarChartHorizontal, X } from 'lucide-react';
+import { Heart, SlidersHorizontal, Eye, ClipboardList, CheckCircle, Sparkles, Star, Clock, BarChartHorizontal, X, Users } from 'lucide-react';
 import { timeSlotFilterOptions } from '@/types';
 import type { TimeOfDayFilterType, MatchPadelLevel, ClubLevelRange } from '@/types';
 import { cn } from '@/lib/utils';
