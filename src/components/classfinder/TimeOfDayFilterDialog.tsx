@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -63,3 +64,8 @@ const TimeOfDayFilterDialog: React.FC<TimeOfDayFilterDialogProps> = ({ isOpen, o
           </DialogClose>
         </DialogFooter>
       </DialogContent>
+    </Dialog>
+  );
+};
+
+export default TimeOfDayFilterDialog;

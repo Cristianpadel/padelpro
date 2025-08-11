@@ -24,6 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import ManageFavoriteInstructorsDialog from '@/components/schedule/ManageFavoriteInstructorsDialog';
 import { Separator } from '../ui/separator';
 import LevelFilterDialog from '../classfinder/LevelFilterDialog';
+import TimeOfDayFilterDialog from '../classfinder/TimeOfDayFilterDialog';
 
 
 interface DesktopSidebarProps {
@@ -55,6 +56,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     const pathname = usePathname();
     const [isManageFavoritesOpen, setIsManageFavoritesOpen] = useState(false);
     const [isLevelFilterOpen, setIsLevelFilterOpen] = useState(false);
+    const [isTimeFilterOpen, setIsTimeFilterOpen] = useState(false);
     const [currentUser, setCurrentUser] = useState(initialCurrentUser);
 
     const {
@@ -81,6 +83,8 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 
     const isActivitiesPage = pathname.startsWith('/activities');
     const levelFilterLabel = selectedLevel === 'all' ? 'Todos los niveles' : selectedLevel === 'abierto' ? 'Nivel Abierto' : `${selectedLevel}`;
+    const timeFilterLabel = timeSlotFilterOptions.find(o => o.value === timeSlotFilter)?.label.replace(' (8-13h)', '').replace(' (13-18h)', '').replace(' (18-22h)', '') || 'Horarios';
+
 
     const handleFavoritesClick = () => {
         if (filterByFavorites) {
@@ -176,34 +180,34 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 
                 <div className="p-1 space-y-2">
                     <Link href="/dashboard" className="w-full">
-                        <Button variant={pathname.startsWith('/dashboard') || pathname.startsWith('/schedule') ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md" style={navButtonShadowStyle}>
+                        <Button variant={pathname.startsWith('/dashboard') || pathname.startsWith('/schedule') ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-md" style={navButtonShadowStyle}>
                             <ClipboardList className="mr-3 h-5 w-5" /> Agenda
                         </Button>
                     </Link>
                     <Link href="/activities?view=clases" className="w-full">
-                        <Button variant={isActivitiesPage && activeView === 'clases' ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md" style={navButtonShadowStyle}>
+                        <Button variant={isActivitiesPage && activeView === 'clases' ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-md" style={navButtonShadowStyle}>
                             <Activity className="mr-3 h-5 w-5" /> Clases
                         </Button>
                     </Link>
                     <Link href="/activities?view=partidas" className="w-full">
-                        <Button variant={isActivitiesPage && activeView === 'partidas' ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md" style={navButtonShadowStyle}>
+                        <Button variant={isActivitiesPage && activeView === 'partidas' ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-md" style={navButtonShadowStyle}>
                             <Users className="mr-3 h-5 w-5" /> Partidas
                         </Button>
                     </Link>
                     <Link href="/activities?view=partidas2" className="w-full">
-                        <Button variant={isActivitiesPage && activeView === 'partidas2' ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md" style={navButtonShadowStyle}>
+                        <Button variant={isActivitiesPage && activeView === 'partidas2' ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-md" style={navButtonShadowStyle}>
                             <Users className="mr-3 h-5 w-5" /> Partidas 2
                         </Button>
                     </Link>
                     {clubInfo?.isMatchDayEnabled && (
                     <Link href="/match-day" className="w-full">
-                        <Button variant={pathname.startsWith('/match-day') ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md" style={navButtonShadowStyle}>
+                        <Button variant={pathname.startsWith('/match-day') ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-md" style={navButtonShadowStyle}>
                             <PartyPopper className="mr-3 h-5 w-5" /> Match-Day
                         </Button>
                     </Link>
                     )}
                     <Link href="/store" className="w-full">
-                        <Button variant={pathname.startsWith('/store') ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md" style={navButtonShadowStyle}>
+                        <Button variant={pathname.startsWith('/store') ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-md" style={navButtonShadowStyle}>
                             <ShoppingBag className="mr-3 h-5 w-5" /> Tienda
                         </Button>
                     </Link>
@@ -214,16 +218,9 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                         <div className="border-t border-border/50 my-2"></div>
                         <div className="space-y-1 p-1">
                             <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase">Filtros</h3>
-                            {timeSlotFilterOptions.map(opt => (
-                                <Button 
-                                    key={opt.value}
-                                    variant="ghost"
-                                    className={cn("w-full justify-start text-sm h-10 rounded-full", timeSlotFilter === opt.value ? activeFilterClasses : inactiveFilterClasses)}
-                                    onClick={() => handleTimeFilterChange(opt.value)}
-                                >
-                                    <Clock className="mr-3 h-4 w-4" /> {opt.label}
-                                </Button>
-                            ))}
+                             <Button variant="ghost" className={cn("w-full justify-start text-sm h-10 rounded-full", timeSlotFilter !== 'all' ? activeFilterClasses : inactiveFilterClasses)} onClick={() => setIsTimeFilterOpen(true)}>
+                                <Clock className="mr-3 h-4 w-4" /> {timeFilterLabel}
+                            </Button>
                             <Button variant="ghost" className={cn("w-full justify-start text-sm h-10 rounded-full", selectedLevel !== 'all' ? activeFilterClasses : inactiveFilterClasses)} onClick={() => setIsLevelFilterOpen(true)}>
                                 <BarChartHorizontal className="mr-3 h-4 w-4" /> {levelFilterLabel}
                             </Button>
@@ -283,15 +280,22 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                 />
             </Card>
 
-            <LevelFilterDialog 
+             <LevelFilterDialog 
                 isOpen={isLevelFilterOpen}
                 onOpenChange={setIsLevelFilterOpen}
                 currentValue={selectedLevel}
                 onSelect={handleLevelChange}
                 clubId={clubInfo.id}
             />
+            <TimeOfDayFilterDialog
+                isOpen={isTimeFilterOpen}
+                onOpenChange={setIsTimeFilterOpen}
+                currentValue={timeSlotFilter}
+                onSelect={handleTimeFilterChange}
+            />
         </>
     );
 };
 
 export default DesktopSidebar;
+
