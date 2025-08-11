@@ -124,20 +124,21 @@ export function useActivityFilters(
   
  const handleViewPrefChange = (
     pref: ViewPreference,
-    type: 'class' | 'match' | 'event',
-    eventId?: string
+    type: 'class' | 'match', // Removed 'event' as it's handled separately now
+    eventId?: string // eventId is kept for potential future use but logic is handled before
   ) => {
-    if (type === 'event' && eventId) {
-        router.push(`/match-day/${eventId}`);
-        return;
-    }
+    // This function will now always keep the current view ('clases' or 'partidas')
+    // and only change the view preference on top of it.
     
-    // Use the new batch update function
-    setUrlFilters({
-        view: type,
-        viewPref: pref,
-    });
+    // The type parameter is crucial to know which view to set if it's not already set,
+    // but in this flow, 'activeView' should already be correct.
+    const newSearchParams = new URLSearchParams(searchParams.toString());
+    newSearchParams.set('view', type); // Ensure the view is set
+    newSearchParams.set('viewPref', pref); // Set the specific preference
+    
+    router.replace(`${pathname}?${newSearchParams.toString()}`, { scroll: false });
   };
+
 
 
   // --- Effects to Sync State with URL/User ---
