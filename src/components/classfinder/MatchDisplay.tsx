@@ -1,16 +1,15 @@
 
-
 // src/components/classfinder/MatchDisplay.tsx
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import type { Match, User, MatchBooking, MatchPadelLevel, PadelCategoryForSlot, SortOption, TimeOfDayFilterType, MatchDayEvent, UserActivityStatusForDay, ViewPreference } from '@/types';
+import type { Match, User, MatchBooking, MatchPadelLevel, PadelCategoryForSlot, SortOption, TimeOfDayFilterType, MatchDayEvent, UserActivityStatusForDay, ViewPreference, MatchDayInscription } from '@/types';
 import { matchPadelLevels, timeSlotFilterOptions } from '@/types';
 import MatchCard from '@/components/match/MatchCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { fetchMatches, getMockClubs, findAvailableCourt, fetchMatchDayEventsForDate, getUserActivityStatusForDay, getMatchDayInscriptions, isUserLevelCompatibleWithActivity, isMatchBookableWithPoints } from '@/lib/mockData';
 import { Loader2, SearchX, CalendarDays, Plus, CheckCircle, PartyPopper, ArrowRight, Users, Sparkles } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, getInitials } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { format, isSameDay, addDays, startOfDay, addMinutes, getDay, parse, isPast } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -20,6 +19,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'; // Import Tabs
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 
 interface MatchDisplayProps {
   currentUser: User | null;
@@ -52,14 +53,20 @@ interface MatchDisplayProps {
 
 const ITEMS_PER_PAGE = 9;
 
+type EnhancedEvent = MatchDayEvent & {
+    isEventCard: true;
+    inscriptions: MatchDayInscription[];
+};
+
+
 const MatchDisplay: React.FC<MatchDisplayProps> = ({
     currentUser, onBookingSuccess, filterByClubId, filterByGratisOnly, filterByLiberadasOnly, onDeactivateGratisFilter, matchShareCode,
     matchIdFilter, selectedDate, onDateChange, timeSlotFilter, selectedLevel, sortBy,
     filterAlsoConfirmedMatches, viewPreference, proposalView, refreshKey, allMatches, isLoading,
     matchDayEvents, filterByPuntosOnly, dateStripIndicators, dateStripDates, onViewPrefChange, showPointsBonus
 }) => {
-  const [filteredMatches, setFilteredMatches] = useState<(Match | (MatchDayEvent & { isEventCard: true, inscriptionCount?: number }))[]>([]);
-  const [displayedMatches, setDisplayedMatches] = useState<(Match | (MatchDayEvent & { isEventCard: true, inscriptionCount?: number }))[]>([]);
+  const [filteredMatches, setFilteredMatches] = useState<(Match | EnhancedEvent)[]>([]);
+  const [displayedMatches, setDisplayedMatches] = useState<(Match | EnhancedEvent)[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [canLoadMore, setCanLoadMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -83,7 +90,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
         return;
     }
     
-    let finalMatches: (Match | (MatchDayEvent & { isEventCard: true, inscriptionCount?: number }))[] = [];
+    let finalMatches: (Match | EnhancedEvent)[] = [];
 
     if (matchIdFilter) {
         const singleMatch = allMatches.find(m => m.id === matchIdFilter);
@@ -92,20 +99,20 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
         const singleMatch = allMatches.find(m => m.privateShareCode === matchShareCode);
         finalMatches = singleMatch ? [singleMatch] : [];
     } else {
-        let workingMatches: (Match | (MatchDayEvent & { isEventCard: true, inscriptionCount?: number }))[] = [...allMatches];
+        let workingMatches: (Match | EnhancedEvent)[] = [...allMatches];
 
         // Add MatchDayEvent as special cards if it exists for the date.
         if (selectedDate && matchDayEvents.length > 0) {
-            const eventCardsWithCounts = await Promise.all(matchDayEvents.map(async (event) => {
+            const eventCards = await Promise.all(matchDayEvents.map(async (event) => {
                 const inscriptions = await getMatchDayInscriptions(event.id);
                 return {
                     ...event,
                     id: `${event.id}`, // Use the original event ID
                     isEventCard: true,
-                    inscriptionCount: inscriptions.length
+                    inscriptions: inscriptions,
                 };
             }));
-            workingMatches.push(...eventCardsWithCounts);
+            workingMatches.push(...eventCards);
         }
 
         workingMatches = workingMatches.filter((match) => {
@@ -246,10 +253,16 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
     applyMatchFilters();
   }, [applyMatchFilters, refreshKey, selectedDate, selectedLevel]);
 
-  useEffect(() => {
-    setDisplayedMatches(filteredMatches.slice(0, ITEMS_PER_PAGE * currentPage));
-    setCanLoadMore(filteredMatches.length > ITEMS_PER_PAGE * currentPage);
-  }, [filteredMatches, currentPage]);
+  // Effect to reset pagination when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filteredMatches]);
+
+    // Effect to update the displayed list based on pagination
+    useEffect(() => {
+        setDisplayedMatches(filteredMatches.slice(0, ITEMS_PER_PAGE * currentPage));
+        setCanLoadMore(filteredMatches.length > ITEMS_PER_PAGE * currentPage);
+    }, [filteredMatches, currentPage]);
 
   const handleLoadMore = useCallback(() => {
     if (!canLoadMore || isLoadingMore) return;
@@ -405,7 +418,8 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
           <div className="grid grid-cols-[repeat(auto-fill,minmax(360px,1fr))] justify-center gap-6">
             {displayedMatches.map((activity) => {
                if ('isEventCard' in activity && activity.isEventCard) {
-                   const isFull = (activity.inscriptionCount ?? 0) >= activity.maxPlayers;
+                   const isFull = (activity.inscriptions?.length ?? 0) >= activity.maxPlayers;
+                   const allSpots = Array.from({ length: activity.maxPlayers });
                    return (
                         <Link key={activity.id} href={`/match-day/${activity.id}`}>
                             <div className="border-l-4 border-orange-500 bg-orange-50 rounded-lg p-4 h-full flex flex-col justify-between cursor-pointer hover:bg-orange-100 transition-colors shadow-sm">
@@ -423,9 +437,22 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                                         {isFull ? "Completo" : "Plazas Libres"}
                                     </Badge>
                                 </div>
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                     {allSpots.map((_, index) => {
+                                        const inscription = activity.inscriptions[index];
+                                        return (
+                                            <Avatar key={inscription?.id || `empty-${index}`} className="h-8 w-8 border-2 border-white">
+                                                <AvatarImage src={inscription?.userProfilePictureUrl} data-ai-hint="player avatar small" />
+                                                <AvatarFallback className={cn("text-xs", inscription ? "bg-primary text-primary-foreground" : "bg-muted")}>
+                                                    {inscription ? getInitials(inscription.userName) : ''}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                        );
+                                     })}
+                                </div>
                                 <div className="flex justify-between items-end mt-2">
                                     <div className="text-sm font-medium text-muted-foreground">
-                                        {activity.inscriptionCount ?? 0} / {activity.maxPlayers} inscritos
+                                        {activity.inscriptions.length} / {activity.maxPlayers} inscritos
                                     </div>
                                      <Button variant="link" size="sm" className="h-auto p-0 text-orange-600">
                                         Ver Evento
