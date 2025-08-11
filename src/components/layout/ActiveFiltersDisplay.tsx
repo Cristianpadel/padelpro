@@ -1,10 +1,11 @@
+
 "use client";
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { X, Activity, Users, Clock, BarChartHorizontal, Heart, Eye } from 'lucide-react';
-import type { TimeOfDayFilterType, MatchPadelLevel } from '@/types';
+import type { TimeOfDayFilterType, MatchPadelLevel, ViewPreference } from '@/types';
 import { timeSlotFilterOptions } from '@/types';
 import { cn } from '@/lib/utils';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -13,7 +14,7 @@ interface ActiveFiltersDisplayProps {
   activeView: 'clases' | 'partidas';
   timeSlotFilter: TimeOfDayFilterType;
   selectedLevel: MatchPadelLevel | 'all';
-  viewPreference: 'normal' | 'myInscriptions' | 'myConfirmed';
+  viewPreference: ViewPreference;
   filterByFavorites: boolean;
   onClearFilters: () => void;
 }
@@ -27,6 +28,20 @@ const ActiveFiltersDisplay: React.FC<ActiveFiltersDisplayProps> = ({
   onClearFilters,
 }) => {
   const timeFilterLabel = timeSlotFilterOptions.find(o => o.value === timeSlotFilter)?.label.replace(' (8-13h)', '').replace(' (13-18h)', '').replace(' (18-22h)', '');
+
+  const getViewPreferenceLabel = (pref: ViewPreference): string => {
+    switch (pref) {
+      case 'myInscriptions':
+        return 'Mis Inscripciones';
+      case 'myConfirmed':
+        return 'Mis Reservas';
+      case 'withPlayers':
+        return 'En Juego';
+      default:
+        return '';
+    }
+  };
+
 
   const filters = [
     {
@@ -46,7 +61,7 @@ const ActiveFiltersDisplay: React.FC<ActiveFiltersDisplayProps> = ({
     },
     {
       isActive: viewPreference !== 'normal',
-      label: viewPreference === 'myInscriptions' ? 'Mis Inscripciones' : 'Mis Reservas',
+      label: getViewPreferenceLabel(viewPreference),
       icon: Eye,
     },
     {
