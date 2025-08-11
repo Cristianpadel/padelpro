@@ -1,4 +1,5 @@
 
+
 // src/components/classfinder/MatchDisplay.tsx
 "use client";
 
@@ -8,7 +9,7 @@ import { matchPadelLevels, timeSlotFilterOptions } from '@/types';
 import MatchCard from '@/components/match/MatchCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { fetchMatches, getMockClubs, findAvailableCourt, fetchMatchDayEventsForDate, getUserActivityStatusForDay, getMatchDayInscriptions, isUserLevelCompatibleWithActivity, isMatchBookableWithPoints } from '@/lib/mockData';
-import { Loader2, SearchX, CalendarDays, Plus, CheckCircle, PartyPopper, ArrowRight, Users, Sparkles } from 'lucide-react';
+import { Loader2, SearchX, CalendarDays, Plus, CheckCircle, PartyPopper, ArrowRight, Users, Sparkles, Euro, ThumbsUp, Lock, Scissors } from 'lucide-react';
 import { cn, getInitials } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { format, isSameDay, addDays, startOfDay, addMinutes, getDay, parse, isPast } from 'date-fns';
@@ -20,6 +21,18 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'; // Import Ta
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { PiggyBank, Star } from 'lucide-react';
 
 
 interface MatchDisplayProps {
@@ -67,6 +80,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
 }) => {
   const [filteredMatches, setFilteredMatches] = useState<(Match | EnhancedEvent)[]>([]);
   const [displayedMatches, setDisplayedMatches] = useState<(Match | EnhancedEvent)[]>([]);
+  
   const [currentPage, setCurrentPage] = useState(1);
   const [canLoadMore, setCanLoadMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -331,6 +345,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
   if (isLoading) return <div className="space-y-4"> <Skeleton className="h-10 w-full" /> <div className="grid grid-cols-[repeat(auto-fill,minmax(350px,1fr))] gap-6"><Skeleton className="h-64 w-full" /><Skeleton className="h-64 w-full" /><Skeleton className="h-64 w-full" /></div></div>
 
   const clubName = filterByClubId ? getMockClubs().find(c => c.id === filterByClubId)?.name : "Todos los Clubes";
+  const availableCredit = (currentUser?.credit ?? 0) - (currentUser?.blockedCredit ?? 0);
 
   return (
     <div>
@@ -422,9 +437,11 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                if ('isEventCard' in activity && activity.isEventCard) {
                    const isFull = (activity.inscriptions?.length ?? 0) >= activity.maxPlayers;
                    const allSpots = Array.from({ length: activity.maxPlayers });
+                   const isUserInscribed = activity.inscriptions.some(i => i.userId === currentUser.id);
+
                    return (
-                        <Link key={activity.id} href={`/match-day/${activity.id}`}>
-                            <div className="border-l-4 border-orange-500 bg-orange-50 rounded-lg p-4 h-full flex flex-col justify-between cursor-pointer hover:bg-orange-100 transition-colors shadow-sm">
+                        <div key={activity.id} className="border-l-4 border-orange-500 bg-orange-50 rounded-lg p-4 h-full flex flex-col justify-between shadow-sm">
+                             <Link href={`/match-day/${activity.id}`}>
                                 <div className="flex justify-between items-start">
                                     <div className="flex-grow">
                                         <div className="font-bold text-orange-800 flex items-center">
@@ -439,32 +456,65 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                                         {isFull ? "Completo" : "Plazas Libres"}
                                     </Badge>
                                 </div>
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                     {allSpots.map((_, index) => {
-                                        const inscription = activity.inscriptions[index];
+                            </Link>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                                 {allSpots.map((_, index) => {
+                                    const inscription = activity.inscriptions[index];
+                                    if(inscription){
                                         return (
-                                            <div key={inscription?.id || `empty-${index}`} className="relative inline-flex items-center justify-center h-12 w-12 rounded-full border-[3px] z-0 transition-all shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.2)] bg-slate-100 border-slate-300">
+                                             <div key={inscription?.id} className="relative inline-flex items-center justify-center h-12 w-12 rounded-full border-[3px] z-0 transition-all shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.2)] bg-slate-100 border-slate-300">
                                                 <Avatar className="h-[calc(100%-4px)] w-[calc(100%-4px)]">
                                                     <AvatarImage src={inscription?.userProfilePictureUrl} data-ai-hint="player avatar small" />
-                                                    <AvatarFallback className={cn("text-xs", inscription ? "bg-primary text-primary-foreground" : "bg-muted")}>
-                                                        {inscription ? getInitials(inscription.userName) : ''}
+                                                    <AvatarFallback className={cn("text-xs", "bg-primary text-primary-foreground")}>
+                                                        {getInitials(inscription.userName)}
                                                     </AvatarFallback>
                                                 </Avatar>
                                             </div>
-                                        );
-                                     })}
+                                        )
+                                    }
+                                    return (
+                                        <AlertDialog key={`empty-${index}`}>
+                                            <AlertDialogTrigger asChild>
+                                                <button disabled={isFull || isUserInscribed} className="relative inline-flex items-center justify-center h-12 w-12 rounded-full border-[3px] z-0 transition-all shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.2)] bg-slate-100 border-slate-300 border-dashed hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60">
+                                                    <Plus className="h-5 w-5 text-muted-foreground" />
+                                                </button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Confirmar Inscripción al Evento</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                         Vas a apuntarte al evento: <span className="font-semibold">{activity.name}</span>.
+                                                         Coste: <span className="font-bold">{activity.price?.toFixed(2)}€</span>.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                 <div className="text-sm bg-blue-50 text-blue-800 p-3 rounded-lg space-y-2">
+                                                    <p className="font-bold text-center">¡Aviso Importante!</p>
+                                                    <ul className="space-y-1.5">
+                                                        <li className="flex items-start"><ThumbsUp className="h-4 w-4 mr-2 mt-0.5 text-blue-500 flex-shrink-0" /><span>Cuando llegue la hora del sorteo, se formarán las partidas.</span></li>
+                                                        <li className="flex items-start"><Lock className="h-4 w-4 mr-2 mt-0.5 text-blue-500 flex-shrink-0" /><span>Tu saldo será bloqueado hasta que se juegue el evento.</span></li>
+                                                    </ul>
+                                                </div>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                    <AlertDialogAction>Inscribirme</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    )
+                                 })}
+                            </div>
+                            <div className="flex justify-between items-end mt-2">
+                                <div className="text-sm font-medium text-muted-foreground">
+                                    {activity.inscriptions.length} / {activity.maxPlayers} inscritos
                                 </div>
-                                <div className="flex justify-between items-end mt-2">
-                                    <div className="text-sm font-medium text-muted-foreground">
-                                        {activity.inscriptions.length} / {activity.maxPlayers} inscritos
-                                    </div>
-                                     <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white rounded-full font-semibold">
+                                <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white rounded-full font-semibold" asChild>
+                                     <Link href={`/match-day/${activity.id}`}>
                                         Ver Evento
                                         <ArrowRight className="ml-2 h-4 w-4" />
-                                    </Button>
-                                </div>
+                                    </Link>
+                                </Button>
                             </div>
-                        </Link>
+                        </div>
                     )
                }
                const match = activity as Match;
@@ -495,3 +545,4 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
 };
 
 export default MatchDisplay;
+
