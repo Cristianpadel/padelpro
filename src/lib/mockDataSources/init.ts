@@ -74,7 +74,7 @@ export function performInitialization() {
         },
         cardShadowEffect: {
             enabled: true,
-            color: '#a855f7',
+            color: '#808080',
             intensity: 0.7,
         },
         shopReservationFee: 1, // Add default reservation fee
