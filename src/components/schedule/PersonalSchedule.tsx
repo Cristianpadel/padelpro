@@ -238,7 +238,7 @@ const BookingListItem: React.FC<BookingListItemProps> = ({ bookingsForSlot, isUp
         const fullStars = Math.round(rating);
         const stars = [];
         for (let i = 1; i <= 5; i++) {
-            stars.push(<Star key={i} className={cn("h-4 w-4", i <= fullStars ? "fill-amber-500 text-amber-500" : "fill-gray-300 text-gray-400")} />);
+            stars.push(<Star key={i} className={cn("h-4 w-4", i < fullStars ? "fill-amber-500 text-amber-500" : "fill-gray-300 text-gray-400")} />);
         }
         return <div className="flex items-center">{stars} <span className="ml-1.5 text-sm text-gray-600 font-medium">({rating.toFixed(1)})</span></div>;
     };
@@ -542,24 +542,18 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
       {hasUpcomingBookings && (
         <div>
           <h4 className="text-base font-semibold mb-3 text-foreground flex items-center"><Clock className="mr-2 h-4 w-4" /> Próximas</h4>
-           <ScrollArea>
-              <div className="flex justify-start space-x-1 pb-4">
-                {upcomingBookings.map(group => renderBookingGroup(group, true))}
-              </div>
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
+          <div className="flex flex-wrap gap-4">
+            {upcomingBookings.map(group => renderBookingGroup(group, true))}
+          </div>
         </div>
       )}
       {hasUpcomingBookings && hasPastBookings && <Separator />}
       {hasPastBookings && (
         <div>
            <h4 className="text-base font-semibold mb-3 text-muted-foreground flex items-center"><CheckCircle className="mr-2 h-4 w-4" /> Historial</h4>
-            <ScrollArea>
-              <div className="flex justify-start space-x-1 pb-4">
-                {pastBookings.map(group => renderBookingGroup(group, false))}
-              </div>
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
+            <div className="flex flex-wrap gap-4">
+              {pastBookings.map(group => renderBookingGroup(group, false))}
+            </div>
         </div>
       )}
     </div>

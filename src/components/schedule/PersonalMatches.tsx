@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useTransition, useMemo } from 'react';
 import type { MatchBooking, User, Match, Club, PadelCategoryForSlot, MatchBookingMatchDetails, PadelCourt } from '@/types';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { List, Clock, Users, CalendarCheck, CalendarX, Loader2, Ban, Hash, Trophy, UserCircle, Gift, Info, MessageSquare, Euro, Users2 as CategoryIcon, Venus, Mars, Share2, Unlock, Lock, Repeat, Lightbulb, BarChartHorizontal, Plus } from 'lucide-react';
 import { format, differenceInHours } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -62,6 +62,7 @@ const InfoButton: React.FC<{
         <span className="font-medium text-slate-700">{text}</span>
     </button>
 );
+
 
 const DialogInfo: React.FC<{
   isOpen: boolean;
@@ -554,24 +555,18 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
           {hasUpcomingBookings && (
               <div>
                 <h3 className="text-lg font-semibold mb-3 text-primary flex items-center"><Trophy className="mr-2 h-5 w-5" /> Partidas Regulares</h3>
-                  <ScrollArea>
-                    <div className="flex space-x-4 pb-4">
-                        {upcomingBookings.map(b => renderBookingItem(b, true))}
-                    </div>
-                    <ScrollBar orientation="horizontal" />
-                  </ScrollArea>
+                  <div className="flex flex-wrap gap-4">
+                    {upcomingBookings.map(b => renderBookingItem(b, true))}
+                  </div>
               </div>
           )}
           {hasUpcomingBookings && hasPastBookings && <Separator />}
           {hasPastBookings && (
               <div>
                 <h3 className="text-lg font-semibold mb-3 text-muted-foreground flex items-center"><CalendarX className="mr-2 h-5 w-5" /> Partidas Pasadas</h3>
-                 <ScrollArea>
-                    <div className="flex space-x-4 pb-4">
-                      {pastBookings.map(b => renderBookingItem(b, false))}
-                    </div>
-                    <ScrollBar orientation="horizontal" />
-                  </ScrollArea>
+                 <div className="flex flex-wrap gap-4">
+                  {pastBookings.map(b => renderBookingItem(b, false))}
+                 </div>
               </div>
           )}
       </div>
