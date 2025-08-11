@@ -36,8 +36,9 @@ const LevelFilterDialog: React.FC<LevelFilterDialogProps> = ({ isOpen, onOpenCha
     onOpenChange(false);
   };
   
-  const allLevelsOption = { name: 'Todos los Niveles', min: 'all', max: 'all' };
-  const allRangeOptions = [allLevelsOption, ...levelRanges];
+  const allLevelsOption = { name: 'Todos los Niveles', value: 'all' as const, min: 'all', max: 'all' };
+  const openLevelOption = { name: 'Nivel Abierto', value: 'abierto' as const, min: 'abierto', max: 'abierto' };
+  const allRangeOptions = [allLevelsOption, openLevelOption, ...levelRanges.map(r => ({ ...r, value: r.name }))];
 
 
   return (
@@ -54,19 +55,18 @@ const LevelFilterDialog: React.FC<LevelFilterDialogProps> = ({ isOpen, onOpenCha
         </DialogHeader>
         <div className="py-4 grid grid-cols-2 gap-3">
           {allRangeOptions.map(range => {
-              const isSelected = currentValue === range.name || (range.name === 'Todos los Niveles' && currentValue === 'all');
-              const valueToSelect = range.name === 'Todos los Niveles' ? 'all' : range.name;
-
+              const isSelected = currentValue === range.value;
+              
               return (
                  <Button
                     key={range.name}
                     variant={isSelected ? "default" : "outline"}
-                    onClick={() => handleSelect(valueToSelect as MatchPadelLevel | 'all')}
+                    onClick={() => handleSelect(range.value)}
                     className="h-auto p-3 text-sm justify-between items-center"
                  >
                     <div className="text-left">
                         <p className="font-semibold">{range.name}</p>
-                        {range.name !== 'Todos los Niveles' && (
+                        {(range.min !== 'all' && range.min !== 'abierto') && (
                              <p className="text-xs opacity-80">{range.min} - {range.max}</p>
                         )}
                     </div>
