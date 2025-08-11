@@ -96,7 +96,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     
     if (!currentUser || !clubInfo) {
          return (
-            <Card className="p-4 flex flex-col gap-4 sticky top-6 h-fit w-72">
+            <Card className="p-4 flex flex-col gap-4 sticky top-6 h-fit w-72 rounded-l-none rounded-r-2xl">
                 {clubInfo && (
                     <Link href="/" className="flex flex-col items-center text-center gap-2 hover:opacity-90 transition-opacity">
                         <Avatar className="h-24 w-24 rounded-md">
@@ -144,7 +144,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 
     return (
         <>
-            <Card className="p-4 flex flex-col gap-4 sticky top-6 h-fit w-72" style={shadowStyle}>
+            <Card className="p-4 flex flex-col gap-4 sticky top-6 h-fit w-72 rounded-l-none rounded-r-2xl" style={shadowStyle}>
                 {clubInfo && (
                     <div className="flex flex-col items-center text-center gap-2">
                         <Avatar className="h-20 w-20 rounded-md">
