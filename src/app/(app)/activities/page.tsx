@@ -147,21 +147,20 @@ export default function ActivitiesPage() {
     }, [currentUser, refreshKey]);
 
     const onViewPrefChange = (date: Date, pref: ViewPreference, types: ('class' | 'match' | 'event')[], eventId?: string) => {
-        handleDateChange(date); // Always set the date first.
+        handleDateChange(date); // Immediately update the date state.
 
-        // Use a timeout to ensure the state update for the date has been processed
-        // before applying other filters that depend on it. This solves race conditions.
-        setTimeout(() => {
-            const relevantTypes = types.filter(t => t !== 'event') as ('class' | 'match')[];
+        const relevantTypes = types.filter(t => t !== 'event') as ('class' | 'match')[];
 
-            if (relevantTypes.length > 1) {
-                setActivitySelection({ isOpen: true, date, preference: pref, types: relevantTypes });
-            } else if (relevantTypes.length === 1) {
-                handleViewPrefChange(pref, relevantTypes[0]);
-            } else if (types.includes('event') && eventId) {
-                router.push(`/match-day/${eventId}`);
-            }
-        }, 0);
+        if (relevantTypes.length > 1) {
+            // More than one type of activity, ask the user
+            setActivitySelection({ isOpen: true, date, preference: pref, types: relevantTypes });
+        } else if (relevantTypes.length === 1) {
+            // Only one type, apply filter directly for that type and date
+            handleViewPrefChange(pref, relevantTypes[0], date);
+        } else if (types.includes('event') && eventId) {
+            // It's a match-day event, navigate there
+            router.push(`/match-day/${eventId}`);
+        }
     };
     
       const handleConfirmLogout = () => {
@@ -173,8 +172,10 @@ export default function ActivitiesPage() {
 
     const handleActivityTypeSelect = (type: 'class' | 'match') => {
         if (activitySelection.date && activitySelection.preference) {
-            handleViewPrefChange(activitySelection.preference, type);
+            // Now apply the filter with the selected type and the correct date
+            handleViewPrefChange(activitySelection.preference, type, activitySelection.date);
         }
+        // Close and reset the dialog state
         setActivitySelection({ isOpen: false, date: null, preference: null, types: [] });
     };
 

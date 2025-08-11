@@ -124,11 +124,17 @@ export function useActivityFilters(
   
   const handleViewPrefChange = (
     pref: ViewPreference,
-    type: 'class' | 'match'
+    type: 'class' | 'match',
+    date?: Date | null,
   ) => {
     const newSearchParams = new URLSearchParams(searchParams.toString());
     newSearchParams.set('view', type);
     newSearchParams.set('viewPref', pref);
+
+    // If a date is provided (coming from an indicator click), update the date in local state
+    if (date) {
+      handleDateChange(date);
+    }
     
     // Clear other filters that conflict with view preferences
     newSearchParams.delete('filter');
