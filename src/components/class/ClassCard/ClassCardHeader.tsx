@@ -63,7 +63,6 @@ export const ClassCardHeader: React.FC<ClassCardHeaderProps> = ({
   const isLevelAssigned = currentSlot.level !== 'abierto';
   const isCategoryAssigned = currentSlot.category !== 'abierta';
   const isCourtAssigned = !!currentSlot.courtNumber;
-  const isClassified = isLevelAssigned || isCategoryAssigned || isCourtAssigned;
 
   const levelDisplay = isLevelAssigned
     ? (typeof currentSlot.level === 'object' ? `${currentSlot.level.min}-${currentSlot.level.max}` : String(currentSlot.level))
@@ -116,19 +115,19 @@ export const ClassCardHeader: React.FC<ClassCardHeaderProps> = ({
               icon={Lightbulb} 
               text={levelDisplay} 
               onClick={() => onInfoClick('level')}
-              className={cn(isClassified && classifiedBadgeClass)}
+              className={cn(isLevelAssigned && classifiedBadgeClass)}
           />
           <InfoButton 
               icon={CategoryIcon} 
               text={categoryDisplay} 
               onClick={() => onInfoClick('category')} 
-              className={cn(isClassified && classifiedBadgeClass)}
+              className={cn(isCategoryAssigned && classifiedBadgeClass)}
           />
           <InfoButton 
               icon={Hash} 
               text={courtDisplay} 
               onClick={() => onInfoClick('court')} 
-              className={cn(isClassified && classifiedBadgeClass)}
+              className={cn(isCourtAssigned && classifiedBadgeClass)}
           />
       </div>
 
