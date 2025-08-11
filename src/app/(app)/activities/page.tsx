@@ -147,8 +147,6 @@ export default function ActivitiesPage() {
     }, [currentUser, refreshKey]);
 
     const onViewPrefChange = (date: Date, pref: ViewPreference, types: ('class' | 'match' | 'event')[], eventId?: string) => {
-        handleDateChange(date); // Immediately update the date state.
-
         const relevantTypes = types.filter(t => t !== 'event') as ('class' | 'match')[];
 
         if (relevantTypes.length > 1) {
@@ -160,6 +158,9 @@ export default function ActivitiesPage() {
         } else if (types.includes('event') && eventId) {
             // It's a match-day event, navigate there
             router.push(`/match-day/${eventId}`);
+        } else {
+             // Default case if no specific type is found but the indicator was clicked (e.g., 'R' for a confirmed event)
+             handleViewPrefChange(pref, activeView, date);
         }
     };
     

@@ -131,9 +131,10 @@ export function useActivityFilters(
     newSearchParams.set('view', type);
     newSearchParams.set('viewPref', pref);
 
-    // If a date is provided (coming from an indicator click), update the date in local state
-    if (date) {
-      handleDateChange(date);
+    if(date){
+        // This is a special case to handle the date strip clicks correctly.
+        // We defer the date change to the page component.
+        handleDateChange(date);
     }
     
     // Clear other filters that conflict with view preferences
