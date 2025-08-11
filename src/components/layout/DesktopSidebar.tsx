@@ -83,7 +83,9 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 
     const isActivitiesPage = pathname.startsWith('/activities');
     const levelFilterLabel = selectedLevel === 'all' ? 'Todos los niveles' : selectedLevel === 'abierto' ? 'Nivel Abierto' : `${selectedLevel}`;
-    const timeFilterLabel = timeSlotFilterOptions.find(o => o.value === timeSlotFilter)?.label.replace(' (8-13h)', '').replace(' (13-18h)', '').replace(' (18-22h)', '') || 'Horarios';
+    const timeFilterLabel = timeSlotFilter === 'all'
+        ? 'Horarios'
+        : timeSlotFilterOptions.find(o => o.value === timeSlotFilter)?.label.replace(/ \([^)]+\)/, '') || 'Horarios';
 
 
     const handleFavoritesClick = () => {
@@ -115,7 +117,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                      <p className="text-sm font-semibold">¡Bienvenido!</p>
                      <p className="text-xs text-muted-foreground mt-1">Inicia sesión para empezar a reservar.</p>
                  </div>
-                 <Link href="/auth/login-alumno" passHref>
+                 <Link href="/auth/login" passHref>
                     <Button variant="default" className="w-full justify-center text-base h-12 rounded-full">
                         <LogIn className="mr-3 h-5 w-5" /> Acceder / Registrarse
                     </Button>
@@ -137,8 +139,8 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
       : {};
 
     const inactiveFilterShadowStyle = shadowEffect?.enabled && shadowEffect.color
-      ? { boxShadow: `inset 0 2px 8px 0 ${hexToRgba(shadowEffect.color, shadowEffect.intensity * 0.5)}` }
-      : { boxShadow: `inset 0 2px 8px 0 rgba(0, 0, 0, 0.1)` };
+      ? { boxShadow: `inset 0 2px 8px 0 ${hexToRgba(shadowEffect.color, shadowEffect.intensity * 0.35)}` }
+      : { boxShadow: `inset 0 2px 8px 0 rgba(0, 0, 0, 0.08)` };
 
     const activeFilterClasses = "font-semibold bg-white text-primary border-primary border-2 shadow-sm";
 
@@ -181,7 +183,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 
                 <Separator />
 
-                <div className="p-1 space-y-2">
+                <div className="p-1 space-y-3">
                     <Link href="/dashboard" className="w-full">
                         <Button variant={pathname.startsWith('/dashboard') || pathname.startsWith('/schedule') ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-md" style={navButtonShadowStyle}>
                             <ClipboardList className="mr-3 h-5 w-5" /> Agenda
@@ -195,11 +197,6 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                     <Link href="/activities?view=partidas" className="w-full">
                         <Button variant={isActivitiesPage && activeView === 'partidas' ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-md" style={navButtonShadowStyle}>
                             <Users className="mr-3 h-5 w-5" /> Partidas
-                        </Button>
-                    </Link>
-                    <Link href="/activities?view=partidas2" className="w-full">
-                        <Button variant={isActivitiesPage && activeView === 'partidas2' ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-md" style={navButtonShadowStyle}>
-                            <Users className="mr-3 h-5 w-5" /> Partidas 2
                         </Button>
                     </Link>
                     {clubInfo?.isMatchDayEnabled && (
@@ -234,7 +231,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                                 <Button variant="ghost" style={viewPreference === 'withPlayers' ? {} : inactiveFilterShadowStyle} className={cn("w-full justify-start text-sm h-10 rounded-full", viewPreference === 'withPlayers' && activeFilterClasses)} onClick={() => handleViewPrefChange('withPlayers')}>
                                     <Users className="mr-3 h-4 w-4" /> En Juego
                                 </Button>
-                                <Button variant="ghost" style={viewPreference === 'completed' ? {} : inactiveFilterShadowStyle} className={cn("w-full justify-start text-sm h-10 rounded-full", viewPreference === 'completed' && activeFilterClasses)} onClick={() => handleViewPrefChange('completed')}>
+                                 <Button variant="ghost" style={viewPreference === 'completed' ? {} : inactiveFilterShadowStyle} className={cn("w-full justify-start text-sm h-10 rounded-full", viewPreference === 'completed' && activeFilterClasses)} onClick={() => handleViewPrefChange('completed')}>
                                     <Trophy className="mr-3 h-4 w-4" /> Completas
                                 </Button>
                                 <Button variant="ghost" style={viewPreference === 'myInscriptions' ? {} : inactiveFilterShadowStyle} className={cn('w-full justify-start text-sm h-10 rounded-full', viewPreference === 'myInscriptions' && activeFilterClasses)} onClick={() => handleViewPrefChange('myInscriptions')}>
@@ -303,4 +300,3 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 };
 
 export default DesktopSidebar;
-
