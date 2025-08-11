@@ -215,16 +215,10 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
 
     const matchLevelToDisplay = isPlaceholderMatch ? 'abierto' : currentMatch.level || 'abierto';
     const matchCategoryToDisplay = isPlaceholderMatch ? 'abierta' : currentMatch.category || 'abierta';
-    
-    const shadowEffect = clubInfo?.cardShadowEffect;
-    const shadowStyle = showPointsBonus && shadowEffect?.enabled && shadowEffect.color
-      ? { boxShadow: `0 0 35px ${hexToRgba(shadowEffect.color, shadowEffect.intensity)}` }
-      : {};
-
 
     return (
         <>
-            <Card className="w-full transition-shadow duration-300 flex flex-col bg-card border-l-4 border-l-green-400" style={shadowStyle}>
+            <Card className="w-full transition-shadow duration-300 flex flex-col bg-card border-l-4 border-l-green-400">
                 <CardHeader className="pb-3 pt-3 px-3">
                     <div className="flex justify-between items-start">
                         <div className="flex items-center space-x-3">
