@@ -136,7 +136,10 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
       ? { boxShadow: `0 4px 15px -2px ${hexToRgba(shadowEffect.color, shadowEffect.intensity * 0.5)}` }
       : {};
 
-    const inactiveFilterClasses = "shadow-[inset_0_2px_8px_0_rgba(168,85,247,0.35)]";
+    const inactiveFilterShadowStyle = shadowEffect?.enabled && shadowEffect.color
+      ? { boxShadow: `inset 0 2px 8px 0 ${hexToRgba(shadowEffect.color, shadowEffect.intensity * 0.5)}` }
+      : { boxShadow: `inset 0 2px 8px 0 rgba(0, 0, 0, 0.1)` };
+
     const activeFilterClasses = "font-semibold bg-white text-primary border-primary border-2 shadow-sm";
 
     return (
@@ -218,33 +221,34 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                         <div className="border-t border-border/50 my-2"></div>
                         <div className="space-y-1 p-1">
                             <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase">Filtros</h3>
-                             <Button variant="ghost" className={cn("w-full justify-start text-sm h-10 rounded-full", timeSlotFilter !== 'all' ? activeFilterClasses : inactiveFilterClasses)} onClick={() => setIsTimeFilterOpen(true)}>
+                             <Button variant="ghost" style={timeSlotFilter !== 'all' ? {} : inactiveFilterShadowStyle} className={cn("w-full justify-start text-sm h-10 rounded-full", timeSlotFilter !== 'all' && activeFilterClasses)} onClick={() => setIsTimeFilterOpen(true)}>
                                 <Clock className="mr-3 h-4 w-4" /> {timeFilterLabel}
                             </Button>
-                            <Button variant="ghost" className={cn("w-full justify-start text-sm h-10 rounded-full", selectedLevel !== 'all' ? activeFilterClasses : inactiveFilterClasses)} onClick={() => setIsLevelFilterOpen(true)}>
+                            <Button variant="ghost" style={selectedLevel !== 'all' ? {} : inactiveFilterShadowStyle} className={cn("w-full justify-start text-sm h-10 rounded-full", selectedLevel !== 'all' && activeFilterClasses)} onClick={() => setIsLevelFilterOpen(true)}>
                                 <BarChartHorizontal className="mr-3 h-4 w-4" /> {levelFilterLabel}
                             </Button>
                             <div className="space-y-1 pt-2">
-                                <Button variant="ghost" className={cn("w-full justify-start text-sm h-10 rounded-full", viewPreference === 'normal' ? activeFilterClasses : inactiveFilterClasses)} onClick={() => handleViewPrefChange('normal')}>
+                                <Button variant="ghost" style={viewPreference === 'normal' ? {} : inactiveFilterShadowStyle} className={cn("w-full justify-start text-sm h-10 rounded-full", viewPreference === 'normal' && activeFilterClasses)} onClick={() => handleViewPrefChange('normal')}>
                                     <Eye className="mr-3 h-4 w-4" /> Disponibles
                                 </Button>
-                                <Button variant="ghost" className={cn("w-full justify-start text-sm h-10 rounded-full", viewPreference === 'withPlayers' ? activeFilterClasses : inactiveFilterClasses)} onClick={() => handleViewPrefChange('withPlayers')}>
+                                <Button variant="ghost" style={viewPreference === 'withPlayers' ? {} : inactiveFilterShadowStyle} className={cn("w-full justify-start text-sm h-10 rounded-full", viewPreference === 'withPlayers' && activeFilterClasses)} onClick={() => handleViewPrefChange('withPlayers')}>
                                     <Users className="mr-3 h-4 w-4" /> En Juego
                                 </Button>
-                                <Button variant="ghost" className={cn("w-full justify-start text-sm h-10 rounded-full", viewPreference === 'completed' ? activeFilterClasses : inactiveFilterClasses)} onClick={() => handleViewPrefChange('completed')}>
+                                <Button variant="ghost" style={viewPreference === 'completed' ? {} : inactiveFilterShadowStyle} className={cn("w-full justify-start text-sm h-10 rounded-full", viewPreference === 'completed' && activeFilterClasses)} onClick={() => handleViewPrefChange('completed')}>
                                     <Trophy className="mr-3 h-4 w-4" /> Completas
                                 </Button>
-                                <Button variant="ghost" className={cn('w-full justify-start text-sm h-10 rounded-full', viewPreference === 'myInscriptions' ? activeFilterClasses : inactiveFilterClasses)} onClick={() => handleViewPrefChange('myInscriptions')}>
+                                <Button variant="ghost" style={viewPreference === 'myInscriptions' ? {} : inactiveFilterShadowStyle} className={cn('w-full justify-start text-sm h-10 rounded-full', viewPreference === 'myInscriptions' && activeFilterClasses)} onClick={() => handleViewPrefChange('myInscriptions')}>
                                     <ClipboardList className="mr-3 h-4 w-4" /> Mis Inscripciones
                                 </Button>
-                                <Button variant="ghost" className={cn('w-full justify-start text-sm h-10 rounded-full', viewPreference === 'myConfirmed' ? activeFilterClasses : inactiveFilterClasses)} onClick={() => handleViewPrefChange('myConfirmed')}>
+                                <Button variant="ghost" style={viewPreference === 'myConfirmed' ? {} : inactiveFilterShadowStyle} className={cn('w-full justify-start text-sm h-10 rounded-full', viewPreference === 'myConfirmed' && activeFilterClasses)} onClick={() => handleViewPrefChange('myConfirmed')}>
                                     <CheckCircle className="mr-3 h-4 w-4" /> Mis Reservas
                                 </Button>
                             </div>
                             {activeView === 'clases' && (
                                 <Button 
                                     variant="ghost"
-                                    className={cn("w-full justify-start text-sm h-10 rounded-full", filterByFavorites ? activeFilterClasses : inactiveFilterClasses)}
+                                    style={filterByFavorites ? {} : inactiveFilterShadowStyle}
+                                    className={cn("w-full justify-start text-sm h-10 rounded-full", filterByFavorites && activeFilterClasses)}
                                     onClick={handleFavoritesClick}
                                 >
                                     <Heart className={cn("mr-3 h-4 w-4", filterByFavorites && "fill-current text-destructive")} /> Favoritos
@@ -252,7 +256,8 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                             )}
                             <Button 
                                 variant="ghost"
-                                className={cn("w-full justify-start text-sm h-10 rounded-full", showPointsBonus ? activeFilterClasses : inactiveFilterClasses)}
+                                style={showPointsBonus ? {} : inactiveFilterShadowStyle}
+                                className={cn("w-full justify-start text-sm h-10 rounded-full", showPointsBonus && activeFilterClasses)}
                                 onClick={handleTogglePointsBonus}
                             >
                                 <Sparkles className="mr-3 h-4 w-4 text-amber-500" /> + Puntos
