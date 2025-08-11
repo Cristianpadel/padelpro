@@ -147,7 +147,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
             workingMatches = workingMatches.filter(match => {
                 if ('isEventCard' in match) return false;
                 const regularMatch = match as Match;
-                return (regularMatch.bookedPlayers || []).some(p => p.userId === currentUser.id) && regularMatch.status !== 'confirmed' && regularMatch.status !== 'confirmed_private';
+                return (regularMatch.bookedPlayers || []).some(p => p.userId === currentUser.id);
             });
         } else if (viewPreference === 'myConfirmed') {
              workingMatches = workingMatches.filter(match => {
@@ -387,10 +387,10 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                                  <div className="h-10 w-8 flex flex-col items-center justify-center relative space-y-0.5">
                                     <TooltipProvider delayDuration={150}>
                                         {indicators.activityStatus === 'confirmed' && (
-                                             <Tooltip><TooltipTrigger asChild><button onClick={() => onViewPrefChange(day, 'myConfirmed', indicators.activityType || 'match')} className="h-6 w-6 flex items-center justify-center bg-destructive text-destructive-foreground rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">R</button></TooltipTrigger><TooltipContent><p>Ver mis reservas</p></TooltipContent></Tooltip>
+                                             <Tooltip><TooltipTrigger asChild><button onClick={() => onViewPrefChange(day, 'myConfirmed', indicators.activityTypes[0] || 'match')} className="h-6 w-6 flex items-center justify-center bg-destructive text-destructive-foreground rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">R</button></TooltipTrigger><TooltipContent><p>Ver mis reservas</p></TooltipContent></Tooltip>
                                         )}
                                         {indicators.activityStatus === 'inscribed' && (
-                                             <Tooltip><TooltipTrigger asChild><button onClick={() => onViewPrefChange(day, 'myInscriptions', indicators.activityType || 'match', indicators.eventId)} className="h-6 w-6 flex items-center justify-center bg-blue-500 text-white rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">I</button></TooltipTrigger><TooltipContent><p>Ver mis inscripciones</p></TooltipContent></Tooltip>
+                                             <Tooltip><TooltipTrigger asChild><button onClick={() => onViewPrefChange(day, 'myInscriptions', indicators.activityTypes[0] || 'match', indicators.eventId)} className="h-6 w-6 flex items-center justify-center bg-blue-500 text-white rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">I</button></TooltipTrigger><TooltipContent><p>Ver mis inscripciones</p></TooltipContent></Tooltip>
                                         )}
                                         {indicators.hasEvent && indicators.activityStatus === 'none' && (
                                             <Tooltip><TooltipTrigger asChild><Link href={`/match-day/${indicators.eventId}`} passHref><Button variant="ghost" size="icon" className="h-6 w-6 rounded-md bg-primary/10 hover:bg-primary/20 animate-pulse-blue border border-primary/50"><Plus className="h-4 w-4 text-primary" /></Button></Link></TooltipTrigger><TooltipContent><p>¡Apúntate al Match-Day!</p></TooltipContent></Tooltip>
@@ -545,6 +545,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
 };
 
 export default MatchDisplay;
+
 
 
 
