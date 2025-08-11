@@ -1,13 +1,13 @@
 // src/components/schedule/PersonalMatches.tsx
 "use client";
 
-import React, { useState, useEffect, useTransition, useMemo } from 'react';
-import type { MatchBooking, User, Match, Club, PadelCategoryForSlot, MatchBookingMatchDetails, PadelCourt } from '@/types';
+import React, { useState, useEffect, useMemo, useCallback, useTransition } from 'react';
+import type { Booking, User, Review, TimeSlot, PadelCourt, Instructor, UserActivityStatusForDay, MatchBooking, Match, Club, PadelCategoryForSlot, MatchBookingMatchDetails } from '@/types';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { List, Clock, Users, CalendarCheck, CalendarX, Loader2, Ban, Hash, Trophy, UserCircle, Gift, Info, MessageSquare, Euro, Users2 as CategoryIcon, Venus, Mars, Share2, Unlock, Lock, Repeat, Lightbulb, BarChartHorizontal, Plus } from 'lucide-react';
 import { format, differenceInHours } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Skeleton } from '@/components/ui/skeleton';
 import { fetchUserMatchBookings, cancelMatchBooking, getMockClubs, makeMatchPublic, cancelPrivateMatchAndReofferWithPoints, getMockMatches, renewRecurringMatch, getCourtAvailabilityForInterval, fillMatchAndMakePrivate } from '@/lib/mockData';
 import * as state from '@/lib/mockDataSources/state';
 import { Button } from '@/components/ui/button';
@@ -322,6 +322,8 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
       const classifiedBadgeClass = 'text-blue-700 border-blue-200 bg-blue-100 hover:border-blue-300';
       const CategoryIconDisplay = category === 'chica' ? Venus : category === 'chico' ? Mars : CategoryIcon;
 
+      const levelRange = level !== 'abierto' && clubDetails?.levelRanges?.find(r => parseFloat(level) >= parseFloat(r.min) && parseFloat(level) <= parseFloat(r.max));
+      const levelToDisplay = levelRange ? levelRange.name : level;
 
       let cancellationButtonText = "Cancelar Inscripción";
       let cancellationDialogText = "¿Estás seguro de que quieres cancelar tu inscripción?";
@@ -440,7 +442,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
              <div className="flex justify-around items-center gap-1.5 my-1">
                 <InfoButton icon={CategoryIcon} text={displayClassCategory(category, true)} onClick={() => handleInfoClick('category', booking.matchDetails!)} className={cn(isCategoryAssigned && classifiedBadgeClass)} />
                 <InfoButton icon={Hash} text={courtNumber ? `# ${courtNumber}` : '# Pista'} onClick={() => handleInfoClick('court', booking.matchDetails!)} className={cn(isCourtAssigned && classifiedBadgeClass)} />
-                <InfoButton icon={BarChartHorizontal} text={level || "Nivel"} onClick={() => handleInfoClick('level', booking.matchDetails!)} className={cn(isLevelAssigned && classifiedBadgeClass)} />
+                <InfoButton icon={BarChartHorizontal} text={levelToDisplay} onClick={() => handleInfoClick('level', booking.matchDetails!)} className={cn(isLevelAssigned && classifiedBadgeClass)} />
              </div>
            
             <div className="grid grid-cols-4 gap-2 items-start justify-items-center mt-1">
@@ -509,7 +511,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                              <AlertDialogTrigger asChild><Button variant="outline" size="sm" className="flex-1 text-xs text-destructive border-destructive hover:bg-destructive/10" disabled={isProcessingAction}><Ban className="mr-1.5 h-3.5 w-3.5" /> Ofrecer</Button></AlertDialogTrigger>
                               <AlertDialogContent>
                                  <AlertDialogHeader><AlertDialogTitle>Cancelar y Ofrecer por Puntos</AlertDialogTitle><AlertDialogDescription>Se te reembolsará el coste total de la pista ({totalCourtFee?.toFixed(2)}€). La pista quedará disponible para que otro jugador la reserve únicamente con puntos de fidelidad. ¿Estás seguro?</AlertDialogDescription></AlertDialogHeader>
-                                 <AlertDialogFooter><AlertDialogCancel disabled={isProcessingAction}>Cerrar</AlertDialogCancel><AlertDialogAction onClick={() => handleCancelAndReoffer(booking.matchId)} disabled={isProcessingAction} className="bg-destructive hover:bg-destructive/90">{currentActionInfo?.type === 'cancelAndReoffer' && isProcessingAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Sí, Cancelar y Ofrecer"}</AlertDialogAction></AlertDialogFooter>
+                                 <AlertDialogFooter><AlertDialogCancel disabled={isProcessingAction}>Cerrar</AlertDialogCancel><AlertDialogAction onClick={() => handleCancelAndReoffer(booking.matchId)} disabled={isProcessingAction && currentActionInfo?.type === 'cancelAndReoffer'} className="bg-destructive hover:bg-destructive/90">{currentActionInfo?.type === 'cancelAndReoffer' && isProcessingAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Sí, Cancelar y Ofrecer"}</AlertDialogAction></AlertDialogFooter>
                              </AlertDialogContent>
                          </AlertDialog>
                       </div>
