@@ -185,18 +185,25 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                 });
             }
 
-            if (selectedLevel !== 'all') {
+            if (selectedLevel && selectedLevel !== 'all') {
                 const club = getMockClubs().find(c => c.id === filterByClubId);
                 const range = club?.levelRanges?.find(r => r.name === selectedLevel);
-                if (range) {
-                    workingMatches = workingMatches.filter(m => {
-                        if('isEventCard' in m) return false;
-                        const match = m as Match;
-                        if (match.level === 'abierto') return true; // Abierto matches are shown for any range filter
+                
+                workingMatches = workingMatches.filter(m => {
+                    if('isEventCard' in m) return false; // Match-Day events don't have level filtering
+                    const match = m as Match;
+                    
+                    if (match.level === 'abierto') {
+                        return selectedLevel === 'abierto';
+                    }
+
+                    if (range) {
                         const matchNumericLevel = parseFloat(match.level);
                         return matchNumericLevel >= parseFloat(range.min) && matchNumericLevel <= parseFloat(range.max);
-                    });
-                }
+                    }
+                    
+                    return false;
+                });
             }
         }
         
@@ -238,7 +245,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
   
   useEffect(() => {
     applyMatchFilters();
-  }, [applyMatchFilters, refreshKey, selectedDate]);
+  }, [applyMatchFilters, refreshKey, selectedDate, selectedLevel]);
 
   useEffect(() => {
     setDisplayedMatches(filteredMatches.slice(0, ITEMS_PER_PAGE * currentPage));

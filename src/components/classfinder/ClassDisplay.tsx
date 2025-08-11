@@ -11,7 +11,7 @@ import { Loader2, AlertTriangle, SearchX, CalendarDays, Plus, CheckCircle, Eye, 
 import ClassCard from '@/components/class/ClassCard';
 import { isProposalSlot as checkIsProposalSlot } from '@/lib/mockDataSources/classProposals';
 import PageSkeleton from '@/components/layout/PageSkeleton';
-import { fetchTimeSlots, getMockCurrentUser, isSlotEffectivelyCompleted, findAvailableCourt, isSlotGratisAndAvailable, fetchMatchDayEventsForDate, getUserActivityStatusForDay } from '@/lib/mockData';
+import { fetchTimeSlots, getMockCurrentUser, isSlotEffectivelyCompleted, findAvailableCourt, isSlotGratisAndAvailable, fetchMatchDayEventsForDate, getUserActivityStatusForDay, getMockClubs } from '@/lib/mockData';
 import type { TimeSlot, User, Booking, MatchPadelLevel, SortOption, Instructor, MatchDayEvent, UserActivityStatusForDay, ViewPreference } from '@/types';
 import { format, isSameDay, addDays, startOfDay, isAfter } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -51,7 +51,7 @@ const ITEMS_PER_PAGE = 9;
 
 const ClassDisplay: React.FC<ClassDisplayProps> = ({
     currentUser, onBookingSuccess, filterByClubId, filterByGratisOnly, filterByLiberadasOnly, onDeactivateGratisFilter,
-    selectedDate, onDateChange, timeSlotFilter, selectedLevelsSheet, sortBy,
+    selectedDate, onDateChange, timeSlotFilter, selectedLevelsSheet: selectedLevelsFromParent, sortBy,
     filterAlsoConfirmedClasses, filterByFavoriteInstructors, viewPreference, proposalView, refreshKey,
     allClasses, isLoading, dateStripIndicators, dateStripDates, onViewPrefChange, showPointsBonus
 }) => {
@@ -67,6 +67,8 @@ const ClassDisplay: React.FC<ClassDisplayProps> = ({
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const loadMoreRef = useRef<HTMLDivElement>(null);
     
+    const selectedLevel = searchParams.get('level') as MatchPadelLevel | 'all' || 'all';
+
     const calculateOptionOccupancy = (slot: TimeSlot): number => {
         if (!slot.bookedPlayers || slot.bookedPlayers.length === 0) return 0;
         const maxOccupancy = Math.max(0, ...slot.bookedPlayers.map(p => {
@@ -122,26 +124,18 @@ const ClassDisplay: React.FC<ClassDisplayProps> = ({
                 workingClasses = workingClasses.filter(cls => favoriteInstructorIds.includes(cls.instructorId || ''));
             }
 
-            if (selectedLevelsSheet.length > 0) {
-                const isAbiertoSelected = selectedLevelsSheet.length === 1 && selectedLevelsSheet[0] === 'abierto';
-
+            if (selectedLevel && selectedLevel !== 'all') {
+                const club = getMockClubs().find(c => c.id === filterByClubId);
+                const range = club?.levelRanges?.find(r => r.name === selectedLevel);
+                
                 workingClasses = workingClasses.filter(cls => {
-                    if (isAbiertoSelected) {
-                        return cls.level === 'abierto';
-                    }
                     if (cls.level === 'abierto') {
-                        return true;
+                        return selectedLevel === 'abierto';
                     }
-                    if (typeof cls.level === 'object' && 'min' in cls.level && 'max' in cls.level) {
-                         return selectedLevelsSheet.some(selLvl => {
-                            if (selLvl === 'abierto') return false; 
-                            const numSel = parseFloat(selLvl);
-                            return numSel >= parseFloat(cls.level.min) && numSel <= parseFloat(cls.level.max);
-                        });
-                    } else if (typeof cls.level === 'string') {
-                         return selectedLevelsSheet.includes(cls.level as MatchPadelLevel);
+                    if (range && typeof cls.level === 'object' && 'min' in cls.level && 'max' in cls.level) {
+                        return parseFloat(cls.level.min) >= parseFloat(range.min) && parseFloat(cls.level.max) <= parseFloat(range.max);
                     }
-                    return false; 
+                    return false;
                 });
             }
             
@@ -186,7 +180,7 @@ const ClassDisplay: React.FC<ClassDisplayProps> = ({
             const aHasPlayers = (a.bookedPlayers || []).length > 0;
             const bHasPlayers = (b.bookedPlayers || []).length > 0;
             if (aHasPlayers && !bHasPlayers) return -1;
-            if (!aHasPlayers && bHasPlayers) return 1;
+            if (!bHasPlayers && aHasPlayers) return 1;
 
             const dateA = new Date(a.startTime).getTime();
             const dateB = new Date(b.startTime).getTime();
@@ -199,11 +193,11 @@ const ClassDisplay: React.FC<ClassDisplayProps> = ({
 
 
         setFilteredClasses(workingClasses);
-    }, [allClasses, filterByGratisOnly, filterByLiberadasOnly, selectedDate, timeSlotFilter, selectedLevelsSheet, filterByFavoriteInstructors, filterAlsoConfirmedClasses, sortBy, currentUser, viewPreference]);
+    }, [allClasses, filterByGratisOnly, filterByLiberadasOnly, selectedDate, timeSlotFilter, selectedLevel, filterByFavoriteInstructors, filterAlsoConfirmedClasses, sortBy, currentUser, viewPreference, filterByClubId]);
     
     useEffect(() => {
         applyClassFilters();
-    }, [applyClassFilters, refreshKey, selectedDate]); // Depend on selectedDate
+    }, [applyClassFilters, refreshKey, selectedDate, selectedLevel]); // Depend on selectedDate and selectedLevel
 
      // Effect to reset pagination when filters change
     useEffect(() => {
