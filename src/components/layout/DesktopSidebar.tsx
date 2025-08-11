@@ -211,33 +211,33 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                                 <Button 
                                     key={opt.value}
                                     variant={timeSlotFilter === opt.value ? "secondary" : "ghost"}
-                                    className={cn("w-full justify-start text-sm h-10 rounded-full shadow-inner", timeSlotFilter === opt.value && "font-semibold")}
+                                    className={cn("w-full justify-start text-sm h-10 rounded-full shadow-inner", timeSlotFilter === opt.value && "font-semibold bg-sidebar")}
                                     onClick={() => handleTimeFilterChange(opt.value)}
                                 >
                                     <Clock className="mr-3 h-4 w-4" /> {opt.label}
                                 </Button>
                             ))}
-                            <Button variant={selectedLevel !== 'all' ? "secondary" : "ghost"} className={cn("w-full justify-start text-sm h-10 rounded-full shadow-inner", selectedLevel !== 'all' && "font-semibold")} onClick={() => setIsLevelFilterOpen(true)}>
+                            <Button variant={selectedLevel !== 'all' ? "secondary" : "ghost"} className={cn("w-full justify-start text-sm h-10 rounded-full shadow-inner", selectedLevel !== 'all' && "font-semibold bg-sidebar")} onClick={() => setIsLevelFilterOpen(true)}>
                                 <BarChartHorizontal className="mr-3 h-4 w-4" /> {levelFilterLabel}
                             </Button>
                             <div className="space-y-1 pt-2">
-                                <Button variant={viewPreference === 'normal' ? "secondary" : "ghost"} className={cn("w-full justify-start text-sm h-10 rounded-full shadow-inner", viewPreference === 'normal' && "font-semibold")} onClick={() => handleViewPrefChange('normal')}>
+                                <Button variant={viewPreference === 'normal' ? "secondary" : "ghost"} className={cn("w-full justify-start text-sm h-10 rounded-full shadow-inner", viewPreference === 'normal' && "font-semibold bg-sidebar")} onClick={() => handleViewPrefChange('normal')}>
                                     <Eye className="mr-3 h-4 w-4" /> Disponibles
                                 </Button>
-                                <Button variant={viewPreference === 'withPlayers' ? "secondary" : "ghost"} className={cn("w-full justify-start text-sm h-10 rounded-full shadow-inner", viewPreference === 'withPlayers' && "font-semibold")} onClick={() => handleViewPrefChange('withPlayers')}>
+                                <Button variant={viewPreference === 'withPlayers' ? "secondary" : "ghost"} className={cn("w-full justify-start text-sm h-10 rounded-full shadow-inner", viewPreference === 'withPlayers' && "font-semibold bg-sidebar")} onClick={() => handleViewPrefChange('withPlayers')}>
                                     <Users className="mr-3 h-4 w-4" /> En Juego
                                 </Button>
-                                <Button variant={viewPreference === 'myInscriptions' ? 'secondary' : 'ghost'} className={cn('w-full justify-start text-sm h-10 rounded-full shadow-inner', viewPreference === 'myInscriptions' && 'font-semibold')} onClick={() => handleViewPrefChange('myInscriptions')}>
+                                <Button variant={viewPreference === 'myInscriptions' ? 'secondary' : 'ghost'} className={cn('w-full justify-start text-sm h-10 rounded-full shadow-inner', viewPreference === 'myInscriptions' && 'font-semibold bg-sidebar')} onClick={() => handleViewPrefChange('myInscriptions')}>
                                     <ClipboardList className="mr-3 h-4 w-4" /> Mis Inscripciones
                                 </Button>
-                                <Button variant={viewPreference === 'myConfirmed' ? 'secondary' : 'ghost'} className={cn('w-full justify-start text-sm h-10 rounded-full shadow-inner', viewPreference === 'myConfirmed' && 'font-semibold')} onClick={() => handleViewPrefChange('myConfirmed')}>
+                                <Button variant={viewPreference === 'myConfirmed' ? 'secondary' : 'ghost'} className={cn('w-full justify-start text-sm h-10 rounded-full shadow-inner', viewPreference === 'myConfirmed' && 'font-semibold bg-sidebar')} onClick={() => handleViewPrefChange('myConfirmed')}>
                                     <CheckCircle className="mr-3 h-4 w-4" /> Mis Reservas
                                 </Button>
                             </div>
                             {activeView === 'clases' && (
                                 <Button 
                                     variant={filterByFavorites ? "secondary" : "ghost"} 
-                                    className={cn("w-full justify-start text-sm h-10 rounded-full shadow-inner", filterByFavorites && "font-semibold")} 
+                                    className={cn("w-full justify-start text-sm h-10 rounded-full shadow-inner", filterByFavorites && "font-semibold bg-sidebar")} 
                                     onClick={handleFavoritesClick}
                                 >
                                     <Heart className={cn("mr-3 h-4 w-4", filterByFavorites && "fill-current text-destructive")} /> Favoritos
@@ -245,7 +245,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                             )}
                             <Button 
                                 variant={showPointsBonus ? "secondary" : "ghost"} 
-                                className={cn("w-full justify-start text-sm h-10 rounded-full shadow-inner", showPointsBonus && "font-semibold")} 
+                                className={cn("w-full justify-start text-sm h-10 rounded-full shadow-inner", showPointsBonus && "font-semibold bg-sidebar")} 
                                 onClick={handleTogglePointsBonus}
                             >
                                 <Sparkles className="mr-3 h-4 w-4 text-amber-500" /> + Puntos
