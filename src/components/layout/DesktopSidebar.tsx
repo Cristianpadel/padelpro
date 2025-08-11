@@ -82,7 +82,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     }, [initialCurrentUser]);
 
     const isActivitiesPage = pathname.startsWith('/activities');
-    const levelFilterLabel = selectedLevel === 'all' ? 'Todos los niveles' : selectedLevel === 'abierto' ? 'Nivel Abierto' : `${selectedLevel}`;
+    const levelFilterLabel = selectedLevel === 'all' ? 'Niveles' : selectedLevel === 'abierto' ? 'Nivel Abierto' : `${selectedLevel}`;
     const timeFilterLabel = timeSlotFilter === 'all'
         ? 'Horarios'
         : timeSlotFilterOptions.find(o => o.value === timeSlotFilter)?.label.replace(/ \([^)]+\)/, '') || 'Horarios';
@@ -146,7 +146,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 
     return (
         <>
-            <Card className="p-4 flex flex-col gap-4 sticky top-6 h-fit w-72 rounded-l-none rounded-r-2xl" style={shadowStyle}>
+            <Card className="p-4 flex flex-col gap-4 sticky top-6 h-fit w-72 rounded-r-2xl rounded-l-none" style={shadowStyle}>
                 {clubInfo && (
                     <div className="flex flex-col items-center text-center gap-2">
                         <Avatar className="h-20 w-20 rounded-md">
