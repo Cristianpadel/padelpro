@@ -124,8 +124,7 @@ export function useActivityFilters(
   
   const handleViewPrefChange = (
     pref: ViewPreference,
-    type: 'class' | 'match',
-    eventId?: string
+    type: 'class' | 'match'
   ) => {
     const newSearchParams = new URLSearchParams(searchParams.toString());
     newSearchParams.set('view', type);

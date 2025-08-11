@@ -147,18 +147,17 @@ export default function ActivitiesPage() {
     }, [currentUser, refreshKey]);
 
     const onViewPrefChange = (date: Date, pref: ViewPreference, types: ('class' | 'match' | 'event')[], eventId?: string) => {
-        const relevantTypes = types.filter(t => t !== 'event') as ('class' | 'match')[];
-
-        // First, always change the date
-        handleDateChange(date);
+        handleDateChange(date); // Always set the date first.
 
         // Use a timeout to ensure the state update for the date has been processed
-        // before applying the view preference change.
+        // before applying other filters that depend on it. This solves race conditions.
         setTimeout(() => {
+            const relevantTypes = types.filter(t => t !== 'event') as ('class' | 'match')[];
+
             if (relevantTypes.length > 1) {
                 setActivitySelection({ isOpen: true, date, preference: pref, types: relevantTypes });
             } else if (relevantTypes.length === 1) {
-                handleViewPrefChange(pref, relevantTypes[0], eventId);
+                handleViewPrefChange(pref, relevantTypes[0]);
             } else if (types.includes('event') && eventId) {
                 router.push(`/match-day/${eventId}`);
             }
