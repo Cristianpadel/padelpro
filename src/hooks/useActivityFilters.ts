@@ -107,7 +107,6 @@ export function useActivityFilters(
       setSelectedDate(startOfDay(date));
       const newSearchParams = new URLSearchParams(searchParams.toString());
       newSearchParams.set('date', format(date, 'yyyy-MM-dd'));
-      // When changing date, reset view preference to normal to avoid confusion
       newSearchParams.delete('viewPref'); 
       router.replace(`${pathname}?${newSearchParams.toString()}`, { scroll: false });
   }, [router, pathname, searchParams]);
@@ -132,20 +131,22 @@ export function useActivityFilters(
     }
   };
   
-  const handleViewPrefChange = (
+  const handleViewPrefChange = useCallback((
     pref: ViewPreference,
     type: 'class' | 'match',
-    date: Date, // Date is now required
+    date?: Date,
   ) => {
     const newSearchParams = new URLSearchParams(searchParams.toString());
     newSearchParams.set('view', type);
     newSearchParams.set('viewPref', pref);
-    newSearchParams.set('date', format(date, 'yyyy-MM-dd'));
+
+    if (date) {
+        newSearchParams.set('date', format(date, 'yyyy-MM-dd'));
+        setSelectedDate(startOfDay(date));
+    }
     
     router.replace(`${pathname}?${newSearchParams.toString()}`, { scroll: false });
-    // Update local date state to match the URL
-    setSelectedDate(startOfDay(date));
-  };
+  }, [router, pathname, searchParams]);
 
 
 
@@ -169,7 +170,6 @@ export function useActivityFilters(
       setSelectedDate(null);
     } else if (dateParam) {
         const newDate = startOfDay(new Date(dateParam));
-        // Check if date is different to avoid infinite loop
         if (!selectedDate || newDate.getTime() !== selectedDate.getTime()) {
            setSelectedDate(newDate);
         }

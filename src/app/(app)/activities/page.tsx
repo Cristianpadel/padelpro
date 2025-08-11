@@ -147,18 +147,17 @@ export default function ActivitiesPage() {
     }, [currentUser, refreshKey]);
 
     const onViewPrefChange = (date: Date, pref: ViewPreference, types: ('class' | 'match' | 'event')[], eventId?: string) => {
-        // This function now orchestrates the entire navigation logic
-        handleDateChange(date); // Immediately set the date for display
         const relevantTypes = types.filter(t => t !== 'event') as ('class' | 'match')[];
-
+    
         if (relevantTypes.length > 1) {
             setActivitySelection({ isOpen: true, date, preference: pref, types: relevantTypes });
         } else if (relevantTypes.length === 1) {
+            // Directly navigate if only one type
             handleViewPrefChange(pref, relevantTypes[0], date);
         } else if (types.includes('event') && eventId) {
             router.push(`/match-day/${eventId}`);
         } else {
-            // Default fallack to current view if no specific type is found
+            // Fallback for cases with no specific type, maybe from a general button
             handleViewPrefChange(pref, activeView, date);
         }
     };
@@ -280,7 +279,7 @@ export default function ActivitiesPage() {
                     showPointsBonus={showPointsBonus}
                     onTimeFilterChange={handleTimeFilterChange}
                     onLevelChange={handleLevelChange}
-                    onViewPreferenceChange={(pref) => handleViewPrefChange(pref, activeView, selectedDate)}
+                    onViewPreferenceChange={(pref) => handleViewPrefChange(pref, activeView, selectedDate || new Date())}
                     onFavoritesClick={() => updateUrlFilter('favorites', !filterByFavorites)}
                     onTogglePointsBonus={handleTogglePointsBonus}
                     onClearFilters={clearAllFilters}
