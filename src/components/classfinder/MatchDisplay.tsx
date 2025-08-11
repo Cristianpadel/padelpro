@@ -99,7 +99,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
     };
 
   
-  const applyMatchFilters = useCallback(async () => {
+  const applyMatchFilters = useCallback(async (matchesToFilter: Match[]) => {
     if (!currentUser) {
         setFilteredMatches([]);
         return;
@@ -108,13 +108,13 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
     let finalMatches: (Match | EnhancedEvent)[] = [];
 
     if (matchIdFilter) {
-        const singleMatch = allMatches.find(m => m.id === matchIdFilter);
+        const singleMatch = matchesToFilter.find(m => m.id === matchIdFilter);
         finalMatches = singleMatch ? [singleMatch] : [];
     } else if (matchShareCode) {
-        const singleMatch = allMatches.find(m => m.privateShareCode === matchShareCode);
+        const singleMatch = matchesToFilter.find(m => m.privateShareCode === matchShareCode);
         finalMatches = singleMatch ? [singleMatch] : [];
     } else {
-        let workingMatches: (Match | EnhancedEvent)[] = [...allMatches];
+        let workingMatches: (Match | EnhancedEvent)[] = [...matchesToFilter];
 
         // Add MatchDayEvent as special cards if it exists for the date.
         if (selectedDate && matchDayEvents.length > 0) {
@@ -263,12 +263,13 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
     }
     
     setFilteredMatches(finalMatches); 
-    setCurrentPage(1); // Reset page when filters change
   }, [allMatches, currentUser, filterByClubId, filterByGratisOnly, filterByLiberadasOnly, filterByPuntosOnly, selectedDate, timeSlotFilter, selectedLevel, viewPreference, matchIdFilter, matchShareCode, matchDayEvents]);
   
   useEffect(() => {
-    applyMatchFilters();
-  }, [applyMatchFilters, refreshKey, selectedDate, selectedLevel]);
+    if (!isLoading) {
+        applyMatchFilters(allMatches);
+    }
+  }, [applyMatchFilters, refreshKey, selectedDate, selectedLevel, allMatches, isLoading, viewPreference, timeSlotFilter]);
 
   // Effect to reset pagination when filters change
     useEffect(() => {
@@ -544,6 +545,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
 };
 
 export default MatchDisplay;
+
 
 
 

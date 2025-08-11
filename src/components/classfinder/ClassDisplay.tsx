@@ -79,15 +79,13 @@ const ClassDisplay: React.FC<ClassDisplayProps> = ({
         return maxOccupancy;
     };
 
-    const applyClassFilters = useCallback(() => {
+    const applyClassFilters = useCallback((classesToFilter: TimeSlot[]) => {
         if (!currentUser) {
             setFilteredClasses([]);
-            setDisplayedClasses([]);
-            setCanLoadMore(false);
             return;
         }
 
-        let workingClasses = [...allClasses];
+        let workingClasses = [...classesToFilter];
         
         if (filterByLiberadasOnly) {
             workingClasses = workingClasses.filter(cls => {
@@ -107,7 +105,8 @@ const ClassDisplay: React.FC<ClassDisplayProps> = ({
                     isSameDay(new Date(cls.startTime), selectedDate)
                 );
             } else {
-                 setFilteredClasses([]); setDisplayedClasses([]); setCanLoadMore(false); return;
+                 setFilteredClasses([]);
+                 return;
             }
             
             if (timeSlotFilter !== 'all') {
@@ -199,11 +198,13 @@ const ClassDisplay: React.FC<ClassDisplayProps> = ({
 
 
         setFilteredClasses(workingClasses);
-    }, [allClasses, filterByGratisOnly, filterByLiberadasOnly, selectedDate, timeSlotFilter, selectedLevel, filterByFavoriteInstructors, filterAlsoConfirmedClasses, sortBy, currentUser, viewPreference, filterByClubId]);
+    }, [filterByGratisOnly, filterByLiberadasOnly, selectedDate, timeSlotFilter, selectedLevel, filterByFavoriteInstructors, filterAlsoConfirmedClasses, sortBy, currentUser, viewPreference, filterByClubId]);
     
     useEffect(() => {
-        applyClassFilters();
-    }, [applyClassFilters, refreshKey, selectedDate, selectedLevel]); // Depend on selectedDate and selectedLevel
+        if (!isLoading) {
+            applyClassFilters(allClasses);
+        }
+    }, [applyClassFilters, refreshKey, selectedDate, selectedLevel, allClasses, isLoading, viewPreference, timeSlotFilter, filterByFavoriteInstructors, filterAlsoConfirmedClasses]);
 
      // Effect to reset pagination when filters change
     useEffect(() => {
@@ -391,4 +392,5 @@ const ClassDisplay: React.FC<ClassDisplayProps> = ({
 }
 
 export default ClassDisplay;
+
 
