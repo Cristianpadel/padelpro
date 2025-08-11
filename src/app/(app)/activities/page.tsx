@@ -188,7 +188,7 @@ export default function ActivitiesPage() {
                         />
                      </div>
                 </header>
-                <main className="flex-1 overflow-y-auto bg-background px-4 md:px-6 pb-6">
+                <main className="flex-1 overflow-y-auto bg-muted/50 px-4 md:px-6 pb-6">
                     {isLoading ? (
                         <PageSkeleton />
                     ) : activeView === 'clases' ? (
