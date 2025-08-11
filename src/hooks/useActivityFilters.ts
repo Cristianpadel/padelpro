@@ -140,7 +140,7 @@ export function useActivityFilters(
     
     // Use the new batch update function
     setUrlFilters({
-        view: type || activeView,
+        view: type || activeView, // Ensure 'view' is maintained
         viewPref: pref,
     });
   };
