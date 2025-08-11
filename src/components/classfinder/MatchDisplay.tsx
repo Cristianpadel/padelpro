@@ -111,6 +111,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
         workingMatches = workingMatches.filter((match) => {
             if ('isEventCard' in match && match.isEventCard) return true; // Always include event cards for the selected date
             const regularMatch = match as Match;
+            // Allow user to see their own private matches
             if (regularMatch.status === 'confirmed_private') return regularMatch.organizerId === currentUser.id;
             return true;
         });
@@ -140,7 +141,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                 const regularMatch = match as Match;
                 const hasPlayers = (regularMatch.bookedPlayers || []).length > 0;
                 const isFull = (regularMatch.bookedPlayers || []).length >= 4;
-                return hasPlayers && !isFull;
+                return hasPlayers && !isFull && regularMatch.status !== 'confirmed_private';
             });
         }
         
@@ -168,10 +169,8 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                 const regularMatch = match as Match;
                 return isMatchBookableWithPoints(regularMatch, club);
             });
-        } else { // Standard filters if no special filter is active
-            if (!selectedDate) {
-                workingMatches = [];
-            } else {
+        } else if (viewPreference === 'normal') { // Standard filters if no special filter is active AND view is normal
+             if (selectedDate) {
                 workingMatches = workingMatches.filter(match => isSameDay(new Date('isEventCard' in match ? match.eventDate : match.startTime), selectedDate));
             }
 
