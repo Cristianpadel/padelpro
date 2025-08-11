@@ -57,7 +57,7 @@ const InfoButton: React.FC<{
     onClick: () => void;
     className?: string;
 }> = ({ icon: Icon, text, onClick, className }) => (
-    <button className={cn("flex-1 flex items-center justify-center text-xs h-8 rounded-full shadow-inner bg-slate-50 border border-slate-200 capitalize hover:bg-slate-100 transition-colors", className)} onClick={onClick}>
+    <button className={cn("flex-1 flex items-center justify-center text-xs h-8 rounded-full shadow-inner bg-slate-50 border-slate-200 capitalize hover:bg-slate-100 transition-colors", className)} onClick={onClick}>
         <Icon className="mr-1.5 h-3 w-3 text-slate-500" /> 
         <span className="font-medium text-slate-700">{text}</span>
     </button>
@@ -323,7 +323,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
       const CategoryIconDisplay = category === 'chica' ? Venus : category === 'chico' ? Mars : CategoryIcon;
 
       const levelRange = level !== 'abierto' && clubDetails?.levelRanges?.find(r => parseFloat(level) >= parseFloat(r.min) && parseFloat(level) <= parseFloat(r.max));
-      const levelToDisplay = levelRange ? levelRange.name : level;
+      const levelToDisplay = levelRange ? `${levelRange.min}-${levelRange.max}` : level;
 
       let cancellationButtonText = "Cancelar Inscripción";
       let cancellationDialogText = "¿Estás seguro de que quieres cancelar tu inscripción?";
