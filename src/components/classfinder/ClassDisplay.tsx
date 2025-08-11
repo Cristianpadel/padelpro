@@ -44,7 +44,7 @@ interface ClassDisplayProps {
   isLoading: boolean;
   dateStripIndicators: Record<string, UserActivityStatusForDay>;
   dateStripDates: Date[];
-  onViewPrefChange: (pref: ViewPreference, type: 'class' | 'match' | 'event', eventId?: string) => void;
+  onViewPrefChange: (date: Date, pref: ViewPreference, type: 'class' | 'match' | 'event', eventId?: string) => void;
   showPointsBonus: boolean; // New prop for visibility
 }
 
@@ -315,10 +315,10 @@ const ClassDisplay: React.FC<ClassDisplayProps> = ({
                                     <div className="h-10 w-8 flex flex-col items-center justify-center relative space-y-0.5">
                                         <TooltipProvider delayDuration={150}>
                                             {indicators.activityStatus === 'confirmed' && (
-                                                <Tooltip><TooltipTrigger asChild><button onClick={() => onViewPrefChange('myConfirmed', indicators.activityType || 'class')} className="h-6 w-6 flex items-center justify-center bg-destructive text-destructive-foreground rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">R</button></TooltipTrigger><TooltipContent><p>Ver mis reservas</p></TooltipContent></Tooltip>
+                                                <Tooltip><TooltipTrigger asChild><button onClick={() => onViewPrefChange(day, 'myConfirmed', indicators.activityType || 'class')} className="h-6 w-6 flex items-center justify-center bg-destructive text-destructive-foreground rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">R</button></TooltipTrigger><TooltipContent><p>Ver mis reservas</p></TooltipContent></Tooltip>
                                             )}
                                             {indicators.activityStatus === 'inscribed' && (
-                                                 <Tooltip><TooltipTrigger asChild><button onClick={() => onViewPrefChange('myInscriptions', indicators.activityType || 'class', indicators.eventId)} className="h-6 w-6 flex items-center justify-center bg-blue-500 text-white rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">I</button></TooltipTrigger><TooltipContent><p>Ver mis inscripciones</p></TooltipContent></Tooltip>
+                                                 <Tooltip><TooltipTrigger asChild><button onClick={() => onViewPrefChange(day, 'myInscriptions', indicators.activityType || 'class', indicators.eventId)} className="h-6 w-6 flex items-center justify-center bg-blue-500 text-white rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">I</button></TooltipTrigger><TooltipContent><p>Ver mis inscripciones</p></TooltipContent></Tooltip>
                                             )}
                                             {indicators.hasEvent && indicators.activityStatus === 'none' && (
                                                  <Tooltip><TooltipTrigger asChild><Link href={`/match-day/${indicators.eventId}`} passHref><Button variant="ghost" size="icon" className="h-6 w-6 rounded-md bg-primary/10 hover:bg-primary/20 animate-pulse-blue border border-primary/50"><Plus className="h-4 w-4 text-primary" /></Button></Link></TooltipTrigger><TooltipContent><p>¡Apúntate al Match-Day!</p></TooltipContent></Tooltip>
@@ -349,11 +349,13 @@ const ClassDisplay: React.FC<ClassDisplayProps> = ({
                          <h2 className="text-2xl font-semibold text-foreground mb-3">
                             {viewPreference === 'myInscriptions' ? "No tienes inscripciones" : 
                              viewPreference === 'myConfirmed' ? "Aquí no tienes reservas hechas" : 
+                             viewPreference === 'completed' ? "No hay clases completas" : 
                              "No se encontraron clases"}
                         </h2>
                         <p className="text-muted-foreground max-w-md mx-auto">
                              {viewPreference === 'myInscriptions' ? "No estás apuntado/a a ninguna clase para este día." :
                              viewPreference === 'myConfirmed' ? "No tienes clases confirmadas para este día." :
+                             viewPreference === 'completed' ? "No hay clases completas que mostrar para este día." :
                              filterByLiberadasOnly ? "No hay plazas liberadas en clases confirmadas por ahora." : 
                              "Prueba a cambiar las fechas o ajusta los filtros."}
                         </p>
@@ -389,3 +391,4 @@ const ClassDisplay: React.FC<ClassDisplayProps> = ({
 }
 
 export default ClassDisplay;
+

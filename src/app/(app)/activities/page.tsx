@@ -8,7 +8,7 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import ClassDisplay from '@/components/classfinder/ClassDisplay';
 import MatchDisplay from '@/components/classfinder/MatchDisplay'; // Import MatchDisplay
 import { getMockTimeSlots, getMockCurrentUser, getUserActivityStatusForDay, fetchMatches, fetchMatchDayEventsForDate, createMatchesForDay, getMockClubs, countUserUnconfirmedInscriptions } from '@/lib/mockData';
-import type { TimeSlot, User, MatchPadelLevel, SortOption, UserActivityStatusForDay, Match, MatchDayEvent, TimeOfDayFilterType } from '@/types';
+import type { TimeSlot, User, MatchPadelLevel, SortOption, UserActivityStatusForDay, Match, MatchDayEvent, TimeOfDayFilterType, ViewPreference } from '@/types';
 import { startOfDay, addDays, isSameDay, format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -136,10 +136,11 @@ export default function ActivitiesPage() {
         return () => clearInterval(intervalId);
     }, [currentUser, refreshKey]);
 
-    const onViewPrefChange = (date: Date, pref: 'myInscriptions' | 'myConfirmed', type: 'class' | 'match') => {
-        handleDateChange(date); // Set the date first
-        // Then handle the preference change, which now reads the latest date state
-        handleViewPrefChange(pref, type); 
+    const onViewPrefChange = (date: Date, pref: ViewPreference, type: 'class' | 'match' | 'event', eventId?: string) => {
+        handleDateChange(date);
+        setTimeout(() => {
+            handleViewPrefChange(pref, type, eventId);
+        }, 0);
     };
     
       const handleConfirmLogout = () => {
@@ -150,7 +151,7 @@ export default function ActivitiesPage() {
       }
 
     return (
-        <div className="flex h-full">
+        <div className="flex h-full bg-muted/50">
             <DesktopSidebar
                 currentUser={currentUser}
                 clubInfo={getMockClubs()[0]} // Pass club info
@@ -158,7 +159,7 @@ export default function ActivitiesPage() {
                 onLogoutClick={() => setIsLogoutConfirmOpen(true)}
             />
             <div className="flex-1 flex flex-col overflow-hidden">
-                <header className="p-4 md:px-6 md:pt-6 md:pb-4 space-y-3 shrink-0">
+                <header className="p-4 md:px-6 md:pt-6 md:pb-4 space-y-3 shrink-0 bg-card border-b">
                      <div className="flex justify-end items-center">
                         <Button onClick={() => setIsMobileFilterSheetOpen(true)} variant="outline" size="sm" className="md:hidden">
                             <SlidersHorizontal className="mr-2 h-4 w-4" />
@@ -188,7 +189,7 @@ export default function ActivitiesPage() {
                         />
                      </div>
                 </header>
-                <main className="flex-1 overflow-y-auto bg-muted/50 px-4 md:px-6 pb-6">
+                <main className="flex-1 overflow-y-auto px-4 md:px-6 pb-6">
                     {isLoading ? (
                         <PageSkeleton />
                     ) : activeView === 'clases' ? (
@@ -209,7 +210,7 @@ export default function ActivitiesPage() {
                             isLoading={isLoading}
                             dateStripIndicators={dateStripIndicators}
                             dateStripDates={dateStripDates}
-                            onViewPrefChange={(pref, type) => onViewPrefChange(selectedDate!, pref, type)}
+                            onViewPrefChange={onViewPrefChange}
                             showPointsBonus={showPointsBonus}
                             filterByGratisOnly={filterByGratisOnly}
                             filterByLiberadasOnly={filterByLiberadasOnly}
@@ -231,7 +232,7 @@ export default function ActivitiesPage() {
                             isLoading={isLoading}
                             dateStripIndicators={dateStripIndicators}
                             dateStripDates={dateStripDates}
-                            onViewPrefChange={(pref, type) => onViewPrefChange(selectedDate!, pref, type)}
+                            onViewPrefChange={onViewPrefChange}
                             showPointsBonus={showPointsBonus}
                             matchDayEvents={matchDayEvents}
                             filterByGratisOnly={filterByGratisOnly}
@@ -270,3 +271,4 @@ export default function ActivitiesPage() {
         </div>
     );
 }
+
