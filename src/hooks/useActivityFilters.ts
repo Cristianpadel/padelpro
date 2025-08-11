@@ -32,7 +32,9 @@ export function useActivityFilters(
 
   // --- Local State ---
   const activeView = (searchParams.get('view') as 'clases' | 'partidas') || 'clases';
-  const [selectedDate, setSelectedDate] = useState<Date | null>(startOfDay(new Date()));
+  const selectedDateParam = searchParams.get('date');
+  const initialDate = selectedDateParam ? startOfDay(new Date(selectedDateParam)) : startOfDay(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(initialDate);
   const [isUpdatingFavorites, startFavoritesTransition] = useTransition();
 
   // --- NEW: Centralized state for date strip indicators ---
@@ -100,7 +102,15 @@ export function useActivityFilters(
   // --- Event Handlers ---
   const handleTimeFilterChange = (value: TimeOfDayFilterType) => updateUrlFilter('time', value);
   const handleLevelChange = (value: MatchPadelLevel | 'all') => updateUrlFilter('level', value);
-  const handleDateChange = useCallback((date: Date) => setSelectedDate(startOfDay(date)), []);
+  
+  const handleDateChange = useCallback((date: Date) => {
+      setSelectedDate(startOfDay(date));
+      const newSearchParams = new URLSearchParams(searchParams.toString());
+      newSearchParams.set('date', format(date, 'yyyy-MM-dd'));
+      // When changing date, reset view preference to normal to avoid confusion
+      newSearchParams.delete('viewPref'); 
+      router.replace(`${pathname}?${newSearchParams.toString()}`, { scroll: false });
+  }, [router, pathname, searchParams]);
   
   const handleTogglePointsBonus = () => updateUrlFilter('showPoints', !showPointsBonus);
 
@@ -125,21 +135,16 @@ export function useActivityFilters(
   const handleViewPrefChange = (
     pref: ViewPreference,
     type: 'class' | 'match',
-    date?: Date | null,
+    date: Date, // Date is now required
   ) => {
-    const newSearchParams = new URLSearchParams();
-    // Set the primary view (clases/partidas)
+    const newSearchParams = new URLSearchParams(searchParams.toString());
     newSearchParams.set('view', type);
-    // Set the preference filter
     newSearchParams.set('viewPref', pref);
-
-    if (date) {
-        // Since this handler is called from an indicator click,
-        // we defer setting the date to the page component to ensure sync.
-        handleDateChange(date);
-    }
-
+    newSearchParams.set('date', format(date, 'yyyy-MM-dd'));
+    
     router.replace(`${pathname}?${newSearchParams.toString()}`, { scroll: false });
+    // Update local date state to match the URL
+    setSelectedDate(startOfDay(date));
   };
 
 
@@ -159,14 +164,22 @@ export function useActivityFilters(
 
 
   useEffect(() => {
+    const dateParam = searchParams.get('date');
     if (filterByGratisOnly || filterByLiberadasOnly || filterByPuntosOnly || matchIdFilter || matchShareCode) {
       setSelectedDate(null);
+    } else if (dateParam) {
+        const newDate = startOfDay(new Date(dateParam));
+        // Check if date is different to avoid infinite loop
+        if (!selectedDate || newDate.getTime() !== selectedDate.getTime()) {
+           setSelectedDate(newDate);
+        }
     } else {
-      if (!selectedDate) {
-        setSelectedDate(startOfDay(new Date()));
-      }
+        if (!selectedDate) {
+           setSelectedDate(startOfDay(new Date()));
+        }
     }
-  }, [filterByGratisOnly, filterByLiberadasOnly, filterByPuntosOnly, matchIdFilter, matchShareCode, selectedDate]);
+  }, [searchParams, filterByGratisOnly, filterByLiberadasOnly, filterByPuntosOnly, matchIdFilter, matchShareCode, selectedDate]);
+
 
   return {
     activeView,

@@ -147,17 +147,18 @@ export default function ActivitiesPage() {
     }, [currentUser, refreshKey]);
 
     const onViewPrefChange = (date: Date, pref: ViewPreference, types: ('class' | 'match' | 'event')[], eventId?: string) => {
+        // This function now orchestrates the entire navigation logic
+        handleDateChange(date); // Immediately set the date for display
         const relevantTypes = types.filter(t => t !== 'event') as ('class' | 'match')[];
 
         if (relevantTypes.length > 1) {
             setActivitySelection({ isOpen: true, date, preference: pref, types: relevantTypes });
         } else if (relevantTypes.length === 1) {
-            handleDateChange(date); // Update the date in the parent
-            handleViewPrefChange(pref, relevantTypes[0], date); // Let the hook handle the URL
+            handleViewPrefChange(pref, relevantTypes[0], date);
         } else if (types.includes('event') && eventId) {
             router.push(`/match-day/${eventId}`);
         } else {
-            handleDateChange(date);
+            // Default fallack to current view if no specific type is found
             handleViewPrefChange(pref, activeView, date);
         }
     };
@@ -171,7 +172,6 @@ export default function ActivitiesPage() {
 
     const handleActivityTypeSelect = (type: 'class' | 'match') => {
         if (activitySelection.date && activitySelection.preference) {
-             handleDateChange(activitySelection.date);
             handleViewPrefChange(activitySelection.preference, type, activitySelection.date);
         }
         setActivitySelection({ isOpen: false, date: null, preference: null, types: [] });
@@ -280,7 +280,7 @@ export default function ActivitiesPage() {
                     showPointsBonus={showPointsBonus}
                     onTimeFilterChange={handleTimeFilterChange}
                     onLevelChange={handleLevelChange}
-                    onViewPreferenceChange={(pref) => handleViewPrefChange(pref, activeView)}
+                    onViewPreferenceChange={(pref) => handleViewPrefChange(pref, activeView, selectedDate)}
                     onFavoritesClick={() => updateUrlFilter('favorites', !filterByFavorites)}
                     onTogglePointsBonus={handleTogglePointsBonus}
                     onClearFilters={clearAllFilters}
