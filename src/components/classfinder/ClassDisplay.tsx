@@ -157,6 +157,11 @@ const ClassDisplay: React.FC<ClassDisplayProps> = ({
                     const { completed } = isSlotEffectivelyCompleted(cls);
                     return hasPlayers && !completed;
                 });
+            } else if (viewPreference === 'completed') {
+                workingClasses = workingClasses.filter(cls => {
+                    const { completed } = isSlotEffectivelyCompleted(cls);
+                    return completed;
+                });
             } else { 
                  if (!filterAlsoConfirmedClasses) {
                     workingClasses = workingClasses.filter(cls => {
@@ -353,7 +358,7 @@ const ClassDisplay: React.FC<ClassDisplayProps> = ({
                              filterByLiberadasOnly ? "No hay plazas liberadas en clases confirmadas por ahora." : 
                              "Prueba a cambiar las fechas o ajusta los filtros."}
                         </p>
-                         {(viewPreference === 'myInscriptions' || viewPreference === 'myConfirmed') && (
+                         {(viewPreference === 'myInscriptions' || viewPreference === 'myConfirmed' || viewPreference === 'completed') && (
                             <Button onClick={handleBackToAvailable} className="mt-4">
                                 <Eye className="mr-2 h-4 w-4"/> Ver Disponibles
                             </Button>

@@ -1,4 +1,5 @@
 
+
 // types/index.ts
 
 // --- Core Enums & Constants ---
@@ -76,7 +77,7 @@ export const timeSlotFilterOptions: { value: TimeOfDayFilterType, label: string 
     { value: 'evening', label: 'Tardes (18-22h)' },
 ];
 
-export type ViewPreference = 'normal' | 'myInscriptions' | 'myConfirmed' | 'withPlayers';
+export type ViewPreference = 'normal' | 'myInscriptions' | 'myConfirmed' | 'withPlayers' | 'completed';
 
 // --- Interfaces & Rich Types ---
 

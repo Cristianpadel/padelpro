@@ -12,7 +12,7 @@ import type { User, Club, TimeOfDayFilterType, MatchPadelLevel } from '@/types';
 import { timeSlotFilterOptions } from '@/types';
 import {
     Activity, Users, Gift, Clock, BarChartHorizontal, Heart,
-    Briefcase, LogOut, Building, CalendarDays, Eye, ClipboardList, CheckCircle, LogIn, PartyPopper, ShoppingBag, Star, Sparkles, Plus, Calendar, User as UserIcon, Wallet
+    Briefcase, LogOut, Building, CalendarDays, Eye, ClipboardList, CheckCircle, LogIn, PartyPopper, ShoppingBag, Star, Sparkles, Plus, Calendar, User as UserIcon, Wallet, Trophy
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { countConfirmedLiberadasSpots, fetchMatchDayEventsForDate, getHasNewSpecialOfferNotification, countUserReservedProducts, countUserConfirmedActivitiesForDay } from '@/lib/mockData';
@@ -233,6 +233,9 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                                 </Button>
                                 <Button variant="ghost" className={cn("w-full justify-start text-sm h-10 rounded-full", viewPreference === 'withPlayers' ? activeFilterClasses : inactiveFilterClasses)} onClick={() => handleViewPrefChange('withPlayers')}>
                                     <Users className="mr-3 h-4 w-4" /> En Juego
+                                </Button>
+                                <Button variant="ghost" className={cn("w-full justify-start text-sm h-10 rounded-full", viewPreference === 'completed' ? activeFilterClasses : inactiveFilterClasses)} onClick={() => handleViewPrefChange('completed')}>
+                                    <Trophy className="mr-3 h-4 w-4" /> Completas
                                 </Button>
                                 <Button variant="ghost" className={cn('w-full justify-start text-sm h-10 rounded-full', viewPreference === 'myInscriptions' ? activeFilterClasses : inactiveFilterClasses)} onClick={() => handleViewPrefChange('myInscriptions')}>
                                     <ClipboardList className="mr-3 h-4 w-4" /> Mis Inscripciones
