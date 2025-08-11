@@ -127,6 +127,10 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     const shadowStyle = shadowEffect?.enabled && shadowEffect.color
       ? { boxShadow: `0 0 35px ${hexToRgba(shadowEffect.color, shadowEffect.intensity)}` }
       : {};
+      
+    const navButtonShadowStyle = shadowEffect?.enabled && shadowEffect.color
+      ? { boxShadow: `0 4px 15px -2px ${hexToRgba(shadowEffect.color, shadowEffect.intensity * 0.5)}` }
+      : {};
 
     const inactiveFilterClasses = "shadow-[inset_0_2px_8px_0_rgba(168,85,247,0.35)]";
     const activeFilterClasses = "font-semibold bg-white text-primary border-primary border-2 shadow-sm";
@@ -170,36 +174,36 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 
                 <Separator />
 
-                <div className="p-1 space-y-1">
+                <div className="p-1 space-y-2">
                     <Link href="/dashboard" className="w-full">
-                        <Button variant={pathname.startsWith('/dashboard') || pathname.startsWith('/schedule') ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md">
+                        <Button variant={pathname.startsWith('/dashboard') || pathname.startsWith('/schedule') ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md" style={navButtonShadowStyle}>
                             <ClipboardList className="mr-3 h-5 w-5" /> Agenda
                         </Button>
                     </Link>
                     <Link href="/activities?view=clases" className="w-full">
-                        <Button variant={isActivitiesPage && activeView === 'clases' ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md">
+                        <Button variant={isActivitiesPage && activeView === 'clases' ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md" style={navButtonShadowStyle}>
                             <Activity className="mr-3 h-5 w-5" /> Clases
                         </Button>
                     </Link>
                     <Link href="/activities?view=partidas" className="w-full">
-                        <Button variant={isActivitiesPage && activeView === 'partidas' ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md">
+                        <Button variant={isActivitiesPage && activeView === 'partidas' ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md" style={navButtonShadowStyle}>
                             <Users className="mr-3 h-5 w-5" /> Partidas
                         </Button>
                     </Link>
                     <Link href="/activities?view=partidas2" className="w-full">
-                        <Button variant={isActivitiesPage && activeView === 'partidas2' ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md">
+                        <Button variant={isActivitiesPage && activeView === 'partidas2' ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md" style={navButtonShadowStyle}>
                             <Users className="mr-3 h-5 w-5" /> Partidas 2
                         </Button>
                     </Link>
                     {clubInfo?.isMatchDayEnabled && (
                     <Link href="/match-day" className="w-full">
-                        <Button variant={pathname.startsWith('/match-day') ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md">
+                        <Button variant={pathname.startsWith('/match-day') ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md" style={navButtonShadowStyle}>
                             <PartyPopper className="mr-3 h-5 w-5" /> Match-Day
                         </Button>
                     </Link>
                     )}
                     <Link href="/store" className="w-full">
-                        <Button variant={pathname.startsWith('/store') ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md">
+                        <Button variant={pathname.startsWith('/store') ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md" style={navButtonShadowStyle}>
                             <ShoppingBag className="mr-3 h-5 w-5" /> Tienda
                         </Button>
                     </Link>
@@ -259,7 +263,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 
                 <div className="border-t border-border/50 my-2"></div>
                 
-                <div className="space-y-1 mt-auto">
+                <div className="space-y-2 mt-auto">
                     <Button variant="outline" className="w-full justify-start text-base h-12 rounded-full" onClick={onProfessionalAccessClick}>
                         <Briefcase className="mr-3 h-4 w-4" /> Acceso Profesional
                     </Button>
