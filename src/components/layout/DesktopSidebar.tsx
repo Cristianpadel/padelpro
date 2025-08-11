@@ -25,6 +25,7 @@ import ManageFavoriteInstructorsDialog from '@/components/schedule/ManageFavorit
 import { Separator } from '../ui/separator';
 import LevelFilterDialog from '../classfinder/LevelFilterDialog';
 import TimeOfDayFilterDialog from '../classfinder/TimeOfDayFilterDialog';
+import ViewOptionsDialog from '@/components/classfinder/ViewOptionsDialog';
 
 
 interface DesktopSidebarProps {
@@ -57,6 +58,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     const [isManageFavoritesOpen, setIsManageFavoritesOpen] = useState(false);
     const [isLevelFilterOpen, setIsLevelFilterOpen] = useState(false);
     const [isTimeFilterOpen, setIsTimeFilterOpen] = useState(false);
+    const [isViewOptionsOpen, setIsViewOptionsOpen] = useState(false); // New state for view options dialog
     const [currentUser, setCurrentUser] = useState(initialCurrentUser);
 
     const {
@@ -86,6 +88,16 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     const timeFilterLabel = timeSlotFilter === 'all'
         ? 'Horarios'
         : timeSlotFilterOptions.find(o => o.value === timeSlotFilter)?.label.replace(/ \([^)]+\)/, '') || 'Horarios';
+
+    const viewPreferenceLabel = useMemo(() => {
+        switch (viewPreference) {
+            case 'myInscriptions': return 'Mis Inscripciones';
+            case 'myConfirmed': return 'Mis Reservas';
+            case 'withPlayers': return 'En Juego';
+            case 'completed': return 'Completas';
+            default: return 'Ocupación';
+        }
+    }, [viewPreference]);
 
 
     const handleFavoritesClick = () => {
@@ -218,42 +230,28 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                         <div className="border-t border-border/50 my-2"></div>
                         <div className="space-y-1 p-1">
                             <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase">Filtros</h3>
-                             <Button variant="ghost" style={timeSlotFilter !== 'all' ? {} : inactiveFilterShadowStyle} className={cn("w-full justify-start text-sm h-10 rounded-full", timeSlotFilter !== 'all' && activeFilterClasses)} onClick={() => setIsTimeFilterOpen(true)}>
+                             <Button variant="ghost" style={timeSlotFilter === 'all' ? inactiveFilterShadowStyle : {}} className={cn("w-full justify-start text-sm h-10 rounded-full", timeSlotFilter !== 'all' && activeFilterClasses)} onClick={() => setIsTimeFilterOpen(true)}>
                                 <Clock className="mr-3 h-4 w-4" /> {timeFilterLabel}
                             </Button>
-                            <Button variant="ghost" style={selectedLevel !== 'all' ? {} : inactiveFilterShadowStyle} className={cn("w-full justify-start text-sm h-10 rounded-full", selectedLevel !== 'all' && activeFilterClasses)} onClick={() => setIsLevelFilterOpen(true)}>
+                             <Button variant="ghost" style={selectedLevel === 'all' ? inactiveFilterShadowStyle : {}} className={cn("w-full justify-start text-sm h-10 rounded-full", selectedLevel !== 'all' && activeFilterClasses)} onClick={() => setIsLevelFilterOpen(true)}>
                                 <BarChartHorizontal className="mr-3 h-4 w-4" /> {levelFilterLabel}
                             </Button>
-                            <div className="space-y-1 pt-2">
-                                <Button variant="ghost" style={viewPreference === 'normal' ? {} : inactiveFilterShadowStyle} className={cn("w-full justify-start text-sm h-10 rounded-full", viewPreference === 'normal' && activeFilterClasses)} onClick={() => handleViewPrefChange('normal')}>
-                                    <Eye className="mr-3 h-4 w-4" /> Disponibles
-                                </Button>
-                                <Button variant="ghost" style={viewPreference === 'withPlayers' ? {} : inactiveFilterShadowStyle} className={cn("w-full justify-start text-sm h-10 rounded-full", viewPreference === 'withPlayers' && activeFilterClasses)} onClick={() => handleViewPrefChange('withPlayers')}>
-                                    <Users className="mr-3 h-4 w-4" /> En Juego
-                                </Button>
-                                 <Button variant="ghost" style={viewPreference === 'completed' ? {} : inactiveFilterShadowStyle} className={cn("w-full justify-start text-sm h-10 rounded-full", viewPreference === 'completed' && activeFilterClasses)} onClick={() => handleViewPrefChange('completed')}>
-                                    <Trophy className="mr-3 h-4 w-4" /> Completas
-                                </Button>
-                                <Button variant="ghost" style={viewPreference === 'myInscriptions' ? {} : inactiveFilterShadowStyle} className={cn('w-full justify-start text-sm h-10 rounded-full', viewPreference === 'myInscriptions' && activeFilterClasses)} onClick={() => handleViewPrefChange('myInscriptions')}>
-                                    <ClipboardList className="mr-3 h-4 w-4" /> Mis Inscripciones
-                                </Button>
-                                <Button variant="ghost" style={viewPreference === 'myConfirmed' ? {} : inactiveFilterShadowStyle} className={cn('w-full justify-start text-sm h-10 rounded-full', viewPreference === 'myConfirmed' && activeFilterClasses)} onClick={() => handleViewPrefChange('myConfirmed')}>
-                                    <CheckCircle className="mr-3 h-4 w-4" /> Mis Reservas
-                                </Button>
-                            </div>
-                            {activeView === 'clases' && (
+                            <Button variant="ghost" style={viewPreference === 'normal' ? inactiveFilterShadowStyle : {}} className={cn("w-full justify-start text-sm h-10 rounded-full", viewPreference !== 'normal' && activeFilterClasses)} onClick={() => setIsViewOptionsOpen(true)}>
+                                <Eye className="mr-3 h-4 w-4" /> {viewPreferenceLabel}
+                            </Button>
+                             {activeView === 'clases' && (
                                 <Button 
                                     variant="ghost"
-                                    style={filterByFavorites ? {} : inactiveFilterShadowStyle}
+                                    style={!filterByFavorites ? inactiveFilterShadowStyle : {}}
                                     className={cn("w-full justify-start text-sm h-10 rounded-full", filterByFavorites && activeFilterClasses)}
                                     onClick={handleFavoritesClick}
                                 >
                                     <Heart className={cn("mr-3 h-4 w-4", filterByFavorites && "fill-current text-destructive")} /> Favoritos
                                 </Button>
                             )}
-                            <Button 
+                             <Button 
                                 variant="ghost"
-                                style={showPointsBonus ? {} : inactiveFilterShadowStyle}
+                                style={!showPointsBonus ? inactiveFilterShadowStyle : {}}
                                 className={cn("w-full justify-start text-sm h-10 rounded-full", showPointsBonus && activeFilterClasses)}
                                 onClick={handleTogglePointsBonus}
                             >
@@ -294,6 +292,12 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                 onOpenChange={setIsTimeFilterOpen}
                 currentValue={timeSlotFilter}
                 onSelect={handleTimeFilterChange}
+            />
+            <ViewOptionsDialog
+                isOpen={isViewOptionsOpen}
+                onOpenChange={setIsViewOptionsOpen}
+                viewPreference={viewPreference}
+                onViewPreferenceChange={(pref) => handleViewPrefChange(pref, activeView)}
             />
         </>
     );
