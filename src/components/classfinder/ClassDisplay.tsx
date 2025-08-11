@@ -19,6 +19,7 @@ import { cn, isUserLevelCompatibleWithActivity } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 
 interface ClassDisplayProps {
@@ -312,19 +313,17 @@ const ClassDisplay: React.FC<ClassDisplayProps> = ({
 
                                     {/* INDICATOR SECTION */}
                                     <div className="h-10 w-8 flex flex-col items-center justify-center relative space-y-0.5">
-                                        {indicators.activityStatus === 'confirmed' && (
-                                            <button onClick={() => onViewPrefChange('myConfirmed', indicators.activityType || 'class')} title="Ver actividad confirmada" className="h-6 w-6 flex items-center justify-center bg-destructive text-destructive-foreground rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">R</button>
-                                        )}
-                                        {indicators.activityStatus === 'inscribed' && (
-                                             <button onClick={() => onViewPrefChange('myInscriptions', indicators.activityType || 'class', indicators.eventId)} title="Ver pre-inscripción" className="h-6 w-6 flex items-center justify-center bg-blue-500 text-white rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">I</button>
-                                        )}
-                                        {indicators.hasEvent && indicators.activityStatus === 'none' && (
-                                            <Link href={`/match-day/${indicators.eventId}`} passHref>
-                                                <Button variant="ghost" size="icon" className="h-6 w-6 rounded-md bg-primary/10 hover:bg-primary/20 animate-pulse-blue border border-primary/50">
-                                                     <Plus className="h-4 w-4 text-primary" />
-                                                </Button>
-                                            </Link>
-                                        )}
+                                        <TooltipProvider delayDuration={150}>
+                                            {indicators.activityStatus === 'confirmed' && (
+                                                <Tooltip><TooltipTrigger asChild><button onClick={() => onViewPrefChange('myConfirmed', indicators.activityType || 'class')} className="h-6 w-6 flex items-center justify-center bg-destructive text-destructive-foreground rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">R</button></TooltipTrigger><TooltipContent><p>Ver mis reservas</p></TooltipContent></Tooltip>
+                                            )}
+                                            {indicators.activityStatus === 'inscribed' && (
+                                                 <Tooltip><TooltipTrigger asChild><button onClick={() => onViewPrefChange('myInscriptions', indicators.activityType || 'class', indicators.eventId)} className="h-6 w-6 flex items-center justify-center bg-blue-500 text-white rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">I</button></TooltipTrigger><TooltipContent><p>Ver mis inscripciones</p></TooltipContent></Tooltip>
+                                            )}
+                                            {indicators.hasEvent && indicators.activityStatus === 'none' && (
+                                                 <Tooltip><TooltipTrigger asChild><Link href={`/match-day/${indicators.eventId}`} passHref><Button variant="ghost" size="icon" className="h-6 w-6 rounded-md bg-primary/10 hover:bg-primary/20 animate-pulse-blue border border-primary/50"><Plus className="h-4 w-4 text-primary" /></Button></Link></TooltipTrigger><TooltipContent><p>¡Apúntate al Match-Day!</p></TooltipContent></Tooltip>
+                                            )}
+                                        </TooltipProvider>
                                     </div>
                                 </div>
                                 );
