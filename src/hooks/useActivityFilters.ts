@@ -122,20 +122,20 @@ export function useActivityFilters(
     }
   };
   
- const handleViewPrefChange = (
+  const handleViewPrefChange = (
     pref: ViewPreference,
-    type: 'class' | 'match', // Removed 'event' as it's handled separately now
-    eventId?: string // eventId is kept for potential future use but logic is handled before
+    type: 'class' | 'match',
+    eventId?: string
   ) => {
-    // This function will now always keep the current view ('clases' or 'partidas')
-    // and only change the view preference on top of it.
-    
-    // The type parameter is crucial to know which view to set if it's not already set,
-    // but in this flow, 'activeView' should already be correct.
     const newSearchParams = new URLSearchParams(searchParams.toString());
-    newSearchParams.set('view', type); // Ensure the view is set
-    newSearchParams.set('viewPref', pref); // Set the specific preference
+    newSearchParams.set('view', type);
+    newSearchParams.set('viewPref', pref);
     
+    // Clear other filters that conflict with view preferences
+    newSearchParams.delete('filter');
+    newSearchParams.delete('code');
+    newSearchParams.delete('matchId');
+
     router.replace(`${pathname}?${newSearchParams.toString()}`, { scroll: false });
   };
 

@@ -149,19 +149,20 @@ export default function ActivitiesPage() {
     const onViewPrefChange = (date: Date, pref: ViewPreference, types: ('class' | 'match' | 'event')[], eventId?: string) => {
         const relevantTypes = types.filter(t => t !== 'event') as ('class' | 'match')[];
 
-        if (relevantTypes.length > 1) {
-            handleDateChange(date); // Change date first
-            setTimeout(() => {
-              setActivitySelection({ isOpen: true, date, preference: pref, types: relevantTypes });
-            }, 0);
-        } else if (relevantTypes.length === 1) {
-             handleDateChange(date);
-            setTimeout(() => {
-              handleViewPrefChange(pref, relevantTypes[0], eventId);
-            }, 0);
-        } else if (types.includes('event') && eventId) {
-            router.push(`/match-day/${eventId}`);
-        }
+        // First, always change the date
+        handleDateChange(date);
+
+        // Use a timeout to ensure the state update for the date has been processed
+        // before applying the view preference change.
+        setTimeout(() => {
+            if (relevantTypes.length > 1) {
+                setActivitySelection({ isOpen: true, date, preference: pref, types: relevantTypes });
+            } else if (relevantTypes.length === 1) {
+                handleViewPrefChange(pref, relevantTypes[0], eventId);
+            } else if (types.includes('event') && eventId) {
+                router.push(`/match-day/${eventId}`);
+            }
+        }, 0);
     };
     
       const handleConfirmLogout = () => {
@@ -304,5 +305,3 @@ export default function ActivitiesPage() {
         </div>
     );
 }
-
-
