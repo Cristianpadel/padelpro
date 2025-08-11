@@ -111,9 +111,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
         workingMatches = workingMatches.filter((match) => {
             if ('isEventCard' in match && match.isEventCard) return true; // Always include event cards for the selected date
             const regularMatch = match as Match;
-            // On private matches, only show if user is the organizer
             if (regularMatch.status === 'confirmed_private') return regularMatch.organizerId === currentUser.id;
-            // Otherwise, show all other matches (forming, confirmed, placeholders)
             return true;
         });
 
@@ -126,7 +124,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
             workingMatches = workingMatches.filter(match => {
                 if ('isEventCard' in match) return false;
                 const regularMatch = match as Match;
-                return (regularMatch.bookedPlayers || []).some(p => p.userId === currentUser.id);
+                return (regularMatch.bookedPlayers || []).some(p => p.userId === currentUser.id) && regularMatch.status !== 'confirmed' && regularMatch.status !== 'confirmed_private';
             });
         } else if (viewPreference === 'myConfirmed') {
              workingMatches = workingMatches.filter(match => {
