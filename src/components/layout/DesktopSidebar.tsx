@@ -129,7 +129,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
       : {};
 
     const inactiveFilterClasses = "shadow-[inset_0_2px_8px_0_rgba(168,85,247,0.35)]";
-    const activeFilterClasses = "font-semibold bg-accent text-accent-foreground";
+    const activeFilterClasses = "font-semibold bg-white text-primary border-primary border-2 shadow-sm";
 
     return (
         <>
