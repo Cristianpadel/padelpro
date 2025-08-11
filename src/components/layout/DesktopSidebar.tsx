@@ -128,7 +128,8 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
       ? { boxShadow: `0 0 35px ${hexToRgba(shadowEffect.color, shadowEffect.intensity)}` }
       : {};
 
-    const inactiveFilterClasses = "shadow-[inset_0_2px_6px_0_rgba(168,85,247,0.25)]";
+    const inactiveFilterClasses = "shadow-[inset_0_2px_8px_0_rgba(168,85,247,0.35)]";
+    const activeFilterClasses = "font-semibold bg-accent text-accent-foreground";
 
     return (
         <>
@@ -213,33 +214,33 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                                 <Button 
                                     key={opt.value}
                                     variant="ghost"
-                                    className={cn("w-full justify-start text-sm h-10 rounded-full", timeSlotFilter === opt.value ? "font-semibold bg-sidebar text-sidebar-foreground" : inactiveFilterClasses)}
+                                    className={cn("w-full justify-start text-sm h-10 rounded-full", timeSlotFilter === opt.value ? activeFilterClasses : inactiveFilterClasses)}
                                     onClick={() => handleTimeFilterChange(opt.value)}
                                 >
                                     <Clock className="mr-3 h-4 w-4" /> {opt.label}
                                 </Button>
                             ))}
-                            <Button variant="ghost" className={cn("w-full justify-start text-sm h-10 rounded-full", selectedLevel !== 'all' ? "font-semibold bg-sidebar text-sidebar-foreground" : inactiveFilterClasses)} onClick={() => setIsLevelFilterOpen(true)}>
+                            <Button variant="ghost" className={cn("w-full justify-start text-sm h-10 rounded-full", selectedLevel !== 'all' ? activeFilterClasses : inactiveFilterClasses)} onClick={() => setIsLevelFilterOpen(true)}>
                                 <BarChartHorizontal className="mr-3 h-4 w-4" /> {levelFilterLabel}
                             </Button>
                             <div className="space-y-1 pt-2">
-                                <Button variant="ghost" className={cn("w-full justify-start text-sm h-10 rounded-full", viewPreference === 'normal' ? "font-semibold bg-sidebar text-sidebar-foreground" : inactiveFilterClasses)} onClick={() => handleViewPrefChange('normal')}>
+                                <Button variant="ghost" className={cn("w-full justify-start text-sm h-10 rounded-full", viewPreference === 'normal' ? activeFilterClasses : inactiveFilterClasses)} onClick={() => handleViewPrefChange('normal')}>
                                     <Eye className="mr-3 h-4 w-4" /> Disponibles
                                 </Button>
-                                <Button variant="ghost" className={cn("w-full justify-start text-sm h-10 rounded-full", viewPreference === 'withPlayers' ? 'font-semibold bg-sidebar text-sidebar-foreground' : inactiveFilterClasses)} onClick={() => handleViewPrefChange('withPlayers')}>
+                                <Button variant="ghost" className={cn("w-full justify-start text-sm h-10 rounded-full", viewPreference === 'withPlayers' ? activeFilterClasses : inactiveFilterClasses)} onClick={() => handleViewPrefChange('withPlayers')}>
                                     <Users className="mr-3 h-4 w-4" /> En Juego
                                 </Button>
-                                <Button variant="ghost" className={cn('w-full justify-start text-sm h-10 rounded-full', viewPreference === 'myInscriptions' ? 'font-semibold bg-sidebar text-sidebar-foreground' : inactiveFilterClasses)} onClick={() => handleViewPrefChange('myInscriptions')}>
+                                <Button variant="ghost" className={cn('w-full justify-start text-sm h-10 rounded-full', viewPreference === 'myInscriptions' ? activeFilterClasses : inactiveFilterClasses)} onClick={() => handleViewPrefChange('myInscriptions')}>
                                     <ClipboardList className="mr-3 h-4 w-4" /> Mis Inscripciones
                                 </Button>
-                                <Button variant="ghost" className={cn('w-full justify-start text-sm h-10 rounded-full', viewPreference === 'myConfirmed' ? 'font-semibold bg-sidebar text-sidebar-foreground' : inactiveFilterClasses)} onClick={() => handleViewPrefChange('myConfirmed')}>
+                                <Button variant="ghost" className={cn('w-full justify-start text-sm h-10 rounded-full', viewPreference === 'myConfirmed' ? activeFilterClasses : inactiveFilterClasses)} onClick={() => handleViewPrefChange('myConfirmed')}>
                                     <CheckCircle className="mr-3 h-4 w-4" /> Mis Reservas
                                 </Button>
                             </div>
                             {activeView === 'clases' && (
                                 <Button 
                                     variant="ghost"
-                                    className={cn("w-full justify-start text-sm h-10 rounded-full", filterByFavorites ? "font-semibold bg-sidebar text-sidebar-foreground" : inactiveFilterClasses)}
+                                    className={cn("w-full justify-start text-sm h-10 rounded-full", filterByFavorites ? activeFilterClasses : inactiveFilterClasses)}
                                     onClick={handleFavoritesClick}
                                 >
                                     <Heart className={cn("mr-3 h-4 w-4", filterByFavorites && "fill-current text-destructive")} /> Favoritos
@@ -247,7 +248,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                             )}
                             <Button 
                                 variant="ghost"
-                                className={cn("w-full justify-start text-sm h-10 rounded-full", showPointsBonus ? "font-semibold bg-sidebar text-sidebar-foreground" : inactiveFilterClasses)}
+                                className={cn("w-full justify-start text-sm h-10 rounded-full", showPointsBonus ? activeFilterClasses : inactiveFilterClasses)}
                                 onClick={handleTogglePointsBonus}
                             >
                                 <Sparkles className="mr-3 h-4 w-4 text-amber-500" /> + Puntos
