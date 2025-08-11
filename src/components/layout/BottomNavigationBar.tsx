@@ -198,7 +198,7 @@ export function BottomNavigationBar() {
             href: '/activities?view=clases',
             icon: Activity,
             label: 'Clases',
-            isActive: pathname === '/activities' && searchParams.get('view') !== 'partidas',
+            isActive: pathname === '/activities' && searchParams.get('view') === 'clases',
             hidden: !currentUser || !(clubInfo?.showClassesTabOnFrontend ?? true),
         },
         {
@@ -207,6 +207,14 @@ export function BottomNavigationBar() {
             icon: Users,
             label: 'Partidas',
             isActive: pathname === '/activities' && searchParams.get('view') === 'partidas',
+            hidden: !currentUser || !(clubInfo?.showMatchesTabOnFrontend ?? true),
+        },
+        {
+            key: 'partidas2',
+            href: '/activities?view=partidas2',
+            icon: Users,
+            label: 'Partidas 2',
+            isActive: pathname === '/activities' && searchParams.get('view') === 'partidas2',
             hidden: !currentUser || !(clubInfo?.showMatchesTabOnFrontend ?? true),
         },
          {

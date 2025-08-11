@@ -183,6 +183,11 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                             <Users className="mr-3 h-5 w-5" /> Partidas
                         </Button>
                     </Link>
+                    <Link href="/activities?view=partidas2" className="w-full">
+                        <Button variant={isActivitiesPage && activeView === 'partidas2' ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md">
+                            <Users className="mr-3 h-5 w-5" /> Partidas 2
+                        </Button>
+                    </Link>
                     {clubInfo?.isMatchDayEnabled && (
                     <Link href="/match-day" className="w-full">
                         <Button variant={pathname.startsWith('/match-day') ? "default" : "outline"} className="w-full justify-start text-base h-11 rounded-md">
