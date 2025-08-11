@@ -159,8 +159,7 @@ export default function ActivitiesPage() {
             />
             <div className="flex-1 flex flex-col overflow-hidden">
                 <header className="p-4 md:px-6 md:pt-6 md:pb-4 space-y-3 shrink-0">
-                     <div className="flex justify-between items-center">
-                        <h1 className="font-headline text-2xl md:text-3xl font-semibold">Actividades Disponibles</h1>
+                     <div className="flex justify-end items-center">
                         <Button onClick={() => setIsMobileFilterSheetOpen(true)} variant="outline" size="sm" className="md:hidden">
                             <SlidersHorizontal className="mr-2 h-4 w-4" />
                             Filtros
