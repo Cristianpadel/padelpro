@@ -12,6 +12,7 @@ import { es } from 'date-fns/locale';
 import { getInitials } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { getMockStudents } from '@/lib/mockData'; // Import students data source
 
 interface MatchProCardProps {
     match: Match;
@@ -25,6 +26,13 @@ const MatchProCard: React.FC<MatchProCardProps> = ({ match, currentUser, onBooki
     const players = match.bookedPlayers || [];
     const isUserBooked = players.some(p => p.userId === currentUser.id);
     const isFull = players.length >= 4;
+    
+    // Get full student details for avatars
+    const allStudents = getMockStudents();
+    const getPlayerDetails = (userId: string): User | undefined => {
+        return allStudents.find(s => s.id === userId);
+    };
+
 
     const handleJoin = () => {
         if (isFull || isUserBooked || isLoading) return;
@@ -57,6 +65,7 @@ const MatchProCard: React.FC<MatchProCardProps> = ({ match, currentUser, onBooki
                 <div className="grid grid-cols-4 gap-2">
                     {Array.from({ length: 4 }).map((_, index) => {
                         const player = players[index];
+                        const playerDetails = player ? getPlayerDetails(player.userId) : null;
                         const canClickToJoin = !player && !isFull && !isUserBooked && !isLoading;
 
                         return (
@@ -67,15 +76,15 @@ const MatchProCard: React.FC<MatchProCardProps> = ({ match, currentUser, onBooki
                                     className={cn("rounded-full", canClickToJoin && "cursor-pointer hover:opacity-80 transition-opacity")}
                                     aria-label={player ? player.name : "Unirse a la partida"}
                                 >
-                                    <Avatar>
-                                        <AvatarImage src={player ? `https://avatar.vercel.sh/${player.userId}.png` : ''} />
+                                    <Avatar className="h-12 w-12">
+                                        <AvatarImage src={playerDetails?.profilePictureUrl} data-ai-hint="player photo"/>
                                         <AvatarFallback>
                                             {isLoading && !player ? (
                                                 <Loader2 className="h-4 w-4 animate-spin" />
                                             ) : player ? (
                                                 getInitials(player.name || '')
                                             ) : (
-                                                <Plus className="h-4 w-4" />
+                                                <Plus className="h-5 w-5" />
                                             )}
                                         </AvatarFallback>
                                     </Avatar>
