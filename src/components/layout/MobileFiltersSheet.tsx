@@ -7,7 +7,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFo
 import { Button } from '@/components/ui/button';
 import { Heart, SlidersHorizontal, Eye, ClipboardList, CheckCircle, Sparkles, Star, Clock, BarChartHorizontal, X, Users } from 'lucide-react';
 import { timeSlotFilterOptions } from '@/types';
-import type { TimeOfDayFilterType, MatchPadelLevel, ClubLevelRange } from '@/types';
+import type { TimeOfDayFilterType, MatchPadelLevel, ClubLevelRange, ViewPreference } from '@/types';
 import { cn } from '@/lib/utils';
 import { getMockClubs } from '@/lib/mockData';
 
@@ -16,12 +16,12 @@ interface MobileFiltersSheetProps {
   onOpenChange: (open: boolean) => void;
   timeSlotFilter: TimeOfDayFilterType;
   selectedLevel: MatchPadelLevel | 'all';
-  viewPreference: 'normal' | 'myInscriptions' | 'myConfirmed' | 'withPlayers';
+  viewPreference: ViewPreference;
   filterByFavorites: boolean;
   showPointsBonus: boolean;
   onTimeFilterChange: (value: TimeOfDayFilterType) => void;
   onLevelChange: (value: MatchPadelLevel | 'all') => void;
-  onViewPreferenceChange: (value: 'normal' | 'myInscriptions' | 'myConfirmed' | 'withPlayers') => void;
+  onViewPreferenceChange: (value: ViewPreference) => void;
   onFavoritesClick: () => void;
   onTogglePointsBonus: () => void;
   onClearFilters: () => void;

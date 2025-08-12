@@ -138,8 +138,13 @@ export function useActivityFilters(
   ) => {
     const newSearchParams = new URLSearchParams(searchParams.toString());
     newSearchParams.set('view', type);
-    newSearchParams.set('viewPref', pref);
-
+    
+    if (pref !== 'normal') {
+      newSearchParams.set('viewPref', pref);
+    } else {
+      newSearchParams.delete('viewPref');
+    }
+    
     if (date) {
         newSearchParams.set('date', format(date, 'yyyy-MM-dd'));
         setSelectedDate(startOfDay(date));
