@@ -8,7 +8,7 @@ import type { Match, User, MatchBooking, MatchPadelLevel, PadelCategoryForSlot, 
 import { matchPadelLevels, timeSlotFilterOptions } from '@/types';
 import MatchCard from '@/components/match/MatchCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { fetchMatches, getMockClubs, findAvailableCourt, fetchMatchDayEventsForDate, getUserActivityStatusForDay, getMatchDayInscriptions, isUserLevelCompatibleWithActivity, isMatchBookableWithPoints } from '@/lib/mockData';
+import { fetchMatches, getMockClubs, findAvailableCourt, fetchMatchDayEventsForDate, getUserActivityStatusForDay, getMatchDayInscriptions, isUserLevelCompatibleWithActivity, isMatchBookableWithPoints, getCourtAvailabilityForInterval } from '@/lib/mockData';
 import { Loader2, SearchX, CalendarDays, Plus, CheckCircle, PartyPopper, ArrowRight, Users, Sparkles, Euro, ThumbsUp, Lock, Scissors } from 'lucide-react';
 import { cn, getInitials } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -230,6 +230,22 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
             }
         }
         
+        // Final filter: check court availability
+        const availableActivities = [];
+        for (const activity of workingMatches) {
+            if ('isEventCard' in activity) {
+                availableActivities.push(activity); // Assume event courts are pre-booked
+                continue;
+            }
+            const match = activity as Match;
+            const availability = await getCourtAvailabilityForInterval(match.clubId, new Date(match.startTime), new Date(match.endTime));
+            if (availability.available.length > 0) {
+                availableActivities.push(match);
+            }
+        }
+        
+        workingMatches = availableActivities;
+
         workingMatches.sort((a, b) => {
             const isUserInA = !('isEventCard' in a) && (a as Match).bookedPlayers?.some(p => p.userId === currentUser.id);
             const isUserInB = !('isEventCard' in b) && (b as Match).bookedPlayers?.some(p => p.userId === currentUser.id);
@@ -545,6 +561,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
 };
 
 export default MatchDisplay;
+
 
 
 

@@ -11,7 +11,7 @@ import { Loader2, AlertTriangle, SearchX, CalendarDays, Plus, CheckCircle, Eye, 
 import ClassCard from '@/components/class/ClassCard';
 import { isProposalSlot as checkIsProposalSlot } from '@/lib/mockDataSources/classProposals';
 import PageSkeleton from '@/components/layout/PageSkeleton';
-import { fetchTimeSlots, getMockCurrentUser, isSlotEffectivelyCompleted, findAvailableCourt, isSlotGratisAndAvailable, fetchMatchDayEventsForDate, getUserActivityStatusForDay, getMockClubs } from '@/lib/mockData';
+import { fetchTimeSlots, getMockCurrentUser, isSlotEffectivelyCompleted, findAvailableCourt, isSlotGratisAndAvailable, fetchMatchDayEventsForDate, getUserActivityStatusForDay, getMockClubs, getCourtAvailabilityForInterval } from '@/lib/mockData';
 import type { TimeSlot, User, Booking, MatchPadelLevel, SortOption, Instructor, MatchDayEvent, UserActivityStatusForDay, ViewPreference } from '@/types';
 import { format, isSameDay, addDays, startOfDay, isAfter } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -79,7 +79,7 @@ const ClassDisplay: React.FC<ClassDisplayProps> = ({
         return maxOccupancy;
     };
 
-    const applyClassFilters = useCallback((classesToFilter: TimeSlot[]) => {
+    const applyClassFilters = useCallback(async (classesToFilter: TimeSlot[]) => {
         if (!currentUser) {
             setFilteredClasses([]);
             return;
@@ -175,8 +175,17 @@ const ClassDisplay: React.FC<ClassDisplayProps> = ({
             }
         }
         
+        // Final filter: check court availability
+        const availableClasses = [];
+        for (const cls of workingClasses) {
+            const availability = await getCourtAvailabilityForInterval(cls.clubId, new Date(cls.startTime), new Date(cls.endTime));
+            if (availability.available.length > 0) {
+                availableClasses.push(cls);
+            }
+        }
+
         // Sorting logic with user's bookings first
-        workingClasses.sort((a, b) => {
+        availableClasses.sort((a, b) => {
             const isUserInA = (a.bookedPlayers || []).some(p => p.userId === currentUser.id);
             const isUserInB = (b.bookedPlayers || []).some(p => p.userId === currentUser.id);
             if (isUserInA && !isUserInB) return -1;
@@ -197,7 +206,7 @@ const ClassDisplay: React.FC<ClassDisplayProps> = ({
         });
 
 
-        setFilteredClasses(workingClasses);
+        setFilteredClasses(availableClasses);
     }, [filterByGratisOnly, filterByLiberadasOnly, selectedDate, timeSlotFilter, selectedLevel, filterByFavoriteInstructors, filterAlsoConfirmedClasses, sortBy, currentUser, viewPreference, filterByClubId]);
     
     useEffect(() => {
@@ -392,5 +401,3 @@ const ClassDisplay: React.FC<ClassDisplayProps> = ({
 }
 
 export default ClassDisplay;
-
-
