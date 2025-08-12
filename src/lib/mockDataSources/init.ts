@@ -183,6 +183,39 @@ export function performInitialization() {
   const initialTimeSlots = generateDynamicTimeSlots();
   initializeMockTimeSlots(initialTimeSlots);
   const initialMatches = generateDynamicMatches();
+  
+  // Create some mock MatchPro games
+  const today = startOfDay(new Date());
+  const proMatch1 = {
+      id: 'match-pro-1',
+      clubId: 'club-1',
+      startTime: setMinutes(setHours(today, 19), 30),
+      endTime: setMinutes(setHours(today, 21), 0),
+      durationMinutes: 90,
+      courtNumber: 1,
+      level: 'abierto',
+      category: 'abierta',
+      isProMatch: true,
+      status: 'forming',
+      bookedPlayers: [
+          { userId: 'user-7', name: 'Gustavo Herrero' },
+          { userId: 'user-15', name: 'Óscar Romero' },
+      ],
+  };
+  const proMatch2 = {
+      id: 'match-pro-2',
+      clubId: 'club-1',
+      startTime: setMinutes(setHours(addDays(today, 1), 20), 0),
+      endTime: setMinutes(setHours(addDays(today, 1), 21), 30),
+      durationMinutes: 90,
+      courtNumber: 2,
+      level: 'abierto',
+      category: 'abierta',
+      isProMatch: true,
+      status: 'forming',
+      bookedPlayers: [],
+  };
+  initialMatches.push(proMatch1, proMatch2);
   initializeMockMatches(initialMatches);
 
   // --- Initialize Bookings ---
@@ -236,72 +269,38 @@ export function performInitialization() {
 
   // --- Simulate some initial activity to make the app look alive ---
   const simulateInitialData = async () => {
-    // General simulation
-    await simulateBookings({
-        clubId: 'club-1',
-        activityType: 'partidas',
-        days: ['monday', 'wednesday', 'friday', 'saturday'],
-        timeRanges: ['evening'],
-        studentCount: 3,
-        density: 20,
-    });
-    await simulateBookings({
-        clubId: 'club-1',
-        activityType: 'clases',
-        days: ['tuesday', 'thursday'],
-        timeRanges: ['morning', 'midday'],
-        studentCount: 2,
-        density: 15,
-    });
+    const clubId = 'club-1';
+    
+    // Simulate some class bookings
+    const openClassSlots = timeSlots().filter(s => s.clubId === clubId && s.status === 'pre_registration' && (!s.bookedPlayers || s.bookedPlayers.length === 0));
+    const students = userDatabase().filter(u => u.id.startsWith('user-'));
 
-    // Specific simulation from user request
-    const club = clubs().find(c => c.id === 'club-1');
-    if (club && club.levelRanges) {
-        const timeIntervals = ["08:00", "08:30", "09:00", "09:30"];
-        const students = userDatabase().filter(u => u.id !== 'user-current');
-        const today = startOfDay(new Date());
+    if (openClassSlots.length > 0 && students.length > 2) {
+      await bookClass(students[1].id, openClassSlots[0].id, 4, 0);
+    }
+     if (openClassSlots.length > 2 && students.length > 4) {
+      await bookClass(students[2].id, openClassSlots[2].id, 2, 0);
+      await bookClass(students[3].id, openClassSlots[2].id, 2, 1);
+    }
 
-        for (let i = 0; i < 7; i++) {
-            const date = addDays(today, i);
-            for (const time of timeIntervals) {
-                for (const levelRange of club.levelRanges) {
-                    const [hour, minute] = time.split(':').map(Number);
-                    const targetTime = setMinutes(setHours(date, hour), minute);
+    // Simulate some match bookings
+    const openMatches = matches().filter(m => m.clubId === clubId && m.isPlaceholder);
+    if (openMatches.length > 1 && students.length > 5) {
+        await bookMatch(students[4].id, openMatches[1].id);
+    }
+     if (openMatches.length > 3 && students.length > 8) {
+        await bookMatch(students[5].id, openMatches[3].id);
+        await bookMatch(students[6].id, openMatches[3].id);
+        await bookMatch(students[7].id, openMatches[3].id);
+    }
 
-                    // --- Corrected Logic ---
-                    // Find an appropriate student ONCE per level range
-                    const studentForBooking = students.find(st => {
-                        if (!st.level || st.level === 'abierto') return false;
-                        const studentLevel = parseFloat(st.level);
-                        return studentLevel >= parseFloat(levelRange.min) && studentLevel <= parseFloat(levelRange.max);
-                    });
-
-                    if (studentForBooking) {
-                        // Find an available CLASS proposal at the target time
-                        const classTarget = timeSlots().find(s =>
-                            s.clubId === club.id &&
-                            new Date(s.startTime).getTime() === targetTime.getTime() &&
-                            (s.bookedPlayers || []).length === 0
-                        );
-                        if (classTarget) {
-                            // Book the class with the found student
-                            await bookClass(studentForBooking.id, classTarget.id, 4, 0); 
-                        }
-
-                        // Find an available MATCH placeholder at the target time
-                        const matchTarget = matches().find(m =>
-                            m.clubId === club.id &&
-                            new Date(m.startTime).getTime() === targetTime.getTime() &&
-                            m.isPlaceholder
-                        );
-                        if (matchTarget) {
-                            // Book the match with the found student
-                            await bookMatch(studentForBooking.id, matchTarget.id);
-                        }
-                    }
-                }
-            }
-        }
+    // Simulate a full match
+     if (openMatches.length > 5 && students.length > 12) {
+        const matchToFill = openMatches[5];
+        await bookMatch(students[8].id, matchToFill.id);
+        await bookMatch(students[9].id, matchToFill.id);
+        await bookMatch(students[10].id, matchToFill.id);
+        await bookMatch(students[11].id, matchToFill.id);
     }
   };
 
