@@ -416,22 +416,25 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                 return (
                                      <AlertDialog key={`empty-reserve-${index}`}>
                                         <AlertDialogTrigger asChild>
-                                            <div className={cn(
-                                                "p-3 border rounded-lg flex flex-col items-center justify-start bg-background shadow-md h-40 group",
-                                                !isMainListFull && "opacity-50 cursor-not-allowed"
-                                            )}>
+                                            <button 
+                                                className={cn(
+                                                    "p-3 border rounded-lg flex flex-col items-center justify-start bg-background shadow-md h-40 group",
+                                                    !isMainListFull && "opacity-50 cursor-not-allowed"
+                                                )}
+                                                disabled={!isMainListFull}
+                                            >
                                                 <div className="flex flex-col items-center gap-1 overflow-hidden flex-grow justify-center">
-                                                    <Avatar className="h-16 w-16 p-0 overflow-hidden border-[3px] border-dashed border-green-400 bg-slate-100 group-hover:border-green-500 transition-colors shadow-inner">
+                                                     <Avatar className="h-16 w-16 p-0 overflow-hidden border-[3px] border-dashed border-green-400 bg-slate-100 group-hover:border-green-500 transition-colors shadow-inner">
                                                         <AvatarFallback className="bg-transparent flex items-center justify-center">
                                                             <Plus className="h-8 w-8 text-green-600 opacity-60 stroke-[3]" />
                                                         </AvatarFallback>
                                                     </Avatar>
                                                     <div className="space-y-1 mt-1 text-center">
-                                                        <p className="font-medium text-sm text-muted-foreground">Plaza Reserva</p>
+                                                        <p className="font-medium text-sm text-muted-foreground">Reserva</p>
                                                         <Badge variant="outline" className="text-xs bg-white">{event.price?.toFixed(2)}€</Badge>
                                                     </div>
                                                 </div>
-                                            </div>
+                                            </button>
                                         </AlertDialogTrigger>
                                          <AlertDialogContent>
                                             <AlertDialogHeader>
