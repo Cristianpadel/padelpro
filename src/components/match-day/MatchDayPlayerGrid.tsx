@@ -416,7 +416,10 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                 return (
                                      <AlertDialog key={`empty-reserve-${index}`}>
                                         <AlertDialogTrigger asChild>
-                                            <div className="p-3 border rounded-lg flex flex-col items-center justify-start bg-background shadow-md h-40 group disabled:cursor-not-allowed disabled:opacity-50">
+                                            <div className={cn(
+                                                "p-3 border rounded-lg flex flex-col items-center justify-start bg-background shadow-md h-40 group",
+                                                !isMainListFull && "opacity-50 cursor-not-allowed"
+                                            )}>
                                                 <div className="flex flex-col items-center gap-1 overflow-hidden flex-grow justify-center">
                                                     <Avatar className="h-16 w-16 p-0 overflow-hidden border-[3px] border-dashed border-green-400 bg-slate-100 group-hover:border-green-500 transition-colors shadow-inner">
                                                         <AvatarFallback className="bg-transparent flex items-center justify-center">
@@ -434,14 +437,19 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                             <AlertDialogHeader>
                                             <AlertDialogTitle>Confirmar Inscripción en Reserva</AlertDialogTitle>
                                             <AlertDialogDescription>
-                                                La lista principal está llena. Te inscribirás en la lista de reserva para el evento "{event.name}". Se te notificará si se libera una plaza.
+                                                {isMainListFull 
+                                                    ? `La lista principal está llena. Te inscribirás en la lista de reserva para el evento "${event.name}". Se te notificará si se libera una plaza.`
+                                                    : 'Debes esperar a que la lista principal se llene para poder apuntarte en la reserva.'
+                                                }
                                             </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
                                             <AlertDialogCancel disabled={isSubmitting}>Cancelar</AlertDialogCancel>
-                                            <AlertDialogAction onClick={onSignUp} disabled={isSubmitting}>
-                                                {isSubmitting ? <Loader2 className="animate-spin" /> : "Confirmar en Reserva"}
-                                            </AlertDialogAction>
+                                            {isMainListFull && (
+                                                <AlertDialogAction onClick={onSignUp} disabled={isSubmitting}>
+                                                    {isSubmitting ? <Loader2 className="animate-spin" /> : "Confirmar en Reserva"}
+                                                </AlertDialogAction>
+                                            )}
                                             </AlertDialogFooter>
                                         </AlertDialogContent>
                                     </AlertDialog>
