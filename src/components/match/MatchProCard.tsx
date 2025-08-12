@@ -11,6 +11,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { getInitials } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface MatchProCardProps {
     match: Match;
@@ -26,6 +27,8 @@ const MatchProCard: React.FC<MatchProCardProps> = ({ match, currentUser, onBooki
     const isFull = players.length >= 4;
 
     const handleJoin = () => {
+        if (isFull || isUserBooked || isLoading) return;
+        
         setIsLoading(true);
         // Simulate API call
         setTimeout(() => {
@@ -54,14 +57,29 @@ const MatchProCard: React.FC<MatchProCardProps> = ({ match, currentUser, onBooki
                 <div className="grid grid-cols-4 gap-2">
                     {Array.from({ length: 4 }).map((_, index) => {
                         const player = players[index];
+                        const canClickToJoin = !player && !isFull && !isUserBooked && !isLoading;
+
                         return (
                             <div key={index} className="flex flex-col items-center space-y-1">
-                                <Avatar>
-                                    <AvatarImage src={player ? `https://avatar.vercel.sh/${player.userId}.png` : ''} />
-                                    <AvatarFallback>
-                                        {player ? getInitials(player.name || '') : <Plus className="h-4 w-4" />}
-                                    </AvatarFallback>
-                                </Avatar>
+                                <button
+                                    onClick={canClickToJoin ? handleJoin : undefined}
+                                    disabled={!canClickToJoin}
+                                    className={cn("rounded-full", canClickToJoin && "cursor-pointer hover:opacity-80 transition-opacity")}
+                                    aria-label={player ? player.name : "Unirse a la partida"}
+                                >
+                                    <Avatar>
+                                        <AvatarImage src={player ? `https://avatar.vercel.sh/${player.userId}.png` : ''} />
+                                        <AvatarFallback>
+                                            {isLoading && !player ? (
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                            ) : player ? (
+                                                getInitials(player.name || '')
+                                            ) : (
+                                                <Plus className="h-4 w-4" />
+                                            )}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                </button>
                                 <span className="text-xs text-muted-foreground truncate w-full text-center">
                                     {player ? player.name?.split(' ')[0] : 'Libre'}
                                 </span>
@@ -71,10 +89,18 @@ const MatchProCard: React.FC<MatchProCardProps> = ({ match, currentUser, onBooki
                 </div>
             </CardContent>
             <CardFooter>
-                <Button className="w-full" onClick={handleJoin} disabled={isFull || isUserBooked || isLoading}>
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                    {isUserBooked ? 'Inscrito' : (isFull ? 'Completo' : 'Inscribirse')}
-                </Button>
+                 {!isUserBooked && !isFull && (
+                    <Button className="w-full" onClick={handleJoin} disabled={isLoading}>
+                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                        Inscribirse
+                    </Button>
+                )}
+                 {isUserBooked && (
+                     <Button className="w-full" disabled variant="secondary">Inscrito</Button>
+                 )}
+                 {isFull && !isUserBooked && (
+                    <Button className="w-full" disabled variant="outline">Completo</Button>
+                 )}
             </CardFooter>
         </Card>
     );
