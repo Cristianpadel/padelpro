@@ -8,7 +8,7 @@ import Image from 'next/image';
 import { cn, getInitials } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import type { User, Club, TimeOfDayFilterType, MatchPadelLevel } from '@/types';
+import type { User, Club, TimeOfDayFilterType, MatchPadelLevel, ActivityViewType } from '@/types';
 import { timeSlotFilterOptions } from '@/types';
 import {
     Activity, Users, Gift, Clock, BarChartHorizontal, Heart,
@@ -206,6 +206,11 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                             <Activity className="mr-3 h-5 w-5" /> Clases
                         </Button>
                     </Link>
+                    <Link href="/activities?view=matchpro" className="w-full">
+                        <Button variant={isActivitiesPage && activeView === 'matchpro' ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-md" style={navButtonShadowStyle}>
+                            <Trophy className="mr-3 h-5 w-5" /> Matchpro
+                        </Button>
+                    </Link>
                     <Link href="/activities?view=partidas" className="w-full">
                         <Button variant={isActivitiesPage && activeView === 'partidas' ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-md" style={navButtonShadowStyle}>
                             <Users className="mr-3 h-5 w-5" /> Partidas
@@ -297,7 +302,7 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                 isOpen={isViewOptionsOpen}
                 onOpenChange={setIsViewOptionsOpen}
                 viewPreference={viewPreference}
-                onViewPreferenceChange={(pref) => handleViewPrefChange(pref, activeView)}
+                onViewPreferenceChange={(pref) => handleViewPrefChange(pref, activeView as ActivityViewType)}
             />
         </>
     );

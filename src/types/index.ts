@@ -1,6 +1,3 @@
-
-
-
 // types/index.ts
 
 // --- Core Enums & Constants ---
@@ -79,6 +76,8 @@ export const timeSlotFilterOptions: { value: TimeOfDayFilterType, label: string 
 ];
 
 export type ViewPreference = 'normal' | 'myInscriptions' | 'myConfirmed' | 'withPlayers' | 'completed';
+
+export type ActivityViewType = 'clases' | 'partidas' | 'matchpro';
 
 // --- Interfaces & Rich Types ---
 
@@ -463,5 +462,3 @@ export const displayActivityStatusWithDetails = (
         default: return activity.status || 'Desconocido';
     }
 };
-
-

@@ -5,7 +5,7 @@
 import { useState, useEffect, useCallback, useTransition, useMemo } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { startOfDay, format, isSameDay, addDays, differenceInDays } from 'date-fns';
-import type { User, MatchPadelLevel, TimeOfDayFilterType, MatchDayEvent, UserActivityStatusForDay, ViewPreference } from '@/types';
+import type { User, MatchPadelLevel, TimeOfDayFilterType, MatchDayEvent, UserActivityStatusForDay, ViewPreference, ActivityViewType } from '@/types';
 import { updateUserFavoriteInstructors, getUserActivityStatusForDay, fetchMatchDayEventsForDate } from '@/lib/mockData';
 
 export function useActivityFilters(
@@ -32,7 +32,7 @@ export function useActivityFilters(
 
 
   // --- Local State ---
-  const activeView = (searchParams.get('view') as 'clases' | 'partidas') || 'clases';
+  const activeView = (searchParams.get('view') as ActivityViewType) || 'clases';
   const selectedDateParam = searchParams.get('date');
   const initialDate = selectedDateParam ? startOfDay(new Date(selectedDateParam)) : startOfDay(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(initialDate);
@@ -134,7 +134,7 @@ export function useActivityFilters(
   
   const handleViewPrefChange = useCallback((
     pref: ViewPreference,
-    type: 'class' | 'match',
+    type: ActivityViewType,
     date?: Date,
   ) => {
     const newSearchParams = new URLSearchParams(searchParams.toString());

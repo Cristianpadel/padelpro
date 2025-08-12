@@ -7,8 +7,9 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 
 import ClassDisplay from '@/components/classfinder/ClassDisplay';
 import MatchDisplay from '@/components/classfinder/MatchDisplay'; // Import MatchDisplay
+import MatchProDisplay from '@/components/classfinder/MatchProDisplay'; // Import MatchProDisplay
 import { getMockTimeSlots, getMockCurrentUser, getUserActivityStatusForDay, fetchMatches, fetchMatchDayEventsForDate, createMatchesForDay, getMockClubs, countUserUnconfirmedInscriptions } from '@/lib/mockData';
-import type { TimeSlot, User, MatchPadelLevel, SortOption, UserActivityStatusForDay, Match, MatchDayEvent, TimeOfDayFilterType, ViewPreference } from '@/types';
+import type { TimeSlot, User, MatchPadelLevel, SortOption, UserActivityStatusForDay, Match, MatchDayEvent, TimeOfDayFilterType, ViewPreference, ActivityViewType } from '@/types';
 import { startOfDay, addDays, isSameDay, format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -154,7 +155,7 @@ export default function ActivitiesPage() {
             setActivitySelection({ isOpen: true, date, preference: pref, types: relevantTypes });
         } else if (relevantTypes.length === 1) {
             // Directly navigate if only one type
-            handleViewPrefChange(pref, relevantTypes[0], date);
+            handleViewPrefChange(pref, relevantTypes[0] as ActivityViewType, date);
         } else if (types.includes('event') && eventId) {
             router.push(`/match-day/${eventId}`);
         } else {
@@ -175,6 +176,72 @@ export default function ActivitiesPage() {
             handleViewPrefChange(activitySelection.preference, type, activitySelection.date);
         }
         setActivitySelection({ isOpen: false, date: null, preference: null, types: [] });
+    };
+
+    const renderContent = () => {
+        if (isLoading) return <PageSkeleton />;
+        
+        switch(activeView) {
+            case 'clases':
+                return <ClassDisplay
+                            currentUser={currentUser}
+                            onBookingSuccess={handleBookingSuccess}
+                            selectedDate={selectedDate}
+                            onDateChange={handleDateChange}
+                            timeSlotFilter={timeSlotFilter}
+                            selectedLevelsSheet={selectedLevel === 'all' ? [] : [selectedLevel]}
+                            sortBy={'time'}
+                            filterAlsoConfirmedClasses={false}
+                            filterByFavoriteInstructors={filterByFavorites}
+                            viewPreference={viewPreference}
+                            proposalView={'join'}
+                            refreshKey={refreshKey}
+                            allClasses={allTimeSlots}
+                            isLoading={isLoading}
+                            dateStripIndicators={dateStripIndicators}
+                            dateStripDates={dateStripDates}
+                            onViewPrefChange={onViewPrefChange}
+                            showPointsBonus={showPointsBonus}
+                            filterByGratisOnly={filterByGratisOnly}
+                            filterByLiberadasOnly={filterByLiberadasOnly}
+                        />;
+            case 'partidas':
+                 return <MatchDisplay
+                            currentUser={currentUser}
+                            onBookingSuccess={handleBookingSuccess}
+                            selectedDate={selectedDate}
+                            onDateChange={handleDateChange}
+                            timeSlotFilter={timeSlotFilter}
+                            selectedLevel={selectedLevel}
+                            sortBy={'time'}
+                            filterAlsoConfirmedMatches={false}
+                            viewPreference={viewPreference}
+                            proposalView={'join'}
+                            refreshKey={refreshKey}
+                            allMatches={allMatches}
+                            isLoading={isLoading}
+                            dateStripIndicators={dateStripIndicators}
+                            dateStripDates={dateStripDates}
+                            onViewPrefChange={onViewPrefChange}
+                            showPointsBonus={showPointsBonus}
+                            matchDayEvents={matchDayEvents}
+                            filterByGratisOnly={filterByGratisOnly}
+                            filterByLiberadasOnly={filterByLiberadasOnly}
+                            filterByPuntosOnly={filterByPuntosOnly}
+                            filterByProOnly={filterByProOnly}
+                            matchShareCode={matchShareCode}
+                            matchIdFilter={matchIdFilter}
+                        />;
+            case 'matchpro':
+                 return <MatchProDisplay
+                            currentUser={currentUser}
+                            onBookingSuccess={handleBookingSuccess}
+                            selectedDate={selectedDate}
+                            onDateChange={handleDateChange}
+                        />;
+            default:
+                return null;
+        }
     };
 
     return (
@@ -222,59 +289,7 @@ export default function ActivitiesPage() {
                      </div>
                 </header>
                 <main className="flex-1 overflow-y-auto px-4 md:px-6 pb-6">
-                    {isLoading ? (
-                        <PageSkeleton />
-                    ) : activeView === 'clases' ? (
-                        <ClassDisplay
-                            currentUser={currentUser}
-                            onBookingSuccess={handleBookingSuccess}
-                            selectedDate={selectedDate}
-                            onDateChange={handleDateChange}
-                            timeSlotFilter={timeSlotFilter}
-                            selectedLevelsSheet={selectedLevel === 'all' ? [] : [selectedLevel]}
-                            sortBy={'time'}
-                            filterAlsoConfirmedClasses={false}
-                            filterByFavoriteInstructors={filterByFavorites}
-                            viewPreference={viewPreference}
-                            proposalView={'join'}
-                            refreshKey={refreshKey}
-                            allClasses={allTimeSlots}
-                            isLoading={isLoading}
-                            dateStripIndicators={dateStripIndicators}
-                            dateStripDates={dateStripDates}
-                            onViewPrefChange={onViewPrefChange}
-                            showPointsBonus={showPointsBonus}
-                            filterByGratisOnly={filterByGratisOnly}
-                            filterByLiberadasOnly={filterByLiberadasOnly}
-                        />
-                    ) : (
-                        <MatchDisplay
-                            currentUser={currentUser}
-                            onBookingSuccess={handleBookingSuccess}
-                            selectedDate={selectedDate}
-                            onDateChange={handleDateChange}
-                            timeSlotFilter={timeSlotFilter}
-                            selectedLevel={selectedLevel}
-                            sortBy={'time'}
-                            filterAlsoConfirmedMatches={false}
-                            viewPreference={viewPreference}
-                            proposalView={'join'}
-                            refreshKey={refreshKey}
-                            allMatches={allMatches}
-                            isLoading={isLoading}
-                            dateStripIndicators={dateStripIndicators}
-                            dateStripDates={dateStripDates}
-                            onViewPrefChange={onViewPrefChange}
-                            showPointsBonus={showPointsBonus}
-                            matchDayEvents={matchDayEvents}
-                            filterByGratisOnly={filterByGratisOnly}
-                            filterByLiberadasOnly={filterByLiberadasOnly}
-                            filterByPuntosOnly={filterByPuntosOnly}
-                            filterByProOnly={filterByProOnly}
-                            matchShareCode={matchShareCode}
-                            matchIdFilter={matchIdFilter}
-                        />
-                    )}
+                    {renderContent()}
                 </main>
                  <MobileFiltersSheet
                     isOpen={isMobileFilterSheetOpen}
