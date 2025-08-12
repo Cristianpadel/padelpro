@@ -1,5 +1,6 @@
 
 
+
 // types/index.ts
 
 // --- Core Enums & Constants ---
@@ -277,6 +278,7 @@ export interface Match {
     status: 'forming' | 'confirmed' | 'confirmed_private' | 'cancelled';
     bookedPlayers: { userId: string, name?: string, isSimulated?: boolean }[];
     isPlaceholder?: boolean;
+    isProMatch?: boolean;
     isProvisional?: boolean;
     provisionalForUserId?: string;
     provisionalExpiresAt?: Date;
@@ -461,4 +463,5 @@ export const displayActivityStatusWithDetails = (
         default: return activity.status || 'Desconocido';
     }
 };
+
 

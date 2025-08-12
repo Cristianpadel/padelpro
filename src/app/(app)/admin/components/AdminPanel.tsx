@@ -13,6 +13,7 @@ import CourtBookingManagement from './CourtBookingManagement';
 import ManageCourtsPanel from './ManageCourtsPanel';
 import AddClassFormForAdmin from '../../add-class/components/AddClassFormForAdmin';
 import OpenMatchFormForAdmin from './OpenMatchFormForAdmin';
+import OpenMatchProForm from './OpenMatchProForm'; // Import the new form
 import EditPointSettingsForm from './EditPointSettingsForm';
 import ManageLevelRangesForm from './ManageLevelRangesForm';
 import ManageClubMatchAvailability from './ManageClubMatchAvailability';
@@ -184,6 +185,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminClub }) => {
         )},
         { value: "createMatch", label: "Crear Partida", icon: PlayCircle, contentDescription: `Configura y abre una nueva partida en tu club.`, componentFactory: (props) => (
             props.loading ? <Skeleton className="h-[400px] w-full" /> : <OpenMatchFormForAdmin club={props.club} clubPadelCourts={props.clubPadelCourts} onMatchOpened={props.onActivityAdded} />
+        )},
+        { value: "createMatchPro", label: "Crear Partida PRO", icon: Trophy, contentDescription: `Configura y abre una nueva partida de nivel avanzado en tu club.`, componentFactory: (props) => (
+            props.loading ? <Skeleton className="h-[400px] w-full" /> : <OpenMatchProForm club={props.club} clubPadelCourts={props.clubPadelCourts} onMatchOpened={props.onActivityAdded} />
         )},
         { value: "manageMatchDay", label: "Gestionar Match-Day", icon: PartyPopper, componentFactory: (props) => <ManageMatchDayPanel club={props.club} onEventCreated={props.onEventCreated} />, contentDescription: "Configura y gestiona los eventos sociales de Match-Day." },
         { value: "manageShop", label: "Tienda", icon: ShoppingBag, componentFactory: (props) => <ManageShopPanel club={props.club} onClubSettingsUpdated={props.onClubSettingsUpdated} />, contentDescription: "Gestiona los productos disponibles para la venta en tu club." },

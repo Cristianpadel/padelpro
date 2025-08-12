@@ -66,10 +66,18 @@ interface MatchCardProps {
   showPointsBonus: boolean;
 }
 
-const InfoButton = ({ icon: Icon, text, onClick, className }: { icon: React.ElementType, text: string, onClick: () => void, className?: string }) => (
-    <Button variant="outline" className={cn("flex-1 h-8 rounded-full shadow-inner bg-slate-50 border-slate-200 capitalize text-xs", className)} onClick={onClick}>
-        <span className="font-bold text-slate-500 mr-1.5">+</span> {text}
-    </Button>
+const InfoButton: React.FC<{
+    icon: React.ElementType;
+    text: string;
+    onClick: () => void;
+    className?: string;
+}> = ({ icon: Icon, text, onClick, className }) => (
+    <button className="flex-1" onClick={onClick}>
+        <Badge variant="outline" className={cn("w-full justify-center text-xs py-1.5 rounded-full capitalize shadow-inner bg-slate-50 border-slate-200 hover:border-slate-300 transition-colors", className)}>
+            <Icon className="mr-1.5 h-3 w-3 text-slate-500" /> 
+            <span className="font-medium text-slate-700">{text}</span>
+        </Badge>
+    </button>
 );
 
 
@@ -221,9 +229,13 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
         ? { boxShadow: `0 0 25px ${hexToRgba(shadowEffect.color, shadowEffect.intensity)}` } 
         : {};
 
+    const cardBorderClass = currentMatch.isProMatch
+        ? 'border-l-amber-500'
+        : 'border-l-green-400';
+
     return (
         <>
-            <Card className="w-full transition-shadow duration-300 flex flex-col bg-card border-l-4 border-l-green-400" style={shadowStyle}>
+            <Card className={cn("w-full transition-shadow duration-300 flex flex-col bg-card border-l-4", cardBorderClass)} style={shadowStyle}>
                 <CardHeader className="pb-3 pt-3 px-3">
                     <div className="flex justify-between items-start">
                         <div className="flex items-center space-x-3">
@@ -239,6 +251,20 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
                             </div>
                         </div>
                          <div className="flex items-center gap-1.5">
+                             {currentMatch.isProMatch && (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger>
+                                            <div className="p-1 bg-amber-400 rounded-full text-white shadow-md">
+                                                <Trophy className="h-4 w-4" />
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Partida PRO</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                             )}
                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground"><Share2 className="h-4 w-4"/></Button>
                              {canBookPrivate && (
                                 <button
@@ -262,7 +288,7 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
                      <div className="flex justify-around items-center gap-1.5 my-2">
                          <InfoButton icon={Users2} text="Cat." onClick={() => handleInfoClick('category')} />
                          <InfoButton icon={Hash} text="# Pista" onClick={() => handleInfoClick('court')} />
-                         <InfoButton icon={BarChartHorizontal} text="Nivel" onClick={() => handleInfoClick('level')} />
+                         <InfoButton icon={BarChartHorizontal} text={matchLevelToDisplay} onClick={() => handleInfoClick('level')} />
                      </div>
 
                     <div className="grid grid-cols-4 gap-2 items-start justify-items-center mt-3">
