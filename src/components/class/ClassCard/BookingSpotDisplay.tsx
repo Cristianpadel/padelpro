@@ -121,10 +121,11 @@ const BookingSpotDisplay: React.FC<BookingSpotDisplayProps> = ({
             disabled={isLoading || !(canJoinStandard || canJoinGratis)}
           >
             <Avatar className={cn(
-              "h-10 w-10 p-0 overflow-hidden shadow-inner",
-              (canJoinStandard || canJoinGratis) ? "border-[3px] border-dashed border-green-400 hover:border-green-500" : "border-gray-300"
+              "h-10 w-10 p-0 overflow-hidden",
+              "border-[3px] border-dashed border-green-400 bg-slate-100 shadow-inner",
+              (canJoinStandard || canJoinGratis) ? "hover:border-green-500 hover:bg-slate-200" : ""
             )}>
-              <AvatarFallback className="bg-muted flex items-center justify-center">
+              <AvatarFallback className="bg-transparent flex items-center justify-center">
                 {isLoading ? (
                   <Loader2 className="h-5 w-5 animate-spin text-primary" />
                 ) : canJoinGratis ? (
@@ -134,7 +135,7 @@ const BookingSpotDisplay: React.FC<BookingSpotDisplayProps> = ({
                 ) : !hasEnoughCredit ? (
                   <CreditCard className="h-5 w-5 text-destructive/70" />
                 ) : (
-                  <Plus className="h-5 w-5 text-muted-foreground stroke-[3] opacity-60" />
+                  <Plus className="h-5 w-5 text-muted-foreground/60 stroke-[3]" />
                 )}
               </AvatarFallback>
             </Avatar>

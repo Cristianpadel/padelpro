@@ -56,7 +56,7 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
         : pricePerPlayer;
 
     let spotTooltipText = "";
-    let iconToShow: React.ReactNode = <UserIcon className="h-5 w-5 text-muted-foreground opacity-50" />;
+    let iconToShow: React.ReactNode = <Plus className="h-5 w-5 text-green-600 opacity-60 stroke-[3]" />;
     let spotVariant: "solid" | "dashed" | "gratis" = "dashed";
     let isDisabled = true;
     let animationClass = "";
@@ -193,10 +193,10 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
                     aria-label={spotTooltipText}
                 >
                     <div className={cn(
-                        "relative inline-flex items-center justify-center h-12 w-12 rounded-full border-[3px] z-0 transition-all shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.2)]",
+                        "relative inline-flex items-center justify-center h-12 w-12 rounded-full border-[3px] z-0 transition-all shadow-inner",
                         animationClass,
                         spotVariant === "solid" && "bg-slate-100 border-slate-300",
-                        spotVariant === "dashed" && "border-dashed border-green-400 hover:bg-green-100",
+                        spotVariant === "dashed" && "border-dashed border-green-400 bg-slate-100 hover:bg-green-100/50",
                         spotVariant === "gratis" && "border-solid border-purple-500 bg-purple-100 hover:bg-purple-200",
                         isCurrentUserInSpot && "border-4 border-primary shadow-lg",
                         isDisabled && !player && 'opacity-70 hover:bg-transparent'
@@ -205,10 +205,14 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
                             <>
                                 <Avatar className="h-[calc(100%-4px)] w-[calc(100%-4px)]">
                                     <AvatarImage src={fullPlayer?.profilePictureUrl} alt={`Avatar ${player.name}`} data-ai-hint="player avatar large"/>
-                                    <AvatarFallback className="text-sm">{getInitials(player.name || 'P')}</AvatarFallback>
+                                    <AvatarFallback className="text-sm bg-muted text-muted-foreground">{getInitials(player.name || 'P')}</AvatarFallback>
                                 </Avatar>
                             </>
-                        ) : iconToShow}
+                        ) : (
+                          <div className="w-full h-full rounded-full flex items-center justify-center">
+                            {iconToShow}
+                          </div>
+                        )}
                         {player && playerLevelDisplay && (
                             <div className="absolute -top-1.5 -right-1.5 bg-background text-foreground border border-border rounded-md px-1 py-0.5 text-[10px] font-bold shadow-md z-20">{playerLevelDisplay}</div>
                         )}
