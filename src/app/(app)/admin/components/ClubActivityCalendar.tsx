@@ -5,7 +5,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { format, addMinutes, startOfDay, setHours, setMinutes, isBefore, isSameDay, isAfter, differenceInMinutes, parseISO, addDays, isEqual, getDay, parse } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { Club, ClubLevelRange, TimeSlot, Match, PadelCourt, PadelLevelRange, DayOfWeek, MatchPadelLevel, ClassPadelLevel, PadelCategoryForSlot, User, Instructor, MatchDayEvent } from '@/types';
-import { getMockTimeSlots, fetchMatches, fetchPadelCourtsByClub, isSlotEffectivelyCompleted, getMockClubs, getMockStudents, getMockInstructors, fetchMatchDayEventsForDate } from '@/lib/mockData';
+import { getMockTimeSlots, fetchMatches, fetchPadelCourtsByClub, isSlotEffectivelyCompleted, getMockClubs, getMockStudents, getMockInstructors, fetchMatchDayEventsForDate, findAvailableCourt } from '@/lib/mockData';
 import { daysOfWeek as dayOfWeekArray, matchPadelLevels, displayClassLevel, displayClassCategory, numericMatchPadelLevels, displayActivityStatusWithDetails } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -50,6 +50,7 @@ interface CellActivityData {
   levelRangeColor?: string;
   provisionalForUserName?: string;
   provisionalExpiresAt?: Date;
+  assignedCourtNumber?: number;
 }
 
 interface CellContent {
@@ -180,22 +181,31 @@ const ClubActivityCalendar: React.FC<ClubActivityCalendarProps> = ({ club, refre
           ).map(m => ({...m, _activityType: 'match'} as const))
       ];
 
-      activitiesForSelectedDate.forEach(activity => {
-        let activityCourt: number;
-        
-        const isConfirmedActivity = activity.status === 'confirmed' || activity.status === 'confirmed_private';
+      const occupiedCourtIntervals: Record<number, {start: Date, end: Date}[]> = {};
 
-        if (isConfirmedActivity && activity.courtNumber !== undefined && activity.courtNumber !== null) {
-            activityCourt = activity.courtNumber;
-        } else {
-            if (activity._activityType === 'class') {
-                activityCourt = VIRTUAL_ROW_CLASSES.courtNumber;
-            } else { // 'match'
-                activityCourt = VIRTUAL_ROW_MATCHES.courtNumber;
+      activitiesForSelectedDate.forEach(activity => {
+        const activityStartTime = new Date(activity.startTime);
+        const activityEndTime = new Date(activity.endTime);
+
+        let assignedCourtNumber: number | undefined = activity.courtNumber;
+        let isProposal = (activity.bookedPlayers || []).length === 0;
+
+        if (isProposal) {
+            assignedCourtNumber = activity._activityType === 'class' ? VIRTUAL_ROW_CLASSES.courtNumber : VIRTUAL_ROW_MATCHES.courtNumber;
+        } else if (!assignedCourtNumber) {
+            // Find an available court for activities with players but no assigned court yet
+            const court = findAvailableCourt(club.id, activityStartTime, activityEndTime, occupiedCourtIntervals);
+            if (court) {
+                assignedCourtNumber = court.courtNumber;
+                 if (!occupiedCourtIntervals[assignedCourtNumber]) occupiedCourtIntervals[assignedCourtNumber] = [];
+                 occupiedCourtIntervals[assignedCourtNumber].push({ start: activityStartTime, end: activityEndTime });
+            } else {
+                 // If no court is available, place it in the virtual row
+                assignedCourtNumber = activity._activityType === 'class' ? VIRTUAL_ROW_CLASSES.courtNumber : VIRTUAL_ROW_MATCHES.courtNumber;
             }
         }
         
-        const activityStartTime = new Date(activity.startTime);
+        const activityCourt = assignedCourtNumber;
         const timeKey = format(activityStartTime, 'HH:mm');
 
         if (!newProcessedData[activityCourt]?.[timeKey]) {
@@ -221,7 +231,7 @@ const ClubActivityCalendar: React.FC<ClubActivityCalendarProps> = ({ club, refre
             }
         }
             
-        let cellData: CellActivityData;
+        let cellData: Partial<CellActivityData>;
         let participants: ActivityParticipant[] = [];
 
         if (activity._activityType === 'class') {
@@ -237,9 +247,10 @@ const ClubActivityCalendar: React.FC<ClubActivityCalendarProps> = ({ club, refre
             isConfirmed: completed, confirmedSize: size, rawActivity: slot,
             levelDisplay: displayClassLevel(slot.level), categoryDisplay: displayClassCategory(slot.category),
             bookedCount: (slot.bookedPlayers || []).length, maxCapacity: slot.maxPlayers,
-            participants, status: slot.status, levelRangeName: rangeName, levelRangeColor: rangeColor
+            participants, status: slot.status, levelRangeName: rangeName, levelRangeColor: rangeColor,
+            assignedCourtNumber: assignedCourtNumber,
           };
-          newProcessedData[activityCourt][timeKey].classes.push(cellData);
+          newProcessedData[activityCourt][timeKey].classes.push(cellData as CellActivityData);
         } else {
           const match = activity as Match;
           const isMatchFullConfirmedOrPrivate = (match.status === 'confirmed_private') || ((match.bookedPlayers || []).length === 4 && (match.status === 'confirmed'));
@@ -255,9 +266,10 @@ const ClubActivityCalendar: React.FC<ClubActivityCalendarProps> = ({ club, refre
               rawActivity: match,
               levelDisplay: displayClassLevel(match.level), categoryDisplay: displayClassCategory(match.category),
               bookedCount: (match.bookedPlayers || []).length, maxCapacity: 4,
-              participants, status: match.status, levelRangeName: rangeName, levelRangeColor: rangeColor
+              participants, status: match.status, levelRangeName: rangeName, levelRangeColor: rangeColor,
+              assignedCourtNumber: assignedCourtNumber,
           };
-          newProcessedData[activityCourt][timeKey].matches.push(cellData);
+          newProcessedData[activityCourt][timeKey].matches.push(cellData as CellActivityData);
         }
       });
       
@@ -293,6 +305,7 @@ const ClubActivityCalendar: React.FC<ClubActivityCalendarProps> = ({ club, refre
                         status: 'confirmed',
                         levelRangeName: 'Evento Match-Day',
                         levelRangeColor: 'hsl(30 95% 53.1%)', // Orange color for events
+                        assignedCourtNumber: court.courtNumber,
                     };
                     newProcessedData[court.courtNumber][timeKey].matchDays.push(cellData);
                 }
@@ -322,7 +335,7 @@ const ClubActivityCalendar: React.FC<ClubActivityCalendarProps> = ({ club, refre
   }, []);
 
   const getCellSpan = (activity: CellActivityData): number => {
-    if (!activity.isConfirmed && activity.type === 'class') {
+    if (!activity.isConfirmed && activity.type === 'class' && (activity.rawActivity as TimeSlot).bookedPlayers.length === 0) {
       return 1;
     }
     const durationMinutes = differenceInMinutes(new Date(activity.endTime), new Date(activity.startTime));
