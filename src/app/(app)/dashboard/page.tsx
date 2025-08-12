@@ -1,5 +1,3 @@
-
-
 // src/app/(app)/dashboard/page.tsx
 "use client";
 
@@ -18,7 +16,6 @@ import { Badge } from '@/components/ui/badge';
 import UserProfileAvatar from '@/components/user/profile/UserProfileAvatar';
 import ChangePasswordDialog from '@/components/user/profile/ChangePasswordDialog';
 import { useUserProfile } from '@/hooks/useUserProfile';
-import { RecommendedClasses } from './components/RecommendedClasses';
 import PersonalSchedule from '@/components/schedule/PersonalSchedule';
 import PersonalMatches from '@/components/schedule/PersonalMatches';
 import PersonalMatchDay from '@/components/schedule/PersonalMatchDay';
@@ -151,8 +148,6 @@ function DashboardPageContent() {
                         </CardContent>
                     </Card>
                 </div>
-
-                <RecommendedClasses />
 
                 <PersonalMatches 
                     currentUser={user} 
