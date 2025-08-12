@@ -57,9 +57,11 @@ const InfoButton: React.FC<{
     onClick: () => void;
     className?: string;
 }> = ({ icon: Icon, text, onClick, className }) => (
-    <button className={cn("flex-1 flex items-center justify-center text-xs h-8 rounded-full shadow-inner bg-slate-50 border-slate-200 capitalize hover:bg-slate-100 transition-colors", className)} onClick={onClick}>
-        <Icon className="mr-1.5 h-3 w-3 text-slate-500" /> 
-        <span className="font-medium text-slate-700">{text}</span>
+    <button className="flex-1" onClick={onClick}>
+        <Badge variant="outline" className={cn("w-full justify-center text-xs py-1.5 rounded-full capitalize shadow-inner bg-slate-50 border-slate-200 hover:border-slate-300 transition-colors", className)}>
+            <Icon className="mr-1.5 h-3 w-3 text-slate-500" /> 
+            <span className="font-medium text-slate-700">{text}</span>
+        </Badge>
     </button>
 );
 
@@ -412,29 +414,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                     </div>
                 </div>
                   <div className="mt-0.5 flex flex-col items-end gap-1.5">
-                    {canMakePrivate && (
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <button
-                                    className="flex items-center h-10 bg-purple-600 text-white rounded-lg shadow-lg cursor-pointer hover:bg-purple-700 transition-colors disabled:opacity-50"
-                                    disabled={isProcessingAction}
-                                >
-                                    <div className="flex items-center justify-center h-full w-10 bg-purple-700 rounded-l-lg">
-                                        {isProcessingAction && currentActionInfo?.bookingId === booking.id && currentActionInfo.type === 'makePrivate' ? <Loader2 className="h-5 w-5 animate-spin" /> : <Lock className="h-5 w-5" />}
-                                    </div>
-                                    <div className="px-3 text-center">
-                                        <p className="text-sm font-bold leading-tight">Hacer</p>
-                                        <p className="text-xs leading-tight">Privada</p>
-                                    </div>
-                                </button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader><AlertDialogTitle>Hacer Partida Privada</AlertDialogTitle><AlertDialogDescription>Pagarás las plazas restantes para completar la partida y asegurarla. Se te cobrará el coste correspondiente de tu saldo. ¿Continuar?</AlertDialogDescription></AlertDialogHeader>
-                                <AlertDialogFooter><AlertDialogCancel disabled={isProcessingAction}>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => handleMakePrivate(booking)} disabled={isProcessingAction} className="bg-purple-600 text-white hover:bg-purple-700">{isProcessingAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : "Sí, Hacer Privada"}</AlertDialogAction></AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    )}
-                    {isUpcomingItem && !canMakePrivate && status !== 'confirmed_private' && <Badge variant={isMatchFull ? 'destructive' : 'default'} className={cn('text-xs', isMatchFull ? 'bg-red-500' : 'bg-blue-500')}>{isMatchFull ? 'Completa' : 'Inscrito'}</Badge>}
+                    {isUpcomingItem && status !== 'confirmed_private' && <Badge variant={isMatchFull ? 'destructive' : 'default'} className={cn('text-xs', isMatchFull ? 'bg-red-500' : 'bg-blue-500')}>{isMatchFull ? 'Completa' : 'Inscrito'}</Badge>}
                     {isUpcomingItem && status === 'confirmed_private' && <Badge variant="outline" className="text-xs bg-purple-100 text-purple-700 border-purple-400">Privada</Badge>}
                     {!isUpcomingItem && <Badge variant="outline" className="text-xs">Finalizada</Badge>}
 
@@ -499,9 +479,9 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
             )}
 
 
-              <div className="pt-2 border-t mt-2 flex flex-col sm:flex-row sm:items-center sm:justify-center space-y-2 sm:space-y-0 sm:space-x-2">
-                  {isOrganizerOfPrivateMatch && isUpcomingItem && (
-                      <div className="flex w-full gap-2">
+              <div className="pt-2 border-t mt-2 flex flex-col items-center justify-center space-y-2">
+                 {isOrganizerOfPrivateMatch && isUpcomingItem && (
+                     <div className="flex w-full gap-2">
                          <Button variant="outline" size="sm" className="flex-1 text-xs bg-purple-500 text-white border-purple-600 hover:bg-purple-600" onClick={handleSharePrivateMatch} disabled={isProcessingAction}><Share2 className="mr-1.5 h-3.5 w-3.5" /> Compartir</Button>
                          <AlertDialog>
                              <AlertDialogTrigger asChild><Button variant="outline" size="sm" className="flex-1 text-xs border-orange-500 text-orange-600 hover:bg-orange-500/10 hover:text-orange-700" disabled={isProcessingAction}>{isProcessingAction ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin"/> : <Unlock className="mr-1.5 h-3.5 w-3.5"/>} Pública</Button></AlertDialogTrigger>
@@ -518,9 +498,9 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                              </AlertDialogContent>
                          </AlertDialog>
                       </div>
-                  )}
+                 )}
                  {isUpcomingItem && !isOrganizerOfPrivateMatch && (
-                     <div className="flex items-center justify-center w-full">
+                     <div className="flex items-center justify-center w-full gap-2">
                          <AlertDialog>
                              <AlertDialogTrigger asChild>
                                 <Button 
@@ -541,9 +521,23 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                              <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>¿Confirmar Cancelación?</AlertDialogTitle><AlertDialogDescription>{cancellationDialogText}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={isProcessingAction && currentActionInfo?.bookingId === booking.id}>Cerrar</AlertDialogCancel><AlertDialogAction onClick={() => handleCancellationAction(booking)} disabled={isProcessingAction && currentActionInfo?.bookingId === booking.id} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{isProcessingAction && currentActionInfo?.bookingId === booking.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Sí, Cancelar"}</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
                          </AlertDialog>
                          {isMatchFull && isUpcomingItem && (<Button variant="outline" size="sm" className="w-full sm:w-auto ml-2 text-xs bg-blue-500 text-white border-blue-600 hover:bg-blue-600" onClick={() => handleOpenChatDialog(booking.matchDetails)}><MessageSquare className="mr-1.5 h-3.5 w-3.5" />Chat</Button>)}
+                         {canMakePrivate && (
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="outline" size="sm" className="flex-1 bg-purple-100 text-purple-700 border-purple-300 hover:bg-purple-200 hover:text-purple-800" disabled={isProcessingAction}>
+                                        {isProcessingAction && currentActionInfo?.bookingId === booking.id && currentActionInfo.type === 'makePrivate' ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Lock className="mr-1.5 h-3.5 w-3.5" />}
+                                        Hacer Privada
+                                    </Button>
+                                </AlertDialogTrigger>
+                                 <AlertDialogContent>
+                                    <AlertDialogHeader><AlertDialogTitle>Hacer Partida Privada</AlertDialogTitle><AlertDialogDescription>Pagarás las plazas restantes para completar la partida y asegurarla. Se te cobrará el coste correspondiente de tu saldo. ¿Continuar?</AlertDialogDescription></AlertDialogHeader>
+                                    <AlertDialogFooter><AlertDialogCancel disabled={isProcessingAction}>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => handleMakePrivate(booking)} disabled={isProcessingAction} className="bg-purple-600 text-white hover:bg-purple-700">{isProcessingAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : "Sí, Hacer Privada"}</AlertDialogAction></AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        )}
                      </div>
                  )}
-                  {!isUpcomingItem && provisionalMatch && !isRenewalExpired && (
+                {!isUpcomingItem && provisionalMatch && !isRenewalExpired && (
                     <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-2 p-2 bg-blue-50 border-t border-blue-200">
                         <span className="text-xs text-blue-700 font-medium">Renovar para la próxima semana (expira en {renewalTimeLeft}):</span>
                         <Button onClick={() => handleRenew(booking.matchId)} size="sm" className="h-8 bg-blue-600 hover:bg-blue-700" disabled={isProcessingAction}>{isProcessingAction && currentActionInfo?.type === 'renew' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Repeat className="mr-2 h-4 w-4"/>} Renovar Reserva</Button>
