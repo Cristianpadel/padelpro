@@ -20,7 +20,7 @@ import PersonalSchedule from '@/components/schedule/PersonalSchedule';
 import PersonalMatches from '@/components/schedule/PersonalMatches';
 import PersonalMatchDay from '@/components/schedule/PersonalMatchDay';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
-import { Wallet, Star, History, Repeat, PlusCircle, PiggyBank, Lock } from 'lucide-react';
+import { Wallet, Star, History, Repeat, PlusCircle, PiggyBank, Lock, Sparkles } from 'lucide-react';
 import CreditMovementsDialog from '@/components/user/CreditMovementsDialog';
 import PointMovementsDialog from '@/components/user/PointMovementsDialog';
 import AddCreditDialog from '@/components/user/AddCreditDialog';
@@ -81,6 +81,7 @@ function DashboardPageContent() {
     }
     
     const availableCredit = (user.credit ?? 0) - (user.blockedCredit ?? 0);
+    const availablePoints = (user.loyaltyPoints ?? 0) - (user.blockedLoyaltyPoints ?? 0);
     const hasPendingPoints = (user.pendingBonusPoints ?? 0) > 0;
 
     return (
@@ -132,20 +133,31 @@ function DashboardPageContent() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
-                            <div className="text-4xl font-bold text-foreground">{(user.loyaltyPoints ?? 0).toFixed(0)}</div>
+                             <div className="text-4xl font-bold text-foreground">{availablePoints.toFixed(0)}</div>
                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <p>Puntos de fidelidad para canjear.</p>
-                            </div>
-                            <div className="flex items-center gap-2 pt-2">
-                                <Button variant="default" size="sm" onClick={() => setIsConvertBalanceDialogOpen(true)} className="flex-1 bg-amber-500 hover:bg-amber-600">
-                                <Repeat className="mr-1.5 h-4 w-4" />
-                                Convertir
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={() => setIsPointMovementsDialogOpen(true)} className="flex-1">
-                                <History className="mr-1 h-3.5 w-3.5" /> Movimientos
-                            </Button>
-                            </div>
-                        </CardContent>
+                                 <div className="flex-1 p-2 bg-muted rounded-md text-center">
+                                     <p className="flex items-center justify-center gap-1"><PiggyBank className="h-3 w-3"/> Total</p>
+                                     <p className="font-semibold text-foreground">{(user.loyaltyPoints ?? 0).toFixed(0)}</p>
+                                 </div>
+                                 <div className="flex-1 p-2 bg-muted rounded-md text-center">
+                                     <p className="flex items-center justify-center gap-1"><Lock className="h-3 w-3"/> Bloqueados</p>
+                                     <p className="font-semibold text-foreground">{(user.blockedLoyaltyPoints ?? 0).toFixed(0)}</p>
+                                 </div>
+                                  <div className="flex-1 p-2 bg-muted rounded-md text-center">
+                                     <p className="flex items-center justify-center gap-1"><Sparkles className="h-3 w-3"/> Pendientes</p>
+                                     <p className="font-semibold text-foreground">{(user.pendingBonusPoints ?? 0).toFixed(0)}</p>
+                                 </div>
+                             </div>
+                             <div className="flex items-center gap-2 pt-2">
+                                 <Button variant="default" size="sm" onClick={() => setIsConvertBalanceDialogOpen(true)} className="flex-1 bg-amber-500 hover:bg-amber-600">
+                                 <Repeat className="mr-1.5 h-4 w-4" />
+                                 Convertir
+                             </Button>
+                             <Button variant="outline" size="sm" onClick={() => setIsPointMovementsDialogOpen(true)} className="flex-1">
+                                 <History className="mr-1 h-3.5 w-3.5" /> Movimientos
+                             </Button>
+                             </div>
+                         </CardContent>
                     </Card>
                 </div>
 
