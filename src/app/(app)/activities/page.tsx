@@ -14,7 +14,7 @@ import { es } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { SlidersHorizontal, Star, Zap, User as UserIcon, Check, Activity as ActivityIcon, Users as UsersIcon } from 'lucide-react';
+import { SlidersHorizontal, Star, Zap, User as UserIcon, Check, Activity as ActivityIcon, Users as UsersIcon, Trophy } from 'lucide-react';
 import PageSkeleton from '@/components/layout/PageSkeleton';
 import { useActivityFilters } from '@/hooks/useActivityFilters';
 import ActiveFiltersDisplay from '@/components/layout/ActiveFiltersDisplay';
@@ -66,6 +66,7 @@ export default function ActivitiesPage() {
         filterByGratisOnly,
         filterByLiberadasOnly,
         filterByPuntosOnly,
+        filterByProOnly,
         isUpdatingFavorites,
         dateStripIndicators,
         dateStripDates,
@@ -203,6 +204,11 @@ export default function ActivitiesPage() {
                                 <Star className="mr-2 h-4 w-4" />Pagar con Puntos
                             </Button>
                         </Link>
+                         <Link href="/activities?view=partidas&filter=pro" passHref>
+                             <Button size="sm" variant={filterByProOnly ? "default" : "ghost"} className={cn(filterByProOnly ? "bg-slate-800 text-white" : "text-slate-700")}>
+                                <Trophy className="mr-2 h-4 w-4" />Matchpro
+                            </Button>
+                        </Link>
                      </div>
                       <div className="min-h-[2rem]">
                         <ActiveFiltersDisplay
@@ -264,6 +270,7 @@ export default function ActivitiesPage() {
                             filterByGratisOnly={filterByGratisOnly}
                             filterByLiberadasOnly={filterByLiberadasOnly}
                             filterByPuntosOnly={filterByPuntosOnly}
+                            filterByProOnly={filterByProOnly}
                             matchShareCode={matchShareCode}
                             matchIdFilter={matchIdFilter}
                         />

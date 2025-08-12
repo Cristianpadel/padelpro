@@ -40,7 +40,8 @@ interface MatchDisplayProps {
   filterByClubId?: string | null;
   filterByGratisOnly?: boolean;
   filterByLiberadasOnly?: boolean;
-  filterByPuntosOnly?: boolean; // New prop
+  filterByPuntosOnly?: boolean;
+  filterByProOnly?: boolean;
   onDeactivateGratisFilter?: () => void;
   matchShareCode?: string | null;
   matchIdFilter?: string | null;
@@ -75,7 +76,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
     currentUser, onBookingSuccess, filterByClubId, filterByGratisOnly, filterByLiberadasOnly, onDeactivateGratisFilter, matchShareCode,
     matchIdFilter, selectedDate, onDateChange, timeSlotFilter, selectedLevel, sortBy,
     filterAlsoConfirmedMatches, viewPreference, proposalView, refreshKey, allMatches, isLoading,
-    matchDayEvents, filterByPuntosOnly, dateStripIndicators, dateStripDates, onViewPrefChange, showPointsBonus
+    matchDayEvents, filterByPuntosOnly, filterByProOnly, dateStripIndicators, dateStripDates, onViewPrefChange, showPointsBonus
 }) => {
   const [filteredMatches, setFilteredMatches] = useState<(Match | EnhancedEvent)[]>([]);
   const [displayedMatches, setDisplayedMatches] = useState<(Match | EnhancedEvent)[]>([]);
@@ -165,7 +166,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
             });
         }
         
-        // --- Special Filters (Gratis, Liberadas, Puntos) ---
+        // --- Special Filters (Gratis, Liberadas, Puntos, Pro) ---
         if (filterByLiberadasOnly) {
             workingMatches = workingMatches.filter(match => {
                 if ('isEventCard' in match && match.isEventCard) return false;
@@ -188,6 +189,11 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                 if ('isEventCard' in match) return false;
                 const regularMatch = match as Match;
                 return isMatchBookableWithPoints(regularMatch, club);
+            });
+        } else if (filterByProOnly) {
+            workingMatches = workingMatches.filter(match => {
+                if ('isEventCard' in match) return false;
+                return (match as Match).isProMatch === true;
             });
         } else if (viewPreference === 'normal') { // Standard filters if no special filter is active AND view is normal
              if (selectedDate) {
@@ -284,7 +290,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
     }
     
     setFilteredMatches(finalMatches); 
-  }, [allMatches, currentUser, filterByClubId, filterByGratisOnly, filterByLiberadasOnly, filterByPuntosOnly, selectedDate, timeSlotFilter, selectedLevel, viewPreference, matchIdFilter, matchShareCode, matchDayEvents]);
+  }, [allMatches, currentUser, filterByClubId, filterByGratisOnly, filterByLiberadasOnly, filterByPuntosOnly, filterByProOnly, selectedDate, timeSlotFilter, selectedLevel, viewPreference, matchIdFilter, matchShareCode, matchDayEvents]);
   
   useEffect(() => {
     if (!isLoading) {
@@ -566,4 +572,3 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
 };
 
 export default MatchDisplay;
-

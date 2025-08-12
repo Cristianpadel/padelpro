@@ -27,6 +27,7 @@ export function useActivityFilters(
   const filterByGratisOnly = searchParams.get('filter') === 'gratis';
   const filterByLiberadasOnly = searchParams.get('filter') === 'liberadas';
   const filterByPuntosOnly = searchParams.get('filter') === 'puntos';
+  const filterByProOnly = searchParams.get('filter') === 'pro';
   const showPointsBonus = searchParams.get('showPoints') === 'true';
 
 
@@ -199,7 +200,8 @@ export function useActivityFilters(
     matchIdFilter,
     filterByGratisOnly,
     filterByLiberadasOnly,
-    filterByPuntosOnly, 
+    filterByPuntosOnly,
+    filterByProOnly,
     isUpdatingFavorites,
     dateStripIndicators, 
     dateStripDates,      
