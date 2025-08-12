@@ -122,7 +122,7 @@ const BookingSpotDisplay: React.FC<BookingSpotDisplayProps> = ({
           >
             <Avatar className={cn(
               "h-10 w-10 p-0 overflow-hidden",
-              "border-[3px] border-dashed border-green-400 bg-slate-100 shadow-inner",
+              "border-[3px] border-dashed border-green-400 bg-slate-100 shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.2)]", // Applied stronger inner shadow
               (canJoinStandard || canJoinGratis) ? "hover:border-green-500 hover:bg-slate-200" : ""
             )}>
               <AvatarFallback className="bg-transparent flex items-center justify-center">

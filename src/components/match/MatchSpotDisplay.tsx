@@ -193,7 +193,7 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
                     aria-label={spotTooltipText}
                 >
                     <div className={cn(
-                        "relative inline-flex items-center justify-center h-12 w-12 rounded-full border-[3px] z-0 transition-all shadow-inner",
+                        "relative inline-flex items-center justify-center h-12 w-12 rounded-full border-[3px] z-0 transition-all shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.2)]",
                         animationClass,
                         spotVariant === "solid" && "bg-slate-100 border-slate-300",
                         spotVariant === "dashed" && "border-dashed border-green-400 bg-slate-100 hover:bg-green-100/50",
