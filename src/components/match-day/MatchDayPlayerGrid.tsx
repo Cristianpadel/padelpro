@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getInitials } from '@/lib/utils';
-import { UserPlus, CheckCircle, Handshake, Dices, Swords, HardHat, RefreshCw, Clock, Loader2, Euro, Info, PartyPopper, Rocket, PiggyBank, Star, ThumbsUp, Lock, Scissors } from 'lucide-react';
+import { UserPlus, CheckCircle, Handshake, Dices, Swords, HardHat, RefreshCw, Clock, Loader2, Euro, Info, PartyPopper, Rocket, PiggyBank, Star, ThumbsUp, Lock, Scissors, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -321,15 +321,18 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                             return (
                                  <AlertDialog key={`empty-${index}`}>
                                     <AlertDialogTrigger asChild>
-                                        <button disabled={isMainListFull || !!userInscription || isSubmitting} className="p-3 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-muted-foreground bg-secondary/30 h-40 shadow-sm transition-colors hover:bg-secondary/60 disabled:cursor-not-allowed disabled:opacity-50">
-                                            {isSubmitting ? (
-                                                <Loader2 className="h-8 w-8 animate-spin" />
-                                            ) : (
-                                                    <div className="relative inline-flex items-center justify-center h-16 w-16 rounded-full border-[3px] border-dashed border-gray-400 bg-white/50 shadow-inner">
-                                                    <UserPlus className="h-8 w-8" />
+                                        <button disabled={isMainListFull || !!userInscription || isSubmitting} className="p-3 border rounded-lg flex flex-col items-center justify-start bg-background shadow-md h-40 group disabled:cursor-not-allowed disabled:opacity-50">
+                                            <div className="flex flex-col items-center gap-1 overflow-hidden flex-grow justify-center">
+                                                 <Avatar className="h-16 w-16 p-0 overflow-hidden shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.2)] border-2 border-dashed border-green-400 bg-green-50/50 group-hover:border-green-500 transition-colors">
+                                                    <AvatarFallback className="bg-transparent flex items-center justify-center">
+                                                        {isSubmitting ? <Loader2 className="h-8 w-8 animate-spin" /> : <Plus className="h-8 w-8 text-green-600 opacity-60 stroke-[3]" />}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                <div className="space-y-1 mt-1 text-center">
+                                                    <p className="font-medium text-sm text-muted-foreground">Plaza Libre</p>
+                                                     <Badge variant="outline" className="text-xs bg-white">{event.price?.toFixed(2)}€</Badge>
                                                 </div>
-                                            )}
-                                            <p className="text-sm font-semibold mt-2 flex items-center">{event.price?.toFixed(2)}€</p>
+                                            </div>
                                         </button>
                                     </AlertDialogTrigger>
                                      <AlertDialogContent>
@@ -359,7 +362,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                         <div className="text-sm bg-blue-50 text-blue-800 p-3 rounded-lg space-y-2">
                                             <p className="font-bold text-center">¡Recuerda las reglas del juego!</p>
                                             <ul className="space-y-1.5">
-                                                <li className="flex items-start"><ThumbsUp className="h-4 w-4 mr-2 mt-0.5 text-blue-500 flex-shrink-0" /><span>Una vez realizado el sorteo, la plaza es definitiva.</span></li>
+                                                <li className="flex items-start"><ThumbsUp className="h-4 w-4 mr-2 mt-0.5 text-blue-500 flex-shrink-0" /><span>Cuando llegue la hora del sorteo, se formarán las partidas.</span></li>
                                                 <li className="flex items-start"><Lock className="h-4 w-4 mr-2 mt-0.5 text-blue-500 flex-shrink-0" /><span>Tu saldo será bloqueado hasta que se juegue el evento.</span></li>
                                                 <li className="flex items-start"><Scissors className="h-4 w-4 mr-2 mt-0.5 text-blue-500 flex-shrink-0" /><span>**Si este evento se confirma**, tus otras inscripciones del día se anularán solas.</span></li>
                                             </ul>
