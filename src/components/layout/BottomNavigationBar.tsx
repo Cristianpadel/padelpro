@@ -202,20 +202,20 @@ export function BottomNavigationBar() {
             hidden: !currentUser || !(clubInfo?.showClassesTabOnFrontend ?? true),
         },
         {
-            key: 'matchpro',
-            href: '/activities?view=matchpro',
-            icon: Trophy,
-            label: 'Match Pro',
-            isActive: pathname === '/activities' && searchParams.get('view') === 'matchpro',
-            hidden: !currentUser,
-        },
-        {
             key: 'partidas',
             href: '/activities?view=partidas',
             icon: Users,
             label: 'Partidas',
             isActive: pathname === '/activities' && searchParams.get('view') === 'partidas',
             hidden: !currentUser || !(clubInfo?.showMatchesTabOnFrontend ?? true),
+        },
+        {
+            key: 'matchpro',
+            href: '/activities?view=matchpro',
+            icon: Trophy,
+            label: 'Match Pro',
+            isActive: pathname === '/activities' && searchParams.get('view') === 'matchpro',
+            hidden: !currentUser,
         },
          {
             key: 'liberadas',
@@ -319,3 +319,5 @@ export function BottomNavigationBar() {
         </nav>
     );
 }
+
+    
