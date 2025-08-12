@@ -111,34 +111,39 @@ const BookingSpotDisplay: React.FC<BookingSpotDisplayProps> = ({
     <TooltipProvider delayDuration={150}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <span className="relative" onClick={handleClick}>
-            <Button
-              variant="outline" size="icon"
-              className={cn(
-                "h-10 w-10 rounded-full flex items-center justify-center border-[3px] border-dashed shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.2)]",
-                isLoading && "cursor-wait",
-                (canJoinStandard || canJoinGratis) ? (canJoinGratis ? "border-yellow-400 hover:bg-yellow-50" : "border-green-400 hover:bg-green-50") : "opacity-50 cursor-not-allowed"
-              )}
-              disabled={isLoading || !(canJoinStandard || canJoinGratis)}
-            >
-              {isLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin text-primary" />
-              ) : canJoinGratis ? (
-                <Gift className="h-5 w-5 text-yellow-600" />
-              ) : canJoinStandard ? (
-                <Plus className="h-5 w-5 text-green-600 stroke-[3]" />
-              ) : !hasEnoughCredit ? (
-                <CreditCard className="h-5 w-5 text-destructive/70" />
-              ) : (
-                 <Plus className="h-5 w-5 text-muted-foreground stroke-[3] opacity-60" />
-              )}
-            </Button>
+          <button
+            onClick={handleClick}
+            className={cn(
+              "relative",
+              isLoading && "cursor-wait",
+              !(canJoinStandard || canJoinGratis) && "opacity-50 cursor-not-allowed"
+            )}
+            disabled={isLoading || !(canJoinStandard || canJoinGratis)}
+          >
+            <Avatar className={cn(
+              "h-10 w-10 p-0 overflow-hidden shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.2)]",
+              (canJoinStandard || canJoinGratis) ? "border-[3px] border-green-400 hover:border-green-500" : "border-gray-300"
+            )}>
+              <AvatarFallback className="bg-muted border-[3px] border-dashed border-muted-foreground/30 flex items-center justify-center">
+                {isLoading ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                ) : canJoinGratis ? (
+                  <Gift className="h-5 w-5 text-yellow-600" />
+                ) : canJoinStandard ? (
+                  <Plus className="h-5 w-5 text-green-600 stroke-[3]" />
+                ) : !hasEnoughCredit ? (
+                  <CreditCard className="h-5 w-5 text-destructive/70" />
+                ) : (
+                  <Plus className="h-5 w-5 text-muted-foreground stroke-[3] opacity-60" />
+                )}
+              </AvatarFallback>
+            </Avatar>
             {shouldShowPointsBonus && (
               <div className="absolute -top-1 -right-1 z-10 flex h-auto items-center justify-center rounded-full bg-amber-400 px-1 py-0 text-white shadow-md text-[10px] font-bold" title={`${pointsToAward} puntos de bonificación`}>
                   +{Math.floor(pointsToAward)}
               </div>
             )}
-          </span>
+          </button>
         </TooltipTrigger>
         <TooltipContent><p>{getTooltipText()}</p></TooltipContent>
       </Tooltip>
@@ -147,4 +152,3 @@ const BookingSpotDisplay: React.FC<BookingSpotDisplayProps> = ({
 };
 
 export default React.memo(BookingSpotDisplay);
-
