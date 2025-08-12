@@ -257,7 +257,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                             <div className="flex flex-col items-center gap-1 overflow-hidden flex-grow">
                                                 <div className="relative">
                                                     <Avatar className={cn(
-                                                        "h-16 w-16 p-0 overflow-hidden shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.4)]",
+                                                        "h-16 w-16 p-0 overflow-hidden shadow-inner",
                                                         isCurrentUser ? "border-[3px] border-primary shadow-lg" : "border-gray-300"
                                                     )}>
                                                         <AvatarImage src={inscription.userProfilePictureUrl} data-ai-hint="player avatar"/>
@@ -323,7 +323,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                     <AlertDialogTrigger asChild>
                                         <button disabled={isMainListFull || !!userInscription || isSubmitting} className="p-3 border rounded-lg flex flex-col items-center justify-start bg-background shadow-md h-40 group disabled:cursor-not-allowed disabled:opacity-50">
                                             <div className="flex flex-col items-center gap-1 overflow-hidden flex-grow justify-center">
-                                                 <Avatar className="h-16 w-16 p-0 overflow-hidden border-[3px] border-dashed border-green-400 bg-green-50/50 group-hover:border-green-500 transition-colors">
+                                                 <Avatar className="h-16 w-16 p-0 overflow-hidden border-[3px] border-dashed border-green-400 bg-green-50/50 group-hover:border-green-500 transition-colors shadow-inner">
                                                     <AvatarFallback className="bg-transparent flex items-center justify-center">
                                                         {isSubmitting ? <Loader2 className="h-8 w-8 animate-spin" /> : <Plus className="h-8 w-8 text-green-600 opacity-60 stroke-[3]" />}
                                                     </AvatarFallback>
@@ -397,7 +397,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                              <div className="flex flex-col items-center gap-1 overflow-hidden flex-grow">
                                                 <div className="relative">
                                                      <Avatar className={cn(
-                                                        "h-16 w-16 p-0 overflow-hidden shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.4)] border-gray-300",
+                                                        "h-16 w-16 p-0 overflow-hidden shadow-inner border-gray-300",
                                                          isCurrentUser && "border-[3px] border-primary shadow-lg"
                                                     )}>
                                                         <AvatarImage src={inscription.userProfilePictureUrl} data-ai-hint="player avatar"/>
@@ -416,9 +416,9 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                 return (
                                      <AlertDialog key={`empty-reserve-${index}`}>
                                         <AlertDialogTrigger asChild>
-                                             <div className="p-3 border rounded-lg flex flex-col items-center justify-start bg-background shadow-md h-40 group disabled:cursor-not-allowed disabled:opacity-50">
+                                            <div className="p-3 border rounded-lg flex flex-col items-center justify-start bg-background shadow-md h-40 group disabled:cursor-not-allowed disabled:opacity-50">
                                                 <div className="flex flex-col items-center gap-1 overflow-hidden flex-grow justify-center">
-                                                    <Avatar className="h-16 w-16 p-0 overflow-hidden border-[3px] border-dashed border-green-400 bg-green-50/50 group-hover:border-green-500 transition-colors">
+                                                    <Avatar className="h-16 w-16 p-0 overflow-hidden border-[3px] border-dashed border-green-400 bg-green-50/50 group-hover:border-green-500 transition-colors shadow-inner">
                                                         <AvatarFallback className="bg-transparent flex items-center justify-center">
                                                             <Plus className="h-8 w-8 text-green-600 opacity-60 stroke-[3]" />
                                                         </AvatarFallback>
