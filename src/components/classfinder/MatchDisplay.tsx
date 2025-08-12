@@ -483,7 +483,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                                     const inscription = activity.inscriptions[index];
                                     if(inscription){
                                         return (
-                                             <div key={inscription?.id} className="relative inline-flex items-center justify-center h-12 w-12 rounded-full border-[3px] z-0 transition-all shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.2)] bg-slate-100 border-slate-300">
+                                             <div key={inscription?.id} className="relative inline-flex items-center justify-center h-12 w-12 rounded-full border-[3px] z-0 transition-all shadow-inner bg-slate-100 border-slate-300">
                                                 <Avatar className="h-[calc(100%-4px)] w-[calc(100%-4px)]">
                                                     <AvatarImage src={inscription?.userProfilePictureUrl} data-ai-hint="player avatar small" />
                                                     <AvatarFallback className={cn("text-xs", "bg-primary text-primary-foreground")}>
@@ -496,7 +496,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                                     return (
                                         <AlertDialog key={`empty-${index}`}>
                                             <AlertDialogTrigger asChild>
-                                                <button disabled={isFull || isUserInscribed} className="relative inline-flex items-center justify-center h-12 w-12 rounded-full border-[3px] z-0 transition-all shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.2)] bg-slate-100 border-slate-300 border-dashed hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60">
+                                                <button disabled={isFull || isUserInscribed} className="relative inline-flex items-center justify-center h-12 w-12 rounded-full border-[3px] z-0 transition-all shadow-inner bg-slate-100 border-slate-300 border-dashed hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60">
                                                     <Plus className="h-5 w-5 text-muted-foreground" />
                                                 </button>
                                             </AlertDialogTrigger>
@@ -566,3 +566,4 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
 };
 
 export default MatchDisplay;
+
