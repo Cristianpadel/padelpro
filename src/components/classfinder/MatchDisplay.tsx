@@ -1,5 +1,3 @@
-
-
 // src/components/classfinder/MatchDisplay.tsx
 "use client";
 
@@ -228,6 +226,13 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                     return false;
                 });
             }
+
+             // In normal view, show placeholders AND forming matches
+            workingMatches = workingMatches.filter(m => {
+                 if ('isEventCard' in m) return true;
+                 const match = m as Match;
+                 return match.isPlaceholder || match.status === 'forming';
+            });
         }
         
         // Final filter: check court availability
@@ -561,10 +566,3 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
 };
 
 export default MatchDisplay;
-
-
-
-
-
-
-
