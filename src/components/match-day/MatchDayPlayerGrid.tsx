@@ -323,7 +323,7 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                     <AlertDialogTrigger asChild>
                                         <button disabled={isMainListFull || !!userInscription || isSubmitting} className="p-3 border rounded-lg flex flex-col items-center justify-start bg-background shadow-md h-40 group disabled:cursor-not-allowed disabled:opacity-50">
                                             <div className="flex flex-col items-center gap-1 overflow-hidden flex-grow justify-center">
-                                                 <Avatar className="h-16 w-16 p-0 overflow-hidden shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.2)] border-4 border-green-400 bg-green-50/50 group-hover:border-green-500 transition-colors">
+                                                 <Avatar className="h-16 w-16 p-0 overflow-hidden border-[3px] border-dashed border-green-400 bg-green-50/50 group-hover:border-green-500 transition-colors">
                                                     <AvatarFallback className="bg-transparent flex items-center justify-center">
                                                         {isSubmitting ? <Loader2 className="h-8 w-8 animate-spin" /> : <Plus className="h-8 w-8 text-green-600 opacity-60 stroke-[3]" />}
                                                     </AvatarFallback>
@@ -391,10 +391,10 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                     return (
                                         <div 
                                         key={inscription.id} 
-                                        className={cn("p-3 border rounded-lg flex flex-col items-center justify-center text-center bg-background shadow-md h-40 relative",  isCurrentUser && "bg-blue-50 border-blue-300 ring-2 ring-blue-400")}
+                                        className={cn("p-3 border rounded-lg flex flex-col items-center justify-start text-center bg-background shadow-md h-40 relative",  isCurrentUser && "bg-blue-50 border-blue-300 ring-2 ring-blue-400")}
                                         >
                                             <div className="absolute top-1 left-2 text-xs font-bold text-muted-foreground">#{index + 1}</div>
-                                             <div className="flex flex-col items-center gap-1 overflow-hidden">
+                                             <div className="flex flex-col items-center gap-1 overflow-hidden flex-grow">
                                                 <div className="relative">
                                                      <Avatar className={cn(
                                                         "h-16 w-16 p-0 overflow-hidden shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.4)] border-gray-300",
@@ -416,12 +416,19 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                                 return (
                                      <AlertDialog key={`empty-reserve-${index}`}>
                                         <AlertDialogTrigger asChild>
-                                            <button disabled={!isMainListFull || !!userInscription || isSubmitting} className={cn("p-3 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-muted-foreground h-40 shadow-sm transition-colors", isMainListFull ? "bg-secondary/30 hover:bg-secondary/60" : "bg-gray-100 opacity-60", 'disabled:cursor-not-allowed disabled:opacity-50')}>
-                                                <div className="relative inline-flex items-center justify-center h-16 w-16 rounded-full border-[3px] border-dashed border-gray-400 bg-white/50 shadow-inner">
-                                                    <UserPlus className="h-8 w-8 opacity-50" />
+                                             <div className="p-3 border rounded-lg flex flex-col items-center justify-start bg-background shadow-md h-40 group disabled:cursor-not-allowed disabled:opacity-50">
+                                                <div className="flex flex-col items-center gap-1 overflow-hidden flex-grow justify-center">
+                                                    <Avatar className="h-16 w-16 p-0 overflow-hidden border-[3px] border-dashed border-green-400 bg-green-50/50 group-hover:border-green-500 transition-colors">
+                                                        <AvatarFallback className="bg-transparent flex items-center justify-center">
+                                                            <Plus className="h-8 w-8 text-green-600 opacity-60 stroke-[3]" />
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                    <div className="space-y-1 mt-1 text-center">
+                                                        <p className="font-medium text-sm text-muted-foreground">Plaza Reserva</p>
+                                                        <Badge variant="outline" className="text-xs bg-white">{event.price?.toFixed(2)}€</Badge>
+                                                    </div>
                                                 </div>
-                                                <p className="text-xs font-medium mt-2">Plaza Reserva</p>
-                                            </button>
+                                            </div>
                                         </AlertDialogTrigger>
                                          <AlertDialogContent>
                                             <AlertDialogHeader>
