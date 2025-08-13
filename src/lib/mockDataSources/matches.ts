@@ -60,7 +60,9 @@ export const bookMatch = async (
     if (mockUtils.hasAnyConfirmedActivityForDay(userId, new Date(match.startTime), matchId, 'match')) {
         return { error: 'Ya tienes otra actividad confirmada para este día.' };
     }
-    if (!isUserLevelCompatible(match.level, user.level, match.isPlaceholder)) {
+    
+    // Check level compatibility only if the match is not a placeholder ('abierto')
+    if (match.level !== 'abierto' && !isUserLevelCompatible(match.level, user.level, match.isPlaceholder)) {
         return { error: 'Tu nivel de juego no es compatible con el de esta partida.' };
     }
 
@@ -85,7 +87,7 @@ export const bookMatch = async (
         }
     }
 
-    if (match.isPlaceholder) {
+    if (match.isPlaceholder || match.level === 'abierto') {
         match.isPlaceholder = false;
         if (match.level === 'abierto') {
             match.level = user.level || '1.0';
@@ -199,7 +201,7 @@ export const addMatch = async (matchData: Omit<Match, 'id' | 'status' | 'confirm
         clubId: matchData.clubId,
         startTime: startTimeDate,
         endTime: endTimeDate,
-        courtNumber: matchData.courtNumber,
+        courtNumber: (matchData.bookedPlayers || []).length === 4 ? matchData.courtNumber : undefined,
         level: matchData.level || matchPadelLevels[0],
         category: matchData.category || 'abierta',
         bookedPlayers: matchData.bookedPlayers || [],
