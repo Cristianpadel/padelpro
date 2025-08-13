@@ -5,7 +5,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import type { User, Match } from '@/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import MatchCard from '@/components/match/MatchCard'; // Changed from MatchProCard to MatchCard
+import MatchCard from '@/components/match/MatchCard';
 import { fetchMatches, getMockCurrentUser } from '@/lib/mockData';
 import { isSameDay, startOfDay } from 'date-fns';
 
@@ -73,24 +73,22 @@ const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, onBookin
 
     return (
         <div className="space-y-4">
-             <div>
-                {matchProGames.length > 0 ? (
-                    <div className="grid grid-cols-[repeat(auto-fill,minmax(360px,1fr))] justify-center gap-6">
-                        {matchProGames.map(match => (
-                            <MatchCard 
-                                key={match.id} 
-                                match={match} 
-                                currentUser={localCurrentUser} 
-                                onBookingSuccess={onBookingSuccess}
-                                onMatchUpdate={handleMatchUpdate}
-                                showPointsBonus={false} // Match Pro games don't award points by default
-                            />
-                        ))}
-                    </div>
-                ) : (
-                    <p className="text-center text-muted-foreground p-8">No hay partidas Matchpro programadas para el día seleccionado.</p>
-                )}
-            </div>
+            {matchProGames.length > 0 ? (
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(360px,1fr))] justify-center gap-6">
+                    {matchProGames.map(match => (
+                        <MatchCard 
+                            key={match.id} 
+                            match={match} 
+                            currentUser={localCurrentUser} 
+                            onBookingSuccess={onBookingSuccess}
+                            onMatchUpdate={handleMatchUpdate}
+                            showPointsBonus={false} // Match Pro games don't award points by default
+                        />
+                    ))}
+                </div>
+            ) : (
+                <p className="text-center text-muted-foreground p-8">No hay partidas Matchpro programadas para el día seleccionado.</p>
+            )}
         </div>
     );
 }
