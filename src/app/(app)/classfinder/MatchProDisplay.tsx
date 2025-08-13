@@ -5,7 +5,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import type { User, Match } from '@/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import MatchCard from '@/components/match/MatchCard';
+import MatchCard from '@/components/match/MatchCard'; // Changed from MatchProCard to MatchCard
 import { fetchMatches, getMockCurrentUser } from '@/lib/mockData';
 import { isSameDay, startOfDay } from 'date-fns';
 
