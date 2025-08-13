@@ -59,16 +59,10 @@ const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, onBookin
     if (loading) {
          return (
             <div className="space-y-4">
-                 <Card>
-                    <CardHeader>
-                        <CardTitle><Skeleton className="h-6 w-48" /></CardTitle>
-                        <CardDescription><Skeleton className="h-4 w-64" /></CardDescription>
-                    </CardHeader>
-                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Skeleton className="h-[280px] w-full" />
-                        <Skeleton className="h-[280px] w-full" />
-                    </CardContent>
-                </Card>
+                 <div className="grid grid-cols-[repeat(auto-fill,minmax(360px,1fr))] justify-center gap-6">
+                    <Skeleton className="h-[280px] w-full" />
+                    <Skeleton className="h-[280px] w-full" />
+                 </div>
             </div>
          );
     }
@@ -79,30 +73,24 @@ const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, onBookin
 
     return (
         <div className="space-y-4">
-             <Card>
-                <CardHeader>
-                    <CardTitle>Partidas Matchpro</CardTitle>
-                    <CardDescription>Eventos especiales sin nivel ni categoría. ¡Solo por la diversión de jugar!</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {matchProGames.length > 0 ? (
-                        <div className="grid grid-cols-[repeat(auto-fill,minmax(360px,1fr))] justify-center gap-6">
-                            {matchProGames.map(match => (
-                                <MatchCard 
-                                    key={match.id} 
-                                    match={match} 
-                                    currentUser={localCurrentUser} 
-                                    onBookingSuccess={onBookingSuccess}
-                                    onMatchUpdate={handleMatchUpdate}
-                                    showPointsBonus={false} // Match Pro games don't award points by default
-                                />
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="text-center text-muted-foreground p-8">No hay partidas Matchpro programadas para el día seleccionado.</p>
-                    )}
-                </CardContent>
-            </Card>
+             <div>
+                {matchProGames.length > 0 ? (
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(360px,1fr))] justify-center gap-6">
+                        {matchProGames.map(match => (
+                            <MatchCard 
+                                key={match.id} 
+                                match={match} 
+                                currentUser={localCurrentUser} 
+                                onBookingSuccess={onBookingSuccess}
+                                onMatchUpdate={handleMatchUpdate}
+                                showPointsBonus={false} // Match Pro games don't award points by default
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <p className="text-center text-muted-foreground p-8">No hay partidas Matchpro programadas para el día seleccionado.</p>
+                )}
+            </div>
         </div>
     );
 }
