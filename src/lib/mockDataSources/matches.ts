@@ -87,13 +87,13 @@ export const bookMatch = async (
         }
     }
 
-    if (match.isPlaceholder || match.level === 'abierto' || match.isProMatch) {
+    if (match.isPlaceholder || match.isProMatch) {
         match.isPlaceholder = false;
-        if (match.level === 'abierto' || match.isProMatch) { // Apply level logic to Pro Matches as well
+        if (match.level === 'abierto' || match.isProMatch) {
             match.level = user.level || '1.0';
         }
-        if (match.category === 'abierta' || match.isProMatch) { // Apply category logic to Pro Matches as well
-            match.category = user.genderCategory || 'abierta';
+        if (match.category === 'abierta' || match.isProMatch) {
+             match.category = user.genderCategory === 'femenino' ? 'chica' : user.genderCategory === 'masculino' ? 'chico' : 'abierta';
         }
     }
 
@@ -214,6 +214,7 @@ export const addMatch = async (matchData: Omit<Match, 'id' | 'status' | 'confirm
         eventId: matchData.eventId,
         totalCourtFee: matchData.totalCourtFee,
         durationMinutes: matchData.durationMinutes || 90,
+        isProMatch: matchData.isProMatch || false,
     };
     state.addMatchToState(newMatch);
 
