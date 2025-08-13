@@ -183,39 +183,6 @@ export function performInitialization() {
   const initialTimeSlots = generateDynamicTimeSlots();
   initializeMockTimeSlots(initialTimeSlots);
   const initialMatches = generateDynamicMatches();
-  
-  // Create some mock MatchPro games
-  const today = startOfDay(new Date());
-  const proMatch1 = {
-      id: 'match-pro-1',
-      clubId: 'club-1',
-      startTime: setMinutes(setHours(today, 19), 30),
-      endTime: setMinutes(setHours(today, 21), 0),
-      durationMinutes: 90,
-      courtNumber: 1,
-      level: 'abierto',
-      category: 'abierta',
-      isProMatch: true,
-      status: 'forming',
-      bookedPlayers: [
-          { userId: 'user-7', name: 'Gustavo Herrero' },
-          { userId: 'user-15', name: 'Óscar Romero' },
-      ],
-  };
-  const proMatch2 = {
-      id: 'match-pro-2',
-      clubId: 'club-1',
-      startTime: setMinutes(setHours(addDays(today, 1), 20), 0),
-      endTime: setMinutes(setHours(addDays(today, 1), 21), 30),
-      durationMinutes: 90,
-      courtNumber: 2,
-      level: 'abierto',
-      category: 'abierta',
-      isProMatch: true,
-      status: 'forming',
-      bookedPlayers: [],
-  };
-  initialMatches.push(proMatch1, proMatch2);
   initializeMockMatches(initialMatches);
 
   // --- Initialize Bookings ---

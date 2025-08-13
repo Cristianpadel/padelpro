@@ -89,10 +89,10 @@ export const bookMatch = async (
 
     if ((match.isPlaceholder || match.isProMatch) && (match.bookedPlayers || []).length === 0) {
       match.isPlaceholder = false; 
-      if (match.level === 'abierto' || match.isProMatch) {
+       if (match.level === 'abierto') {
           match.level = user.level || '1.0';
       }
-      if (match.category === 'abierta' || match.isProMatch) {
+      if (match.category === 'abierta') {
            match.category = user.genderCategory === 'femenino' ? 'chica' : user.genderCategory === 'masculino' ? 'chico' : 'abierta';
       }
     }
@@ -298,7 +298,7 @@ export const cancelMatchBooking = async (
     let pointsAwarded = 0;
     let penaltyApplied = false;
 
-    if (match.status === 'confirmed' || match.status === 'confirmed_private') {
+    if (match.status === 'confirmed') {
         const pricePaid = calculatePricePerPerson(price || 0, 4);
         const basePointsToAward = Math.round(pricePaid * (club?.pointSettings?.cancellationPointPerEuro || 0));
         pointsAwarded = basePointsToAward;
@@ -378,48 +378,23 @@ export const removePlayerFromMatch = async (matchId: string, userId: string, isS
     const isNowNotConfirmed = updatedBookedPlayers.length < 4;
 
     if (wasConfirmed && isNowNotConfirmed) {
-        if (!originalMatch.gratisSpotAvailable) {
-            newGratisSpotAvailable = true;
-        }
+        // A confirmed match now has an open spot.
+        // It should now be offered as a gratis spot.
+        newGratisSpotAvailable = true;
     } else if (updatedBookedPlayers.length < 3) {
+        // If less than 3 players, the gratis offer is no longer valid.
         newGratisSpotAvailable = false;
     }
+
 
     const updatedMatch: Match = {
         ...originalMatch,
         bookedPlayers: updatedBookedPlayers,
         gratisSpotAvailable: newGratisSpotAvailable,
-        status: (originalMatch.status === 'confirmed_private' || originalMatch.status === 'confirmed') ? 'confirmed' : 'forming',
+        status: 'confirmed', // It remains confirmed, the spot is just open
     };
     state.updateMatchInState(originalMatch.id, updatedMatch);
     state.removeUserMatchBookingFromStateByMatchAndUser(matchId, userId);
-
-    if (originalMatch.status === 'confirmed' && updatedMatch.status === 'forming') {
-        const hasOpenPlaceholder = state.getMockMatches().some(m =>
-            m.clubId === updatedMatch.clubId &&
-            m.courtNumber === updatedMatch.courtNumber &&
-            new Date(m.startTime).getTime() === new Date(updatedMatch.startTime).getTime() &&
-            m.isPlaceholder === true
-        );
-        if (!hasOpenPlaceholder) {
-            const newPlaceholder: Match = {
-                id: `match-open-${updatedMatch.clubId}-${updatedMatch.courtNumber}-${format(new Date(updatedMatch.startTime), 'yyyyMMddHHmm')}-reopened-${Date.now().toString().slice(-4)}`,
-                clubId: updatedMatch.clubId,
-                startTime: new Date(updatedMatch.startTime),
-                endTime: new Date(updatedMatch.endTime),
-                courtNumber: undefined,
-                level: 'abierto',
-                category: 'abierta',
-                bookedPlayers: [],
-                gratisSpotAvailable: false,
-                isPlaceholder: true,
-                status: 'forming',
-                durationMinutes: updatedMatch.durationMinutes,
-            };
-            state.addMatchToState(newPlaceholder);
-        }
-    }
-
     await recalculateAndSetBlockedBalances(userId);
 
     return { success: true, updatedMatch: JSON.parse(JSON.stringify(updatedMatch)), message };
@@ -446,6 +421,7 @@ export function createMatchesForDay(club: Club, date: Date): Match[] {
 
     while (currentTimeSlotStart < endOfDayOperations) {
         const matchStartTime = new Date(currentTimeSlotStart);
+        const matchEndTime = addMinutes(matchStartTime, matchDurationMinutes);
 
         // Check against unavailable blocks defined in club settings
         const isUnavailableBlock = clubUnavailableRanges.some(range => {
@@ -461,7 +437,7 @@ export function createMatchesForDay(club: Club, date: Date): Match[] {
         
        const hasConfirmedConflict = confirmedActivitiesToday.some(activity => 
              areIntervalsOverlapping(
-                { start: matchStartTime, end: addMinutes(matchStartTime, matchDurationMinutes) },
+                { start: matchStartTime, end: matchEndTime },
                 { start: new Date(activity.startTime), end: new Date('endTime' in activity ? activity.endTime : addMinutes(new Date(activity.startTime), 90)) },
                 { inclusive: false }
             )
@@ -472,20 +448,21 @@ export function createMatchesForDay(club: Club, date: Date): Match[] {
             continue;
         }
 
-        const existingIdenticalProposal = matchesForDay.find(m =>
-            new Date(m.startTime).getTime() === matchStartTime.getTime()
+        const existingIdenticalProposal = state.getMockMatches().find(m =>
+             m.clubId === club.id && new Date(m.startTime).getTime() === matchStartTime.getTime()
         );
-
+        
         if (existingIdenticalProposal) {
-            currentTimeSlotStart = addMinutes(currentTimeSlotStart, timeSlotIntervalMinutes);
+             currentTimeSlotStart = addMinutes(currentTimeSlotStart, timeSlotIntervalMinutes);
             continue;
         }
         
+        // Create Regular Match
         const newMatch: Match = {
             id: `match-ph-${club.id}-${format(matchStartTime, 'yyyyMMddHHmm')}`,
             clubId: club.id,
             startTime: matchStartTime,
-            endTime: addMinutes(matchStartTime, matchDurationMinutes),
+            endTime: matchEndTime,
             level: 'abierto',
             category: 'abierta',
             bookedPlayers: [],
@@ -493,8 +470,24 @@ export function createMatchesForDay(club: Club, date: Date): Match[] {
             status: 'forming',
             durationMinutes: matchDurationMinutes,
         };
-
         matchesForDay.push(newMatch);
+
+        // Create MatchPro Match
+        const newProMatch: Match = {
+            id: `match-pro-ph-${club.id}-${format(matchStartTime, 'yyyyMMddHHmm')}`,
+            clubId: club.id,
+            startTime: matchStartTime,
+            endTime: matchEndTime,
+            level: 'abierto',
+            category: 'abierta',
+            bookedPlayers: [],
+            isPlaceholder: true,
+            isProMatch: true,
+            status: 'forming',
+            durationMinutes: matchDurationMinutes,
+        };
+        matchesForDay.push(newProMatch);
+
         currentTimeSlotStart = addMinutes(currentTimeSlotStart, timeSlotIntervalMinutes);
     }
     return matchesForDay;
