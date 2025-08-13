@@ -87,8 +87,8 @@ export const bookMatch = async (
         }
     }
 
-    if (match.isPlaceholder || match.isProMatch) {
-        match.isPlaceholder = false;
+    if (match.isPlaceholder || (match.isProMatch && match.category === 'abierta')) {
+        match.isPlaceholder = false; // A pro match is no longer a placeholder once someone joins
         if (match.level === 'abierto' || match.isProMatch) {
             match.level = user.level || '1.0';
         }
@@ -390,6 +390,7 @@ export const removePlayerFromMatch = async (matchId: string, userId: string, isS
         bookedPlayers: updatedBookedPlayers,
         gratisSpotAvailable: newGratisSpotAvailable,
         status: (originalMatch.status === 'confirmed_private') ? 'confirmed_private' : (updatedBookedPlayers.length === 4 ? 'confirmed' : 'forming'),
+        courtNumber: (originalMatch.status === 'confirmed' && updatedBookedPlayers.length < 4) ? undefined : originalMatch.courtNumber,
     };
     state.updateMatchInState(originalMatch.id, updatedMatch);
     state.removeUserMatchBookingFromStateByMatchAndUser(matchId, userId);
@@ -461,7 +462,11 @@ export function createMatchesForDay(club: Club, date: Date): Match[] {
         
         // Check if there's already a confirmed activity at this exact start time.
         const hasConfirmedConflict = confirmedActivitiesToday.some(activity => 
-            new Date(activity.startTime).getTime() === matchStartTime.getTime()
+             areIntervalsOverlapping(
+                { start: matchStartTime, end: addMinutes(matchStartTime, matchDurationMinutes) },
+                { start: new Date(activity.startTime), end: new Date('endTime' in activity ? activity.endTime : addMinutes(new Date(activity.startTime), 90)) },
+                { inclusive: false }
+            )
         );
 
         if (hasConfirmedConflict) {
