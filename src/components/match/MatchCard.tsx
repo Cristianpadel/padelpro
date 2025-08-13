@@ -200,7 +200,7 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
 
     const handleInfoClick = (type: 'level' | 'court' | 'category') => {
         let dialogData;
-        const CategoryIconDisplay = currentMatch.category === 'chica' ? Venus : currentMatch.category === 'chico' ? Mars : Users2;
+        const CategoryIconDisplay = currentMatch.category === 'chica' ? Venus : currentMatch.category === 'chico' ? Mars : CategoryIcon;
 
         switch (type) {
             case 'level':
@@ -221,7 +221,17 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
     const canBookPrivate = (currentMatch.bookedPlayers || []).length === 0 && isPlaceholderMatch;
     const isBookableWithPointsBySchedule = clubInfo.pointBookingSlots && isMatchBookableWithPoints(currentMatch, clubInfo);
 
-    const matchLevelToDisplay = isPlaceholderMatch ? 'abierto' : currentMatch.level || 'abierto';
+    const matchLevelToDisplay = useMemo(() => {
+        const level = isPlaceholderMatch ? 'abierto' : currentMatch.level || 'abierto';
+        if (level === 'abierto') return 'Abierto';
+
+        const numericLevel = parseFloat(level);
+        if (isNaN(numericLevel)) return level;
+
+        const range = clubInfo.levelRanges?.find(r => numericLevel >= parseFloat(r.min) && numericLevel <= parseFloat(r.max));
+        return range ? `${range.min}-${range.max}` : level;
+    }, [isPlaceholderMatch, currentMatch.level, clubInfo.levelRanges]);
+    
     const matchCategoryToDisplay = isPlaceholderMatch ? 'abierta' : currentMatch.category || 'abierta';
     
     const shadowEffect = clubInfo?.cardShadowEffect;
@@ -232,6 +242,13 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
     const cardBorderClass = currentMatch.isProMatch
         ? 'border-l-amber-500'
         : 'border-l-green-400';
+
+    const isLevelAssigned = !isPlaceholderMatch && currentMatch.level !== 'abierto';
+    const isCategoryAssigned = !isPlaceholderMatch && currentMatch.category !== 'abierta';
+    const isCourtAssigned = !!currentMatch.courtNumber;
+    const classifiedBadgeClass = 'text-blue-700 border-blue-200 bg-blue-100 hover:border-blue-300';
+    const CategoryIconDisplay = currentMatch.category === 'chica' ? Venus : currentMatch.category === 'chico' ? Mars : CategoryIcon;
+    const courtDisplay = isCourtAssigned ? `# ${currentMatch.courtNumber}` : '# Pista';
 
     return (
         <>
@@ -286,9 +303,9 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
                 </CardHeader>
                 <CardContent className="px-3 pb-3 flex-grow">
                      <div className="flex justify-around items-center gap-1.5 my-2">
-                         <InfoButton icon={Users2} text="Cat." onClick={() => handleInfoClick('category')} />
-                         <InfoButton icon={Hash} text="# Pista" onClick={() => handleInfoClick('court')} />
-                         <InfoButton icon={BarChartHorizontal} text={matchLevelToDisplay} onClick={() => handleInfoClick('level')} />
+                         <InfoButton icon={CategoryIconDisplay} text={displayClassCategory(matchCategoryToDisplay, true)} onClick={() => handleInfoClick('category')} className={cn(isCategoryAssigned && classifiedBadgeClass)} />
+                         <InfoButton icon={Hash} text={courtDisplay} onClick={() => handleInfoClick('court')} className={cn(isCourtAssigned && classifiedBadgeClass)} />
+                         <InfoButton icon={BarChartHorizontal} text={matchLevelToDisplay} onClick={() => handleInfoClick('level')} className={cn(isLevelAssigned && classifiedBadgeClass)} />
                      </div>
 
                     <div className="grid grid-cols-4 gap-2 items-start justify-items-center mt-3">
