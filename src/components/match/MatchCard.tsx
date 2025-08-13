@@ -202,7 +202,7 @@ const MatchCardContentComponent: React.FC<MatchCardContentComponentProps> = Reac
 
     const handleInfoClick = (type: 'level' | 'court' | 'category') => {
         let dialogData;
-        const CategoryIconDisplay = currentMatch.category === 'chica' ? Venus : currentMatch.category === 'chico' ? Mars : CategoryIcon;
+        const CategoryIconDisplay = currentMatch.category === 'chica' ? Venus : currentMatch.category === 'chico' ? Mars : Users2;
 
         switch (type) {
             case 'level':
@@ -247,7 +247,7 @@ const MatchCardContentComponent: React.FC<MatchCardContentComponentProps> = Reac
     const isCategoryAssigned = !isPlaceholderMatch && currentMatch.category !== 'abierta';
     const isCourtAssigned = !!currentMatch.courtNumber;
     const classifiedBadgeClass = 'text-blue-700 border-blue-200 bg-blue-100 hover:border-blue-300';
-    const CategoryIconDisplay = currentMatch.category === 'chica' ? Venus : currentMatch.category === 'chico' ? Mars : CategoryIcon;
+    const CategoryIconDisplay = currentMatch.category === 'chica' ? Venus : currentMatch.category === 'chico' ? Mars : Users2;
     const courtDisplay = isCourtAssigned ? `# ${currentMatch.courtNumber}` : '# Pista';
 
     return (
@@ -423,7 +423,9 @@ const MatchCard: React.FC<MatchCardProps> = (props) => {
         const club = getMockClubs().find(c => c.id === props.match.clubId);
         setClubInfo(club || null);
     }, [props.match.clubId]);
-
+    
+    // This is the correct placement for the conditional return.
+    // We check for necessary props BEFORE any hooks are called in the content component.
     if (!props.currentUser || !clubInfo) {
         return <Skeleton className="h-[280px] w-full" />;
     }
