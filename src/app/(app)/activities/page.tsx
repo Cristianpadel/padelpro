@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import ClassDisplay from '@/components/classfinder/ClassDisplay';
 import MatchDisplay from '@/components/classfinder/MatchDisplay'; // Import MatchDisplay
 import MatchProDisplay from '@/components/classfinder/MatchProDisplay'; // Import MatchProDisplay
@@ -14,7 +14,7 @@ import { es } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { SlidersHorizontal, Star, Zap, User as UserIcon, Check, Activity as ActivityIcon, Users as UsersIcon, Trophy } from 'lucide-react';
+import { SlidersHorizontal, Star, Zap, User as UserIcon, Check, Activity as ActivityIcon, Users as UsersIcon, Trophy, Plus, CalendarDays } from 'lucide-react';
 import PageSkeleton from '@/components/layout/PageSkeleton';
 import { useActivityFilters } from '@/hooks/useActivityFilters';
 import ActiveFiltersDisplay from '@/components/layout/ActiveFiltersDisplay';
@@ -26,7 +26,7 @@ import DesktopSidebar from '@/components/layout/DesktopSidebar';
 import LogoutConfirmationDialog from '@/components/layout/LogoutConfirmationDialog';
 import ProfessionalAccessDialog from '@/components/layout/ProfessionalAccessDialog';
 import ActivityTypeSelectionDialog from './components/ActivityTypeSelectionDialog';
-import DateNavigation from '@/app/(app)/admin/components/DateNavigation';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 
 export default function ActivitiesPage() {
@@ -277,17 +277,9 @@ export default function ActivitiesPage() {
                             </Button>
                         </Link>
                      </div>
-                      {activeView === 'matchpro' && selectedDate && (
-                         <DateNavigation 
-                            currentDate={selectedDate}
-                            setCurrentDate={handleDateChange}
-                            dateStripDates={dateStripDates}
-                            isToday={(d) => isSameDay(d, startOfDay(new Date()))}
-                         />
-                      )}
                       <div className="min-h-[2rem]">
                         <ActiveFiltersDisplay
-                            activeView={activeView}
+                            activeView={activeView as 'clases' | 'partidas'}
                             timeSlotFilter={timeSlotFilter}
                             selectedLevel={selectedLevel}
                             viewPreference={viewPreference}
@@ -296,7 +288,59 @@ export default function ActivitiesPage() {
                         />
                      </div>
                 </header>
-                <main className="flex-1 overflow-y-auto px-4 md:px-6 pb-6">
+                 <main className="flex-1 overflow-y-auto px-4 md:px-6 pb-6 space-y-4">
+                    <div className="relative z-10 pt-2">
+                        <ScrollArea className="w-full whitespace-nowrap">
+                            <div className="flex space-x-2 py-1">
+                                {dateStripDates.map(day => {
+                                    const isSelected = selectedDate ? isSameDay(day, selectedDate) : false;
+                                    const dateKey = format(day, 'yyyy-MM-dd');
+                                    const indicators = dateStripIndicators[dateKey] || { activityStatus: 'none', hasEvent: false, anticipationPoints: 0 };
+                                    
+                                    return (
+                                    <div key={day.toISOString()} className="flex flex-col items-center space-y-1 relative pt-4">
+                                        {indicators.anticipationPoints > 0 && showPointsBonus && (
+                                            <div
+                                            className="absolute top-0 left-1/2 -translate-x-1/2 z-10 flex h-auto items-center justify-center rounded-full bg-amber-400 px-2 py-0.5 text-white shadow"
+                                            title={`+${indicators.anticipationPoints} puntos por reservar con antelación`}
+                                            >
+                                            <span className="text-[10px] font-bold">+{indicators.anticipationPoints}</span>
+                                            </div>
+                                        )}
+                                        <Button variant={isSelected ? "default" : "outline"} size="sm"
+                                            className={cn(
+                                                "h-auto px-1.5 py-1 flex flex-col items-center justify-center leading-tight shadow-sm w-10",
+                                                isSameDay(day, new Date()) && !isSelected && "border-primary text-primary font-semibold",
+                                                isSelected && "shadow-md"
+                                            )}
+                                            onClick={() => handleDateChange(day)}
+                                        >
+                                            <span className="font-bold text-[10px] uppercase">{format(day, "EEE", { locale: es }).slice(0, 3)}</span>
+                                            <span className="text-sm font-bold">{format(day, "d", { locale: es })}</span>
+                                            <span className="text-[9px] text-muted-foreground capitalize -mt-0.5">{format(day, "MMM", { locale: es }).slice(0,3)}</span>
+                                        </Button>
+
+                                        {/* INDICATOR SECTION */}
+                                        <div className="h-10 w-8 flex flex-col items-center justify-center relative space-y-0.5">
+                                            <TooltipProvider delayDuration={150}>
+                                                {indicators.activityStatus === 'confirmed' && (
+                                                    <Tooltip><TooltipTrigger asChild><button onClick={() => onViewPrefChange(day, 'myConfirmed', indicators.activityType || 'class')} className="h-6 w-6 flex items-center justify-center bg-destructive text-destructive-foreground rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">R</button></TooltipTrigger><TooltipContent><p>Ver mis reservas</p></TooltipContent></Tooltip>
+                                                )}
+                                                {indicators.activityStatus === 'inscribed' && (
+                                                    <Tooltip><TooltipTrigger asChild><button onClick={() => onViewPrefChange(day, 'myInscriptions', indicators.activityType || 'class', indicators.eventId)} className="h-6 w-6 flex items-center justify-center bg-blue-500 text-white rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">I</button></TooltipTrigger><TooltipContent><p>Ver mis inscripciones</p></TooltipContent></Tooltip>
+                                                )}
+                                                {indicators.hasEvent && indicators.activityStatus === 'none' && (
+                                                    <Tooltip><TooltipTrigger asChild><Link href={`/match-day/${indicators.eventId}`} passHref><Button variant="ghost" size="icon" className="h-6 w-6 rounded-md bg-primary/10 hover:bg-primary/20 animate-pulse-blue border border-primary/50"><Plus className="h-4 w-4 text-primary" /></Button></Link></TooltipTrigger><TooltipContent><p>¡Apúntate al Match-Day!</p></TooltipContent></Tooltip>
+                                                )}
+                                            </TooltipProvider>
+                                        </div>
+                                    </div>
+                                    );
+                                })}
+                            </div>
+                            <ScrollBar orientation="horizontal" className="h-2 mt-1" />
+                        </ScrollArea>
+                    </div>
                     {renderContent()}
                 </main>
                  <MobileFiltersSheet
