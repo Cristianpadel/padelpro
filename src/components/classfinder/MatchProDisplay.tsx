@@ -1,12 +1,13 @@
-// src/components/classfinder/MatchProDisplay.tsx
+// src/app/(app)/classfinder/MatchProDisplay.tsx
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import type { User, Match } from '@/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import MatchProCard from '@/components/match/MatchProCard';
-import { fetchMatches } from '@/lib/mockData';
+import MatchCard from '@/components/match/MatchCard'; // Changed from MatchProCard to MatchCard
+import { fetchMatches, getMockCurrentUser } from '@/lib/mockData';
+import { isSameDay, startOfDay } from 'date-fns';
 
 interface MatchProDisplayProps {
     currentUser: User | null;
@@ -19,22 +20,41 @@ const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, onBookin
 
     const [matchProGames, setMatchProGames] = useState<Match[]>([]);
     const [loading, setLoading] = useState(true);
+    const [localCurrentUser, setLocalCurrentUser] = useState<User | null>(null);
 
     useEffect(() => {
-        const loadMatches = async () => {
+        const loadMatchesAndUser = async () => {
             setLoading(true);
             try {
-                const allMatches = await fetchMatches('club-1'); // Assuming a single club for now
-                const proMatches = allMatches.filter(m => m.isProMatch);
+                const [allMatches, user] = await Promise.all([
+                    fetchMatches('club-1'), // Assuming a single club for now
+                    getMockCurrentUser()
+                ]);
+
+                let proMatches = allMatches.filter(m => m.isProMatch);
+
+                // Filter by selectedDate if it exists
+                if (selectedDate) {
+                    proMatches = proMatches.filter(m => isSameDay(new Date(m.startTime), selectedDate));
+                }
+
                 setMatchProGames(proMatches);
+                setLocalCurrentUser(user);
+
             } catch (error) {
-                console.error("Error fetching pro matches", error);
+                console.error("Error fetching pro matches or user", error);
             } finally {
                 setLoading(false);
             }
         };
-        loadMatches();
-    }, [selectedDate]); // Refetch if date changes, for future compatibility
+        loadMatchesAndUser();
+    }, [selectedDate]); // Refetch if date changes
+
+    const handleMatchUpdate = (updatedMatch: Match) => {
+        setMatchProGames(prev => prev.map(m => m.id === updatedMatch.id ? updatedMatch : m));
+        onBookingSuccess();
+    };
+
     
     if (loading) {
          return (
@@ -44,16 +64,16 @@ const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, onBookin
                         <CardTitle><Skeleton className="h-6 w-48" /></CardTitle>
                         <CardDescription><Skeleton className="h-4 w-64" /></CardDescription>
                     </CardHeader>
-                    <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <Skeleton className="h-48 w-full" />
-                        <Skeleton className="h-48 w-full" />
+                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Skeleton className="h-[280px] w-full" />
+                        <Skeleton className="h-[280px] w-full" />
                     </CardContent>
                 </Card>
             </div>
          );
     }
     
-    if (!currentUser) {
+    if (!localCurrentUser) {
         return <Skeleton className="h-96 w-full" />
     }
 
@@ -66,13 +86,20 @@ const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, onBookin
                 </CardHeader>
                 <CardContent>
                     {matchProGames.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-[repeat(auto-fill,minmax(360px,1fr))] justify-center gap-6">
                             {matchProGames.map(match => (
-                                <MatchProCard key={match.id} match={match} currentUser={currentUser} onBookingSuccess={onBookingSuccess} />
+                                <MatchCard 
+                                    key={match.id} 
+                                    match={match} 
+                                    currentUser={localCurrentUser} 
+                                    onBookingSuccess={onBookingSuccess}
+                                    onMatchUpdate={handleMatchUpdate}
+                                    showPointsBonus={false} // Match Pro games don't award points by default
+                                />
                             ))}
                         </div>
                     ) : (
-                        <p className="text-center text-muted-foreground p-8">No hay partidas Matchpro programadas por el momento.</p>
+                        <p className="text-center text-muted-foreground p-8">No hay partidas Matchpro programadas para el día seleccionado.</p>
                     )}
                 </CardContent>
             </Card>
