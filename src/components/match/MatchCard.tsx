@@ -25,7 +25,6 @@ import { MatchSpotDisplay } from '@/components/match/MatchSpotDisplay';
 import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
 import { hasAnyConfirmedActivityForDay } from '@/lib/mockData';
 
-
 const InfoDialog: React.FC<{
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -81,11 +80,17 @@ const InfoButton: React.FC<{
 );
 
 
-const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, currentUser, onBookingSuccess, showPointsBonus }) => {
+interface MatchCardContentComponentProps extends MatchCardProps {
+    currentUser: User;
+    clubInfo: Club;
+}
+
+// This is the inner component that contains all the logic and hooks.
+// It will only be rendered when currentUser and clubInfo are available.
+const MatchCardContentComponent: React.FC<MatchCardContentComponentProps> = React.memo(({ match: initialMatch, currentUser, clubInfo, onBookingSuccess, showPointsBonus }) => {
     const { toast } = useToast();
     const [isPending, startTransition] = useTransition();
     const [currentMatch, setCurrentMatch] = useState<Match>(initialMatch);
-    const [clubInfo, setClubInfo] = useState<Club | null>(null);
     const [courtAvailability, setCourtAvailability] = useState<{ available: PadelCourt[], occupied: PadelCourt[], total: number }>({ available: [], occupied: [], total: 0 });
     const [infoDialog, setInfoDialog] = useState<{ open: boolean, title: string, description: string, icon: React.ElementType }>({ open: false, title: '', description: '', icon: Lightbulb });
     const [isConfirmPrivateDialogOpen, setIsConfirmPrivateDialogOpen] = useState(false);
@@ -93,22 +98,16 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
     const [dialogContent, setDialogContent] = useState<{ isJoiningWithPoints: boolean, pointsCost: number, price: number, spotIndex: number }>({ isJoiningWithPoints: false, pointsCost: 0, price: 0, spotIndex: 0 });
 
-
     useEffect(() => {
-        const loadData = async () => {
-            const club = getMockClubs().find(c => c.id === initialMatch.clubId);
-            setClubInfo(club || null);
-            if (club) {
+        const loadAvailability = async () => {
+            if (clubInfo) {
                 const availability = await getCourtAvailabilityForInterval(initialMatch.clubId, new Date(initialMatch.startTime), new Date(initialMatch.endTime));
                 setCourtAvailability(availability);
             }
         };
-        loadData();
+        loadAvailability();
         setCurrentMatch(initialMatch);
-    }, [initialMatch]);
-    
-    // Moved this check to the top to avoid conditional hook calls.
-    if (!currentUser || !clubInfo) return <Skeleton className="h-[280px] w-full" />;
+    }, [initialMatch, clubInfo]);
 
     const isUserBooked = useMemo(() => (currentMatch.bookedPlayers || []).some(p => p.userId === currentUser?.id), [currentMatch.bookedPlayers, currentUser?.id]);
     const isOrganizer = currentUser?.id === currentMatch.organizerId;
@@ -414,5 +413,23 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
         </>
     );
 });
+
+// This is the main exported component. It fetches the necessary data
+// and then renders the content component, or a skeleton if data is missing.
+const MatchCard: React.FC<MatchCardProps> = (props) => {
+    const [clubInfo, setClubInfo] = useState<Club | null>(null);
+
+    useEffect(() => {
+        const club = getMockClubs().find(c => c.id === props.match.clubId);
+        setClubInfo(club || null);
+    }, [props.match.clubId]);
+
+    if (!props.currentUser || !clubInfo) {
+        return <Skeleton className="h-[280px] w-full" />;
+    }
+
+    return <MatchCardContentComponent {...props} currentUser={props.currentUser} clubInfo={clubInfo} />;
+};
+
 MatchCard.displayName = 'MatchCard';
 export default MatchCard;
