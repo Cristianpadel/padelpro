@@ -106,6 +106,9 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
         loadData();
         setCurrentMatch(initialMatch);
     }, [initialMatch]);
+    
+    // Moved this check to the top to avoid conditional hook calls.
+    if (!currentUser || !clubInfo) return <Skeleton className="h-[280px] w-full" />;
 
     const isUserBooked = useMemo(() => (currentMatch.bookedPlayers || []).some(p => p.userId === currentUser?.id), [currentMatch.bookedPlayers, currentUser?.id]);
     const isOrganizer = currentUser?.id === currentMatch.organizerId;
@@ -216,8 +219,6 @@ const MatchCard: React.FC<MatchCardProps> = React.memo(({ match: initialMatch, c
         setInfoDialog({ open: true, ...dialogData });
     };
 
-    if (!currentUser || !clubInfo) return <Skeleton className="h-[280px] w-full" />;
-    
     const canBookPrivate = (currentMatch.bookedPlayers || []).length === 0 && isPlaceholderMatch;
     const isBookableWithPointsBySchedule = clubInfo.pointBookingSlots && isMatchBookableWithPoints(currentMatch, clubInfo);
 
