@@ -87,14 +87,14 @@ export const bookMatch = async (
         }
     }
 
-    if (match.isPlaceholder || (match.isProMatch && match.category === 'abierta')) {
-        match.isPlaceholder = false; // A pro match is no longer a placeholder once someone joins
-        if (match.level === 'abierto' || match.isProMatch) {
-            match.level = user.level || '1.0';
-        }
-        if (match.category === 'abierta' || match.isProMatch) {
-             match.category = user.genderCategory === 'femenino' ? 'chica' : user.genderCategory === 'masculino' ? 'chico' : 'abierta';
-        }
+    if ((match.isPlaceholder || match.isProMatch) && (match.bookedPlayers || []).length === 0) {
+      match.isPlaceholder = false; 
+      if (match.level === 'abierto' || match.isProMatch) {
+          match.level = user.level || '1.0';
+      }
+      if (match.category === 'abierta' || match.isProMatch) {
+           match.category = user.genderCategory === 'femenino' ? 'chica' : user.genderCategory === 'masculino' ? 'chico' : 'abierta';
+      }
     }
 
     match.bookedPlayers.push({ userId: user.id, name: user.name });
@@ -389,8 +389,7 @@ export const removePlayerFromMatch = async (matchId: string, userId: string, isS
         ...originalMatch,
         bookedPlayers: updatedBookedPlayers,
         gratisSpotAvailable: newGratisSpotAvailable,
-        status: (originalMatch.status === 'confirmed_private') ? 'confirmed_private' : (updatedBookedPlayers.length === 4 ? 'confirmed' : 'forming'),
-        courtNumber: (originalMatch.status === 'confirmed' && updatedBookedPlayers.length < 4) ? undefined : originalMatch.courtNumber,
+        status: (originalMatch.status === 'confirmed_private' || originalMatch.status === 'confirmed') ? 'confirmed' : 'forming',
     };
     state.updateMatchInState(originalMatch.id, updatedMatch);
     state.removeUserMatchBookingFromStateByMatchAndUser(matchId, userId);
@@ -460,8 +459,7 @@ export function createMatchesForDay(club: Club, date: Date): Match[] {
             continue;
         }
         
-        // Check if there's already a confirmed activity at this exact start time.
-        const hasConfirmedConflict = confirmedActivitiesToday.some(activity => 
+       const hasConfirmedConflict = confirmedActivitiesToday.some(activity => 
              areIntervalsOverlapping(
                 { start: matchStartTime, end: addMinutes(matchStartTime, matchDurationMinutes) },
                 { start: new Date(activity.startTime), end: new Date('endTime' in activity ? activity.endTime : addMinutes(new Date(activity.startTime), 90)) },
