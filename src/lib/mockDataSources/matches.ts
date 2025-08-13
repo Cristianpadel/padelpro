@@ -87,12 +87,12 @@ export const bookMatch = async (
         }
     }
 
-    if (match.isPlaceholder || match.level === 'abierto') {
+    if (match.isPlaceholder || match.level === 'abierto' || match.isProMatch) {
         match.isPlaceholder = false;
-        if (match.level === 'abierto') {
+        if (match.level === 'abierto' || match.isProMatch) { // Apply level logic to Pro Matches as well
             match.level = user.level || '1.0';
         }
-        if (match.category === 'abierta') {
+        if (match.category === 'abierta' || match.isProMatch) { // Apply category logic to Pro Matches as well
             match.category = user.genderCategory || 'abierta';
         }
     }

@@ -1,18 +1,19 @@
 // src/components/match/MatchProCard.tsx
 "use client";
 
-import React from 'react';
-import type { Match, User } from '@/types';
+import React, { useState, useEffect } from 'react';
+import type { User, Match } from '@/types';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Clock, Plus, Loader2 } from 'lucide-react';
+import { Clock, Plus, Loader2, BarChartHorizontal, Users2, Hash } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { getInitials } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { getMockStudents } from '@/lib/mockData'; // Import students data source
+import { getMockStudents, bookMatch } from '@/lib/mockData';
+import { Badge } from '@/components/ui/badge';
 
 interface MatchProCardProps {
     match: Match;
@@ -34,22 +35,28 @@ const MatchProCard: React.FC<MatchProCardProps> = ({ match, currentUser, onBooki
     };
 
 
-    const handleJoin = () => {
+    const handleJoin = (index: number) => {
         if (isFull || isUserBooked || isLoading) return;
         
         setIsLoading(true);
-        // Simulate API call
-        setTimeout(() => {
-            // This is where you would call the actual booking logic
-            toast({
-                title: "¡Inscrito en Matchpro!",
-                description: "Te has apuntado a la partida."
-            });
-            onBookingSuccess();
-            setIsLoading(false);
-        }, 1000);
+        bookMatch(currentUser.id, match.id)
+            .then(result => {
+                if ('error' in result) {
+                    toast({ title: "Error", description: result.error, variant: 'destructive' });
+                } else {
+                    toast({
+                        title: "¡Inscrito en Matchpro!",
+                        description: "Te has apuntado a la partida."
+                    });
+                    onBookingSuccess();
+                }
+            })
+            .finally(() => setIsLoading(false));
     };
 
+    const isLevelAssigned = match.level !== 'abierto';
+    const isCategoryAssigned = match.category !== 'abierta';
+    
     return (
         <Card>
             <CardHeader>
@@ -60,6 +67,14 @@ const MatchProCard: React.FC<MatchProCardProps> = ({ match, currentUser, onBooki
                         {format(new Date(match.startTime), "HH:mm", { locale: es })}
                     </span>
                 </CardTitle>
+                <div className="flex justify-start items-center gap-1.5 pt-1">
+                    <Badge variant={isLevelAssigned ? "default" : "outline"} className="text-xs">
+                        <BarChartHorizontal className="mr-1.5 h-3 w-3 -rotate-90" /> {isLevelAssigned ? `Nivel ${match.level}` : 'Nivel Abierto'}
+                    </Badge>
+                     <Badge variant={isCategoryAssigned ? "default" : "outline"} className="text-xs">
+                        <Users2 className="mr-1.5 h-3 w-3" /> {isCategoryAssigned ? match.category.charAt(0).toUpperCase() + match.category.slice(1) : 'Categoría Abierta'}
+                    </Badge>
+                </div>
             </CardHeader>
             <CardContent>
                 <div className="grid grid-cols-4 gap-2">
@@ -71,7 +86,7 @@ const MatchProCard: React.FC<MatchProCardProps> = ({ match, currentUser, onBooki
                         return (
                             <div key={index} className="flex flex-col items-center space-y-1">
                                 <button
-                                    onClick={canClickToJoin ? handleJoin : undefined}
+                                    onClick={() => canClickToJoin ? handleJoin(index) : undefined}
                                     disabled={!canClickToJoin}
                                     className={cn("rounded-full", canClickToJoin && "cursor-pointer hover:opacity-80 transition-opacity")}
                                     aria-label={player ? player.name : "Unirse a la partida"}
@@ -81,8 +96,8 @@ const MatchProCard: React.FC<MatchProCardProps> = ({ match, currentUser, onBooki
                                         <AvatarFallback>
                                             {isLoading && !player ? (
                                                 <Loader2 className="h-4 w-4 animate-spin" />
-                                            ) : player ? (
-                                                getInitials(player.name || '')
+                                            ) : playerDetails ? (
+                                                getInitials(playerDetails.name || '')
                                             ) : (
                                                 <Plus className="h-5 w-5" />
                                             )}
@@ -90,27 +105,31 @@ const MatchProCard: React.FC<MatchProCardProps> = ({ match, currentUser, onBooki
                                     </Avatar>
                                 </button>
                                 <span className="text-xs text-muted-foreground truncate w-full text-center">
-                                    {player ? player.name?.split(' ')[0] : 'Libre'}
+                                    {playerDetails ? playerDetails.name?.split(' ')[0] : 'Libre'}
                                 </span>
                             </div>
                         );
                     })}
                 </div>
             </CardContent>
-            <CardFooter>
-                 {!isUserBooked && !isFull && (
-                    <Button className="w-full" onClick={handleJoin} disabled={isLoading}>
+             {(!isUserBooked && !isFull) && (
+                <CardFooter>
+                    <Button className="w-full" onClick={() => handleJoin(players.length)} disabled={isLoading}>
                         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                         Inscribirse
                     </Button>
-                )}
-                 {isUserBooked && (
-                     <Button className="w-full" disabled variant="secondary">Inscrito</Button>
-                 )}
-                 {isFull && !isUserBooked && (
+                </CardFooter>
+            )}
+            {isUserBooked && (
+                <CardFooter>
+                    <Button className="w-full" disabled variant="secondary">Inscrito</Button>
+                </CardFooter>
+            )}
+            {isFull && !isUserBooked && (
+                <CardFooter>
                     <Button className="w-full" disabled variant="outline">Completo</Button>
-                 )}
-            </CardFooter>
+                </CardFooter>
+            )}
         </Card>
     );
 }
