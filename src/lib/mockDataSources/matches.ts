@@ -62,7 +62,8 @@ export const bookMatch = async (
     }
     
     // Check level compatibility only if the match is not a placeholder ('abierto')
-    if (match.level !== 'abierto' && !isUserLevelCompatible(match.level, user.level, match.isPlaceholder)) {
+    // AND it's not a pro match
+    if (match.level !== 'abierto' && !match.isProMatch && !isUserLevelCompatible(match.level, user.level, match.isPlaceholder)) {
         return { error: 'Tu nivel de juego no es compatible con el de esta partida.' };
     }
 
@@ -88,13 +89,13 @@ export const bookMatch = async (
     }
 
     if ((match.isPlaceholder || match.isProMatch) && (match.bookedPlayers || []).length === 0) {
-      match.isPlaceholder = false; 
-       if (match.level === 'abierto') {
-          match.level = user.level || '1.0';
-      }
-      if (match.category === 'abierta') {
-           match.category = user.genderCategory === 'femenino' ? 'chica' : user.genderCategory === 'masculino' ? 'chico' : 'abierta';
-      }
+        match.isPlaceholder = false; 
+        if (match.level === 'abierto') {
+            match.level = user.level || '1.0';
+        }
+        if (match.category === 'abierta') {
+            match.category = user.genderCategory === 'femenino' ? 'chica' : user.genderCategory === 'masculino' ? 'chico' : 'abierta';
+        }
     }
 
     match.bookedPlayers.push({ userId: user.id, name: user.name });
