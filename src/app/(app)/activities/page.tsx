@@ -26,7 +26,7 @@ import DesktopSidebar from '@/components/layout/DesktopSidebar';
 import LogoutConfirmationDialog from '@/components/layout/LogoutConfirmationDialog';
 import ProfessionalAccessDialog from '@/components/layout/ProfessionalAccessDialog';
 import ActivityTypeSelectionDialog from './components/ActivityTypeSelectionDialog';
-import DateNavigation from '@/components/admin/components/DateNavigation';
+import DateNavigation from '@/app/(app)/admin/components/DateNavigation';
 
 
 export default function ActivitiesPage() {
@@ -332,6 +332,3 @@ export default function ActivitiesPage() {
         </div>
     );
 }
-
-    
-

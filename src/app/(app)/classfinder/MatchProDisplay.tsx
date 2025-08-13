@@ -108,4 +108,3 @@ const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, onBookin
 }
 
 export default MatchProDisplay;
-
