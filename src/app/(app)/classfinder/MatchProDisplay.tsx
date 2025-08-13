@@ -73,22 +73,29 @@ const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, onBookin
 
     return (
         <div className="space-y-4">
-            {matchProGames.length > 0 ? (
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(360px,1fr))] justify-center gap-6">
-                    {matchProGames.map(match => (
-                        <MatchCard 
-                            key={match.id} 
-                            match={match} 
-                            currentUser={localCurrentUser} 
-                            onBookingSuccess={onBookingSuccess}
-                            onMatchUpdate={handleMatchUpdate}
-                            showPointsBonus={false} // Match Pro games don't award points by default
-                        />
-                    ))}
-                </div>
-            ) : (
-                <p className="text-center text-muted-foreground p-8">No hay partidas Matchpro programadas para el día seleccionado.</p>
-            )}
+             <Card>
+                <CardHeader>
+                    <CardTitle>Partidas Matchpro</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {matchProGames.length > 0 ? (
+                        <div className="grid grid-cols-[repeat(auto-fill,minmax(360px,1fr))] justify-center gap-6">
+                            {matchProGames.map(match => (
+                                <MatchCard 
+                                    key={match.id} 
+                                    match={match} 
+                                    currentUser={localCurrentUser} 
+                                    onBookingSuccess={onBookingSuccess}
+                                    onMatchUpdate={handleMatchUpdate}
+                                    showPointsBonus={false} // Match Pro games don't award points by default
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-center text-muted-foreground p-8">No hay partidas Matchpro programadas para el día seleccionado.</p>
+                    )}
+                </CardContent>
+            </Card>
         </div>
     );
 }
