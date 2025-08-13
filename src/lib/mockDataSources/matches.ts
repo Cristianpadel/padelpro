@@ -89,7 +89,8 @@ export const bookMatch = async (
     }
 
     if ((match.isPlaceholder || match.isProMatch) && (match.bookedPlayers || []).length === 0) {
-        match.isPlaceholder = false; 
+        match.isPlaceholder = false;
+        match.isProMatch = false; // A MatchPro card becomes a regular match once someone joins
         if (match.level === 'abierto') {
             match.level = user.level || '1.0';
         }
