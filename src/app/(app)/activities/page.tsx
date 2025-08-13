@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -27,6 +26,7 @@ import DesktopSidebar from '@/components/layout/DesktopSidebar';
 import LogoutConfirmationDialog from '@/components/layout/LogoutConfirmationDialog';
 import ProfessionalAccessDialog from '@/components/layout/ProfessionalAccessDialog';
 import ActivityTypeSelectionDialog from './components/ActivityTypeSelectionDialog';
+import DateNavigation from '@/components/admin/components/DateNavigation';
 
 
 export default function ActivitiesPage() {
@@ -277,6 +277,14 @@ export default function ActivitiesPage() {
                             </Button>
                         </Link>
                      </div>
+                      {activeView === 'matchpro' && selectedDate && (
+                         <DateNavigation 
+                            currentDate={selectedDate}
+                            setCurrentDate={handleDateChange}
+                            dateStripDates={dateStripDates}
+                            isToday={(d) => isSameDay(d, startOfDay(new Date()))}
+                         />
+                      )}
                       <div className="min-h-[2rem]">
                         <ActiveFiltersDisplay
                             activeView={activeView}
@@ -326,3 +334,4 @@ export default function ActivitiesPage() {
 }
 
     
+
