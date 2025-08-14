@@ -37,6 +37,7 @@ import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "@/comp
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
 import { hasAnyConfirmedActivityForDay } from '@/lib/mockData';
+import { MatchSpotDisplay } from '@/components/match/MatchSpotDisplay';
 
 
 interface PersonalMatchesProps {
@@ -109,7 +110,6 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
 
   const [isChatDialogOpen, setIsChatDialogOpen] = useState(false);
   const [selectedMatchForChat, setSelectedMatchForChat] = useState<Match | null | undefined>(null);
-  const [allMatches, setAllMatches] = useState<Match[]>([]);
   const [now, setNow] = useState(new Date());
   const [availabilityData, setAvailabilityData] = useState<Record<string, CourtAvailabilityState>>({});
   const [infoDialog, setInfoDialog] = useState<{ open: boolean, title: string, description: string, icon: React.ElementType }>({ open: false, title: '', description: '', icon: Lightbulb });
@@ -117,19 +117,24 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
   const [isProcessingPrivateAction, setIsProcessingPrivateAction] = useState(false);
 
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const [fetchedBookings, fetchedMatches] = await Promise.all([
-        fetchUserMatchBookings(currentUser.id),
-        getMockMatches(),
-      ]);
-      fetchedBookings.sort((a, b) => (a.matchDetails?.startTime?.getTime() ?? 0) - (b.matchDetails?.startTime?.getTime() ?? 0));
-      setBookings(fetchedBookings);
-      setAllMatches(fetchedMatches);
+      const fetchedBookings = await fetchUserMatchBookings(currentUser.id);
+      
+      const enrichedBookings = fetchedBookings.map(booking => {
+          const matchDetails = state.getMockMatches().find(m => m.id === booking.activityId);
+          return {
+              ...booking,
+              matchDetails: matchDetails ? { ...matchDetails, startTime: new Date(matchDetails.startTime), endTime: new Date(matchDetails.endTime), bookedPlayers: [...(matchDetails.bookedPlayers || [])] } : undefined
+          };
+      });
+
+      enrichedBookings.sort((a, b) => (a.matchDetails?.startTime?.getTime() ?? 0) - (b.matchDetails?.startTime?.getTime() ?? 0));
+      setBookings(enrichedBookings);
       setError(null);
 
-      const upcoming = fetchedBookings.filter(b => b.matchDetails && new Date(b.matchDetails.endTime) > new Date());
+      const upcoming = enrichedBookings.filter(b => b.matchDetails && new Date(b.matchDetails.endTime) > new Date());
       const newAvailabilityData: Record<string, CourtAvailabilityState> = {};
       for (const booking of upcoming) {
           if (booking.matchDetails) {
@@ -145,13 +150,13 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUser.id]);
 
   useEffect(() => {
     loadData();
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
-  }, [currentUser.id, newMatchBooking, onBookingActionSuccess]);
+  }, [currentUser.id, newMatchBooking, onBookingActionSuccess, loadData]);
 
   const handleCancellationAction = (booking: MatchBooking) => {
     if (!booking.matchDetails) {
@@ -176,16 +181,9 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
     });
   };
 
-  const handleOpenChatDialog = (matchDetails: MatchBookingMatchDetails | undefined | null) => {
-    if (matchDetails) {
-        const fullMatchDetails: Match = {
-            id: selectedMatchForChat?.id || matchDetails.clubId + Date.now(),
-            ...matchDetails,
-            level: matchDetails.level || 'abierto',
-            bookedPlayers: matchDetails.bookedPlayers || [],
-            isPlaceholder: false, 
-            status: (matchDetails.bookedPlayers || []).length === 4 ? 'confirmed' : 'forming',
-        };
+  const handleOpenChatDialog = (matchDetails: Match['id']) => {
+    const fullMatchDetails = state.getMockMatches().find(m => m.id === matchDetails);
+    if (fullMatchDetails) {
         setSelectedMatchForChat(fullMatchDetails);
         setIsChatDialogOpen(true);
     } else {
@@ -197,7 +195,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
     }
   };
   
-    const handleInfoClick = (type: 'level' | 'court' | 'category', match: MatchBookingMatchDetails) => {
+    const handleInfoClick = (type: 'level' | 'court' | 'category', match: Match) => {
         let dialogData;
         const CategoryIconDisplay = match.category === 'chica' ? Venus : match.category === 'chico' ? Mars : CategoryIcon;
 
@@ -298,7 +296,8 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
   }
 
   const renderBookingItem = (booking: MatchBooking, isUpcomingItem: boolean) => {
-      if (!booking.matchDetails) {
+      const matchDetails = bookings.find(b => b.id === booking.id)?.matchDetails;
+      if (!matchDetails) {
           return (
             <div key={booking.id} className="flex items-start space-x-3 p-3 sm:p-4 rounded-lg bg-muted/30 opacity-50 w-80">
                <div className="flex-shrink-0 mt-1">
@@ -312,7 +311,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
           );
       }
 
-      const { startTime, endTime, courtNumber, level, category, bookedPlayers, totalCourtFee, clubId, status, organizerId, privateShareCode, isRecurring, nextRecurringMatchId, durationMinutes } = booking.matchDetails;
+      const { id: matchId, startTime, endTime, courtNumber, level, category, bookedPlayers, totalCourtFee, clubId, status, organizerId, privateShareCode, isRecurring, nextRecurringMatchId, durationMinutes } = matchDetails;
       const isMatchFull = (bookedPlayers || []).length >= 4;
       const wasBookedWithPoints = booking.bookedWithPoints === true;
       const clubDetails = getMockClubs().find(c => c.id === clubId);
@@ -329,6 +328,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
 
       const levelRange = level !== 'abierto' && clubDetails?.levelRanges?.find(r => parseFloat(level) >= parseFloat(r.min) && parseFloat(level) <= parseFloat(r.max));
       const levelToDisplay = levelRange ? `${levelRange.min}-${levelRange.max}` : level;
+      const courtDisplay = isCourtAssigned ? `# ${courtNumber}` : '# Pista';
 
       let cancellationButtonText = "Cancelar Inscripción";
       let cancellationDialogText = "¿Estás seguro de que quieres cancelar tu inscripción?";
@@ -369,7 +369,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
       
       const handleMakeMatchPublic = () => {
          startProcessingTransition(async () => {
-            const result = await makeMatchPublic(currentUser.id, booking.matchId);
+            const result = await makeMatchPublic(currentUser.id, booking.activityId);
             if ('error' in result) {
                 toast({ title: "Error al Hacer Pública", description: result.error, variant: "destructive" });
             } else {
@@ -379,7 +379,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
         });
       };
       
-      const provisionalMatch = !isUpcomingItem && nextRecurringMatchId ? allMatches.find(m => m.id === nextRecurringMatchId) : undefined;
+      const provisionalMatch = !isUpcomingItem && nextRecurringMatchId ? state.getMockMatches().find(m => m.id === nextRecurringMatchId) : undefined;
       let renewalTimeLeft = '';
       let isRenewalExpired = false;
       if (provisionalMatch?.provisionalExpiresAt) {
@@ -423,49 +423,31 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
              </div>
              
              <div className="flex justify-around items-center gap-1.5 my-1">
-                <InfoButton icon={CategoryIcon} text={displayClassCategory(category, true)} onClick={() => handleInfoClick('category', booking.matchDetails!)} className={cn(isCategoryAssigned && classifiedBadgeClass)} />
-                <InfoButton icon={Hash} text={courtNumber ? `# ${courtNumber}` : '# Pista'} onClick={() => handleInfoClick('court', booking.matchDetails!)} className={cn(isCourtAssigned && classifiedBadgeClass)} />
+                <InfoButton icon={CategoryIconDisplay} text={displayClassCategory(category, true)} onClick={() => handleInfoClick('category', booking.matchDetails!)} className={cn(isCategoryAssigned && classifiedBadgeClass)} />
+                <InfoButton icon={Hash} text={courtDisplay} onClick={() => handleInfoClick('court', booking.matchDetails!)} className={cn(isCourtAssigned && classifiedBadgeClass)} />
                 <InfoButton icon={BarChartHorizontal} text={levelToDisplay} onClick={() => handleInfoClick('level', booking.matchDetails!)} className={cn(isLevelAssigned && classifiedBadgeClass)} />
              </div>
            
             <div className="grid grid-cols-4 gap-2 items-start justify-items-center mt-1">
-                {Array.from({ length: 4 }).map((_, idx) => {
-                    const player = (bookedPlayers || [])[idx];
-                    const fullPlayer = player ? (state.getMockStudents().find(s => s.id === player.userId) || (currentUser?.id === player.userId ? currentUser : null)) : null;
-
-                    return (
-                        <div key={idx} className="flex flex-col items-center group/avatar-wrapper space-y-0.5 relative text-center">
-                            <TooltipProvider key={idx} delayDuration={150}>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <button className="flex flex-col items-center space-y-1" disabled={!player} onClick={() => player && toast({title: `Nivel de ${player.name || 'Jugador'}`, description: `Nivel de juego: ${fullPlayer?.level || 'No especificado'}`})}>
-                                            <Avatar className={cn(
-                                                "h-12 w-12 border-[3px] transition-all shadow-inner",
-                                                player ? "border-green-500 bg-green-100" : "border-dashed border-green-400 bg-green-50/50"
-                                            )}>
-                                                {player && fullPlayer ? (
-                                                    <>
-                                                        <AvatarImage src={fullPlayer.profilePictureUrl} data-ai-hint="player avatar small" />
-                                                        <AvatarFallback className="text-sm bg-muted text-muted-foreground">{getInitials(fullPlayer.name || 'P')}</AvatarFallback>
-                                                    </>
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center">
-                                                        <Plus className="h-5 w-5 text-green-600 opacity-60" />
-                                                    </div>
-                                                )}
-                                            </Avatar>
-                                            <span className={cn(
-                                                "text-[11px] font-medium truncate w-auto max-w-[60px]",
-                                                player ? "text-foreground" : "text-muted-foreground"
-                                            )}>{player ? (player.name || 'Jugador').split(' ')[0] : (pricePerPlayer > 0 ? `${pricePerPlayer.toFixed(2)}€` : "Libre")}</span>
-                                        </button>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="bottom"><p>{player ? (player.name || 'Tú') : 'Plaza Libre'}</p></TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        </div>
-                    );
-                })}
+                {Array.from({ length: 4 }).map((_, idx) => (
+                    <MatchSpotDisplay
+                        key={idx}
+                        spotIndex={idx}
+                        match={matchDetails}
+                        currentUser={currentUser}
+                        onJoin={()=>{}}
+                        onJoinPrivate={()=>{}}
+                        isPending={false}
+                        userHasOtherConfirmedActivityToday={false}
+                        isUserLevelCompatible={true}
+                        canJoinThisPrivateMatch={false}
+                        isOrganizer={isOrganizerOfPrivateMatch}
+                        canBookWithPoints={false}
+                        showPointsBonus={false}
+                        pricePerPlayer={pricePerPlayer}
+                        pointsToAward={0}
+                    />
+                ))}
             </div>
 
             {isUpcomingItem && availability && (
@@ -488,14 +470,14 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                               <AlertDialogContent>
                                  <AlertDialogHeader><AlertDialogTitle>¿Hacer Pública esta Partida?</AlertDialogTitle><AlertDialogDescription>La partida será visible para todos y podrán unirse nuevos jugadores. No se realizarán reembolsos automáticos.</AlertDialogDescription></AlertDialogHeader>
                                  <AlertDialogFooter><AlertDialogCancel disabled={isProcessingAction}>Cancelar</AlertDialogCancel><AlertDialogAction onClick={handleMakeMatchPublic} disabled={isProcessingAction} className="bg-orange-500 hover:bg-orange-600 text-white">{isProcessingAction ? <Loader2 className="animate-spin h-4 w-4" /> : "Sí, Hacer Pública"}</AlertDialogAction></AlertDialogFooter>
-                             </AlertDialogContent>
+                              </AlertDialogContent>
                          </AlertDialog>
                          <AlertDialog>
                              <AlertDialogTrigger asChild><Button variant="outline" size="sm" className="flex-1 text-xs text-destructive border-destructive hover:bg-destructive/10" disabled={isProcessingAction}><Ban className="mr-1.5 h-3.5 w-3.5" /> Ofrecer</Button></AlertDialogTrigger>
                               <AlertDialogContent>
                                  <AlertDialogHeader><AlertDialogTitle>Cancelar y Ofrecer por Puntos</AlertDialogTitle><AlertDialogDescription>Se te reembolsará el coste total de la pista ({totalCourtFee?.toFixed(2)}€). La pista quedará disponible para que otro jugador la reserve únicamente con puntos de fidelidad. ¿Estás seguro?</AlertDialogDescription></AlertDialogHeader>
-                                 <AlertDialogFooter><AlertDialogCancel disabled={isProcessingAction}>Cerrar</AlertDialogCancel><AlertDialogAction onClick={() => handleCancelAndReoffer(booking.matchId)} disabled={isProcessingAction && currentActionInfo?.type === 'cancelAndReoffer'} className="bg-destructive hover:bg-destructive/90">{currentActionInfo?.type === 'cancelAndReoffer' && isProcessingAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Sí, Cancelar y Ofrecer"}</AlertDialogAction></AlertDialogFooter>
-                             </AlertDialogContent>
+                                 <AlertDialogFooter><AlertDialogCancel disabled={isProcessingAction}>Cerrar</AlertDialogCancel><AlertDialogAction onClick={() => handleCancelAndReoffer(booking.activityId)} disabled={isProcessingAction && currentActionInfo?.type === 'cancelAndReoffer'} className="bg-destructive hover:bg-destructive/90">{currentActionInfo?.type === 'cancelAndReoffer' && isProcessingAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Sí, Cancelar y Ofrecer"}</AlertDialogAction></AlertDialogFooter>
+                              </AlertDialogContent>
                          </AlertDialog>
                       </div>
                  )}
@@ -520,7 +502,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                              </AlertDialogTrigger>
                              <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>¿Confirmar Cancelación?</AlertDialogTitle><AlertDialogDescription>{cancellationDialogText}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={isProcessingAction && currentActionInfo?.bookingId === booking.id}>Cerrar</AlertDialogCancel><AlertDialogAction onClick={() => handleCancellationAction(booking)} disabled={isProcessingAction && currentActionInfo?.bookingId === booking.id} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{isProcessingAction && currentActionInfo?.bookingId === booking.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Sí, Cancelar"}</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
                          </AlertDialog>
-                         {isMatchFull && isUpcomingItem && (<Button variant="outline" size="sm" className="w-full sm:w-auto ml-2 text-xs bg-blue-500 text-white border-blue-600 hover:bg-blue-600" onClick={() => handleOpenChatDialog(booking.matchDetails)}><MessageSquare className="mr-1.5 h-3.5 w-3.5" />Chat</Button>)}
+                         {isMatchFull && isUpcomingItem && (<Button variant="outline" size="sm" className="w-full sm:w-auto ml-2 text-xs bg-blue-500 text-white border-blue-600 hover:bg-blue-600" onClick={() => handleOpenChatDialog(booking.activityId)}><MessageSquare className="mr-1.5 h-3.5 w-3.5" />Chat</Button>)}
                          {canMakePrivate && (
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
@@ -540,7 +522,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                 {!isUpcomingItem && provisionalMatch && !isRenewalExpired && (
                     <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-2 p-2 bg-blue-50 border-t border-blue-200">
                         <span className="text-xs text-blue-700 font-medium">Renovar para la próxima semana (expira en {renewalTimeLeft}):</span>
-                        <Button onClick={() => handleRenew(booking.matchId)} size="sm" className="h-8 bg-blue-600 hover:bg-blue-700" disabled={isProcessingAction}>{isProcessingAction && currentActionInfo?.type === 'renew' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Repeat className="mr-2 h-4 w-4"/>} Renovar Reserva</Button>
+                        <Button onClick={() => handleRenew(booking.activityId)} size="sm" className="h-8 bg-blue-600 hover:bg-blue-700" disabled={isProcessingAction}>{isProcessingAction && currentActionInfo?.type === 'renew' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Repeat className="mr-2 h-4 w-4"/>} Renovar Reserva</Button>
                     </div>
                 )}
              </div>

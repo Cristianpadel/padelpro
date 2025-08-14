@@ -52,7 +52,7 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
     const isPlaceholderMatch = match.isPlaceholder === true;
     
     const pointsCost = match.isPointsOnlyBooking 
-        ? (calculatePricePerPerson(match.totalCourtFee, 4) || 20) // Use price if available, else fallback
+        ? (calculatePricePerPerson(match.totalCourtFee, 4) || 20)
         : pricePerPlayer;
 
     let spotTooltipText = "";
@@ -80,9 +80,10 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
         }
     };
 
+    const fullPlayer = player ? (getMockStudents().find(s => s.id === player.userId) || (currentUser?.id === player.userId ? currentUser : null)) : null;
 
-    if (player) {
-        spotTooltipText = `${player.name || 'Jugador'}${isCurrentUserInSpot ? ' (Tú)' : ''}`;
+    if (player && fullPlayer) {
+        spotTooltipText = `${fullPlayer.name || 'Jugador'}${isCurrentUserInSpot ? ' (Tú)' : ''}`;
         spotVariant = "solid";
         isDisabled = true; 
     } else if (isPending) {
@@ -173,11 +174,10 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
         }
     }
     
-    const fullPlayer = player ? (getMockStudents().find(s => s.id === player.userId) || (currentUser?.id === player.userId ? currentUser : null)) : null;
     const playerLevelDisplay = fullPlayer?.level && fullPlayer.level !== 'abierto' ? fullPlayer.level : (fullPlayer ? '?' : '');
     
-     const spotLabel = player
-      ? (player.name || 'Jugador').split(' ')[0]
+     const spotLabel = player && fullPlayer
+      ? (fullPlayer.name || 'Jugador').split(' ')[0]
       : (match.gratisSpotAvailable && (match.bookedPlayers || []).length === 3 && !player)
       ? ""
       : (pricePerPlayer > 0 ? `${pricePerPlayer.toFixed(2)}€` : "");
@@ -201,11 +201,11 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
                         isCurrentUserInSpot && "border-4 border-primary shadow-lg",
                         isDisabled && !player && 'opacity-70 hover:bg-transparent'
                     )}>
-                        {player ? (
+                        {player && fullPlayer ? (
                             <>
                                 <Avatar className="h-[calc(100%-4px)] w-[calc(100%-4px)]">
-                                    <AvatarImage src={fullPlayer?.profilePictureUrl} alt={`Avatar ${player.name}`} data-ai-hint="player avatar large"/>
-                                    <AvatarFallback className="text-sm bg-muted text-muted-foreground">{getInitials(player.name || 'P')}</AvatarFallback>
+                                    <AvatarImage src={fullPlayer.profilePictureUrl} alt={`Avatar ${fullPlayer.name}`} data-ai-hint="player avatar large"/>
+                                    <AvatarFallback className="text-sm bg-muted text-muted-foreground">{getInitials(fullPlayer.name || 'P')}</AvatarFallback>
                                 </Avatar>
                             </>
                         ) : (
