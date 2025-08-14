@@ -803,33 +803,50 @@ export const renewRecurringMatch = async (userId: string, completedMatchId: stri
 };
 
 export const fetchUserMatchBookings = async (userId: string): Promise<MatchBooking[]> => {
-  await new Promise(resolve => setTimeout(resolve, config.MINIMAL_DELAY));
-  const userBookingsData = state.getMockUserMatchBookings().filter(booking => booking.userId === userId);
-  return userBookingsData.map(booking => {
-    const match = state.getMockMatches().find(m => m.id === booking.activityId);
-    return {
-      ...booking,
-      bookedAt: new Date(booking.bookedAt),
-      matchDetails: match ? {
-        id: match.id,
-        clubId: match.clubId,
-        startTime: new Date(match.startTime),
-        endTime: new Date(match.endTime),
-        courtNumber: match.courtNumber,
-        level: match.level,
-        category: match.category,
-        bookedPlayers: JSON.parse(JSON.stringify(match.bookedPlayers || [])),
-        totalCourtFee: match.totalCourtFee,
-        status: match.status,
-        organizerId: match.organizerId,
-        privateShareCode: match.privateShareCode,
-        isRecurring: match.isRecurring,
-        nextRecurringMatchId: match.nextRecurringMatchId,
-        eventId: match.eventId,
-        durationMinutes: match.durationMinutes,
-      } : booking.matchDetails
-    };
-  });
+    await new Promise(resolve => setTimeout(resolve, config.MINIMAL_DELAY));
+    const userBookingsData = state.getMockUserMatchBookings().filter(booking => booking.userId === userId);
+    
+    // Create a helper map to avoid multiple lookups
+    const allMatchesMap = new Map<string, Match>();
+    state.getMockMatches().forEach(m => allMatchesMap.set(m.id, m));
+    
+    return userBookingsData.map(booking => {
+        const match = allMatchesMap.get(booking.activityId);
+        
+        let fullBookedPlayers: { userId: string, name?: string }[] = [];
+        if (match && match.bookedPlayers) {
+            fullBookedPlayers = match.bookedPlayers.map(p => {
+                const studentData = state.getMockStudents().find(s => s.id === p.userId);
+                return {
+                    userId: p.userId,
+                    name: studentData?.name || p.name || 'Jugador',
+                };
+            });
+        }
+        
+        return {
+            ...booking,
+            bookedAt: new Date(booking.bookedAt),
+            matchDetails: match ? {
+                id: match.id,
+                clubId: match.clubId,
+                startTime: new Date(match.startTime),
+                endTime: new Date(match.endTime),
+                courtNumber: match.courtNumber,
+                level: match.level,
+                category: match.category,
+                bookedPlayers: fullBookedPlayers,
+                totalCourtFee: match.totalCourtFee,
+                status: match.status,
+                organizerId: match.organizerId,
+                privateShareCode: match.privateShareCode,
+                isRecurring: match.isRecurring,
+                nextRecurringMatchId: match.nextRecurringMatchId,
+                eventId: match.eventId,
+                durationMinutes: match.durationMinutes,
+            } : booking.matchDetails
+        };
+    });
 };
 
 export const fillMatchAndMakePrivate = async (userId: string, matchId: string): Promise<{ updatedMatch: Match; cost: number } | { error: string }> => {
