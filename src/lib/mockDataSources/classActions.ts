@@ -98,6 +98,8 @@ export const bookClass = async (
   let slot = { ...state.getMockTimeSlots()[slotIndex] };
   const club = state.getMockClubs().find(c => c.id === slot.clubId);
   if (!club) return { error: "Club no encontrado." };
+  
+  const isOriginalProposal = (slot.bookedPlayers || []).length === 0 && slot.level === 'abierto';
 
   if ((slot.bookedPlayers || []).some(p => p.userId === userId && p.groupSize === groupSize)) {
     return { error: "Ya estás inscrito en esta opción de clase." };
@@ -186,6 +188,25 @@ export const bookClass = async (
   await recalculateAndSetBlockedBalances(userId);
 
   state.updateTimeSlotInState(slot.id, slot);
+  
+  // *** NEW LOGIC: Create a new proposal if the original was a proposal ***
+  if (isOriginalProposal) {
+      const newProposalSlot: TimeSlot = {
+          ...slot, // Inherit most properties
+          id: `ts-proposal-${slot.clubId}-${slot.instructorId}-${format(new Date(slot.startTime), 'yyyyMMddHHmm')}-new`,
+          level: 'abierto',
+          category: 'abierta',
+          bookedPlayers: [], // Empty
+          status: 'pre_registration',
+          organizerId: undefined,
+          privateShareCode: undefined,
+          confirmedPrivateSize: undefined,
+          courtNumber: undefined,
+          designatedGratisSpotPlaceholderIndexForOption: {},
+      };
+      // Add the new proposal to the state
+      state.addTimeSlotToState(newProposalSlot);
+  }
   
   return { booking: newBooking, updatedSlot: slot };
 };
