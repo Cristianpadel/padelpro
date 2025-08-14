@@ -235,11 +235,12 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                 });
             }
 
-             // In normal view, show placeholders AND forming matches
+            // In normal view, show placeholders, forming matches, and matches the user is in.
             workingMatches = workingMatches.filter(m => {
-                 if ('isEventCard' in m) return true;
-                 const match = m as Match;
-                 return match.isPlaceholder || match.status === 'forming';
+                if ('isEventCard' in m) return true;
+                const match = m as Match;
+                const isUserInscribed = (match.bookedPlayers || []).some(p => p.userId === currentUser.id);
+                return match.isPlaceholder || match.status === 'forming' || isUserInscribed;
             });
         }
         
@@ -447,33 +448,15 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                                         )
                                     }
                                     return (
-                                        <AlertDialog key={`empty-${index}`}>
-                                            <AlertDialogTrigger asChild>
-                                                <button disabled={isFull || isUserInscribed} className="relative inline-flex items-center justify-center h-12 w-12 rounded-full border-[3px] z-0 transition-all shadow-inner bg-slate-100 border-slate-300 border-dashed hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60">
-                                                    <Plus className="h-5 w-5 text-muted-foreground" />
-                                                </button>
-                                            </AlertDialogTrigger>
-                                            <AlertDialogContent>
-                                                <AlertDialogHeader>
-                                                    <AlertDialogTitle>Confirmar Inscripción al Evento</AlertDialogTitle>
-                                                    <AlertDialogDescription>
-                                                         Vas a apuntarte al evento: <span className="font-semibold">{activity.name}</span>.
-                                                         Coste: <span className="font-bold">{activity.price?.toFixed(2)}€</span>.
-                                                    </AlertDialogDescription>
-                                                </AlertDialogHeader>
-                                                 <div className="text-sm bg-blue-50 text-blue-800 p-3 rounded-lg space-y-2">
-                                                    <p className="font-bold text-center">¡Aviso Importante!</p>
-                                                    <ul className="space-y-1.5">
-                                                        <li className="flex items-start"><ThumbsUp className="h-4 w-4 mr-2 mt-0.5 text-blue-500 flex-shrink-0" /><span>Cuando llegue la hora del sorteo, se formarán las partidas.</span></li>
-                                                        <li className="flex items-start"><Lock className="h-4 w-4 mr-2 mt-0.5 text-blue-500 flex-shrink-0" /><span>Tu saldo será bloqueado hasta que se juegue el evento.</span></li>
-                                                    </ul>
-                                                </div>
-                                                <AlertDialogFooter>
-                                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                                    <AlertDialogAction>Inscribirme</AlertDialogAction>
-                                                </AlertDialogFooter>
-                                            </AlertDialogContent>
-                                        </AlertDialog>
+                                        
+                                        <AlertDialogTrigger asChild key={`empty-${index}`}>
+                                            <button disabled={isFull || isUserInscribed} className="relative inline-flex items-center justify-center h-12 w-12 rounded-full border-[3px] z-0 transition-all shadow-inner bg-slate-100 border-slate-300 border-dashed hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60">
+                                                <Plus className="h-5 w-5 text-muted-foreground" />
+                                            </button>
+                                        </AlertDialogTrigger>
+                                       
+                                            
+                                        
                                     )
                                  })}
                             </div>
@@ -497,23 +480,22 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                     <MatchCard
                         match={match}
                         currentUser={currentUser}
-                        onBookingSuccess={onBookingSuccess}
+                        onBookingSuccess={handleLocalMatchBookingUpdate}
                         onMatchUpdate={handleLocalMatchBookingUpdate}
                         matchShareCode={matchShareCode}
                         showPointsBonus={showPointsBonus}
                     />
-                </div>
+                 </div>
                )
             })}
           </div>
         )}
-      </div>
-
-      {canLoadMore && displayedMatches.length > 0 && (
-          <div ref={loadMoreMatchesRef} className="h-10 flex justify-center items-center text-muted-foreground mt-6">
-            {isLoadingMore && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
-          </div>
+        {canLoadMore && displayedMatches.length > 0 && (
+            <div ref={loadMoreMatchesRef} className="h-10 flex justify-center items-center text-muted-foreground mt-6">
+                {isLoadingMore && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+            </div>
         )}
+      </div>
     </div>
   );
 };
