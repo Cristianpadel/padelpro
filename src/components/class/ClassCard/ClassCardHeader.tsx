@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { getInitials } from '@/lib/utils';
 import { cn } from '@/lib/utils';
-import type { TimeSlot, Instructor } from '@/types';
+import type { TimeSlot, Instructor, Club } from '@/types';
 import { Clock, Share2, Star, Plus, Lightbulb, Hash, Users2, Venus, Mars } from 'lucide-react';
 import { displayClassLevel, displayClassCategory } from '@/types';
 
@@ -18,6 +18,7 @@ import { displayClassLevel, displayClassCategory } from '@/types';
 interface ClassCardHeaderProps {
   currentSlot: TimeSlot;
   instructor: Instructor;
+  clubInfo: Club | null;
   instructorRating: number;
   durationMinutes: number;
   isSlotEffectivelyFull: boolean;
@@ -48,6 +49,7 @@ const InfoButton = ({ icon: Icon, text, onClick, className }: { icon: React.Elem
 export const ClassCardHeader: React.FC<ClassCardHeaderProps> = ({
   currentSlot,
   instructor,
+  clubInfo,
   instructorRating,
   durationMinutes,
   isSlotEffectivelyFull,
@@ -132,21 +134,20 @@ export const ClassCardHeader: React.FC<ClassCardHeaderProps> = ({
       </div>
 
       {/* Middle section: Date, Time, Duration, and Share */}
-      <div className="flex justify-between items-center border-t border-border pt-1.5">
-        <div className="flex items-baseline space-x-3">
-          <div className="text-center font-bold">
-            <p className="text-xs uppercase text-muted-foreground">{format(new Date(currentSlot.startTime), 'EEE', { locale: es })}</p>
-            <p className="text-4xl leading-none">{format(new Date(currentSlot.startTime), 'd')}</p>
+       <div className="flex items-start justify-between border-t border-border pt-1.5">
+        <div className="flex items-center space-x-3">
+          <div className="flex-shrink-0 text-center font-bold bg-white p-1 rounded-md w-14 shadow-lg border border-border/20">
+            <p className="text-xs uppercase text-muted-foreground">{format(new Date(currentSlot.startTime), "EEE", { locale: es })}</p>
+            <p className="text-3xl leading-none">{format(new Date(currentSlot.startTime), "d")}</p>
+            <p className="text-xs uppercase text-muted-foreground">{format(new Date(currentSlot.startTime), "MMM", { locale: es })}</p>
           </div>
-          <div className="text-center font-bold">
-             <p className="text-xs uppercase text-muted-foreground">{format(new Date(currentSlot.startTime), 'MMM', { locale: es })}</p>
-             <p className="text-4xl leading-none">{format(new Date(currentSlot.startTime), "HH:mm'h'")}</p>
+          <div className="flex flex-col">
+            <span className="font-semibold text-lg">{format(new Date(currentSlot.startTime), 'HH:mm')}h</span>
+            <span className="text-sm text-muted-foreground flex items-center"><Clock className="mr-1 h-3.5 w-3.5"/>{durationMinutes} min</span>
+            <span className="text-sm text-muted-foreground">{clubInfo?.name || 'Club Padel'}</span>
           </div>
         </div>
         <div className="flex flex-col items-end gap-2">
-            <p className="text-xs text-muted-foreground flex items-center font-medium">
-              <Clock className="mr-1 h-3 w-3" /> {durationMinutes} min
-            </p>
             <Button variant="ghost" className="h-auto p-1 text-muted-foreground self-start" onClick={handleShareClass}>
               <Share2 className="h-5 w-5" />
             </Button>
