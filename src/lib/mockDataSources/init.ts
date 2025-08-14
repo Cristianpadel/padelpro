@@ -54,7 +54,7 @@ export function performInitialization() {
         showClassesTabOnFrontend: true,
         showMatchesTabOnFrontend: true,
         isMatchDayEnabled: true,
-        isMatchProEnabled: true,
+        isMatchProEnabled: false, // Set to false by default
         pointSettings: defaultPointSettings,
         adminEmail: 'admin@padelestrella.com',
         adminPassword: 'adminpassword',
