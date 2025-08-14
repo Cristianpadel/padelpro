@@ -87,8 +87,10 @@ export const bookMatch = async (
             return { error: `Saldo insuficiente. Necesitas ${pricePerPlayer.toFixed(2)}€.` };
         }
     }
+    
+    const isOriginalProposal = match.isPlaceholder === true && (match.bookedPlayers || []).length === 0;
 
-    if ((match.isPlaceholder) && (match.bookedPlayers || []).length === 0) {
+    if (isOriginalProposal) {
         match.isPlaceholder = false;
         if (match.level === 'abierto') {
             match.level = user.level || '1.0';
@@ -128,6 +130,24 @@ export const bookMatch = async (
     }
 
     state.updateMatchInState(matchId, match);
+    
+    if (isOriginalProposal) {
+      const newProposalMatch: Match = {
+          ...match, // Inherit properties like time, club, duration
+          id: `match-ph-${match.clubId}-${format(new Date(match.startTime), 'yyyyMMddHHmm')}-new`,
+          level: 'abierto',
+          category: 'abierta',
+          bookedPlayers: [],
+          isPlaceholder: true, // This is the new placeholder
+          isProMatch: match.isProMatch, // Preserve pro status if applicable
+          status: 'forming',
+          courtNumber: undefined,
+          organizerId: undefined,
+          privateShareCode: undefined,
+          confirmedPrivateSize: undefined,
+      };
+      state.addMatchToState(newProposalMatch);
+    }
 
     // After booking, recalculate blocked credit for the user
     await recalculateAndSetBlockedBalances(userId);
