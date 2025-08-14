@@ -241,6 +241,7 @@ export default function ActivitiesPage() {
                             onBookingSuccess={handleBookingSuccess}
                             selectedDate={selectedDate}
                             onDateChange={handleDateChange}
+                            timeSlotFilter={timeSlotFilter}
                         />;
             default:
                 return null;

@@ -2,10 +2,10 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import type { User, Match, Club } from '@/types';
+import type { User, Match, Club, TimeOfDayFilterType } from '@/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import MatchCard from '@/components/match/MatchCard'; // Changed from MatchProCard to MatchCard
+import MatchCard from '@/components/match/MatchCard';
 import { fetchMatches, getMockCurrentUser } from '@/lib/mockData';
 import { isSameDay, startOfDay } from 'date-fns';
 import { Trophy } from 'lucide-react';
@@ -16,11 +16,12 @@ interface MatchProDisplayProps {
     onBookingSuccess: () => void;
     selectedDate: Date | null;
     onDateChange: (date: Date) => void;
+    timeSlotFilter: TimeOfDayFilterType;
 }
 
-const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, clubInfo, onBookingSuccess, selectedDate, onDateChange }) => {
+const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, clubInfo, onBookingSuccess, selectedDate, onDateChange, timeSlotFilter }) => {
 
-    const [matchProGames, setMatchProGames] = useState<Match[]>([]);
+    const [allMatchProGames, setAllMatchProGames] = useState<Match[]>([]);
     const [loading, setLoading] = useState(true);
     const [localCurrentUser, setLocalCurrentUser] = useState<User | null>(null);
 
@@ -38,14 +39,8 @@ const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, clubInfo
                     getMockCurrentUser()
                 ]);
 
-                let proMatches = allMatches.filter(m => m.isProMatch);
-
-                // Filter by selectedDate if it exists
-                if (selectedDate) {
-                    proMatches = proMatches.filter(m => isSameDay(new Date(m.startTime), selectedDate));
-                }
-
-                setMatchProGames(proMatches);
+                const proMatches = allMatches.filter(m => m.isProMatch);
+                setAllMatchProGames(proMatches);
                 setLocalCurrentUser(user);
 
             } catch (error) {
@@ -55,10 +50,31 @@ const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, clubInfo
             }
         };
         loadMatchesAndUser();
-    }, [selectedDate, clubInfo]);
+    }, [clubInfo]);
+
+    const filteredAndSortedMatches = useMemo(() => {
+        if (!selectedDate) return [];
+
+        let matches = allMatchProGames.filter(m => isSameDay(new Date(m.startTime), selectedDate));
+
+        if (timeSlotFilter !== 'all') {
+            matches = matches.filter(match => {
+                const matchHour = new Date(match.startTime).getHours();
+                if (timeSlotFilter === 'morning') return matchHour >= 8 && matchHour < 13;
+                if (timeSlotFilter === 'midday') return matchHour >= 13 && matchHour < 18;
+                if (timeSlotFilter === 'evening') return matchHour >= 18 && matchHour <= 22;
+                return true;
+            });
+        }
+        
+        matches.sort((a,b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+
+        return matches;
+    }, [allMatchProGames, selectedDate, timeSlotFilter]);
+
 
     const handleMatchUpdate = (updatedMatch: Match) => {
-        setMatchProGames(prev => prev.map(m => m.id === updatedMatch.id ? updatedMatch : m));
+        setAllMatchProGames(prev => prev.map(m => m.id === updatedMatch.id ? updatedMatch : m));
         onBookingSuccess();
     };
 
@@ -93,9 +109,9 @@ const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, clubInfo
 
     return (
         <div className="space-y-4">
-            {matchProGames.length > 0 ? (
+            {filteredAndSortedMatches.length > 0 ? (
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(360px,1fr))] justify-center gap-6">
-                    {matchProGames.map(match => (
+                    {filteredAndSortedMatches.map(match => (
                         <MatchCard 
                             key={match.id} 
                             match={match} 
@@ -107,7 +123,7 @@ const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, clubInfo
                     ))}
                 </div>
             ) : (
-                <p className="text-center text-muted-foreground p-8">No hay partidas Matchpro programadas para el día seleccionado.</p>
+                <p className="text-center text-muted-foreground p-8">No hay partidas Matchpro programadas para los filtros seleccionados.</p>
             )}
         </div>
     );
