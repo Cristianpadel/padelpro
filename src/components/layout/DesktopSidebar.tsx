@@ -206,11 +206,13 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                             <Activity className="mr-3 h-5 w-5" /> Clases
                         </Button>
                     </Link>
-                    <Link href="/activities?view=matchpro" className="w-full">
-                        <Button variant={isActivitiesPage && activeView === 'matchpro' ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-md" style={navButtonShadowStyle}>
-                            <Trophy className="mr-3 h-5 w-5" /> Matchpro
-                        </Button>
-                    </Link>
+                    {(clubInfo?.isMatchProEnabled ?? false) && (
+                        <Link href="/activities?view=matchpro" className="w-full">
+                            <Button variant={isActivitiesPage && activeView === 'matchpro' ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-md" style={navButtonShadowStyle}>
+                                <Trophy className="mr-3 h-5 w-5" /> Matchpro
+                            </Button>
+                        </Link>
+                    )}
                     <Link href="/activities?view=partidas" className="w-full">
                         <Button variant={isActivitiesPage && activeView === 'partidas' ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-md" style={navButtonShadowStyle}>
                             <Users className="mr-3 h-5 w-5" /> Partidas

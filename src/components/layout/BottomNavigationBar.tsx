@@ -215,7 +215,7 @@ export function BottomNavigationBar() {
             icon: Trophy,
             label: 'Match Pro',
             isActive: pathname === '/activities' && searchParams.get('view') === 'matchpro',
-            hidden: !currentUser,
+            hidden: !currentUser || !(clubInfo?.isMatchProEnabled ?? false),
         },
          {
             key: 'liberadas',
