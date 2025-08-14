@@ -237,6 +237,7 @@ export default function ActivitiesPage() {
             case 'matchpro':
                  return <MatchProDisplay
                             currentUser={currentUser}
+                            clubInfo={currentClub}
                             onBookingSuccess={handleBookingSuccess}
                             selectedDate={selectedDate}
                             onDateChange={handleDateChange}
@@ -256,19 +257,23 @@ export default function ActivitiesPage() {
             />
             <div className="flex-1 flex flex-col overflow-hidden">
                 <header className="p-4 md:px-6 md:pt-6 md:pb-4 space-y-3 shrink-0 bg-card border-b">
-                     <div className="flex justify-end items-center">
+                    <div className="flex justify-end md:justify-between items-center">
+                        <div className="hidden md:flex items-center gap-1 p-1 bg-muted rounded-full">
+                            <Button size="sm" variant={activeView === 'clases' ? 'secondary' : 'ghost'} className="rounded-full" onClick={() => updateUrlFilter('view', 'clases')}><ActivityIcon className="mr-2 h-4 w-4" />Clases</Button>
+                            <Button size="sm" variant={activeView === 'partidas' ? 'secondary' : 'ghost'} className="rounded-full" onClick={() => updateUrlFilter('view', 'partidas')}><UsersIcon className="mr-2 h-4 w-4" />Partidas</Button>
+                        </div>
                         <Button onClick={() => setIsMobileFilterSheetOpen(true)} variant="outline" size="sm" className="md:hidden">
                             <SlidersHorizontal className="mr-2 h-4 w-4" />
                             Filtros
                         </Button>
                     </div>
                      <div className="flex gap-2 items-center justify-center">
-                        <Link href="/activities?filter=liberadas" passHref>
+                        <Link href="/activities?view=partidas&filter=liberadas" passHref>
                              <Button size="sm" variant={filterByLiberadasOnly ? "default" : "ghost"} className={cn(filterByLiberadasOnly ? "bg-purple-600 text-white" : "text-purple-600 hover:bg-purple-100 hover:text-purple-700")}>
                                 <Zap className="mr-2 h-4 w-4" />Liberadas
                             </Button>
                         </Link>
-                         <Link href="/activities?filter=puntos" passHref>
+                         <Link href="/activities?view=partidas&filter=puntos" passHref>
                              <Button size="sm" variant={filterByPuntosOnly ? "default" : "ghost"} className={cn(filterByPuntosOnly ? "bg-amber-600 text-white" : "text-amber-700")}>
                                 <Star className="mr-2 h-4 w-4" />Pagar con Puntos
                             </Button>
@@ -328,10 +333,10 @@ export default function ActivitiesPage() {
                                         <div className="h-10 w-8 flex flex-col items-center justify-center relative space-y-0.5">
                                             <TooltipProvider delayDuration={150}>
                                                 {indicators.activityStatus === 'confirmed' && (
-                                                    <Tooltip><TooltipTrigger asChild><button onClick={() => onViewPrefChange(day, 'myConfirmed', indicators.activityType || 'class')} className="h-6 w-6 flex items-center justify-center bg-destructive text-destructive-foreground rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">R</button></TooltipTrigger><TooltipContent><p>Ver mis reservas</p></TooltipContent></Tooltip>
+                                                    <Tooltip><TooltipTrigger asChild><button onClick={() => onViewPrefChange(day, 'myConfirmed', indicators.activityType || ['class'])} className="h-6 w-6 flex items-center justify-center bg-destructive text-destructive-foreground rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">R</button></TooltipTrigger><TooltipContent><p>Ver mis reservas</p></TooltipContent></Tooltip>
                                                 )}
                                                 {indicators.activityStatus === 'inscribed' && (
-                                                    <Tooltip><TooltipTrigger asChild><button onClick={() => onViewPrefChange(day, 'myInscriptions', indicators.activityType || 'class', indicators.eventId)} className="h-6 w-6 flex items-center justify-center bg-blue-500 text-white rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">I</button></TooltipTrigger><TooltipContent><p>Ver mis inscripciones</p></TooltipContent></Tooltip>
+                                                    <Tooltip><TooltipTrigger asChild><button onClick={() => onViewPrefChange(day, 'myInscriptions', indicators.activityType || ['class'], indicators.eventId)} className="h-6 w-6 flex items-center justify-center bg-blue-500 text-white rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">I</button></TooltipTrigger><TooltipContent><p>Ver mis inscripciones</p></TooltipContent></Tooltip>
                                                 )}
                                                 {indicators.hasEvent && indicators.activityStatus === 'none' && (
                                                     <Tooltip><TooltipTrigger asChild><Link href={`/match-day/${indicators.eventId}`} passHref><Button variant="ghost" size="icon" className="h-6 w-6 rounded-md bg-primary/10 hover:bg-primary/20 animate-pulse-blue border border-primary/50"><Plus className="h-4 w-4 text-primary" /></Button></Link></TooltipTrigger><TooltipContent><p>¡Apúntate al Match-Day!</p></TooltipContent></Tooltip>

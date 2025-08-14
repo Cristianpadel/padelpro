@@ -2,27 +2,34 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import type { User, Match } from '@/types';
+import type { User, Match, Club } from '@/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import MatchCard from '@/components/match/MatchCard'; // Changed from MatchProCard to MatchCard
 import { fetchMatches, getMockCurrentUser } from '@/lib/mockData';
 import { isSameDay, startOfDay } from 'date-fns';
+import { Trophy } from 'lucide-react';
 
 interface MatchProDisplayProps {
     currentUser: User | null;
+    clubInfo: Club | null;
     onBookingSuccess: () => void;
     selectedDate: Date | null;
     onDateChange: (date: Date) => void;
 }
 
-const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, onBookingSuccess, selectedDate, onDateChange }) => {
+const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, clubInfo, onBookingSuccess, selectedDate, onDateChange }) => {
 
     const [matchProGames, setMatchProGames] = useState<Match[]>([]);
     const [loading, setLoading] = useState(true);
     const [localCurrentUser, setLocalCurrentUser] = useState<User | null>(null);
 
     useEffect(() => {
+        if (!clubInfo?.isMatchProEnabled) {
+            setLoading(false);
+            return;
+        }
+
         const loadMatchesAndUser = async () => {
             setLoading(true);
             try {
@@ -31,10 +38,7 @@ const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, onBookin
                     getMockCurrentUser()
                 ]);
 
-                let proMatches = allMatches.filter(m => {
-                    // Show open Pro Match placeholders OR pro matches the user is already in.
-                    return m.isProMatch && (m.isPlaceholder || (m.bookedPlayers || []).some(p => p.userId === user?.id));
-                });
+                let proMatches = allMatches.filter(m => m.isProMatch);
 
                 // Filter by selectedDate if it exists
                 if (selectedDate) {
@@ -51,14 +55,27 @@ const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, onBookin
             }
         };
         loadMatchesAndUser();
-    }, [selectedDate, currentUser?.id, onBookingSuccess]); // Refetch if date or user changes, or after booking
+    }, [selectedDate, clubInfo]);
 
     const handleMatchUpdate = (updatedMatch: Match) => {
         setMatchProGames(prev => prev.map(m => m.id === updatedMatch.id ? updatedMatch : m));
         onBookingSuccess();
     };
 
-    
+    if (!clubInfo?.isMatchProEnabled) {
+        return (
+            <Card>
+                <CardHeader className="items-center text-center">
+                    <Trophy className="h-12 w-12 text-muted-foreground" />
+                    <CardTitle>Matchpro Desactivado</CardTitle>
+                    <CardDescription>
+                        Esta funcionalidad no está activada para tu club en este momento.
+                    </CardDescription>
+                </CardHeader>
+            </Card>
+        )
+    }
+
     if (loading) {
          return (
             <div className="space-y-4">
