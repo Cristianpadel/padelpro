@@ -37,7 +37,7 @@ const renderStarsDisplay = (rating: number) => {
 };
 
 const InfoButton = ({ icon: Icon, text, onClick, className }: { icon: React.ElementType, text: string, onClick: () => void, className?: string }) => (
-    <button onClick={onClick} className="flex-1">
+    <button className="flex-1" onClick={onClick}>
         <Badge variant="outline" className={cn("w-full justify-center text-xs py-1.5 rounded-full capitalize shadow-inner bg-slate-50 border-slate-200 hover:border-slate-300 transition-colors", className)}>
             <Icon className="mr-1.5 h-3 w-3" /> {text}
         </Badge>
@@ -132,22 +132,25 @@ export const ClassCardHeader: React.FC<ClassCardHeaderProps> = ({
       </div>
 
       {/* Middle section: Date, Time, Duration, and Share */}
-      <div className="flex justify-between items-center border-t border-border pt-1">
-        <div className="flex items-center space-x-3">
-          <div className="flex flex-col items-center justify-center font-bold">
-            <span className="text-4xl leading-none -mb-1">{format(new Date(currentSlot.startTime), 'd')}</span>
-            <span className="text-[10px] uppercase leading-none">{format(new Date(currentSlot.startTime), 'MMM', { locale: es })}</span>
+      <div className="flex justify-between items-center border-t border-border pt-1.5">
+        <div className="flex items-baseline space-x-3">
+          <div className="text-center font-bold">
+            <p className="text-xs uppercase text-muted-foreground">{format(new Date(currentSlot.startTime), 'EEE', { locale: es })}</p>
+            <p className="text-4xl leading-none">{format(new Date(currentSlot.startTime), 'd')}</p>
           </div>
-          <div className="text-sm">
-            <p className="font-semibold text-foreground uppercase">{format(new Date(currentSlot.startTime), 'eeee HH:mm\'h\'', { locale: es })}</p>
-            <p className="text-xs text-muted-foreground flex items-center">
-              <Clock className="mr-1 h-3 w-3" /> {durationMinutes} min
-            </p>
+          <div className="text-center font-bold">
+             <p className="text-xs uppercase text-muted-foreground">{format(new Date(currentSlot.startTime), 'MMM', { locale: es })}</p>
+             <p className="text-4xl leading-none">{format(new Date(currentSlot.startTime), "HH:mm'h'")}</p>
           </div>
         </div>
-        <Button variant="ghost" className="h-auto p-1 text-muted-foreground self-start" onClick={handleShareClass}>
-          <Share2 className="h-5 w-5" />
-        </Button>
+        <div className="flex flex-col items-end gap-2">
+            <p className="text-xs text-muted-foreground flex items-center font-medium">
+              <Clock className="mr-1 h-3 w-3" /> {durationMinutes} min
+            </p>
+            <Button variant="ghost" className="h-auto p-1 text-muted-foreground self-start" onClick={handleShareClass}>
+              <Share2 className="h-5 w-5" />
+            </Button>
+        </div>
       </div>
     </div>
   );
