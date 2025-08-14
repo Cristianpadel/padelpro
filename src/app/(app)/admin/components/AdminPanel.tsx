@@ -49,6 +49,7 @@ interface AdminPanelOption {
     icon: React.ElementType;
     componentFactory: (props: AdminPanelContentProps) => React.ReactNode;
     contentDescription?: string;
+    isHidden?: (club: Club) => boolean;
 }
 
 interface AdminPanelContentProps {
@@ -140,7 +141,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminClub }) => {
         if (updated) handleDataChanged();
     };
 
-    const handleToggleActivity = (activityType: 'classes' | 'matches' | 'matchDay', enabled: boolean) => {
+    const handleToggleActivity = (activityType: 'classes' | 'matches' | 'matchDay' | 'matchPro', enabled: boolean) => {
         startSettingsTransition(async () => {
             let updateData: Partial<Club> = {};
             let activityName = "";
@@ -153,6 +154,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminClub }) => {
             } else if (activityType === 'matchDay') {
                 updateData = { isMatchDayEnabled: enabled };
                 activityName = "Match-Day";
+            } else if (activityType === 'matchPro') {
+                updateData = { isMatchProEnabled: enabled };
+                activityName = "Match Pro";
             }
             
             const result = await updateClub(currentAdminClub.id, updateData);
@@ -188,7 +192,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminClub }) => {
         )},
         { value: "createMatchPro", label: "Crear Partida PRO", icon: Trophy, contentDescription: `Configura y abre una nueva partida de nivel avanzado en tu club.`, componentFactory: (props) => (
             props.loading ? <Skeleton className="h-[400px] w-full" /> : <OpenMatchProForm club={props.club} clubPadelCourts={props.clubPadelCourts} onMatchOpened={props.onActivityAdded} />
-        )},
+        ), isHidden: (club) => !club.isMatchProEnabled },
         { value: "manageMatchDay", label: "Gestionar Match-Day", icon: PartyPopper, componentFactory: (props) => <ManageMatchDayPanel club={props.club} onEventCreated={props.onEventCreated} />, contentDescription: "Configura y gestiona los eventos sociales de Match-Day." },
         { value: "manageShop", label: "Tienda", icon: ShoppingBag, componentFactory: (props) => <ManageShopPanel club={props.club} onClubSettingsUpdated={props.onClubSettingsUpdated} />, contentDescription: "Gestiona los productos disponibles para la venta en tu club." },
         { value: "manageMatches", label: "Gestionar Partidas", icon: Trophy, componentFactory: (props) => <ManageMatchesPanel clubId={props.club.id} /> },
@@ -211,6 +215,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminClub }) => {
                 <div className="flex items-center justify-between p-4 border rounded-lg bg-secondary/30"><div className="space-y-0.5"><Label htmlFor="classes-visibility" className="text-base font-medium flex items-center"><Activity className="mr-2 h-5 w-5 text-blue-500" />Mostrar Pestaña de Clases</Label><p className="text-xs text-muted-foreground">Controla si la pestaña "Clases" es visible para los usuarios.</p></div><Switch id="classes-visibility" checked={props.club.showClassesTabOnFrontend ?? true} onCheckedChange={(checked) => handleToggleActivity('classes', checked)} disabled={isUpdatingSettings} aria-label="Mostrar u ocultar pestaña de clases" /></div>
                 <div className="flex items-center justify-between p-4 border rounded-lg bg-secondary/30"><div className="space-y-0.5"><Label htmlFor="matches-visibility" className="text-base font-medium flex items-center"><BarChartHorizontal className="mr-2 h-5 w-5 text-purple-500" />Mostrar Pestaña de Partidas</Label><p className="text-xs text-muted-foreground">Controla si la pestaña "Partidas" es visible para los usuarios.</p></div><Switch id="matches-visibility" checked={props.club.showMatchesTabOnFrontend ?? true} onCheckedChange={(checked) => handleToggleActivity('matches', checked)} disabled={isUpdatingSettings} aria-label="Mostrar u ocultar pestaña de partidas" /></div>
                 <div className="flex items-center justify-between p-4 border rounded-lg bg-secondary/30"><div className="space-y-0.5"><Label htmlFor="matchday-visibility" className="text-base font-medium flex items-center"><PartyPopper className="mr-2 h-5 w-5 text-amber-500" />Activar Funcionalidad "Match-Day"</Label><p className="text-xs text-muted-foreground">Permite crear y gestionar eventos sociales de Match-Day.</p></div><Switch id="matchday-visibility" checked={props.club.isMatchDayEnabled ?? false} onCheckedChange={(checked) => handleToggleActivity('matchDay', checked)} disabled={isUpdatingSettings} aria-label="Activar o desactivar Match-Day" /></div>
+                <div className="flex items-center justify-between p-4 border rounded-lg bg-secondary/30"><div className="space-y-0.5"><Label htmlFor="matchpro-visibility" className="text-base font-medium flex items-center"><Trophy className="mr-2 h-5 w-5 text-slate-500" />Activar Partidas Match Pro</Label><p className="text-xs text-muted-foreground">Permite crear y mostrar partidas de nivel avanzado.</p></div><Switch id="matchpro-visibility" checked={props.club.isMatchProEnabled ?? false} onCheckedChange={(checked) => handleToggleActivity('matchPro', checked)} disabled={isUpdatingSettings} aria-label="Activar o desactivar Match Pro" /></div>
                 {isUpdatingSettings && (<div className="flex items-center text-sm text-muted-foreground"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Guardando cambios...</div>)}
             </div>
         )},
@@ -245,7 +250,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ adminClub }) => {
 
             {!showPanelContent ? (
                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {adminPanelOptions.map(option => {
+                    {adminPanelOptions.filter(opt => !opt.isHidden || !opt.isHidden(currentAdminClub)).map(option => {
                         const Icon = option.icon;
                         return (
                             <Button

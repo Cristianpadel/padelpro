@@ -8,7 +8,7 @@ import ClassDisplay from '@/components/classfinder/ClassDisplay';
 import MatchDisplay from '@/components/classfinder/MatchDisplay'; // Import MatchDisplay
 import MatchProDisplay from '@/components/classfinder/MatchProDisplay'; // Import MatchProDisplay
 import { getMockTimeSlots, getMockCurrentUser, getUserActivityStatusForDay, fetchMatches, fetchMatchDayEventsForDate, createMatchesForDay, getMockClubs, countUserUnconfirmedInscriptions } from '@/lib/mockData';
-import type { TimeSlot, User, MatchPadelLevel, SortOption, UserActivityStatusForDay, Match, MatchDayEvent, TimeOfDayFilterType, ViewPreference, ActivityViewType } from '@/types';
+import type { TimeSlot, User, MatchPadelLevel, SortOption, UserActivityStatusForDay, Match, MatchDayEvent, TimeOfDayFilterType, ViewPreference, ActivityViewType, Club } from '@/types';
 import { startOfDay, addDays, isSameDay, format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -36,6 +36,7 @@ export default function ActivitiesPage() {
     const { toast } = useToast();
 
     const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [currentClub, setCurrentClub] = useState<Club | null>(null);
     const [allTimeSlots, setAllTimeSlots] = useState<TimeSlot[]>([]);
     const [allMatches, setAllMatches] = useState<Match[]>([]);
     const [matchDayEvents, setMatchDayEvents] = useState<MatchDayEvent[]>([]);
@@ -105,6 +106,7 @@ export default function ActivitiesPage() {
                     getMockClubs(),
                 ]);
                 setCurrentUser(user);
+                setCurrentClub(clubs.length > 0 ? clubs[0] : null);
                 setAllTimeSlots(slots);
                 
                 const club = clubs[0];
@@ -248,7 +250,7 @@ export default function ActivitiesPage() {
         <div className="flex h-full bg-muted/50">
             <DesktopSidebar
                 currentUser={currentUser}
-                clubInfo={getMockClubs()[0]} // Pass club info
+                clubInfo={currentClub} // Pass club info
                 onProfessionalAccessClick={() => setIsProfessionalAccessOpen(true)}
                 onLogoutClick={() => setIsLogoutConfirmOpen(true)}
             />
@@ -271,11 +273,13 @@ export default function ActivitiesPage() {
                                 <Star className="mr-2 h-4 w-4" />Pagar con Puntos
                             </Button>
                         </Link>
-                         <Link href="/activities?view=partidas&filter=pro" passHref>
-                             <Button size="sm" variant={filterByProOnly ? "default" : "ghost"} className={cn(filterByProOnly ? "bg-slate-800 text-white" : "text-slate-700")}>
-                                <Trophy className="mr-2 h-4 w-4" />Matchpro
-                            </Button>
-                        </Link>
+                         {(currentClub?.isMatchProEnabled ?? false) && (
+                            <Link href="/activities?view=partidas&filter=pro" passHref>
+                                <Button size="sm" variant={filterByProOnly ? "default" : "ghost"} className={cn(filterByProOnly ? "bg-slate-800 text-white" : "text-slate-700")}>
+                                    <Trophy className="mr-2 h-4 w-4" />Matchpro
+                                </Button>
+                            </Link>
+                         )}
                      </div>
                       <div className="min-h-[2rem]">
                         <ActiveFiltersDisplay

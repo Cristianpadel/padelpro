@@ -194,6 +194,7 @@ export interface Club {
     showClassesTabOnFrontend?: boolean;
     showMatchesTabOnFrontend?: boolean;
     isMatchDayEnabled?: boolean;
+    isMatchProEnabled?: boolean;
     pointSettings?: PointSettings;
     levelRanges?: ClubLevelRange[];
     unavailableMatchHours?: Partial<Record<DayOfWeek, TimeRange[]>>;
@@ -462,5 +463,3 @@ export const displayActivityStatusWithDetails = (
         default: return activity.status || 'Desconocido';
     }
 };
-
-    
