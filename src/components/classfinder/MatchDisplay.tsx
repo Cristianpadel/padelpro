@@ -134,6 +134,8 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
             const regularMatch = match as Match;
             // Allow user to see their own private matches
             if (regularMatch.status === 'confirmed_private') return regularMatch.organizerId === currentUser.id;
+            // Don't show pro matches unless the pro filter is on
+            if (regularMatch.isProMatch && !filterByProOnly) return false;
             return true;
         });
 
