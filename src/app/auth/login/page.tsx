@@ -23,12 +23,15 @@ export default function StudentLoginPage() {
     const router = useRouter();
     const { toast } = useToast();
     
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        // In a real app, you'd validate credentials.
-        // Here, we'll simulate logging in as the default student user.
-        const studentUser = getMockUserDatabase().find(u => u.id === 'user-current');
-        if (studentUser) {
+        
+        const email = (e.currentTarget.elements.namedItem('email') as HTMLInputElement).value;
+        const password = (e.currentTarget.elements.namedItem('password') as HTMLInputElement).value;
+
+        const studentUser = getMockUserDatabase().find(u => u.email === email);
+
+        if (studentUser && studentUser.hashedPassword === `hashed_${password}`) {
             setGlobalCurrentUser(studentUser);
             toast({
                 title: `¡Bienvenido, ${studentUser.name}!`,
@@ -38,7 +41,7 @@ export default function StudentLoginPage() {
         } else {
             toast({
                 title: "Error de Autenticación",
-                description: "No se pudo encontrar el usuario por defecto.",
+                description: "El correo electrónico o la contraseña son incorrectos.",
                 variant: "destructive"
             });
         }
