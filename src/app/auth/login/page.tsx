@@ -1,4 +1,4 @@
-// src/app/page.tsx
+// src/app/auth/login/page.tsx
 'use client';
 
 import React from 'react';
@@ -8,37 +8,29 @@ import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
+  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
-  CardDescription
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PadelRacketIcon } from '@/components/PadelRacketIcon';
 import ProfessionalAccessDialog from '@/components/layout/ProfessionalAccessDialog';
 
-export default function LoginPage() {
+export default function StudentLoginPage() {
     const router = useRouter();
-    const [isProfessionalAccessOpen, setIsProfessionalAccessOpen] = React.useState(false);
     
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
-        // This is the login for a student, so it redirects to the student login page
-        router.push('/auth/login');
+        // Here you would typically validate credentials
+        router.push('/dashboard');
     };
 
   return (
-    <>
-    <div className="video-background-container">
-        <video autoPlay loop muted className="video-background">
-            <source src="/background-video.mp4" type="video/mp4" />
-            Your browser does not support the video tag.
-        </video>
-    </div>
-    <main className="flex min-h-screen flex-col items-center justify-center bg-black/50 p-4">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4">
       <div className="w-full max-w-md">
-        <Card className="shadow-2xl border-border/20 bg-card/80 backdrop-blur-sm text-card-foreground">
+        <Card className="shadow-2xl">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 flex items-center justify-center gap-2">
               <PadelRacketIcon className="h-8 w-8 text-primary" />
@@ -47,7 +39,7 @@ export default function LoginPage() {
               </h1>
             </div>
             <CardTitle className="font-headline text-2xl">
-              ¡Hola de Nuevo!
+              Acceso Alumno
             </CardTitle>
             <CardDescription>
               Introduce tus datos para acceder a tu agenda.
@@ -88,14 +80,7 @@ export default function LoginPage() {
               </CardFooter>
           </form>
         </Card>
-        <div className="mt-6 text-center">
-            <Button variant="outline" size="sm" onClick={() => setIsProfessionalAccessOpen(true)} className="bg-background/80 backdrop-blur-sm">
-                Acceso Profesional
-            </Button>
-        </div>
       </div>
     </main>
-    <ProfessionalAccessDialog isOpen={isProfessionalAccessOpen} onOpenChange={setIsProfessionalAccessOpen} />
-    </>
   );
 }
