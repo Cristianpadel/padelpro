@@ -70,4 +70,7 @@ export default function AddClassPage() {
                 <div className="lg:col-span-2">
                      <CourtAvailabilityView instructor={instructor} />
                 </div>
-            
+            </main>
+        </div>
+    );
+}
