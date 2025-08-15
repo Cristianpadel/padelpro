@@ -5,8 +5,8 @@ import React, { useState, useEffect, useCallback, useMemo, Suspense } from 'reac
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import ClassDisplay from '@/components/classfinder/ClassDisplay';
-import MatchDisplay from '@/components/classfinder/MatchDisplay'; // Import MatchDisplay
-import MatchProDisplay from '@/components/classfinder/MatchProDisplay'; // Import MatchProDisplay
+import MatchDisplay from '@/components/classfinder/MatchDisplay';
+import MatchProDisplay from '@/components/classfinder/MatchProDisplay';
 import { getMockTimeSlots, getMockCurrentUser, getUserActivityStatusForDay, fetchMatches, fetchMatchDayEventsForDate, createMatchesForDay, getMockClubs, countUserUnconfirmedInscriptions } from '@/lib/mockData';
 import type { TimeSlot, User, MatchPadelLevel, SortOption, UserActivityStatusForDay, Match, MatchDayEvent, TimeOfDayFilterType, ViewPreference, ActivityViewType, Club } from '@/types';
 import { startOfDay, addDays, isSameDay, format, parseISO } from 'date-fns';
@@ -40,12 +40,9 @@ function ActivitiesPageContent() {
     const [allMatches, setAllMatches] = useState<Match[]>([]);
     const [matchDayEvents, setMatchDayEvents] = useState<MatchDayEvent[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [unconfirmedCount, setUnconfirmedCount] = useState(0);
-    const [isMobileFilterSheetOpen, setIsMobileFilterSheetOpen] = useState(false);
     const [isLogoutConfimOpen, setIsLogoutConfirmOpen] = React.useState(false);
     const [isProfessionalAccessOpen, setIsProfessionalAccessOpen] = React.useState(false);
 
-    // New state for the activity type selection dialog
     const [activitySelection, setActivitySelection] = useState<{
         isOpen: boolean;
         date: Date | null;
@@ -137,17 +134,6 @@ function ActivitiesPageContent() {
         loadInitialData();
     }, [refreshKey, selectedDate, toast]);
     
-    useEffect(() => {
-        const fetchCount = async () => {
-            if (currentUser) {
-                const count = await countUserUnconfirmedInscriptions(currentUser.id);
-                setUnconfirmedCount(count);
-            }
-        };
-        fetchCount();
-        const intervalId = setInterval(fetchCount, 5000); // Poll every 5 seconds
-        return () => clearInterval(intervalId);
-    }, [currentUser, refreshKey]);
 
     const onViewPrefChange = (date: Date, pref: ViewPreference, types: ('class' | 'match' | 'event')[], eventId?: string) => {
         const relevantTypes = types.filter(t => t !== 'event') as ('class' | 'match')[];
@@ -155,12 +141,10 @@ function ActivitiesPageContent() {
         if (relevantTypes.length > 1) {
             setActivitySelection({ isOpen: true, date, preference: pref, types: relevantTypes });
         } else if (relevantTypes.length === 1) {
-            // Directly navigate if only one type
             handleViewPrefChange(pref, relevantTypes[0] as ActivityViewType, date);
         } else if (types.includes('event') && eventId) {
             router.push(`/match-day/${eventId}`);
         } else {
-            // Fallback for cases with no specific type, maybe from a general button
             handleViewPrefChange(pref, activeView, date);
         }
     };
@@ -250,9 +234,9 @@ function ActivitiesPageContent() {
 
     return (
         <div className="flex h-full bg-muted/50">
-            <DesktopSidebar
+             <DesktopSidebar
                 currentUser={currentUser}
-                clubInfo={currentClub} // Pass club info
+                clubInfo={currentClub}
                 onProfessionalAccessClick={() => setIsProfessionalAccessOpen(true)}
                 onLogoutClick={() => setIsLogoutConfirmOpen(true)}
             />
@@ -263,7 +247,7 @@ function ActivitiesPageContent() {
                             <Button size="sm" variant={activeView === 'clases' ? 'secondary' : 'ghost'} className="rounded-full" onClick={() => updateUrlFilter('view', 'clases')}><ActivityIcon className="mr-2 h-4 w-4" />Clases</Button>
                             <Button size="sm" variant={activeView === 'partidas' ? 'secondary' : 'ghost'} className="rounded-full" onClick={() => updateUrlFilter('view', 'partidas')}><UsersIcon className="mr-2 h-4 w-4" />Partidas</Button>
                         </div>
-                        <Button onClick={() => setIsMobileFilterSheetOpen(true)} variant="outline" size="sm" className="md:hidden">
+                        <Button onClick={() => {}} variant="outline" size="sm" className="md:hidden">
                             <SlidersHorizontal className="mr-2 h-4 w-4" />
                             Filtros
                         </Button>
@@ -354,8 +338,8 @@ function ActivitiesPageContent() {
                     {renderContent()}
                 </main>
                  <MobileFiltersSheet
-                    isOpen={isMobileFilterSheetOpen}
-                    onOpenChange={setIsMobileFilterSheetOpen}
+                    isOpen={false}
+                    onOpenChange={()=>{}}
                     timeSlotFilter={timeSlotFilter}
                     selectedLevel={selectedLevel}
                     viewPreference={viewPreference}
@@ -394,5 +378,3 @@ export default function ActivitiesPage() {
         </Suspense>
     );
 }
-
-    
