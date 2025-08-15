@@ -13,3 +13,24 @@ export * from './clubs';
 export * from './courts';
 export * from './shop';
 export * from './utils';
+export {
+    addUserToDB,
+    registerStudent,
+    findUserByEmail,
+    findUserById,
+    fetchStudents,
+    updateUserLevel,
+    updateUserFavoriteInstructors,
+    updateUserGenderCategory,
+    updateUserPassword,
+    addInstructor,
+    fetchInstructors,
+    updateInstructor,
+    deleteInstructor,
+    simulateInviteFriend,
+    reserveProductWithCredit,
+    fetchPointTransactions,
+    countUserReservedProducts
+} from './users';
+export { addProduct, updateProduct, deleteProduct, fetchProductsByClub } from './shop';
+export { getUserActivityStatusForDay } from './users';
