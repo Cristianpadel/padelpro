@@ -1,9 +1,8 @@
 
-
 'use client';
 
 import * as React from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import DesktopSidebar from '@/components/layout/DesktopSidebar';
 import { BottomNavigationBar } from '@/components/layout/BottomNavigationBar';
 import { getMockCurrentUser, getMockClubs } from '@/lib/mockData';
@@ -12,7 +11,6 @@ import Footer from '@/components/layout/Footer';
 import ProfessionalAccessDialog from '@/components/layout/ProfessionalAccessDialog';
 import LogoutConfirmationDialog from '@/components/layout/LogoutConfirmationDialog';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -98,3 +96,5 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
+
+    
