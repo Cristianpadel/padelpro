@@ -30,13 +30,7 @@ export default function LoginPage() {
 
   return (
     <>
-    <div className="video-background-container">
-        <video autoPlay loop muted className="video-background">
-            <source src="/background-video.mp4" type="video/mp4" />
-            Your browser does not support the video tag.
-        </video>
-    </div>
-    <main className="flex min-h-screen flex-col items-center justify-center bg-black/50 p-4">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-gray-200 dark:from-gray-900 dark:to-gray-950 p-4">
       <div className="w-full max-w-md">
         <Card className="shadow-2xl border-border/20 bg-card/80 backdrop-blur-sm text-card-foreground">
           <CardHeader className="text-center">
