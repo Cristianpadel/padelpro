@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { List, Clock, Users, CalendarCheck, CalendarX, Loader2, Ban, Hash, Trophy, UserCircle, Gift, Info, MessageSquare, Euro, Users2 as CategoryIcon, Venus, Mars, Share2, Unlock, Lock, Repeat, Lightbulb, BarChartHorizontal, Plus } from 'lucide-react';
 import { format, differenceInHours } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { fetchUserMatchBookings, cancelMatchBooking, getMockClubs, makeMatchPublic, cancelPrivateMatchAndReofferWithPoints, getMockMatches, renewRecurringMatch, getCourtAvailabilityForInterval, fillMatchAndMakePrivate } from '@/lib/mockData';
+import { fetchUserMatchBookings, cancelMatchBooking, getMockClubs, makeMatchPublic, cancelPrivateMatchAndReofferWithPoints, getMockMatches, renewRecurringMatch, fillMatchAndMakePrivate } from '@/lib/mockData';
 import * as state from '@/lib/mockDataSources/state';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -36,7 +36,7 @@ import { Separator } from '../ui/separator';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
-import { hasAnyConfirmedActivityForDay } from '@/lib/mockData';
+import { hasAnyConfirmedActivityForDay, getCourtAvailabilityForInterval } from '@/lib/mockDataSources/utils';
 import { MatchSpotDisplay } from '@/components/match/MatchSpotDisplay';
 
 
