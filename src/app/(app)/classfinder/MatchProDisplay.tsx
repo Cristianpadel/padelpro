@@ -1,4 +1,3 @@
-
 // src/app/(app)/classfinder/MatchProDisplay.tsx
 "use client";
 
