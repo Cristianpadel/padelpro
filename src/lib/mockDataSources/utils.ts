@@ -1,9 +1,9 @@
+
 // src/lib/mockDataSources/utils.ts
 "use client";
 
 import { isSameDay, areIntervalsOverlapping as dateFnsAreIntervalsOverlapping, startOfDay, format, differenceInDays } from 'date-fns';
 import type { TimeSlot, Booking, Match, MatchBooking, User, PadelCourt, PadelCategoryForSlot, MatchPadelLevel, ClassPadelLevel, UserActivityStatusForDay, Club } from '@/types';
-import { daysOfWeek } from '@/types';
 import * as state from './index'; // Import state module
 import { setGlobalCurrentUser } from './state';
 import { recalculateAndSetBlockedBalances } from './users';
@@ -123,86 +123,6 @@ export const countUserUnconfirmedInscriptions = (userId: string): number => {
     }
 
     return unconfirmedCount;
-};
-
-
-export const getUserActivityStatusForDay = (userId: string, date: Date): UserActivityStatusForDay => {
-    const todayStart = startOfDay(date);
-    const now = new Date();
-    
-    let result: UserActivityStatusForDay = {
-        activityStatus: 'none',
-        activityTypes: [],
-        hasEvent: false,
-        anticipationPoints: Math.max(0, differenceInDays(date, now))
-    };
-
-    // Check match-day events
-    const eventsToday = state.getMockMatchDayEvents().filter(e => isSameDay(new Date(e.eventDate), todayStart));
-    if (eventsToday.length > 0) {
-        result.hasEvent = true;
-        result.eventId = eventsToday[0].id; // Assuming one event per day for simplicity
-        const userEventInscription = state.getMockMatchDayInscriptions().find(i => i.userId === userId && i.eventId === result.eventId);
-        if (userEventInscription) {
-            result.activityStatus = 'inscribed';
-            result.activityTypes.push('event');
-        }
-    }
-    
-    // Check confirmed classes
-    const hasConfirmedClass = state.getMockUserBookings().some(b => {
-        if (b.userId !== userId) return false;
-        const slot = state.getMockTimeSlots().find(s => s.id === b.activityId);
-        return slot && isSameDay(new Date(slot.startTime), todayStart) && isSlotEffectivelyCompleted(slot).completed;
-    });
-
-    if (hasConfirmedClass) {
-        result.activityStatus = 'confirmed';
-        result.activityTypes.push('class');
-    }
-
-    // Check confirmed matches
-    const hasConfirmedMatch = state.getMockUserMatchBookings().some(b => {
-        if (b.userId !== userId) return false;
-        const match = state.getMockMatches().find(m => m.id === b.activityId);
-        return match && isSameDay(new Date(match.startTime), todayStart) && (match.status === 'confirmed' || match.status === 'confirmed_private');
-    });
-
-    if (hasConfirmedMatch) {
-        result.activityStatus = 'confirmed';
-        result.activityTypes.push('match');
-    }
-
-    // If there are confirmed activities, we don't need to check for inscriptions
-    if (result.activityStatus === 'confirmed') {
-        return result;
-    }
-
-    // Check inscribed classes
-    const hasInscribedClass = state.getMockUserBookings().some(b => {
-        if (b.userId !== userId) return false;
-        const slot = state.getMockTimeSlots().find(s => s.id === b.activityId);
-        return slot && isSameDay(new Date(slot.startTime), todayStart) && slot.status === 'pre_registration';
-    });
-
-    if (hasInscribedClass) {
-        result.activityStatus = 'inscribed';
-        result.activityTypes.push('class');
-    }
-
-    // Check inscribed matches
-    const hasInscribedMatch = state.getMockUserMatchBookings().some(b => {
-        if (b.userId !== userId) return false;
-        const match = state.getMockMatches().find(m => m.id === b.activityId);
-        return match && isSameDay(new Date(match.startTime), todayStart) && match.status === 'forming';
-    });
-    
-    if (hasInscribedMatch) {
-        result.activityStatus = 'inscribed';
-        result.activityTypes.push('match');
-    }
-    
-    return result;
 };
 
 
@@ -569,7 +489,7 @@ export const isMatchBookableWithPoints = (match: Match, club: Club | null | unde
     if (!club || !club.pointBookingSlots || !match.isPlaceholder) {
         return false;
     }
-    const dayKey = daysOfWeek[new Date(match.startTime).getDay()];
+    const dayKey = daysOfWeek[getDay(new Date(match.startTime))];
     const allowedRanges = club.pointBookingSlots[dayKey];
     if (!allowedRanges) {
         return false;

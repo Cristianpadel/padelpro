@@ -1,3 +1,4 @@
+
 // src/lib/mockData.ts
 "use client";
 
@@ -8,13 +9,14 @@
 import { isSameDay, addMinutes } from 'date-fns';
 import type { CourtGridBooking, DayOfWeek, PadelCourt } from '@/types';
 import * as state from './mockDataSources/state';
-import { isMatchBookableWithPoints as isMatchBookableWithPointsFromUtils, getCourtAvailabilityForInterval as getCourtAvailabilityForIntervalFromUtils } from './mockDataSources/utils';
+import { isMatchBookableWithPoints as isMatchBookableWithPointsFromUtils } from './mockDataSources/utils';
+import { getCourtAvailabilityForInterval as getCourtAvailabilityForIntervalFromUtils } from './mockDataSources/utils';
 
 
 // Re-export all functions from the index
 export * from './mockDataSources';
-export const getCourtAvailabilityForInterval = getCourtAvailabilityForIntervalFromUtils;
 export const isMatchBookableWithPoints = isMatchBookableWithPointsFromUtils;
+export const getCourtAvailabilityForInterval = getCourtAvailabilityForIntervalFromUtils;
 
 
 // --- New composite functions ---

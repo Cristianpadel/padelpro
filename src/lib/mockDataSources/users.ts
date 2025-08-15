@@ -1,12 +1,13 @@
 // src/lib/mockDataSources/users.ts
 "use client";
 
-import type { User, Booking, PointTransactionType, TimeSlot, Match, Product, Instructor, UserDB, MatchPadelLevel, UserGenderCategory, DayOfWeek, TimeRange, InstructorRateTier, MatchBooking, Review, Transaction, MatchDayEvent } from '@/types';
+import type { User, Booking, PointTransactionType, TimeSlot, Match, Product, Instructor, UserDB, MatchPadelLevel, UserGenderCategory, DayOfWeek, TimeRange, InstructorRateTier, MatchBooking, Review, Transaction, MatchDayEvent, UserActivityStatusForDay } from '@/types';
 import * as state from './index'; 
 import * as config from '../config';
-import { areIntervalsOverlapping, parse, getDay, format, differenceInDays, startOfDay } from 'date-fns';
+import { areIntervalsOverlapping, parse, getDay, format, differenceInDays, startOfDay, isSameDay } from 'date-fns';
 import { calculatePricePerPerson } from '@/lib/utils';
 import { cancelBooking } from './classActions';
+import { isSlotEffectivelyCompleted } from './utils';
 
 
 export const addUserPointsAndAddTransaction = async (
@@ -833,4 +834,85 @@ export const addProduct = async (productData: Omit<Product, 'id'>): Promise<Prod
 
   state.addProductToState(newProduct);
   return newProduct;
+};
+
+
+export const getUserActivityStatusForDay = async (userId: string, date: Date): Promise<UserActivityStatusForDay> => {
+    await new Promise(resolve => setTimeout(resolve, 50)); // simulate async
+    const todayStart = startOfDay(date);
+    const now = new Date();
+    
+    let result: UserActivityStatusForDay = {
+        activityStatus: 'none',
+        activityTypes: [],
+        hasEvent: false,
+        anticipationPoints: Math.max(0, differenceInDays(date, now))
+    };
+
+    // Check match-day events
+    const eventsToday = state.getMockMatchDayEvents().filter(e => isSameDay(new Date(e.eventDate), todayStart));
+    if (eventsToday.length > 0) {
+        result.hasEvent = true;
+        result.eventId = eventsToday[0].id; // Assuming one event per day for simplicity
+        const userEventInscription = state.getMockMatchDayInscriptions().find(i => i.userId === userId && i.eventId === result.eventId);
+        if (userEventInscription) {
+            result.activityStatus = 'inscribed';
+            result.activityTypes.push('event');
+        }
+    }
+    
+    // Check confirmed classes
+    const hasConfirmedClass = state.getMockUserBookings().some(b => {
+        if (b.userId !== userId) return false;
+        const slot = state.getMockTimeSlots().find(s => s.id === b.activityId);
+        return slot && isSameDay(new Date(slot.startTime), todayStart) && isSlotEffectivelyCompleted(slot).completed;
+    });
+
+    if (hasConfirmedClass) {
+        result.activityStatus = 'confirmed';
+        result.activityTypes.push('class');
+    }
+
+    // Check confirmed matches
+    const hasConfirmedMatch = state.getMockUserMatchBookings().some(b => {
+        if (b.userId !== userId) return false;
+        const match = state.getMockMatches().find(m => m.id === b.activityId);
+        return match && isSameDay(new Date(match.startTime), todayStart) && (match.status === 'confirmed' || match.status === 'confirmed_private');
+    });
+
+    if (hasConfirmedMatch) {
+        result.activityStatus = 'confirmed';
+        result.activityTypes.push('match');
+    }
+
+    // If there are confirmed activities, we don't need to check for inscriptions
+    if (result.activityStatus === 'confirmed') {
+        return result;
+    }
+
+    // Check inscribed classes
+    const hasInscribedClass = state.getMockUserBookings().some(b => {
+        if (b.userId !== userId) return false;
+        const slot = state.getMockTimeSlots().find(s => s.id === b.activityId);
+        return slot && isSameDay(new Date(slot.startTime), todayStart) && slot.status === 'pre_registration';
+    });
+
+    if (hasInscribedClass) {
+        result.activityStatus = 'inscribed';
+        result.activityTypes.push('class');
+    }
+
+    // Check inscribed matches
+    const hasInscribedMatch = state.getMockUserMatchBookings().some(b => {
+        if (b.userId !== userId) return false;
+        const match = state.getMockMatches().find(m => m.id === b.activityId);
+        return match && isSameDay(new Date(match.startTime), todayStart) && match.status === 'forming';
+    });
+    
+    if (hasInscribedMatch) {
+        result.activityStatus = 'inscribed';
+        result.activityTypes.push('match');
+    }
+    
+    return result;
 };
