@@ -16,15 +16,32 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PadelRacketIcon } from '@/components/PadelRacketIcon';
-import ProfessionalAccessDialog from '@/components/layout/ProfessionalAccessDialog';
+import { getMockUserDatabase, setGlobalCurrentUser } from '@/lib/mockData';
+import { useToast } from '@/hooks/use-toast';
 
 export default function StudentLoginPage() {
     const router = useRouter();
+    const { toast } = useToast();
     
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
-        // Here you would typically validate credentials
-        router.push('/dashboard');
+        // In a real app, you'd validate credentials.
+        // Here, we'll simulate logging in as the default student user.
+        const studentUser = getMockUserDatabase().find(u => u.id === 'user-current');
+        if (studentUser) {
+            setGlobalCurrentUser(studentUser);
+            toast({
+                title: `¡Bienvenido, ${studentUser.name}!`,
+                description: "Has iniciado sesión correctamente.",
+            });
+            router.push('/dashboard');
+        } else {
+            toast({
+                title: "Error de Autenticación",
+                description: "No se pudo encontrar el usuario por defecto.",
+                variant: "destructive"
+            });
+        }
     };
 
   return (
