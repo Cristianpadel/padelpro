@@ -3,6 +3,7 @@
 
 import { isSameDay, areIntervalsOverlapping as dateFnsAreIntervalsOverlapping, startOfDay, format, differenceInDays } from 'date-fns';
 import type { TimeSlot, Booking, Match, MatchBooking, User, PadelCourt, PadelCategoryForSlot, MatchPadelLevel, ClassPadelLevel, UserActivityStatusForDay, Club } from '@/types';
+import { daysOfWeek } from '@/types';
 import * as state from './index'; // Import state module
 import { setGlobalCurrentUser } from './state';
 import { recalculateAndSetBlockedBalances } from './users';
@@ -217,23 +218,24 @@ export const getPlaceholderUserName = (userId: string | undefined, currentUserId
 };
 
 export const findAvailableCourt = (clubId: string, startTime: Date, endTime: Date): PadelCourt | undefined => {
-    const clubCourts = state.getMockPadelCourts().filter(c => c.clubId === clubId && c.isActive);
-    if (clubCourts.length === 0) return undefined;
+    const allClubCourts = state.getMockPadelCourts().filter(c => c.clubId === clubId && c.isActive);
+    if (allClubCourts.length === 0) return undefined;
 
-    const bookedIntervalsForClub: { courtNumber: number; start: Date; end: Date }[] = [];
+    const occupiedCourtNumbers = new Set<number>();
     
-    // Collect intervals ONLY from activities that are CONFIRMED and have a court assigned.
+    const checkAndAdd = (activity: { startTime: Date, endTime: Date, courtNumber?: number }) => {
+        if (activity.courtNumber && dateFnsAreIntervalsOverlapping({ start: startTime, end: endTime }, { start: new Date(activity.startTime), end: new Date(activity.endTime) }, { inclusive: false })) {
+            occupiedCourtNumbers.add(activity.courtNumber);
+        }
+    };
+    
     state.getMockTimeSlots()
-        .filter(s => s.clubId === clubId && (s.status === 'confirmed' || s.status === 'confirmed_private') && s.courtNumber !== undefined)
-        .forEach(s => {
-            bookedIntervalsForClub.push({ courtNumber: s.courtNumber!, start: new Date(s.startTime), end: new Date(s.endTime) });
-        });
+        .filter(s => s.clubId === clubId && (s.status === 'confirmed' || s.status === 'confirmed_private'))
+        .forEach(checkAndAdd);
 
     state.getMockMatches()
-        .filter(m => m.clubId === clubId && (m.status === 'confirmed' || m.status === 'confirmed_private') && m.courtNumber !== undefined)
-        .forEach(m => {
-            bookedIntervalsForClub.push({ courtNumber: m.courtNumber!, start: new Date(m.startTime), end: new Date(m.endTime) });
-        });
+        .filter(m => m.clubId === clubId && (m.status === 'confirmed' || m.status === 'confirmed_private'))
+        .forEach(checkAndAdd);
     
     // Add Match-Day event bookings
     state.getMockMatchDayEvents()
@@ -245,12 +247,9 @@ export const findAvailableCourt = (clubId: string, startTime: Date, endTime: Dat
             })
         });
 
-    for (const court of clubCourts) {
-        const isCourtAvailable = !bookedIntervalsForClub.some(
-            booking => booking.courtNumber === court.courtNumber &&
-                dateFnsAreIntervalsOverlapping({ start: startTime, end: endTime }, { start: booking.start, end: booking.end }, { inclusive: false })
-        );
-        if (isCourtAvailable) {
+
+    for (const court of allClubCourts) {
+        if (!occupiedCourtNumbers.has(court.courtNumber)) {
             return court;
         }
     }
@@ -570,7 +569,7 @@ export const isMatchBookableWithPoints = (match: Match, club: Club | null | unde
     if (!club || !club.pointBookingSlots || !match.isPlaceholder) {
         return false;
     }
-    const dayKey = state.daysOfWeek[new Date(match.startTime).getDay()];
+    const dayKey = daysOfWeek[new Date(match.startTime).getDay()];
     const allowedRanges = club.pointBookingSlots[dayKey];
     if (!allowedRanges) {
         return false;
