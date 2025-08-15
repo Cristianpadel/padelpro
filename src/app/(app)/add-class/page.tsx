@@ -6,7 +6,7 @@ import AddClassForm from './components/AddClassForm';
 import { getMockInstructors } from '@/lib/mockData';
 import type { TimeSlot, Instructor } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import CourtAvailabilityView from '@/components/admin/CourtAvailabilityView';
+import CourtAvailabilityView from '@/app/(app)/admin/components/CourtAvailabilityView';
 import { Separator } from '@/components/ui/separator';
 
 
