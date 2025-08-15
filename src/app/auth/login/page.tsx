@@ -16,10 +16,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PadelRacketIcon } from '@/components/PadelRacketIcon';
-import { getMockUserDatabase, setGlobalCurrentUser } from '@/lib/mockData';
+import { getMockUserDatabase, setGlobalCurrentUser, performInitialization } from '@/lib/mockData';
 import { useToast } from '@/hooks/use-toast';
 
 export default function StudentLoginPage() {
+    performInitialization(); // Ensure data is loaded
     const router = useRouter();
     const { toast } = useToast();
     
