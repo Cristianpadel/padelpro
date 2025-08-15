@@ -11,12 +11,16 @@ import type { CourtGridBooking, DayOfWeek, PadelCourt } from '@/types';
 import * as state from './mockDataSources/state';
 import { isMatchBookableWithPoints as isMatchBookableWithPointsFromUtils } from './mockDataSources/utils';
 import { getCourtAvailabilityForInterval as getCourtAvailabilityForIntervalFromUtils } from './mockDataSources/utils';
+import { isSlotEffectivelyCompleted as isSlotEffectivelyCompletedFromUtils } from './mockDataSources/utils';
+import { getUserActivityStatusForDay as getUserActivityStatusForDayFromUsers } from './mockDataSources/users';
 
 
 // Re-export all functions from the index
 export * from './mockDataSources';
 export const isMatchBookableWithPoints = isMatchBookableWithPointsFromUtils;
 export const getCourtAvailabilityForInterval = getCourtAvailabilityForIntervalFromUtils;
+export const isSlotEffectivelyCompleted = isSlotEffectivelyCompletedFromUtils;
+export const getUserActivityStatusForDay = getUserActivityStatusForDayFromUsers;
 
 
 // --- New composite functions ---

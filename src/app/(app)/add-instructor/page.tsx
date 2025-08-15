@@ -10,11 +10,11 @@ export default function AddInstructorPage() {
     const [allInstructors, setAllInstructors] = useState<Instructor[]>([]);
 
     useEffect(() => {
-        const fetchInstructors = async () => {
-            const instructors = await getMockInstructors();
-            setAllInstructors(instructors);
+        const fetchInstructorsData = async () => {
+            const instructorsData = await getMockInstructors();
+            setAllInstructors(instructorsData);
         };
-        fetchInstructors();
+        fetchInstructorsData();
     }, []);
 
     const handleInstructorAdded = (newInstructor: Instructor) => {

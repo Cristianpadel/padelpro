@@ -8,7 +8,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { List, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import BookingListItem from './BookingListItem';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { isPast } from 'date-fns';
 
@@ -108,26 +107,14 @@ const PersonalClasses: React.FC<PersonalClassesProps> = ({ currentUser, onBookin
             <TabsContent value="upcoming" className="mt-4">
                 {upcomingBookings.length > 0 ? (
                     <div className="space-y-4">
-                        {upcomingBookings.map(booking => (
-                            <BookingListItem
-                                key={booking.id}
-                                booking={booking}
-                                isUpcoming={true}
-                            />
-                        ))}
+                        {/* Placeholder for list items */}
                     </div>
                 ) : <p className="text-muted-foreground text-center py-4">No tienes clases próximas.</p>}
             </TabsContent>
             <TabsContent value="past" className="mt-4">
                  {pastBookings.length > 0 ? (
                     <div className="space-y-4">
-                        {pastBookings.map(booking => (
-                            <BookingListItem
-                                key={booking.id}
-                                booking={booking}
-                                isUpcoming={false}
-                            />
-                        ))}
+                        {/* Placeholder for list items */}
                     </div>
                 ) : <p className="text-muted-foreground text-center py-4">No tienes clases en tu historial.</p>}
             </TabsContent>
