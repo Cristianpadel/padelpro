@@ -272,5 +272,5 @@ export function performInitialization() {
     }
   };
 
-  simulateInitialData();
+  // simulateInitialData(); // Commented out to prevent simulation
 }
