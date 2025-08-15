@@ -1,8 +1,9 @@
+
 // src/app/(app)/classfinder/MatchProDisplay.tsx
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import type { User, Match, Club, TimeOfDayFilterType } from '@/types';
+import type { User, Match, Club, TimeOfDayFilterType, ViewPreference } from '@/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import MatchCard from '@/components/match/MatchCard';
@@ -17,9 +18,10 @@ interface MatchProDisplayProps {
     selectedDate: Date | null;
     onDateChange: (date: Date) => void;
     timeSlotFilter: TimeOfDayFilterType;
+    viewPreference: ViewPreference;
 }
 
-const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, clubInfo, onBookingSuccess, selectedDate, onDateChange, timeSlotFilter }) => {
+const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, clubInfo, onBookingSuccess, selectedDate, onDateChange, timeSlotFilter, viewPreference }) => {
 
     const [allMatchProGames, setAllMatchProGames] = useState<Match[]>([]);
     const [loading, setLoading] = useState(true);
@@ -53,7 +55,7 @@ const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, clubInfo
     }, [clubInfo]);
 
     const filteredAndSortedMatches = useMemo(() => {
-        if (!selectedDate) return [];
+        if (!selectedDate || !localCurrentUser) return [];
 
         let matches = allMatchProGames.filter(m => isSameDay(new Date(m.startTime), selectedDate));
 
@@ -67,10 +69,20 @@ const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, clubInfo
             });
         }
         
+        if (viewPreference === 'myInscriptions') {
+            matches = matches.filter(match => (match.bookedPlayers || []).some(p => p.userId === localCurrentUser.id));
+        } else if (viewPreference === 'myConfirmed') {
+            matches = matches.filter(match => (match.bookedPlayers || []).some(p => p.userId === localCurrentUser.id) && (match.bookedPlayers || []).length === 4);
+        } else if (viewPreference === 'withPlayers') {
+            matches = matches.filter(match => (match.bookedPlayers || []).length > 0 && (match.bookedPlayers || []).length < 4);
+        } else if (viewPreference === 'completed') {
+            matches = matches.filter(match => (match.bookedPlayers || []).length === 4);
+        }
+        
         matches.sort((a,b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
 
         return matches;
-    }, [allMatchProGames, selectedDate, timeSlotFilter]);
+    }, [allMatchProGames, selectedDate, timeSlotFilter, localCurrentUser, viewPreference]);
 
 
     const handleMatchUpdate = (updatedMatch: Match) => {

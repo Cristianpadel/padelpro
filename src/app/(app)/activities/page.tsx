@@ -242,6 +242,7 @@ export default function ActivitiesPage() {
                             selectedDate={selectedDate}
                             onDateChange={handleDateChange}
                             timeSlotFilter={timeSlotFilter}
+                            viewPreference={viewPreference}
                         />;
             default:
                 return null;
