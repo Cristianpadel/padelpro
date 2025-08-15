@@ -2,8 +2,9 @@
 // src/lib/mockDataSources/utils.ts
 "use client";
 
-import { isSameDay, areIntervalsOverlapping as dateFnsAreIntervalsOverlapping, startOfDay, format, differenceInDays } from 'date-fns';
+import { isSameDay, areIntervalsOverlapping as dateFnsAreIntervalsOverlapping, startOfDay, format, differenceInDays, getDay } from 'date-fns';
 import type { TimeSlot, Booking, Match, MatchBooking, User, PadelCourt, PadelCategoryForSlot, MatchPadelLevel, ClassPadelLevel, UserActivityStatusForDay, Club } from '@/types';
+import { daysOfWeek } from '@/types';
 import * as state from './index'; // Import state module
 import { setGlobalCurrentUser } from './state';
 import { recalculateAndSetBlockedBalances } from './users';
