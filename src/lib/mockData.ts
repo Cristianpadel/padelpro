@@ -8,7 +8,8 @@
 import { isSameDay, addMinutes } from 'date-fns';
 import type { CourtGridBooking, DayOfWeek, PadelCourt } from '@/types';
 import * as state from './mockDataSources/state';
-import { getCourtAvailabilityForInterval as getCourtAvailabilityForIntervalFromUtils, isMatchBookableWithPoints as isMatchBookableWithPointsFromUtils } from './mockDataSources/utils';
+import { isMatchBookableWithPoints as isMatchBookableWithPointsFromUtils, getCourtAvailabilityForInterval as getCourtAvailabilityForIntervalFromUtils } from './mockDataSources/utils';
+
 
 // Re-export all functions from the index
 export * from './mockDataSources';

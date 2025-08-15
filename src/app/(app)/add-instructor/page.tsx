@@ -1,12 +1,21 @@
+// src/app/(app)/add-instructor/page.tsx
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AddInstructorForm from './components/AddInstructorForm';
-import { instructors } from '@/lib/mockData';
+import { getMockInstructors } from '@/lib/mockData';
 import type { Instructor } from '@/types';
 
 export default function AddInstructorPage() {
-    const [allInstructors, setAllInstructors] = useState<Instructor[]>(instructors);
+    const [allInstructors, setAllInstructors] = useState<Instructor[]>([]);
+
+    useEffect(() => {
+        const fetchInstructors = async () => {
+            const instructors = await getMockInstructors();
+            setAllInstructors(instructors);
+        };
+        fetchInstructors();
+    }, []);
 
     const handleInstructorAdded = (newInstructor: Instructor) => {
         if(newInstructor.id) {

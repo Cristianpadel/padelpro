@@ -3,13 +3,14 @@
 
 import { isSameDay, format, addDays } from 'date-fns';
 import type { User, Booking, MatchBooking, TimeSlot, Match } from '@/types';
-import * as state from './index';
+import * as state from './state';
 import * as config from '../config';
 import { calculatePricePerPerson } from '@/lib/utils';
 import { cancelBooking, bookClass } from './classActions';
-import { removePlayerFromMatch, bookMatch, createMatchesForDay } from './matches';
+import { bookMatch, createMatchesForDay } from './matches';
 import { recalculateAndSetBlockedBalances } from './users';
 import { createProposedClassesForDay } from './classProposals';
+import { removePlayerFromMatch } from './matches';
 
 
 export const verifyAndCleanUserInscriptions = async (userId: string): Promise<{
@@ -157,8 +158,6 @@ export const simulateBookings = async (options: {
 };
 
 export const clearSimulatedBookings = async (clubId: string): Promise<{ bookingsRemoved: number; message: string }> => {
-    const { cancelBooking } = await import('./classActions');
-    const { removePlayerFromMatch } = await import('./matches');
     let bookingsRemoved = 0;
 
     const simulatedClassBookings = state.getMockUserBookings().filter(b => b.isSimulated && b.slotDetails?.clubId === clubId);

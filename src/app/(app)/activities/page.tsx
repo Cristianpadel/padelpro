@@ -1,7 +1,8 @@
 
+
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import ClassDisplay from '@/components/classfinder/ClassDisplay';
@@ -28,8 +29,7 @@ import ProfessionalAccessDialog from '@/components/layout/ProfessionalAccessDial
 import ActivityTypeSelectionDialog from './components/ActivityTypeSelectionDialog';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
-
-export default function ActivitiesPage() {
+function ActivitiesPageContent() {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -385,5 +385,13 @@ export default function ActivitiesPage() {
                 />
             </div>
         </div>
+    );
+}
+
+export default function ActivitiesPage() {
+    return (
+        <Suspense fallback={<PageSkeleton />}>
+            <ActivitiesPageContent />
+        </Suspense>
     );
 }

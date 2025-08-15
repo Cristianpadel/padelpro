@@ -1,7 +1,8 @@
+// src/components/schedule/PersonalClasses.tsx
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import type { Booking, User, TimeSlot, Review } from '@/types';
+import type { Booking, User, Review, TimeSlot, PadelCourt, Instructor, UserActivityStatusForDay } from '@/types';
 import { fetchUserBookings, addReviewToState as addReview } from '@/lib/mockData';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -14,9 +15,10 @@ import { isPast } from 'date-fns';
 interface PersonalClassesProps {
   currentUser: User;
   onBookingActionSuccess: () => void;
+  refreshKey: number;
 }
 
-const PersonalClasses: React.FC<PersonalClassesProps> = ({ currentUser, onBookingActionSuccess }) => {
+const PersonalClasses: React.FC<PersonalClassesProps> = ({ currentUser, onBookingActionSuccess, refreshKey }) => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +55,7 @@ const PersonalClasses: React.FC<PersonalClassesProps> = ({ currentUser, onBookin
 
   useEffect(() => {
     loadBookings();
-  }, [loadBookings, onBookingActionSuccess]);
+  }, [loadBookings, onBookingActionSuccess, refreshKey]);
 
   const handleRateClass = (bookingId: string, instructorName: string, rating: number) => {
     setRatedBookings(prev => ({ ...prev, [bookingId]: rating }));
@@ -111,10 +113,6 @@ const PersonalClasses: React.FC<PersonalClassesProps> = ({ currentUser, onBookin
                                 key={booking.id}
                                 booking={booking}
                                 isUpcoming={true}
-                                ratedBookings={ratedBookings}
-                                onRateClass={handleRateClass}
-                                currentUser={currentUser}
-                                onBookingCancelledOrCeded={loadBookings}
                             />
                         ))}
                     </div>
@@ -128,10 +126,6 @@ const PersonalClasses: React.FC<PersonalClassesProps> = ({ currentUser, onBookin
                                 key={booking.id}
                                 booking={booking}
                                 isUpcoming={false}
-                                ratedBookings={ratedBookings}
-                                onRateClass={handleRateClass}
-                                currentUser={currentUser}
-                                onBookingCancelledOrCeded={loadBookings}
                             />
                         ))}
                     </div>
@@ -143,4 +137,4 @@ const PersonalClasses: React.FC<PersonalClassesProps> = ({ currentUser, onBookin
   );
 };
 
-export default memo(PersonalClasses);
+export default React.memo(PersonalClasses);

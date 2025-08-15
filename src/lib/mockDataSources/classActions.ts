@@ -7,7 +7,7 @@ import type { TimeSlot, Booking, User, Instructor, ClassPadelLevel, PadelCategor
 import * as state from './index';
 import * as config from '../config';
 import { _classifyLevelAndCategoryForSlot } from './classProposals';
-import { _annulConflictingActivities, findAvailableCourt, removeUserPreInscriptionsForDay, isUserLevelCompatibleWithActivity } from './utils';
+import { _annulConflictingActivities, findAvailableCourt, removeUserPreInscriptionsForDay, isUserLevelCompatibleWithActivity, hasAnyConfirmedActivityForDay, isSlotEffectivelyCompleted } from './utils';
 import { addUserPointsAndAddTransaction, deductCredit, recalculateAndSetBlockedBalances, confirmAndAwardPendingPoints } from './users';
 import { calculatePricePerPerson } from '@/lib/utils';
 import { v4 as uuidv4 } from 'uuid';
@@ -108,7 +108,7 @@ export const bookClass = async (
     return { error: 'Tu nivel de juego no es compatible con el de esta clase.' };
   }
   
-  if (state.hasAnyConfirmedActivityForDay(userId, new Date(slot.startTime), slotId, 'class')) {
+  if (hasAnyConfirmedActivityForDay(userId, new Date(slot.startTime), slotId, 'class')) {
       return { error: 'Ya tienes otra actividad confirmada para este día.' };
   }
 
@@ -157,7 +157,7 @@ export const bookClass = async (
   // This ensures pending points are calculated for the new booking
   await recalculateAndSetBlockedBalances(userId);
 
-  const { completed, size: completedSize } = state.isSlotEffectivelyCompleted(slot);
+  const { completed, size: completedSize } = isSlotEffectivelyCompleted(slot);
   if (completed) {
       slot.status = 'confirmed';
       newBooking.status = 'confirmed'; // Update booking status
@@ -444,7 +444,7 @@ export const toggleGratisSpot = async (slotId: string, optionSize: 1 | 2 | 3 | 4
 
     let slot = { ...state.getMockTimeSlots()[slotIndex] };
     
-    if (state.isSlotEffectivelyCompleted(slot).completed) {
+    if (isSlotEffectivelyCompleted(slot).completed) {
         return { error: "No se puede modificar una clase ya confirmada." };
     }
     if ((slot.bookedPlayers || []).some(p => p.groupSize === optionSize)) {
@@ -507,7 +507,7 @@ export const fillClassAndMakePrivate = async (userId: string, slotId: string): P
         return { error: "No hay pistas disponibles en este momento para confirmar la clase." };
     }
 
-    // Deduct credit and update balances
+    // Deduct credit for the remaining spots
     deductCredit(userId, totalCost, slot, 'Clase');
     
     // Update slot to be confirmed and private
