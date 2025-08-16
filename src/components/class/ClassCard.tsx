@@ -16,7 +16,7 @@ import { BookingConfirmationDialog } from './ClassCard/BookingConfirmationDialog
 
 import type { TimeSlot, User, Club, PadelCourt, Instructor, ClassPadelLevel } from '@/types';
 import {
-    bookClass, isSlotEffectivelyCompleted, hasAnyConfirmedActivityForDay,
+    bookClass, isSlotEffectivelyCompleted, hasAnyActivityForDay,
     getMockClubs, calculateActivityPrice, getInstructorRate, getCourtAvailabilityForInterval, getMockInstructors,
     confirmClassAsPrivate
 } from '@/lib/mockData';
@@ -124,8 +124,8 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
 
     const userHasConfirmedActivityToday = useMemo(() => {
         if (!currentUser) return false;
-        return hasAnyConfirmedActivityForDay(currentUser.id, new Date(currentSlot.startTime), currentSlot.id, 'class');
-    }, [currentUser, currentSlot.startTime, currentSlot.id]);
+        return hasAnyActivityForDay(currentUser.id, new Date(currentSlot.startTime), new Date(currentSlot.endTime));
+    }, [currentUser, currentSlot.startTime, currentSlot.endTime]);
 
     const anticipationBonus = useMemo(() => {
       try {
@@ -197,7 +197,7 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
                     dialogContent = { title: 'Asignación de Pista', description: 'La pista se asigna automáticamente solo cuando la clase está completa.\nRecibirás una notificación con el número de pista cuando se confirme.', icon: Hash };
                     break;
                 case 'category':
-                    dialogContent = { title: 'Categoría de la Clase', description: 'La categoría (chicos/chicas) la sugiere el primer jugador que se apunta.\nNo es una regla estricta, solo una guía para los demás jugadores.', icon: CategoryIcon };
+                    dialogContent = { title: 'Categoría de la Clase', description: 'La categoría (chicos/chicas) la sugiere el primer jugador que se apunta.\nNo es una regla estricta, solo una guía para los demás.', icon: CategoryIcon };
                     break;
             }
         }
@@ -242,6 +242,7 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
                 <ClassCardHeader
                     currentSlot={currentSlot}
                     instructor={instructor}
+                    clubInfo={clubInfo}
                     instructorRating={instructorRating}
                     durationMinutes={durationMinutes}
                     isSlotEffectivelyFull={isSlotEffectivelyFull}

@@ -36,7 +36,7 @@ import { Separator } from '../ui/separator';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
-import { hasAnyConfirmedActivityForDay, getCourtAvailabilityForInterval } from '@/lib/mockDataSources/utils';
+import { hasAnyActivityForDay, getCourtAvailabilityForInterval } from '@/lib/mockData';
 import { MatchSpotDisplay } from '@/components/match/MatchSpotDisplay';
 
 
@@ -263,8 +263,8 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
 
   if (loading) {
     return (
-      <div className="space-y-4">
-         <Skeleton className="h-8 w-3/4" />
+      <div className="space-y-3">
+         <Skeleton className="h-8 w-1/2" />
          <div className="flex space-x-1">
             <Skeleton className="h-96 w-80" />
             <Skeleton className="h-96 w-80" />
@@ -500,7 +500,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                                     {cancellationButtonText}
                                 </Button>
                              </AlertDialogTrigger>
-                             <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>¿Confirmar Cancelación?</AlertDialogTitle><AlertDialogDescription>{cancellationDialogText}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={isProcessingAction && currentActionInfo?.bookingId === booking.id}>Cerrar</AlertDialogCancel><AlertDialogAction onClick={() => handleCancellationAction(booking)} disabled={isProcessingAction && currentActionInfo?.bookingId === booking.id} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{isProcessingAction && currentActionInfo?.bookingId === booking.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Sí, Cancelar"}</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+                             <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>¿Confirmar Cancelación?</AlertDialogTitle><AlertDialogDescription>{cancellationDialogText}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={isProcessingAction && currentActionInfo?.bookingId === booking.id}>Volver</AlertDialogCancel><AlertDialogAction onClick={() => handleCancellationAction(booking)} disabled={isProcessingAction && currentActionInfo?.bookingId === booking.id} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{isProcessingAction && currentActionInfo?.bookingId === booking.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Sí, Cancelar"}</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
                          </AlertDialog>
                          {isMatchFull && isUpcomingItem && (<Button variant="outline" size="sm" className="w-full sm:w-auto ml-2 text-xs bg-blue-500 text-white border-blue-600 hover:bg-blue-600" onClick={() => handleOpenChatDialog(booking.activityId)}><MessageSquare className="mr-1.5 h-3.5 w-3.5" />Chat</Button>)}
                          {canMakePrivate && (
@@ -533,21 +533,30 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
     return (
     <>
       <div className="space-y-6">
+          {(hasUpcomingBookings || hasPastBookings) &&
+            <h3 className="text-lg font-semibold mb-3 text-green-600 flex items-center"><Trophy className="mr-2 h-5 w-5" /> Mis Partidas</h3>
+          }
           {hasUpcomingBookings && (
               <div>
-                <h3 className="text-lg font-semibold mb-3 text-primary flex items-center"><Trophy className="mr-2 h-5 w-5" /> Partidas Regulares</h3>
-                  <div className="flex flex-wrap gap-4">
-                    {upcomingBookings.map(b => renderBookingItem(b, true))}
-                  </div>
+                <h4 className="text-base font-semibold mb-3 text-foreground flex items-center"><Clock className="mr-2 h-4 w-4" /> Próximas</h4>
+                  <ScrollArea className="w-full whitespace-nowrap">
+                    <div className="flex pb-4 space-x-4">
+                        {upcomingBookings.map(b => renderBookingItem(b, true))}
+                    </div>
+                    <ScrollBar orientation="horizontal" />
+                  </ScrollArea>
               </div>
           )}
           {hasUpcomingBookings && hasPastBookings && <Separator />}
           {hasPastBookings && (
               <div>
-                <h3 className="text-lg font-semibold mb-3 text-muted-foreground flex items-center"><CalendarX className="mr-2 h-5 w-5" /> Partidas Pasadas</h3>
-                 <div className="flex flex-wrap gap-4">
-                  {pastBookings.map(b => renderBookingItem(b, false))}
-                 </div>
+                <h4 className="text-base font-semibold mb-3 text-muted-foreground flex items-center"><CheckCircle className="mr-2 h-4 w-4" /> Historial</h4>
+                 <ScrollArea className="w-full whitespace-nowrap">
+                    <div className="flex pb-4 space-x-4">
+                      {pastBookings.map(b => renderBookingItem(b, false))}
+                    </div>
+                    <ScrollBar orientation="horizontal" />
+                 </ScrollArea>
               </div>
           )}
       </div>

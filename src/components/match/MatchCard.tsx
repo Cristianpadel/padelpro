@@ -23,7 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Clock, Users, Plus, Loader2, Gift, CreditCard, AlertTriangle, Lock, Star, Share2, Hash, Users2, Venus, Mars, BarChartHorizontal, Lightbulb, Euro, Trophy, PiggyBank, ThumbsUp, Scissors } from 'lucide-react';
 import { MatchSpotDisplay } from '@/components/match/MatchSpotDisplay';
 import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
-import { hasAnyConfirmedActivityForDay } from '@/lib/mockData';
+import { hasAnyActivityForDay } from '@/lib/mockData';
 
 const InfoDialog: React.FC<{
   isOpen: boolean;
@@ -116,8 +116,8 @@ const MatchCardContentComponent: React.FC<MatchCardContentComponentProps> = Reac
     const canJoinThisPrivateMatch = isPrivateMatch && !isUserBooked;
     const userHasOtherConfirmedActivityToday = useMemo(() => {
         if (!currentUser) return false;
-        return hasAnyConfirmedActivityForDay(currentUser.id, new Date(currentMatch.startTime));
-    }, [currentUser, currentMatch.startTime]);
+        return hasAnyActivityForDay(currentUser.id, new Date(currentMatch.startTime), new Date(currentMatch.endTime));
+    }, [currentUser, currentMatch.startTime, currentMatch.endTime]);
 
 
     const pricePerPlayer = useMemo(() => {
@@ -318,7 +318,7 @@ const MatchCardContentComponent: React.FC<MatchCardContentComponentProps> = Reac
                                 onJoin={handleJoinClick}
                                 onJoinPrivate={handleJoinPrivate}
                                 isPending={isPending && dialogContent.spotIndex === index}
-                                userHasOtherConfirmedActivityToday={hasAnyConfirmedActivityForDay(currentUser.id, new Date(currentMatch.startTime))}
+                                userHasOtherConfirmedActivityToday={hasAnyActivityForDay(currentUser.id, new Date(currentMatch.startTime), new Date(currentMatch.endTime))}
                                 isUserLevelCompatible={isUserLevelCompatibleWithActivity(matchLevelToDisplay, currentUser.level, isPlaceholderMatch)}
                                 canJoinThisPrivateMatch={canJoinThisPrivateMatch}
                                 isOrganizer={isOrganizer}
