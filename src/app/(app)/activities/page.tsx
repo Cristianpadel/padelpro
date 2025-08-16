@@ -3,10 +3,13 @@ import React, { Suspense } from 'react';
 import ActivitiesPageContent from './components/ActivitiesPageContent';
 import PageSkeleton from '@/components/layout/PageSkeleton';
 
-export default function ActivitiesPage() {
+// This is now a Server Component
+export default function ActivitiesPage(props: any) {
     return (
+        // The Suspense boundary is essential for streaming the client component
+        // that uses searchParams.
         <Suspense fallback={<PageSkeleton />}>
-            <ActivitiesPageContent />
+            <ActivitiesPageContent {...props} />
         </Suspense>
     );
 }

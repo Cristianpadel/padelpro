@@ -1,35 +1,45 @@
 // src/app/(app)/activities/components/ActivitiesPageContent.tsx
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import ClassDisplay from '@/components/classfinder/ClassDisplay';
 import MatchDisplay from '@/components/classfinder/MatchDisplay';
 import MatchProDisplay from '@/app/(app)/classfinder/MatchProDisplay';
 import { getMockTimeSlots, getMockCurrentUser, getUserActivityStatusForDay, fetchMatches, fetchMatchDayEventsForDate, createMatchesForDay, getMockClubs, countUserUnconfirmedInscriptions } from '@/lib/mockData';
-import type { TimeSlot, User, MatchPadelLevel, SortOption, UserActivityStatusForDay, Match, MatchDayEvent, TimeOfDayFilterType, ViewPreference, ActivityViewType, Club } from '@/types';
-import { startOfDay, addDays, isSameDay, format, parseISO } from 'date-fns';
+import type { TimeSlot, User, Match, MatchDayEvent, Club } from '@/types';
+import { startOfDay, addDays, isSameDay, format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { SlidersHorizontal, Star, Zap, User as UserIcon, Check, Activity as ActivityIcon, Users as UsersIcon, Trophy, Plus, CalendarDays } from 'lucide-react';
 import PageSkeleton from '@/components/layout/PageSkeleton';
-import { useActivityFilters } from '@/hooks/useActivityFilters';
-import ActiveFiltersDisplay from '@/components/layout/ActiveFiltersDisplay';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import ActivityTypeSelectionDialog from './ActivityTypeSelectionDialog';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Plus } from 'lucide-react';
+import type { useActivityFilters } from '@/hooks/useActivityFilters';
 
-export default function ActivitiesPageContent() {
+// This component receives all filter state and handlers as props from AppLayoutClient
+export default function ActivitiesPageContent({ activityFilters }: { activityFilters: ReturnType<typeof useActivityFilters> }) {
     const router = useRouter();
-    const pathname = usePathname();
-    const searchParams = useSearchParams();
     const { toast } = useToast();
 
+    // Use the passed-in filters and handlers
+    const {
+        activeView,
+        selectedDate,
+        handleDateChange,
+        triggerRefresh,
+        dateStripIndicators,
+        dateStripDates,
+        showPointsBonus,
+        handleViewPrefChange,
+        ...restOfFilters // Pass the rest down to displays
+    } = activityFilters;
+    
+    // Local state for this component
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [currentClub, setCurrentClub] = useState<Club | null>(null);
     const [allTimeSlots, setAllTimeSlots] = useState<TimeSlot[]>([]);
@@ -40,40 +50,10 @@ export default function ActivitiesPageContent() {
     const [activitySelection, setActivitySelection] = useState<{
         isOpen: boolean;
         date: Date | null;
-        preference: ViewPreference | null;
+        preference: any | null; // Using 'any' for now to match prop
         types: ('class' | 'match')[];
     }>({ isOpen: false, date: null, preference: null, types: [] });
 
-    const {
-        activeView,
-        selectedDate,
-        setSelectedDate,
-        timeSlotFilter,
-        selectedLevel,
-        filterByFavorites,
-        viewPreference,
-        proposalView,
-        matchShareCode,
-        matchIdFilter,
-        filterByGratisOnly,
-        filterByLiberadasOnly,
-        filterByPuntosOnly,
-        filterByProOnly,
-        isUpdatingFavorites,
-        dateStripIndicators,
-        dateStripDates,
-        refreshKey,
-        showPointsBonus,
-        handleDateChange,
-        handleViewPrefChange,
-        clearAllFilters,
-        triggerRefresh,
-        updateUrlFilter,
-    } = useActivityFilters(currentUser, (newFavorites) => {
-        if (currentUser) {
-            setCurrentUser({ ...currentUser, favoriteInstructorIds: newFavorites });
-        }
-    });
 
     const handleBookingSuccess = useCallback(async () => {
         triggerRefresh();
@@ -124,16 +104,16 @@ export default function ActivitiesPageContent() {
             }
         };
         loadInitialData();
-    }, [refreshKey, selectedDate, toast]);
+    }, [activityFilters.refreshKey, selectedDate, toast]);
     
 
-    const onViewPrefChange = (date: Date, pref: ViewPreference, types: ('class' | 'match' | 'event')[], eventId?: string) => {
+    const onViewPrefChange = (date: Date, pref: any, types: ('class' | 'match' | 'event')[], eventId?: string) => {
         const relevantTypes = types.filter(t => t !== 'event') as ('class' | 'match')[];
     
         if (relevantTypes.length > 1) {
             setActivitySelection({ isOpen: true, date, preference: pref, types: relevantTypes });
         } else if (relevantTypes.length === 1) {
-            handleViewPrefChange(pref, relevantTypes[0] as ActivityViewType, date);
+            handleViewPrefChange(pref, relevantTypes[0], date);
         } else if (types.includes('event') && eventId) {
             router.push(`/match-day/${eventId}`);
         } else {
@@ -154,53 +134,32 @@ export default function ActivitiesPageContent() {
         switch(activeView) {
             case 'clases':
                 return <ClassDisplay
+                            {...restOfFilters} // Pass down all other filters from the hook
                             currentUser={currentUser}
                             onBookingSuccess={handleBookingSuccess}
                             selectedDate={selectedDate}
                             onDateChange={handleDateChange}
-                            timeSlotFilter={timeSlotFilter}
-                            selectedLevelsSheet={selectedLevel === 'all' ? [] : [selectedLevel]}
-                            sortBy={'time'}
-                            filterAlsoConfirmedClasses={false}
-                            filterByFavoriteInstructors={filterByFavorites}
-                            viewPreference={viewPreference}
-                            proposalView={'join'}
-                            refreshKey={refreshKey}
                             allClasses={allTimeSlots}
                             isLoading={isLoading}
                             dateStripIndicators={dateStripIndicators}
                             dateStripDates={dateStripDates}
                             onViewPrefChange={onViewPrefChange}
                             showPointsBonus={showPointsBonus}
-                            filterByGratisOnly={filterByGratisOnly}
-                            filterByLiberadasOnly={filterByLiberadasOnly}
                         />;
             case 'partidas':
                  return <MatchDisplay
+                            {...restOfFilters}
                             currentUser={currentUser}
                             onBookingSuccess={handleBookingSuccess}
                             selectedDate={selectedDate}
                             onDateChange={handleDateChange}
-                            timeSlotFilter={timeSlotFilter}
-                            selectedLevel={selectedLevel}
-                            sortBy={'time'}
-                            filterAlsoConfirmedMatches={false}
-                            viewPreference={viewPreference}
-                            proposalView={'join'}
-                            refreshKey={refreshKey}
                             allMatches={allMatches}
                             isLoading={isLoading}
+                            matchDayEvents={matchDayEvents}
                             dateStripIndicators={dateStripIndicators}
                             dateStripDates={dateStripDates}
                             onViewPrefChange={onViewPrefChange}
                             showPointsBonus={showPointsBonus}
-                            matchDayEvents={matchDayEvents}
-                            filterByGratisOnly={filterByGratisOnly}
-                            filterByLiberadasOnly={filterByLiberadasOnly}
-                            filterByPuntosOnly={filterByPuntosOnly}
-                            filterByProOnly={filterByProOnly}
-                            matchShareCode={matchShareCode}
-                            matchIdFilter={matchIdFilter}
                         />;
             case 'matchpro':
                  return <MatchProDisplay
@@ -216,7 +175,6 @@ export default function ActivitiesPageContent() {
 
     return (
         <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Header is now in DesktopSidebar/AppLayoutClient */}
             <main className="flex-1 overflow-y-auto px-4 md:px-6 pb-6 space-y-4 pt-4">
             <div className="relative z-10 pt-2">
                 <ScrollArea className="w-full whitespace-nowrap">
@@ -249,7 +207,6 @@ export default function ActivitiesPageContent() {
                                     <span className="text-[9px] text-muted-foreground capitalize -mt-0.5">{format(day, "MMM", { locale: es }).slice(0,3)}</span>
                                 </Button>
 
-                                {/* INDICATOR SECTION */}
                                 <div className="h-10 w-8 flex flex-col items-center justify-center relative space-y-0.5">
                                     <TooltipProvider delayDuration={150}>
                                         {indicators.activityStatus === 'confirmed' && (

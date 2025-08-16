@@ -7,8 +7,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import DesktopSidebar from '@/components/layout/DesktopSidebar';
 import { BottomNavigationBar } from '@/components/layout/BottomNavigationBar';
 import Footer from '@/components/layout/Footer';
-import { getMockCurrentUser, getMockClubs, setGlobalCurrentUser, updateUserFavoriteInstructors } from '@/lib/mockData';
-import type { User, Club, TimeOfDayFilterType, MatchPadelLevel, ViewPreference, ActivityViewType } from '@/types';
+import { getMockCurrentUser, getMockClubs, setGlobalCurrentUser } from '@/lib/mockData';
+import type { User, Club, ActivityViewType } from '@/types';
 import LogoutConfirmationDialog from '@/components/layout/LogoutConfirmationDialog';
 import ProfessionalAccessDialog from '@/components/layout/ProfessionalAccessDialog';
 import { useToast } from '@/hooks/use-toast';
@@ -27,7 +27,6 @@ export default function AppLayoutClient({ children }: { children: React.ReactNod
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = React.useState(false);
   const [isProfessionalAccessOpen, setIsProfessionalAccessOpen] = React.useState(false);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = React.useState(false);
-
 
   React.useEffect(() => {
     const fetchUserAndClub = async () => {
@@ -55,22 +54,7 @@ export default function AppLayoutClient({ children }: { children: React.ReactNod
     router.push('/');
   };
 
-  const {
-      activeView,
-      timeSlotFilter,
-      selectedLevel,
-      filterByFavorites,
-      viewPreference,
-      isUpdatingFavorites,
-      showPointsBonus,
-      handleTimeFilterChange,
-      handleLevelChange,
-      handleApplyFavorites,
-      handleViewPrefChange,
-      handleTogglePointsBonus,
-      updateUrlFilter,
-      clearAllFilters
-  } = useActivityFilters(currentUser, (newFavoriteIds) => {
+  const activityFilters = useActivityFilters(currentUser, (newFavoriteIds) => {
       setCurrentUser(prevUser => prevUser ? { ...prevUser, favoriteInstructorIds: newFavoriteIds } : null);
   });
 
@@ -83,23 +67,17 @@ export default function AppLayoutClient({ children }: { children: React.ReactNod
             onProfessionalAccessClick={() => setIsProfessionalAccessOpen(true)}
             onLogoutClick={handleLogout}
             onMobileFiltersClick={() => setIsMobileFiltersOpen(true)}
-             // Filters props
             isActivitiesPage={pathname.startsWith('/activities')}
-            activeView={activeView}
-            timeSlotFilter={timeSlotFilter}
-            selectedLevel={selectedLevel}
-            viewPreference={viewPreference}
-            filterByFavorites={filterByFavorites}
-            showPointsBonus={showPointsBonus}
-            handleLevelChange={handleLevelChange}
-            handleTimeFilterChange={handleTimeFilterChange}
-            handleViewPrefChange={handleViewPrefChange}
-            handleTogglePointsBonus={handleTogglePointsBonus}
-            handleApplyFavorites={handleApplyFavorites}
-            updateUrlFilter={updateUrlFilter}
+            {...activityFilters}
         />
         <main className="flex-1 flex flex-col">
-          {children}
+          {React.Children.map(children, child => {
+            if (React.isValidElement(child)) {
+              // @ts-ignore
+              return React.cloneElement(child, { activityFilters });
+            }
+            return child;
+          })}
           <Footer />
         </main>
       </div>
@@ -117,17 +95,17 @@ export default function AppLayoutClient({ children }: { children: React.ReactNod
        <MobileFiltersSheet
             isOpen={isMobileFiltersOpen}
             onOpenChange={setIsMobileFiltersOpen}
-            timeSlotFilter={timeSlotFilter}
-            selectedLevel={selectedLevel}
-            viewPreference={viewPreference}
-            filterByFavorites={filterByFavorites}
-            showPointsBonus={showPointsBonus}
-            onTimeFilterChange={handleTimeFilterChange}
-            onLevelChange={handleLevelChange}
-            onViewPreferenceChange={(pref) => handleViewPrefChange(pref, activeView as ActivityViewType)}
-            onFavoritesClick={() => updateUrlFilter('favorites', !filterByFavorites)}
-            onTogglePointsBonus={handleTogglePointsBonus}
-            onClearFilters={clearAllFilters}
+            timeSlotFilter={activityFilters.timeSlotFilter}
+            selectedLevel={activityFilters.selectedLevel}
+            viewPreference={activityFilters.viewPreference}
+            filterByFavorites={activityFilters.filterByFavorites}
+            showPointsBonus={activityFilters.showPointsBonus}
+            onTimeFilterChange={activityFilters.handleTimeFilterChange}
+            onLevelChange={activityFilters.handleLevelChange}
+            onViewPreferenceChange={(pref) => activityFilters.handleViewPrefChange(pref, activityFilters.activeView as ActivityViewType)}
+            onFavoritesClick={() => activityFilters.updateUrlFilter('favorites', !activityFilters.filterByFavorites)}
+            onTogglePointsBonus={activityFilters.handleTogglePointsBonus}
+            onClearFilters={activityFilters.clearAllFilters}
         />
     </>
   );
