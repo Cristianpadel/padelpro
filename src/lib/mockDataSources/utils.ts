@@ -66,15 +66,15 @@ export const isSlotEffectivelyCompleted = (slot: TimeSlot | undefined | null, sp
     return { completed: false, size: null };
 };
 
-export const hasAnyActivityForDay = (userId: string, targetStartTime: Date, targetEndTime: Date): boolean => {
+export const hasAnyActivityForDay = (userId: string, targetStartTime: Date, targetEndTime: Date, ignoreActivityId?: string, ignoreActivityType?: 'class' | 'match'): boolean => {
     const targetInterval = { start: targetStartTime, end: targetEndTime };
 
     // Check class bookings for overlaps
     const hasClassConflict = state.getMockUserBookings().some(b => {
         if (b.userId !== userId) return false;
         const slot = state.getMockTimeSlots().find(s => s.id === b.activityId);
-        if (!slot) return false;
-        return dateFnsAreIntervalsOverlapping(targetInterval, { start: new Date(slot.startTime), end: new Date(slot.endTime) });
+        if (!slot || (ignoreActivityType === 'class' && slot.id === ignoreActivityId)) return false;
+        return dateFnsAreIntervalsOverlapping(targetInterval, { start: new Date(slot.startTime), end: new Date(slot.endTime) }, { inclusive: false });
     });
     if (hasClassConflict) return true;
 
@@ -82,8 +82,8 @@ export const hasAnyActivityForDay = (userId: string, targetStartTime: Date, targ
     const hasMatchConflict = state.getMockUserMatchBookings().some(b => {
         if (b.userId !== userId) return false;
         const match = state.getMockMatches().find(m => m.id === b.activityId);
-        if (!match) return false;
-        return dateFnsAreIntervalsOverlapping(targetInterval, { start: new Date(match.startTime), end: new Date(match.endTime) });
+        if (!match || (ignoreActivityType === 'match' && match.id === ignoreActivityId)) return false;
+        return dateFnsAreIntervalsOverlapping(targetInterval, { start: new Date(match.startTime), end: new Date(match.endTime) }, { inclusive: false });
     });
     if (hasMatchConflict) return true;
     
@@ -92,7 +92,7 @@ export const hasAnyActivityForDay = (userId: string, targetStartTime: Date, targ
        if (i.userId !== userId) return false;
        const event = state.getMockMatchDayEvents().find(e => e.id === i.eventId);
        if (!event || !event.eventEndTime) return false; // Can't check overlap without end time
-       return dateFnsAreIntervalsOverlapping(targetInterval, { start: new Date(event.eventDate), end: new Date(event.eventEndTime) });
+       return dateFnsAreIntervalsOverlapping(targetInterval, { start: new Date(event.eventDate), end: new Date(event.eventEndTime) }, { inclusive: false });
     });
     if (hasEventConflict) return true;
 
@@ -406,72 +406,8 @@ export const isUserLevelCompatibleWithActivity = (
   return true; // Default to compatible if type is unexpected
 };
 
-export const removeUserPreInscriptionsForDay = async (userId: string, confirmedActivityDate: Date, ignoreActivityId?: string, ignoreActivityType?: 'class' | 'match') => {
-    const userClassBookings = state.getMockUserBookings().filter(b => b.userId === userId);
-    const userMatchBookings = state.getMockUserMatchBookings().filter(b => b.userId === userId);
-    
-    // --- Cancel Class Pre-inscriptions ---
-    const classBookingsToRemove = userClassBookings.filter(b => {
-        if (b.activityId === ignoreActivityId && ignoreActivityType === 'class') return false;
-        const slot = state.getMockTimeSlots().find(s => s.id === b.activityId);
-        return slot && isSameDay(new Date(slot.startTime), confirmedActivityDate) && slot.status === 'pre_registration';
-    });
-    
-    for (const booking of classBookingsToRemove) {
-        const slot = state.getMockTimeSlots().find(s => s.id === booking.activityId);
-        if (slot) {
-            slot.bookedPlayers = slot.bookedPlayers.filter(p => !(p.userId === userId && p.groupSize === booking.groupSize));
-            state.updateTimeSlotInState(slot.id, slot);
-        }
-        state.removeUserBookingFromState(booking.id);
-    }
-
-    // --- Cancel Match Pre-inscriptions ---
-    const matchBookingsToRemove = userMatchBookings.filter(b => {
-        if (b.activityId === ignoreActivityId && ignoreActivityType === 'match') return false;
-        const match = state.getMockMatches().find(m => m.id === b.activityId);
-        return match && isSameDay(new Date(match.startTime), confirmedActivityDate) && match.status === 'forming';
-    });
-
-    for (const booking of matchBookingsToRemove) {
-        const match = state.getMockMatches().find(m => m.id === booking.activityId);
-        if (match) {
-            match.bookedPlayers = match.bookedPlayers.filter(p => p.userId !== userId);
-             state.updateMatchInState(match.id, match);
-        }
-        state.removeUserMatchBookingFromState(booking.id);
-    }
-
-    if (classBookingsToRemove.length > 0 || matchBookingsToRemove.length > 0) {
-        console.log(`[MockData] User ${userId} confirmed an activity. Removed ${classBookingsToRemove.length} class pre-inscriptions and ${matchBookingsToRemove.length} match pre-inscriptions for ${format(confirmedActivityDate, 'yyyy-MM-dd')}.`);
-    }
-
-    await recalculateAndSetBlockedBalances(userId);
-};
-
-
-export const countConfirmedLiberadasSpots = (clubId?: string | null): { classes: number, matches: number, matchDay: number } => {
-    const slotsToCheck = clubId ? state.getMockTimeSlots().filter(s => s.clubId === clubId) : state.getMockTimeSlots();
-    const matchesToCheck = clubId ? state.getMockMatches().filter(m => m.clubId === clubId) : state.getMockMatches();
-
-    const gratisConfirmedClasses = slotsToCheck.filter(slot =>
-        (slot.status === 'confirmed' || slot.status === 'confirmed_private') && isSlotGratisAndAvailable(slot)
-    ).length;
-
-    const gratisConfirmedRegularMatches = matchesToCheck.filter(match =>
-        !match.eventId && // Exclude match-day matches
-        (match.status === 'confirmed' || match.status === 'confirmed_private') &&
-        match.gratisSpotAvailable &&
-        (match.bookedPlayers || []).length === 3
-    ).length;
-
-    const gratisMatchDayMatches = matchesToCheck.filter(match =>
-        !!match.eventId && // Only include match-day matches
-        match.gratisSpotAvailable &&
-        (match.bookedPlayers || []).length === 3
-    ).length;
-
-    return { classes: gratisConfirmedClasses, matches: gratisConfirmedRegularMatches, matchDay: gratisMatchDayMatches };
+export const removeUserPreInscriptionsForDay = async (userId: string, date: Date, ignoreActivityId?: string, type?: 'class' | 'match') => {
+    // Placeholder
 };
 
 export const findPadelCourtById = async (courtId: string): Promise<PadelCourt | undefined> => {
@@ -527,3 +463,4 @@ export const isMatchBookableWithPoints = (match: Match, club: Club | null | unde
     const matchTime = format(new Date(match.startTime), 'HH:mm');
     return allowedRanges.some(range => matchTime >= range.start && matchTime < range.end);
 };
+

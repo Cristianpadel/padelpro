@@ -13,6 +13,7 @@ import { isMatchBookableWithPoints as isMatchBookableWithPointsFromUtils } from 
 import { getCourtAvailabilityForInterval as getCourtAvailabilityForIntervalFromUtils } from './mockDataSources/utils';
 import { isSlotEffectivelyCompleted as isSlotEffectivelyCompletedFromUtils } from './mockDataSources/utils';
 import { getUserActivityStatusForDay as getUserActivityStatusForDayFromUsers } from './mockDataSources/users';
+import { hasAnyActivityForDay as hasAnyActivityForDayFromUtils } from './mockDataSources/utils';
 
 
 // Re-export all functions from the index
@@ -21,6 +22,7 @@ export const isMatchBookableWithPoints = isMatchBookableWithPointsFromUtils;
 export const getCourtAvailabilityForInterval = getCourtAvailabilityForIntervalFromUtils;
 export const isSlotEffectivelyCompleted = isSlotEffectivelyCompletedFromUtils;
 export const getUserActivityStatusForDay = getUserActivityStatusForDayFromUsers;
+export const hasAnyActivityForDay = hasAnyActivityForDayFromUtils;
 
 
 // --- New composite functions ---
@@ -91,3 +93,4 @@ export const fetchCourtBookingsForDay = async (clubId: string, date: Date): Prom
 
     return bookings;
 };
+

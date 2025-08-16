@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import type { ClassPadelLevel, MatchPadelLevel, PadelCourt, TimeSlot, Match } from '@/types';
-import { getMockPadelCourts } from "./mockData";
+import { getMockPadelCourts, hasAnyActivityForDay as hasAnyActivityForDayFromMockData } from "./mockData";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -66,10 +66,8 @@ export const isUserLevelCompatibleWithActivity = (
   return true; // Default to compatible if type is unexpected
 };
 
-export const hasAnyConfirmedActivityForDay = (userId: string, date: Date, excludingId?: string, type?: 'class' | 'match'): boolean => {
-    // This is a placeholder for a more complex check against the user's full schedule.
-    // For now, it returns false to allow booking.
-    return false;
+export const hasAnyActivityForDay = (userId: string, date: Date, excludingId?: string, type?: 'class' | 'match'): boolean => {
+    return hasAnyActivityForDayFromMockData(userId, date, date, excludingId, type);
 };
 
 export const findAvailableCourt = (clubId: string, startTime: Date, endTime: Date): PadelCourt | null => {

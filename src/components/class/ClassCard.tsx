@@ -124,8 +124,9 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
 
     const userHasConfirmedActivityToday = useMemo(() => {
         if (!currentUser) return false;
-        return hasAnyActivityForDay(currentUser.id, new Date(currentSlot.startTime), new Date(currentSlot.endTime));
-    }, [currentUser, currentSlot.startTime, currentSlot.endTime]);
+        const targetEndTime = new Date(new Date(currentSlot.startTime).getTime() + (currentSlot.durationMinutes || 60) * 60000);
+        return hasAnyActivityForDay(currentUser.id, new Date(currentSlot.startTime), targetEndTime);
+    }, [currentUser, currentSlot.startTime, currentSlot.durationMinutes]);
 
     const anticipationBonus = useMemo(() => {
       try {
