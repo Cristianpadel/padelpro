@@ -6,35 +6,38 @@ import type { User, Match, Club, TimeOfDayFilterType, ViewPreference } from '@/t
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import MatchCard from '@/components/match/MatchCard';
-import { fetchMatches, getMockCurrentUser } from '@/lib/mockData';
+import { fetchMatches, getMockCurrentUser, getMockClubs } from '@/lib/mockData';
 import { isSameDay, startOfDay } from 'date-fns';
 import { Trophy } from 'lucide-react';
 
 interface MatchProDisplayProps {
     currentUser: User | null;
-    clubInfo: Club | null;
     onBookingSuccess: () => void;
     selectedDate: Date | null;
     onDateChange: (date: Date) => void;
 }
 
-const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, clubInfo, onBookingSuccess, selectedDate, onDateChange }) => {
-
+const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, onBookingSuccess, selectedDate, onDateChange }) => {
     const [allMatchProGames, setAllMatchProGames] = useState<Match[]>([]);
+    const [clubInfo, setClubInfo] = useState<Club | null>(null);
     const [loading, setLoading] = useState(true);
     const [localCurrentUser, setLocalCurrentUser] = useState<User | null>(null);
 
     useEffect(() => {
-        if (!clubInfo?.isMatchProEnabled) {
-            setLoading(false);
-            return;
-        }
-
-        const loadMatchesAndUser = async () => {
+        const loadInitialData = async () => {
             setLoading(true);
             try {
+                const clubs = await getMockClubs();
+                const currentClub = clubs[0]; // Assuming a single club for now
+                setClubInfo(currentClub);
+
+                if (!currentClub?.isMatchProEnabled) {
+                    setLoading(false);
+                    return;
+                }
+
                 const [allMatches, user] = await Promise.all([
-                    fetchMatches('club-1'), // Assuming a single club for now
+                    fetchMatches('club-1'),
                     getMockCurrentUser()
                 ]);
 
@@ -48,25 +51,32 @@ const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, clubInfo
                 setLoading(false);
             }
         };
-        loadMatchesAndUser();
-    }, [clubInfo]);
+        loadInitialData();
+    }, []);
 
     const filteredAndSortedMatches = useMemo(() => {
         if (!selectedDate || !localCurrentUser) return [];
-
         let matches = allMatchProGames.filter(m => isSameDay(new Date(m.startTime), selectedDate));
-        
         matches.sort((a,b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
-
         return matches;
     }, [allMatchProGames, selectedDate, localCurrentUser]);
-
 
     const handleMatchUpdate = (updatedMatch: Match) => {
         setAllMatchProGames(prev => prev.map(m => m.id === updatedMatch.id ? updatedMatch : m));
         onBookingSuccess();
     };
 
+    if (loading) {
+        return (
+            <div className="space-y-4">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Skeleton className="h-[280px] w-full" />
+                    <Skeleton className="h-[280px] w-full" />
+                 </div>
+            </div>
+         );
+    }
+    
     if (!clubInfo?.isMatchProEnabled) {
         return (
             <Card>
@@ -81,17 +91,6 @@ const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, clubInfo
         )
     }
 
-    if (loading) {
-         return (
-            <div className="space-y-4">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Skeleton className="h-[280px] w-full" />
-                    <Skeleton className="h-[280px] w-full" />
-                 </div>
-            </div>
-         );
-    }
-    
     if (!localCurrentUser) {
         return <Skeleton className="h-96 w-full" />
     }
