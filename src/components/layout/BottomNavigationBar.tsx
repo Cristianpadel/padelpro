@@ -24,7 +24,11 @@ import type { User, Club } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { addDays } from 'date-fns';
 
-export function BottomNavigationBar() {
+interface BottomNavigationBarProps {
+    onMobileFiltersClick: () => void;
+}
+
+export function BottomNavigationBar({ onMobileFiltersClick }: BottomNavigationBarProps) {
     const pathname = usePathname();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -168,22 +172,9 @@ export function BottomNavigationBar() {
         }
     }, [isClient, pathname, searchParams]);
 
-
-    const handleFiltersClick = () => {
-        const newSearchParams = new URLSearchParams(searchParams.toString());
-        newSearchParams.set('show_filters', 'true');
-        router.replace(`${pathname}?${newSearchParams.toString()}`, { scroll: false });
-    };
+    const isActivitiesPage = pathname.startsWith('/activities');
     
     const navItems = [
-        {
-            key: 'inicio',
-            href: '/',
-            icon: Home,
-            label: 'Inicio',
-            isActive: pathname === '/',
-            hidden: !!currentUser,
-        },
         {
             key: 'agenda',
             href: '/dashboard',
@@ -194,14 +185,6 @@ export function BottomNavigationBar() {
             badgeCount: confirmedBookingsCount,
         },
         {
-            key: 'clases',
-            href: '/activities?view=clases',
-            icon: Activity,
-            label: 'Clases',
-            isActive: pathname === '/activities' && searchParams.get('view') === 'clases',
-            hidden: !currentUser || !(clubInfo?.showClassesTabOnFrontend ?? true),
-        },
-        {
             key: 'partidas',
             href: '/activities?view=partidas',
             icon: Users,
@@ -210,14 +193,14 @@ export function BottomNavigationBar() {
             hidden: !currentUser || !(clubInfo?.showMatchesTabOnFrontend ?? true),
         },
         {
-            key: 'matchpro',
-            href: '/activities?view=matchpro',
-            icon: Trophy,
-            label: 'Match Pro',
-            isActive: pathname === '/activities' && searchParams.get('view') === 'matchpro',
-            hidden: !currentUser || !(clubInfo?.isMatchProEnabled ?? false),
+            key: 'filters',
+            onClick: onMobileFiltersClick,
+            icon: SlidersHorizontal,
+            label: 'Filtros',
+            isActive: false, // This button is for action, not navigation state
+            hidden: !currentUser || !isActivitiesPage,
         },
-         {
+        {
             key: 'liberadas',
             href: '/activities?filter=liberadas',
             icon: Star,
@@ -225,23 +208,6 @@ export function BottomNavigationBar() {
             isActive: pathname === '/activities' && searchParams.get('filter') === 'liberadas',
             hidden: !currentUser,
             showNotificationDot: showGratisNotificationDot,
-        },
-        {
-            key: 'match-day',
-            href: nextMatchDayEventId ? `/match-day/${nextMatchDayEventId}` : '/match-day',
-            icon: PartyPopper,
-            label: 'Match-Day',
-            isActive: pathname.startsWith('/match-day'),
-            hidden: !currentUser || !clubInfo?.isMatchDayEnabled,
-        },
-        {
-            key: 'tienda',
-            href: '/store',
-            icon: ShoppingBag,
-            label: 'Tienda',
-            isActive: pathname === '/store',
-            badgeCount: reservedProductsCount,
-            hidden: !currentUser,
         },
         {
             key: 'profile',
@@ -257,7 +223,7 @@ export function BottomNavigationBar() {
     const visibleNavItemsCount = visibleNavItems.length;
     const itemWidthClass = visibleNavItemsCount > 0 ? `w-1/${visibleNavItemsCount}` : 'w-full';
 
-     if (!isClient) {
+     if (!isClient || !currentUser) {
         return <div className="fixed bottom-0 left-0 right-0 h-16 bg-card border-t" />;
     }
 
@@ -319,5 +285,3 @@ export function BottomNavigationBar() {
         </nav>
     );
 }
-
-    
