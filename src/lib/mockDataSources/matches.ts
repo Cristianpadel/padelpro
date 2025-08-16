@@ -55,8 +55,13 @@ export const bookMatch = async (
     const club = state.getMockClubs().find(c => c.id === match.clubId);
     if (!club) return { error: "Club no encontrado para esta partida." };
 
-    if ((match.bookedPlayers || []).length >= 4) return { error: "Esta partida ya está completa." };
-    if ((match.bookedPlayers || []).some(p => p.userId === userId)) return { error: "Ya estás inscrito en esta partida." };
+    // Critical check: Ensure user is not already in the match.
+    if ((match.bookedPlayers || []).some(p => p.userId === userId)) {
+        return { error: "Ya estás inscrito en esta partida." };
+    }
+    if ((match.bookedPlayers || []).length >= 4) {
+        return { error: "Esta partida ya está completa." };
+    }
     if (mockUtils.hasAnyConfirmedActivityForDay(userId, new Date(match.startTime), matchId, 'match')) {
         return { error: 'Ya tienes otra actividad confirmada para este día.' };
     }
