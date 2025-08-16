@@ -49,10 +49,18 @@ function DashboardPageContent() {
     const [refreshKey, setRefreshKey] = useState(0);
 
     const { toast } = useToast();
+    const router = useRouter();
 
     useEffect(() => {
         setIsClient(true);
-    }, []);
+        const checkUser = async () => {
+            const user = await getMockCurrentUser();
+            if (!user) {
+                router.push('/');
+            }
+        };
+        checkUser();
+    }, [router]);
     
     const handleDataChange = useCallback(() => {
         setRefreshKey(prev => prev + 1);
@@ -85,7 +93,7 @@ function DashboardPageContent() {
     const hasPendingPoints = (user.pendingBonusPoints ?? 0) > 0;
 
     return (
-        <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
+        <div className="flex-1 space-y-8 p-4 md:p-6 lg:p-8">
             <header className="mb-6">
                 <h1 className="text-3xl font-bold text-foreground">
                     Tu Agenda, {user.name}
