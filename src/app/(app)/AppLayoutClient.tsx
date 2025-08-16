@@ -58,16 +58,6 @@ export default function AppLayoutClient({ children }: { children: React.ReactNod
       setCurrentUser(prevUser => prevUser ? { ...prevUser, favoriteInstructorIds: newFavoriteIds } : null);
   });
 
-  // Clone children to pass props to them
-  const childrenWithProps = React.Children.map(children, child => {
-    if (React.isValidElement(child)) {
-      // @ts-ignore
-      return React.cloneElement(child, { activityFilters });
-    }
-    return child;
-  });
-
-
   return (
     <>
       <div className="flex min-h-screen">
@@ -81,7 +71,7 @@ export default function AppLayoutClient({ children }: { children: React.ReactNod
             {...activityFilters}
         />
         <main className="flex-1 flex flex-col">
-          {childrenWithProps}
+          {children}
           <Footer />
         </main>
       </div>
