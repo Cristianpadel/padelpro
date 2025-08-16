@@ -6,7 +6,7 @@ import type { User, Match, Club, ViewPreference } from '@/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import MatchCard from '@/components/match/MatchCard';
-import { fetchMatches, getMockCurrentUser, getMockClubs } from '@/lib/mockData';
+import { fetchMatches, getMockCurrentUser, getMockClubs, getCourtAvailabilityForInterval } from '@/lib/mockData';
 import { isSameDay, startOfDay } from 'date-fns';
 import { Trophy } from 'lucide-react';
 
@@ -43,7 +43,17 @@ const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, onBookin
                 ]);
 
                 const proMatches = allMatches.filter(m => m.isProMatch);
-                setAllMatchProGames(proMatches);
+                
+                // Filter by court availability
+                const availableProMatches = [];
+                for (const match of proMatches) {
+                    const availability = await getCourtAvailabilityForInterval(match.clubId, new Date(match.startTime), new Date(match.endTime));
+                    if (availability.available.length > 0) {
+                        availableProMatches.push(match);
+                    }
+                }
+
+                setAllMatchProGames(availableProMatches);
                 setLocalCurrentUser(user);
 
             } catch (error) {
