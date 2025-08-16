@@ -432,34 +432,69 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                                     </Badge>
                                 </div>
                             </Link>
-                            <div className="flex flex-wrap gap-2 mt-2">
-                                 {allSpots.map((_, index) => {
-                                    const inscription = activity.inscriptions[index];
-                                    if(inscription){
+                            <AlertDialog>
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                    {allSpots.map((_, index) => {
+                                        const inscription = activity.inscriptions[index];
+                                        if(inscription){
+                                            return (
+                                                 <div key={inscription?.id} className="relative inline-flex items-center justify-center h-12 w-12 rounded-full border-[3px] z-0 transition-all shadow-inner bg-slate-100 border-slate-300">
+                                                    <Avatar className="h-[calc(100%-4px)] w-[calc(100%-4px)]">
+                                                        <AvatarImage src={inscription?.userProfilePictureUrl} data-ai-hint="player avatar small" />
+                                                        <AvatarFallback className={cn("text-xs", "bg-primary text-primary-foreground")}>
+                                                            {getInitials(inscription.userName)}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                </div>
+                                            )
+                                        }
                                         return (
-                                             <div key={inscription?.id} className="relative inline-flex items-center justify-center h-12 w-12 rounded-full border-[3px] z-0 transition-all shadow-inner bg-slate-100 border-slate-300">
-                                                <Avatar className="h-[calc(100%-4px)] w-[calc(100%-4px)]">
-                                                    <AvatarImage src={inscription?.userProfilePictureUrl} data-ai-hint="player avatar small" />
-                                                    <AvatarFallback className={cn("text-xs", "bg-primary text-primary-foreground")}>
-                                                        {getInitials(inscription.userName)}
-                                                    </AvatarFallback>
-                                                </Avatar>
-                                            </div>
+                                            <AlertDialogTrigger asChild key={`empty-${index}`}>
+                                                <button disabled={isFull || isUserInscribed} className="relative inline-flex items-center justify-center h-12 w-12 rounded-full border-[3px] z-0 transition-all shadow-inner bg-slate-100 border-slate-300 border-dashed hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60">
+                                                    <Plus className="h-5 w-5 text-muted-foreground" />
+                                                </button>
+                                            </AlertDialogTrigger>
                                         )
-                                    }
-                                    return (
-                                        
-                                        <AlertDialogTrigger asChild key={`empty-${index}`}>
-                                            <button disabled={isFull || isUserInscribed} className="relative inline-flex items-center justify-center h-12 w-12 rounded-full border-[3px] z-0 transition-all shadow-inner bg-slate-100 border-slate-300 border-dashed hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60">
-                                                <Plus className="h-5 w-5 text-muted-foreground" />
-                                            </button>
-                                        </AlertDialogTrigger>
-                                       
-                                            
-                                        
-                                    )
-                                 })}
-                            </div>
+                                     })}
+                                </div>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle className="text-2xl font-bold flex items-center justify-center"><Rocket className="h-8 w-8 mr-3 text-blue-500" /> ¡Casi dentro!</AlertDialogTitle>
+                                    </AlertDialogHeader>
+                                     <AlertDialogDescription asChild>
+                                        <div className="text-center text-lg text-foreground space-y-4 py-4">
+                                            <div className="space-y-1">
+                                                <div>Te apuntas al evento: <br/><span className="font-semibold">{activity.name}</span></div>
+                                                <div className="flex items-center justify-center text-3xl font-bold">
+                                                    <Euro className="h-7 w-7 mr-1" /> {activity.price?.toFixed(2)}
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center justify-center gap-2 p-2 bg-slate-100 rounded-md">
+                                                <PiggyBank className="h-6 w-6 text-slate-500" />
+                                                <span className="text-sm">Tu hucha tiene:</span>
+                                                <span className="font-bold text-slate-800">{availableCredit.toFixed(2)}€</span>
+                                                <span className="text-slate-400">/</span>
+                                                <Star className="h-5 w-5 text-amber-500"/>
+                                                <span className="font-bold text-slate-800">{currentUser?.loyaltyPoints ?? 0}</span>
+                                            </div>
+                                        </div>
+                                    </AlertDialogDescription>
+                                    <div className="text-sm bg-blue-50 text-blue-800 p-3 rounded-lg space-y-2">
+                                        <p className="font-bold text-center">¡Recuerda las reglas del juego!</p>
+                                        <ul className="space-y-1.5">
+                                            <li className="flex items-start"><ThumbsUp className="h-4 w-4 mr-2 mt-0.5 text-blue-500 flex-shrink-0" /><span>Cuando llegue la hora del sorteo, se formarán las partidas.</span></li>
+                                            <li className="flex items-start"><Lock className="h-4 w-4 mr-2 mt-0.5 text-blue-500 flex-shrink-0" /><span>Tu saldo será bloqueado hasta que se juegue el evento.</span></li>
+                                            <li className="flex items-start"><Scissors className="h-4 w-4 mr-2 mt-0.5 text-blue-500 flex-shrink-0" /><span>**Si este evento se confirma**, tus otras inscripciones del día se anularán solas.</span></li>
+                                        </ul>
+                                    </div>
+                                    <AlertDialogFooter className="grid grid-cols-2 gap-2 mt-4">
+                                        <AlertDialogCancel className="h-12 text-base" disabled={false}>Cancelar</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => {}} disabled={false} className="h-12 text-base bg-green-600 text-white hover:bg-green-700">
+                                            Sí, ¡Me apunto!
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
                             <div className="flex justify-between items-end mt-2">
                                 <div className="text-sm font-medium text-muted-foreground">
                                     {activity.inscriptions.length} / {activity.maxPlayers} inscritos
