@@ -28,7 +28,6 @@ export default function ActivitiesPageContent() {
     
     const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-    // Call the hook directly inside the component that needs it
     const activityFilters = useActivityFilters(currentUser, (newFavoriteIds) => {
         setCurrentUser(prevUser => prevUser ? { ...prevUser, favoriteInstructorIds: newFavoriteIds } : null);
     });
