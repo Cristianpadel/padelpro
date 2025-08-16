@@ -68,16 +68,25 @@ export default function ActivitiesPageContent() {
         const loadInitialData = async () => {
             setIsInitialLoading(true);
             try {
-                const [user, slots, existingMatches, clubs] = await Promise.all([
+                const [user, clubs] = await Promise.all([
                     getMockCurrentUser(),
-                    getMockTimeSlots('club-1'),
-                    fetchMatches('club-1'),
                     getMockClubs(),
                 ]);
                 
                 setCurrentUser(user);
                 const club = clubs[0];
                 setCurrentClub(club);
+                
+                let slots: TimeSlot[] = [];
+                let existingMatches: Match[] = [];
+
+                if (club) {
+                    [slots, existingMatches] = await Promise.all([
+                        getMockTimeSlots(club.id),
+                        fetchMatches(club.id),
+                    ]);
+                }
+
                 setAllTimeSlots(slots);
                 
                 let combinedMatches = [...existingMatches];
@@ -102,15 +111,15 @@ export default function ActivitiesPageContent() {
 
     useEffect(() => {
         const fetchEventsForDate = async () => {
-            if (selectedDate) {
-                const events = await fetchMatchDayEventsForDate(selectedDate, 'club-1');
+            if (selectedDate && currentClub) {
+                const events = await fetchMatchDayEventsForDate(selectedDate, currentClub.id);
                 setMatchDayEvents(events);
             } else {
                 setMatchDayEvents([]);
             }
         };
         fetchEventsForDate();
-    }, [selectedDate]);
+    }, [selectedDate, currentClub]);
     
 
     const onViewPrefChange = (date: Date, pref: any, types: ('class' | 'match' | 'event')[], eventId?: string) => {
