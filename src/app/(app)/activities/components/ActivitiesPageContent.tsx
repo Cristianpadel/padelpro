@@ -22,16 +22,17 @@ import { Plus } from 'lucide-react';
 import type { ActivityViewType } from '@/types';
 import { useActivityFilters } from '@/hooks/useActivityFilters';
 
-export default function ActivitiesPageContent() {
+interface ActivitiesPageContentProps {
+    activityFilters: ReturnType<typeof useActivityFilters>;
+}
+
+export default function ActivitiesPageContent({ activityFilters }: ActivitiesPageContentProps) {
     const router = useRouter();
     const { toast } = useToast();
     
     const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-    const activityFilters = useActivityFilters(currentUser, (newFavoriteIds) => {
-        setCurrentUser(prevUser => prevUser ? { ...prevUser, favoriteInstructorIds: newFavoriteIds } : null);
-    });
-
+    // Use the passed-in filters and handlers
     const {
         activeView,
         selectedDate,
