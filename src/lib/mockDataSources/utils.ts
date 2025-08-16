@@ -66,36 +66,35 @@ export const isSlotEffectivelyCompleted = (slot: TimeSlot | undefined | null, sp
     return { completed: false, size: null };
 };
 
-export const hasAnyConfirmedActivityForDay = (userId: string, date: Date, ignoreActivityId?: string, ignoreActivityType?: 'class' | 'match'): boolean => {
-    return countUserConfirmedActivitiesForDay(userId, date, ignoreActivityId, ignoreActivityType) > 0;
-};
+export const hasAnyActivityForDay = (userId: string, targetStartTime: Date, targetEndTime: Date): boolean => {
+    const targetInterval = { start: targetStartTime, end: targetEndTime };
 
-export const hasAnyActivityForDay = (userId: string, date: Date): boolean => {
-    const todayStart = startOfDay(date);
-
-    // Check class bookings for the day (pending or confirmed)
-    const hasClass = state.getMockUserBookings().some(b => {
+    // Check class bookings for overlaps
+    const hasClassConflict = state.getMockUserBookings().some(b => {
         if (b.userId !== userId) return false;
         const slot = state.getMockTimeSlots().find(s => s.id === b.activityId);
-        return slot && isSameDay(new Date(slot.startTime), todayStart);
+        if (!slot) return false;
+        return dateFnsAreIntervalsOverlapping(targetInterval, { start: new Date(slot.startTime), end: new Date(slot.endTime) });
     });
-    if (hasClass) return true;
+    if (hasClassConflict) return true;
 
-    // Check match bookings for the day (forming or confirmed)
-    const hasMatch = state.getMockUserMatchBookings().some(b => {
+    // Check match bookings for overlaps
+    const hasMatchConflict = state.getMockUserMatchBookings().some(b => {
         if (b.userId !== userId) return false;
         const match = state.getMockMatches().find(m => m.id === b.activityId);
-        return match && isSameDay(new Date(match.startTime), todayStart);
+        if (!match) return false;
+        return dateFnsAreIntervalsOverlapping(targetInterval, { start: new Date(match.startTime), end: new Date(match.endTime) });
     });
-    if (hasMatch) return true;
+    if (hasMatchConflict) return true;
     
-    // Check match-day event inscriptions
-    const hasEvent = state.getMockMatchDayInscriptions().some(i => {
+    // Check match-day event inscriptions for overlaps
+    const hasEventConflict = state.getMockMatchDayInscriptions().some(i => {
        if (i.userId !== userId) return false;
        const event = state.getMockMatchDayEvents().find(e => e.id === i.eventId);
-       return event && isSameDay(new Date(event.eventDate), todayStart);
+       if (!event || !event.eventEndTime) return false; // Can't check overlap without end time
+       return dateFnsAreIntervalsOverlapping(targetInterval, { start: new Date(event.eventDate), end: new Date(event.eventEndTime) });
     });
-    if (hasEvent) return true;
+    if (hasEventConflict) return true;
 
     return false;
 };
@@ -314,7 +313,7 @@ export const _annulConflictingActivities = (confirmedActivity: TimeSlot | Match)
 
 
 export const isSlotGratisAndAvailable = (slot: TimeSlot): boolean => {
-    if (!slot || !slot.designatedGratisSpotPlaceholderIndexForOption) {
+    if (!slot.designatedGratisSpotPlaceholderIndexForOption) {
         return false;
     }
     

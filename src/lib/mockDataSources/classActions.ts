@@ -7,7 +7,7 @@ import type { TimeSlot, Booking, User, Instructor, ClassPadelLevel, PadelCategor
 import * as state from './index';
 import * as config from '../config';
 import { _classifyLevelAndCategoryForSlot } from './classProposals';
-import { _annulConflictingActivities, findAvailableCourt, removeUserPreInscriptionsForDay, isUserLevelCompatibleWithActivity, hasAnyConfirmedActivityForDay, isSlotEffectivelyCompleted } from './utils';
+import { _annulConflictingActivities, findAvailableCourt, removeUserPreInscriptionsForDay, isUserLevelCompatibleWithActivity, hasAnyActivityForDay, isSlotEffectivelyCompleted } from './utils';
 import { addUserPointsAndAddTransaction, deductCredit, recalculateAndSetBlockedBalances, confirmAndAwardPendingPoints } from './users';
 import { calculatePricePerPerson } from '@/lib/utils';
 import { v4 as uuidv4 } from 'uuid';
@@ -108,8 +108,9 @@ export const bookClass = async (
     return { error: 'Tu nivel de juego no es compatible con el de esta clase.' };
   }
   
-  if (hasAnyConfirmedActivityForDay(userId, new Date(slot.startTime), slotId, 'class')) {
-      return { error: 'Ya tienes otra actividad confirmada para este día.' };
+  const targetEndTime = new Date(new Date(slot.startTime).getTime() + (slot.durationMinutes || 60) * 60000);
+  if (hasAnyActivityForDay(userId, new Date(slot.startTime), targetEndTime)) {
+      return { error: 'Ya tienes otra actividad que se solapa con este horario.' };
   }
 
   const isGratisSpot = slot.designatedGratisSpotPlaceholderIndexForOption?.[groupSize] === spotIndexPlaceholder;

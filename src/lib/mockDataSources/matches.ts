@@ -61,8 +61,9 @@ export const bookMatch = async (
     }
     
     // NEW CRITICAL CHECK: Prevent double booking at the same time slot across all activities
-    if (mockUtils.hasAnyActivityForDay(userId, new Date(match.startTime))) {
-        return { error: 'Ya tienes otra actividad (clase o partida) en este horario.' };
+     const targetEndTime = new Date(new Date(match.startTime).getTime() + (match.durationMinutes || 90) * 60000);
+    if (mockUtils.hasAnyActivityForDay(userId, new Date(match.startTime), targetEndTime, match.id, 'match')) {
+        return { error: 'Ya tienes otra actividad (clase o partida) que se solapa con este horario.' };
     }
 
     if ((match.bookedPlayers || []).length >= 4) {
@@ -910,4 +911,3 @@ export const fillMatchAndMakePrivate = async (userId: string, matchId: string): 
 
   return { updatedMatch: match, cost: totalCost };
 };
-    
