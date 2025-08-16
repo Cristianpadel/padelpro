@@ -70,6 +70,36 @@ export const hasAnyConfirmedActivityForDay = (userId: string, date: Date, ignore
     return countUserConfirmedActivitiesForDay(userId, date, ignoreActivityId, ignoreActivityType) > 0;
 };
 
+export const hasAnyActivityForDay = (userId: string, date: Date): boolean => {
+    const todayStart = startOfDay(date);
+
+    // Check class bookings for the day (pending or confirmed)
+    const hasClass = state.getMockUserBookings().some(b => {
+        if (b.userId !== userId) return false;
+        const slot = state.getMockTimeSlots().find(s => s.id === b.activityId);
+        return slot && isSameDay(new Date(slot.startTime), todayStart);
+    });
+    if (hasClass) return true;
+
+    // Check match bookings for the day (forming or confirmed)
+    const hasMatch = state.getMockUserMatchBookings().some(b => {
+        if (b.userId !== userId) return false;
+        const match = state.getMockMatches().find(m => m.id === b.activityId);
+        return match && isSameDay(new Date(match.startTime), todayStart);
+    });
+    if (hasMatch) return true;
+    
+    // Check match-day event inscriptions
+    const hasEvent = state.getMockMatchDayInscriptions().some(i => {
+       if (i.userId !== userId) return false;
+       const event = state.getMockMatchDayEvents().find(e => e.id === i.eventId);
+       return event && isSameDay(new Date(event.eventDate), todayStart);
+    });
+    if (hasEvent) return true;
+
+    return false;
+};
+
 export const countUserConfirmedActivitiesForDay = (userId: string, date: Date, ignoreActivityId?: string, ignoreActivityType?: 'class' | 'match'): number => {
     const todayStart = startOfDay(date);
     let count = 0;

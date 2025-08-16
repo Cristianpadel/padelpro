@@ -59,11 +59,14 @@ export const bookMatch = async (
     if ((match.bookedPlayers || []).some(p => p.userId === userId)) {
         return { error: "Ya estás inscrito en esta partida." };
     }
+    
+    // NEW CRITICAL CHECK: Prevent double booking at the same time slot across all activities
+    if (mockUtils.hasAnyActivityForDay(userId, new Date(match.startTime))) {
+        return { error: 'Ya tienes otra actividad (clase o partida) en este horario.' };
+    }
+
     if ((match.bookedPlayers || []).length >= 4) {
         return { error: "Esta partida ya está completa." };
-    }
-    if (mockUtils.hasAnyConfirmedActivityForDay(userId, new Date(match.startTime), matchId, 'match')) {
-        return { error: 'Ya tienes otra actividad confirmada para este día.' };
     }
     
     // Check level compatibility only if the match is not a placeholder ('abierto')
