@@ -21,7 +21,7 @@ import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/comp
 import { Plus } from 'lucide-react';
 import type { useActivityFilters } from '@/hooks/useActivityFilters';
 
-// This component receives all filter state and handlers as props from AppLayoutClient
+// This component receives all filter state and handlers as props
 export default function ActivitiesPageContent({ activityFilters }: { activityFilters: ReturnType<typeof useActivityFilters> }) {
     const router = useRouter();
     const { toast } = useToast();
