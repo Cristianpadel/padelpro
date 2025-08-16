@@ -99,6 +99,7 @@ export const hasAnyActivityForDay = (userId: string, targetStartTime: Date, targ
     return false;
 };
 
+
 export const countUserConfirmedActivitiesForDay = (userId: string, date: Date, ignoreActivityId?: string, ignoreActivityType?: 'class' | 'match'): number => {
     const todayStart = startOfDay(date);
     let count = 0;
@@ -208,108 +209,57 @@ export const findAvailableCourt = (clubId: string, startTime: Date, endTime: Dat
 
 
 export const _annulConflictingActivities = (confirmedActivity: TimeSlot | Match) => {
-    const slotsToKeep: TimeSlot[] = [];
-    const classBookingsToKeep: Booking[] = [];
-    const cancelledSlotIds: string[] = [];
-
-    const matchesToKeep: Match[] = [];
-    const matchBookingsToKeep: MatchBooking[] = [];
-    const cancelledMatchIds: string[] = [];
-
     const confirmedStartTime = new Date(confirmedActivity.startTime);
     const confirmedEndTime = new Date(confirmedActivity.endTime);
+    const confirmedUserId = 'bookedPlayers' in confirmedActivity ? (confirmedActivity.bookedPlayers[0]?.userId ?? '') : '';
 
-    const isConfirmedActivityAClass = 'instructorName' in confirmedActivity;
-    const confirmedInstructorName = isConfirmedActivityAClass ? (confirmedActivity as TimeSlot).instructorName : null;
+    if (!confirmedUserId) return; // Cannot annul if we don't know who was confirmed
 
-    // Annul conflicting TimeSlots (classes)
-    state.getMockTimeSlots().forEach(slot => {
-        if (isConfirmedActivityAClass && slot.id === confirmedActivity.id) {
-            slotsToKeep.push(slot); // Keep the confirmed slot itself
-            return;
-        }
+    const bookingsToCancel: (Booking | MatchBooking)[] = [];
 
-        const isOverlapping = dateFnsAreIntervalsOverlapping(
-            { start: new Date(slot.startTime), end: new Date(slot.endTime) },
-            { start: confirmedStartTime, end: confirmedEndTime },
-            { inclusive: false }
-        );
-
-        let shouldCancel = false;
-        if (isOverlapping && slot.status === 'pre_registration') {
-            // Scenario 1: Conflict on the same court
-            if (confirmedActivity.courtNumber !== undefined && slot.clubId === confirmedActivity.clubId && slot.courtNumber === confirmedActivity.courtNumber) {
-                shouldCancel = true;
-            }
-            // Scenario 2: Same instructor is now busy
-            if (confirmedInstructorName && slot.instructorName === confirmedInstructorName) {
-                shouldCancel = true;
-            }
-        }
-
-        if (shouldCancel) {
-            cancelledSlotIds.push(slot.id);
-        } else {
-            slotsToKeep.push(slot);
-        }
-    });
-
-    state.getMockUserBookings().forEach(b => {
-        if (!cancelledSlotIds.includes(b.activityId)) {
-            classBookingsToKeep.push(b);
-        }
-    });
-    
-    state.initializeMockTimeSlots(slotsToKeep);
-    state.initializeMockUserBookings(classBookingsToKeep);
-
-    // Annul conflicting Matches (placeholders or forming)
-    state.getMockMatches().forEach(match => {
-        if (!isConfirmedActivityAClass && match.id === confirmedActivity.id) {
-            matchesToKeep.push(match); // Keep the confirmed match itself
-            return;
-        }
-
-        const isOverlapping = dateFnsAreIntervalsOverlapping(
-            { start: new Date(match.startTime), end: new Date(match.endTime) },
-            { start: confirmedStartTime, end: confirmedEndTime },
-            { inclusive: false }
-        );
+    // Find conflicting class bookings for the confirmed user
+    state.getMockUserBookings().forEach(booking => {
+        if (booking.userId !== confirmedUserId) return;
         
-        let shouldCancel = false;
-        if (isOverlapping && (match.isPlaceholder === true || match.status === 'forming')) {
-            // Annul placeholder/forming matches on the same court
-            if (confirmedActivity.courtNumber !== undefined && match.clubId === confirmedActivity.clubId && match.courtNumber === confirmedActivity.courtNumber) {
-                 shouldCancel = true;
-            }
-            // Annul any placeholder for the same time slot, as a court is now taken
-            if (match.isPlaceholder) {
-                const availableCourtAfterConfirmation = findAvailableCourt(match.clubId, new Date(match.startTime), new Date(match.endTime));
-                if (!availableCourtAfterConfirmation) {
-                    shouldCancel = true;
-                }
-            }
-        }
-
-        if (shouldCancel) {
-            cancelledMatchIds.push(match.id);
-        } else {
-            matchesToKeep.push(match);
+        const slot = state.getMockTimeSlots().find(s => s.id === booking.activityId);
+        if (!slot || slot.id === confirmedActivity.id) return;
+        
+        if (slot.status === 'pre_registration' && isSameDay(new Date(slot.startTime), confirmedStartTime)) {
+            bookingsToCancel.push(booking);
         }
     });
 
-    state.getMockUserMatchBookings().forEach(b => {
-        if (!cancelledMatchIds.includes(b.activityId)) {
-            matchBookingsToKeep.push(b);
+    // Find conflicting match bookings for the confirmed user
+    state.getMockUserMatchBookings().forEach(booking => {
+        if (booking.userId !== confirmedUserId) return;
+        
+        const match = state.getMockMatches().find(m => m.id === booking.activityId);
+        if (!match || match.id === confirmedActivity.id) return;
+        
+        if (match.status === 'forming' && isSameDay(new Date(match.startTime), confirmedStartTime)) {
+            bookingsToCancel.push(booking);
         }
     });
-    state.initializeMockMatches(matchesToKeep);
-    state.initializeMockUserMatchBookings(matchBookingsToKeep);
     
-    if (cancelledSlotIds.length > 0 || cancelledMatchIds.length > 0) {
-        console.log(`[MockData] Confirmed activity ${confirmedActivity.id}. Annulled ${cancelledSlotIds.length} conflicting class slots and ${cancelledMatchIds.length} conflicting match cards.`);
+    // Cancel all identified conflicting bookings
+    bookingsToCancel.forEach(b => {
+        if ('groupSize' in b) { // It's a class booking
+             state.removeBookingFromTimeSlotInState(b.activityId, b.userId, b.groupSize);
+             state.removeUserBookingFromState(b.id);
+        } else { // It's a match booking
+             state.removePlayerFromMatchInState(b.activityId, b.userId);
+             state.removeUserMatchBookingFromState(b.id);
+        }
+    });
+    
+    // Recalculate blocked balances for the user after annulments
+    recalculateAndSetBlockedBalances(confirmedUserId);
+
+    if (bookingsToCancel.length > 0) {
+        console.log(`[MockData] Confirmed activity ${confirmedActivity.id} for user ${confirmedUserId}. Annulled ${bookingsToCancel.length} conflicting pre-inscriptions for the same day.`);
     }
 };
+
 
 
 export const isSlotGratisAndAvailable = (slot: TimeSlot): boolean => {
@@ -406,9 +356,40 @@ export const isUserLevelCompatibleWithActivity = (
   return true; // Default to compatible if type is unexpected
 };
 
-export const removeUserPreInscriptionsForDay = async (userId: string, date: Date, ignoreActivityId?: string, type?: 'class' | 'match') => {
-    // Placeholder
+export const removeUserPreInscriptionsForDay = async (userId: string, date: Date, excludingId: string, type: 'class' | 'match') => {
+    const todayStart = startOfDay(date);
+
+    // Cancel class pre-inscriptions
+    const classBookingsToCancel = state.getMockUserBookings().filter(b => {
+        if (b.userId !== userId || (type === 'class' && b.activityId === excludingId)) return false;
+        const slot = state.getMockTimeSlots().find(s => s.id === b.activityId);
+        return slot && slot.status === 'pre_registration' && isSameDay(new Date(slot.startTime), todayStart);
+    });
+
+    for (const booking of classBookingsToCancel) {
+        state.removeBookingFromTimeSlotInState(booking.activityId, booking.userId, booking.groupSize);
+        state.removeUserBookingFromState(booking.id);
+    }
+    
+    // Cancel match pre-inscriptions
+    const matchBookingsToCancel = state.getMockUserMatchBookings().filter(b => {
+        if (b.userId !== userId || (type === 'match' && b.activityId === excludingId)) return false;
+        const match = state.getMockMatches().find(m => m.id === b.activityId);
+        return match && match.status === 'forming' && isSameDay(new Date(match.startTime), todayStart);
+    });
+
+    for (const booking of matchBookingsToCancel) {
+        state.removePlayerFromMatchInState(booking.activityId, booking.userId);
+        state.removeUserMatchBookingFromState(booking.id);
+    }
+
+    // Recalculate blocked balances after cancellations
+    await recalculateAndSetBlockedBalances(userId);
+    
+    console.log(`[Annulment] Cancelled ${classBookingsToCancel.length} class and ${matchBookingsToCancel.length} match pre-inscriptions for user ${userId} on ${format(date, 'yyyy-MM-dd')}.`);
 };
+
+
 
 export const findPadelCourtById = async (courtId: string): Promise<PadelCourt | undefined> => {
     return state.getMockPadelCourts().find(c => c.id === courtId);

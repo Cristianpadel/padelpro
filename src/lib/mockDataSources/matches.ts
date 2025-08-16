@@ -1,3 +1,4 @@
+
 // src/lib/mockDataSources/matches.ts
 "use client";
 
@@ -60,9 +61,8 @@ export const bookMatch = async (
         return { error: "Ya estás inscrito en esta partida." };
     }
     
-    // NEW CRITICAL CHECK: Prevent double booking at the same time slot across all activities
-     const targetEndTime = new Date(new Date(match.startTime).getTime() + (match.durationMinutes || 90) * 60000);
-    if (mockUtils.hasAnyActivityForDay(userId, new Date(match.startTime), targetEndTime, match.id, 'match')) {
+    const targetEndTime = new Date(new Date(match.startTime).getTime() + (match.durationMinutes || 90) * 60000);
+    if (mockUtils.hasAnyActivityForDay(userId, new Date(match.startTime), targetEndTime)) {
         return { error: 'Ya tienes otra actividad (clase o partida) que se solapa con este horario.' };
     }
 
@@ -70,15 +70,12 @@ export const bookMatch = async (
         return { error: "Esta partida ya está completa." };
     }
     
-    // Check level compatibility only if the match is not a placeholder ('abierto')
-    // AND it's not a pro match
     if (match.level !== 'abierto' && !match.isProMatch && !isUserLevelCompatible(match.level, user.level, match.isPlaceholder)) {
         return { error: 'Tu nivel de juego no es compatible con el de esta partida.' };
     }
 
     const pricePerPlayer = calculatePricePerPerson(calculateActivityPrice(club, new Date(match.startTime)), 4);
     
-    // Recalculate match total fee just in case it's not set
     if (match.totalCourtFee === undefined || match.totalCourtFee === 0) {
         match.totalCourtFee = calculateActivityPrice(club, new Date(match.startTime));
     }
@@ -89,10 +86,10 @@ export const bookMatch = async (
 
     if (usePoints) {
         if ((user.loyaltyPoints ?? 0) < pointsCost) {
-            return { error: `No tienes suficientes puntos para unirte a esta partida. Necesitas ${pointsCost} y tienes ${user.loyaltyPoints ?? 0}.` };
+            return { error: `No tienes suficientes puntos para unirte. Necesitas ${pointsCost} y tienes ${user.loyaltyPoints ?? 0}.` };
         }
     } else {
-        if ((user.credit ?? 0) < pricePerPlayer) {
+        if (((user.credit ?? 0) - (user.blockedCredit ?? 0)) < pricePerPlayer) {
             return { error: `Saldo insuficiente. Necesitas ${pricePerPlayer.toFixed(2)}€.` };
         }
     }
@@ -158,7 +155,6 @@ export const bookMatch = async (
       state.addMatchToState(newProposalMatch);
     }
 
-    // After booking, recalculate blocked credit for the user
     await recalculateAndSetBlockedBalances(userId);
 
     return { newBooking, updatedMatch: match };
@@ -174,7 +170,6 @@ export const addMatch = async (matchData: Omit<Match, 'id' | 'status' | 'confirm
     const startTimeDate = new Date(matchData.startTime);
     const endTimeDate = new Date(matchData.endTime);
 
-    // Conflict check for creator (instructor)
     if (matchData.creatorId) {
         const creator = state.getMockInstructors().find(inst => inst.id === matchData.creatorId);
         if (creator) {
@@ -210,7 +205,6 @@ export const addMatch = async (matchData: Omit<Match, 'id' | 'status' | 'confirm
         }
     }
 
-    // Conflict check for court
     if (matchData.courtNumber) {
         const existingBlockingActivity = mockUtils.findConflictingConfirmedActivity({
             startTime: startTimeDate,
@@ -227,7 +221,7 @@ export const addMatch = async (matchData: Omit<Match, 'id' | 'status' | 'confirm
 
 
     const newMatch: Match = {
-        id: (matchData as Match).id || `match-${Date.now()}-${Math.random().toString(36).substring(7)}`, // Use provided ID if exists (for updates), else generate
+        id: (matchData as Match).id || `match-${Date.now()}-${Math.random().toString(36).substring(7)}`, 
         clubId: matchData.clubId,
         startTime: startTimeDate,
         endTime: endTimeDate,
