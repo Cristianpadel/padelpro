@@ -48,7 +48,7 @@ export default function ActivitiesPageContent() {
     const [allTimeSlots, setAllTimeSlots] = useState<TimeSlot[]>([]);
     const [allMatches, setAllMatches] = useState<Match[]>([]);
     const [matchDayEvents, setMatchDayEvents] = useState<MatchDayEvent[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isInitialLoading, setIsInitialLoading] = useState(true);
 
     const [activitySelection, setActivitySelection] = useState<{
         isOpen: boolean;
@@ -64,9 +64,9 @@ export default function ActivitiesPageContent() {
         setCurrentUser(updatedUser);
     }, [triggerRefresh]);
     
-    useEffect(() => {
+     useEffect(() => {
         const loadInitialData = async () => {
-            setIsLoading(true);
+            setIsInitialLoading(true);
             try {
                 const [user, slots, existingMatches, clubs] = await Promise.all([
                     getMockCurrentUser(),
@@ -76,38 +76,41 @@ export default function ActivitiesPageContent() {
                 ]);
                 
                 setCurrentUser(user);
-                setCurrentClub(clubs.length > 0 ? clubs[0] : null);
+                const club = clubs[0];
+                setCurrentClub(club);
                 setAllTimeSlots(slots);
                 
-                const club = clubs[0];
-                let combined = [...existingMatches];
-
+                let combinedMatches = [...existingMatches];
                 if (club) {
-                    const today = new Date();
                     for (let i = 0; i < 7; i++) {
-                        const date = addDays(today, i);
-                        const generatedMatches = createMatchesForDay(club, date);
-                        combined = [...combined, ...generatedMatches];
+                        const date = addDays(new Date(), i);
+                        combinedMatches = [...combinedMatches, ...createMatchesForDay(club, date)];
                     }
                 }
-                const uniqueMatches = Array.from(new Map(combined.map(item => [item['id'], item])).values());
+                const uniqueMatches = Array.from(new Map(combinedMatches.map(item => [item['id'], item])).values());
                 setAllMatches(uniqueMatches);
 
-                if (selectedDate) {
-                    const events = await fetchMatchDayEventsForDate(selectedDate, 'club-1');
-                    setMatchDayEvents(events);
-                } else {
-                    setMatchDayEvents([]);
-                }
             } catch (error) {
                 console.error("Error fetching initial data", error);
                 toast({ title: "Error", description: "No se pudieron cargar las actividades.", variant: "destructive" });
             } finally {
-                setIsLoading(false);
+                setIsInitialLoading(false);
             }
         };
         loadInitialData();
-    }, [activityFilters.refreshKey, selectedDate, toast]);
+    }, [activityFilters.refreshKey, toast]);
+
+    useEffect(() => {
+        const fetchEventsForDate = async () => {
+            if (selectedDate) {
+                const events = await fetchMatchDayEventsForDate(selectedDate, 'club-1');
+                setMatchDayEvents(events);
+            } else {
+                setMatchDayEvents([]);
+            }
+        };
+        fetchEventsForDate();
+    }, [selectedDate]);
     
 
     const onViewPrefChange = (date: Date, pref: any, types: ('class' | 'match' | 'event')[], eventId?: string) => {
@@ -132,7 +135,7 @@ export default function ActivitiesPageContent() {
     };
 
     const renderContent = () => {
-        if (isLoading) return <PageSkeleton />;
+        if (isInitialLoading) return <PageSkeleton />;
         
         switch(activeView) {
             case 'clases':
@@ -143,7 +146,7 @@ export default function ActivitiesPageContent() {
                             selectedDate={selectedDate}
                             onDateChange={handleDateChange}
                             allClasses={allTimeSlots}
-                            isLoading={isLoading}
+                            isLoading={isInitialLoading}
                             dateStripIndicators={dateStripIndicators}
                             dateStripDates={dateStripDates}
                             onViewPrefChange={onViewPrefChange}
@@ -157,7 +160,7 @@ export default function ActivitiesPageContent() {
                             selectedDate={selectedDate}
                             onDateChange={handleDateChange}
                             allMatches={allMatches}
-                            isLoading={isLoading}
+                            isLoading={isInitialLoading}
                             matchDayEvents={matchDayEvents}
                             dateStripIndicators={dateStripIndicators}
                             dateStripDates={dateStripDates}
