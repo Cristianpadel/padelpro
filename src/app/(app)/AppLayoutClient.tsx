@@ -71,14 +71,7 @@ export default function AppLayoutClient({ children }: { children: React.ReactNod
             {...activityFilters}
         />
         <main className="flex-1 flex flex-col">
-          {React.Children.map(children, child => {
-            // Clone the child (which is the page component) and pass activityFilters to it
-            if (React.isValidElement(child)) {
-              // @ts-ignore - The page components might not have activityFilters in their props type, but we pass it anyway
-              return React.cloneElement(child, { activityFilters });
-            }
-            return child;
-          })}
+          {children}
           <Footer />
         </main>
       </div>

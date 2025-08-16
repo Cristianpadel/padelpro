@@ -19,14 +19,20 @@ import { cn } from '@/lib/utils';
 import ActivityTypeSelectionDialog from './ActivityTypeSelectionDialog';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Plus } from 'lucide-react';
-import type { useActivityFilters } from '@/hooks/useActivityFilters';
+import type { ActivityViewType } from '@/types';
+import { useActivityFilters } from '@/hooks/useActivityFilters';
 
-// This component receives all filter state and handlers as props
-export default function ActivitiesPageContent({ activityFilters }: { activityFilters: ReturnType<typeof useActivityFilters> }) {
+export default function ActivitiesPageContent() {
     const router = useRouter();
     const { toast } = useToast();
+    
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-    // Use the passed-in filters and handlers
+    // Call the hook directly inside the component that needs it
+    const activityFilters = useActivityFilters(currentUser, (newFavoriteIds) => {
+        setCurrentUser(prevUser => prevUser ? { ...prevUser, favoriteInstructorIds: newFavoriteIds } : null);
+    });
+
     const {
         activeView,
         selectedDate,
@@ -36,11 +42,9 @@ export default function ActivitiesPageContent({ activityFilters }: { activityFil
         dateStripDates,
         showPointsBonus,
         handleViewPrefChange,
-        ...restOfFilters // Pass the rest down to displays
+        ...restOfFilters
     } = activityFilters;
     
-    // Local state for this component
-    const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [currentClub, setCurrentClub] = useState<Club | null>(null);
     const [allTimeSlots, setAllTimeSlots] = useState<TimeSlot[]>([]);
     const [allMatches, setAllMatches] = useState<Match[]>([]);
@@ -50,7 +54,7 @@ export default function ActivitiesPageContent({ activityFilters }: { activityFil
     const [activitySelection, setActivitySelection] = useState<{
         isOpen: boolean;
         date: Date | null;
-        preference: any | null; // Using 'any' for now to match prop
+        preference: any | null;
         types: ('class' | 'match')[];
     }>({ isOpen: false, date: null, preference: null, types: [] });
 
@@ -134,7 +138,7 @@ export default function ActivitiesPageContent({ activityFilters }: { activityFil
         switch(activeView) {
             case 'clases':
                 return <ClassDisplay
-                            {...restOfFilters} // Pass down all other filters from the hook
+                            {...restOfFilters}
                             currentUser={currentUser}
                             onBookingSuccess={handleBookingSuccess}
                             selectedDate={selectedDate}
