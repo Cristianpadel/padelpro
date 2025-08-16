@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
-import type { User, Match, Club, TimeOfDayFilterType, ViewPreference } from '@/types';
+import type { User, Match, Club, ViewPreference } from '@/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import MatchCard from '@/components/match/MatchCard';
@@ -15,9 +15,10 @@ interface MatchProDisplayProps {
     onBookingSuccess: () => void;
     selectedDate: Date | null;
     onDateChange: (date: Date) => void;
+    viewPreference: ViewPreference; // Added prop
 }
 
-const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, onBookingSuccess, selectedDate, onDateChange }) => {
+const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, onBookingSuccess, selectedDate, onDateChange, viewPreference }) => {
     const [allMatchProGames, setAllMatchProGames] = useState<Match[]>([]);
     const [clubInfo, setClubInfo] = useState<Club | null>(null);
     const [loading, setLoading] = useState(true);
@@ -57,9 +58,15 @@ const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, onBookin
     const filteredAndSortedMatches = useMemo(() => {
         if (!selectedDate || !localCurrentUser) return [];
         let matches = allMatchProGames.filter(m => isSameDay(new Date(m.startTime), selectedDate));
+        
+        // Apply viewPreference filter
+        if (viewPreference === 'myInscriptions' || viewPreference === 'myConfirmed') {
+            matches = matches.filter(m => (m.bookedPlayers || []).some(p => p.userId === localCurrentUser.id));
+        }
+
         matches.sort((a,b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
         return matches;
-    }, [allMatchProGames, selectedDate, localCurrentUser]);
+    }, [allMatchProGames, selectedDate, localCurrentUser, viewPreference]);
 
     const handleMatchUpdate = (updatedMatch: Match) => {
         setAllMatchProGames(prev => prev.map(m => m.id === updatedMatch.id ? updatedMatch : m));

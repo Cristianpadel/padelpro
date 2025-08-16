@@ -178,6 +178,7 @@ export default function ActivitiesPageContent() {
                         />;
             case 'matchpro':
                  return <MatchProDisplay
+                            {...restOfFilters}
                             currentUser={currentUser}
                             onBookingSuccess={handleBookingSuccess}
                             selectedDate={selectedDate}
