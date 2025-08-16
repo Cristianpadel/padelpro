@@ -132,13 +132,13 @@ export default function ActivitiesPageContent() {
         } else if (types.includes('event') && eventId) {
             router.push(`/match-day/${eventId}`);
         } else {
-            handleViewPrefChange(pref, activeView, date);
+            handleViewPrefChange(activeView, pref, date);
         }
     };
     
     const handleActivityTypeSelect = (type: 'class' | 'match') => {
         if (activitySelection.date && activitySelection.preference) {
-            handleViewPrefChange(activitySelection.preference, type, activitySelection.date);
+            handleViewPrefChange(type, activitySelection.preference, activitySelection.date);
         }
         setActivitySelection({ isOpen: false, date: null, preference: null, types: [] });
     };
@@ -225,10 +225,10 @@ export default function ActivitiesPageContent() {
                                 <div className="h-10 w-8 flex flex-col items-center justify-center relative space-y-0.5">
                                     <TooltipProvider delayDuration={150}>
                                         {indicators.activityStatus === 'confirmed' && (
-                                            <Tooltip><TooltipTrigger asChild><button onClick={() => onViewPrefChange(day, 'myConfirmed', indicators.activityTypes || ['class'])} className="h-6 w-6 flex items-center justify-center bg-destructive text-destructive-foreground rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">R</button></TooltipTrigger><TooltipContent><p>Ver mis reservas</p></TooltipContent></Tooltip>
+                                            <Tooltip><TooltipTrigger asChild><button onClick={() => onViewPrefChange('myConfirmed', indicators.activityTypes.includes('clases') ? 'clases' : 'partidas', day)} className="h-6 w-6 flex items-center justify-center bg-destructive text-destructive-foreground rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">R</button></TooltipTrigger><TooltipContent><p>Ver mis reservas</p></TooltipContent></Tooltip>
                                         )}
                                         {indicators.activityStatus === 'inscribed' && (
-                                            <Tooltip><TooltipTrigger asChild><button onClick={() => onViewPrefChange(day, 'myInscriptions', indicators.activityTypes || ['class'], indicators.eventId)} className="h-6 w-6 flex items-center justify-center bg-blue-500 text-white rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">I</button></TooltipTrigger><TooltipContent><p>Ver mis inscripciones</p></TooltipContent></Tooltip>
+                                            <Tooltip><TooltipTrigger asChild><button onClick={() => onViewPrefChange('myInscriptions', indicators.activityTypes[0], day, indicators.eventId)} className="h-6 w-6 flex items-center justify-center bg-blue-500 text-white rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">I</button></TooltipTrigger><TooltipContent><p>Ver mis inscripciones</p></TooltipContent></Tooltip>
                                         )}
                                         {indicators.hasEvent && indicators.activityStatus === 'none' && (
                                             <Tooltip><TooltipTrigger asChild><Link href={`/match-day/${indicators.eventId}`} passHref><Button variant="ghost" size="icon" className="h-6 w-6 rounded-md bg-primary/10 hover:bg-primary/20 animate-pulse-blue border border-primary/50"><Plus className="h-4 w-4 text-primary" /></Button></Link></TooltipTrigger><TooltipContent><p>¡Apúntate al Match-Day!</p></TooltipContent></Tooltip>
