@@ -1,15 +1,15 @@
 // src/app/(app)/activities/components/ActivitiesPageContent.tsx
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import ClassDisplay from '@/components/classfinder/ClassDisplay';
 import MatchDisplay from '@/components/classfinder/MatchDisplay';
 import MatchProDisplay from '@/app/(app)/classfinder/MatchProDisplay';
-import { getMockTimeSlots, getMockCurrentUser, getUserActivityStatusForDay, fetchMatches, fetchMatchDayEventsForDate, createMatchesForDay, getMockClubs, countUserUnconfirmedInscriptions } from '@/lib/mockData';
+import { getMockTimeSlots, fetchMatches, fetchMatchDayEventsForDate, createMatchesForDay, getMockClubs } from '@/lib/mockData';
 import type { TimeSlot, User, Match, MatchDayEvent, Club } from '@/types';
-import { startOfDay, addDays, isSameDay, format } from 'date-fns';
+import { addDays, isSameDay, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import PageSkeleton from '@/components/layout/PageSkeleton';
 import { useToast } from '@/hooks/use-toast';
@@ -19,18 +19,18 @@ import { cn } from '@/lib/utils';
 import ActivityTypeSelectionDialog from './ActivityTypeSelectionDialog';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Plus } from 'lucide-react';
-import type { ActivityViewType } from '@/types';
 import { useActivityFilters } from '@/hooks/useActivityFilters';
 
-export default function ActivitiesPageContent() {
+interface ActivitiesPageContentProps {
+    currentUser: User | null;
+    onCurrentUserUpdate: (newFavoriteIds: string[]) => void;
+}
+
+export default function ActivitiesPageContent({ currentUser, onCurrentUserUpdate }: ActivitiesPageContentProps) {
     const router = useRouter();
     const { toast } = useToast();
     
-    const [currentUser, setCurrentUser] = useState<User | null>(null);
-
-    const activityFilters = useActivityFilters(currentUser, (newFavoriteIds) => {
-        setCurrentUser(prevUser => prevUser ? { ...prevUser, favoriteInstructorIds: newFavoriteIds } : null);
-    });
+    const activityFilters = useActivityFilters(currentUser, onCurrentUserUpdate);
     
     const {
         activeView,
@@ -60,20 +60,13 @@ export default function ActivitiesPageContent() {
 
     const handleBookingSuccess = useCallback(async () => {
         triggerRefresh();
-        const updatedUser = await getMockCurrentUser();
-        setCurrentUser(updatedUser);
     }, [triggerRefresh]);
     
-     useEffect(() => {
+    useEffect(() => {
         const loadInitialData = async () => {
             setIsInitialLoading(true);
             try {
-                const [user, clubs] = await Promise.all([
-                    getMockCurrentUser(),
-                    getMockClubs(),
-                ]);
-                
-                setCurrentUser(user);
+                const clubs = await getMockClubs();
                 const club = clubs[0];
                 setCurrentClub(club);
                 
@@ -128,7 +121,8 @@ export default function ActivitiesPageContent() {
         if (relevantTypes.length > 1) {
             setActivitySelection({ isOpen: true, date, preference: pref, types: relevantTypes });
         } else if (relevantTypes.length === 1) {
-            handleViewPrefChange(pref, relevantTypes[0], date);
+            handleViewPrefChange(relevantTypes[0], pref, date);
+            handleViewPrefChange(relevantTypes[0], pref, date);
         } else if (types.includes('event') && eventId) {
             router.push(`/match-day/${eventId}`);
         } else {
@@ -226,10 +220,10 @@ export default function ActivitiesPageContent() {
                                 <div className="h-10 w-8 flex flex-col items-center justify-center relative space-y-0.5">
                                     <TooltipProvider delayDuration={150}>
                                         {indicators.activityStatus === 'confirmed' && (
-                                            <Tooltip><TooltipTrigger asChild><button onClick={() => onViewPrefChange('myConfirmed', indicators.activityTypes.includes('clases') ? 'clases' : 'partidas', day)} className="h-6 w-6 flex items-center justify-center bg-destructive text-destructive-foreground rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">R</button></TooltipTrigger><TooltipContent><p>Ver mis reservas</p></TooltipContent></Tooltip>
+                                            <Tooltip><TooltipTrigger asChild><button onClick={() => onViewPrefChange(day, 'myConfirmed', indicators.activityTypes.includes('clases') ? 'clases' : 'partidas')} className="h-6 w-6 flex items-center justify-center bg-destructive text-destructive-foreground rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">R</button></TooltipTrigger><TooltipContent><p>Ver mis reservas</p></TooltipContent></Tooltip>
                                         )}
                                         {indicators.activityStatus === 'inscribed' && (
-                                            <Tooltip><TooltipTrigger asChild><button onClick={() => onViewPrefChange('myInscriptions', indicators.activityTypes[0], day, indicators.eventId)} className="h-6 w-6 flex items-center justify-center bg-blue-500 text-white rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">I</button></TooltipTrigger><TooltipContent><p>Ver mis inscripciones</p></TooltipContent></Tooltip>
+                                            <Tooltip><TooltipTrigger asChild><button onClick={() => onViewPrefChange(day, 'myInscriptions', indicators.activityTypes[0], indicators.eventId)} className="h-6 w-6 flex items-center justify-center bg-blue-500 text-white rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">I</button></TooltipTrigger><TooltipContent><p>Ver mis inscripciones</p></TooltipContent></Tooltip>
                                         )}
                                         {indicators.hasEvent && indicators.activityStatus === 'none' && (
                                             <Tooltip><TooltipTrigger asChild><Link href={`/match-day/${indicators.eventId}`} passHref><Button variant="ghost" size="icon" className="h-6 w-6 rounded-md bg-primary/10 hover:bg-primary/20 animate-pulse-blue border border-primary/50"><Plus className="h-4 w-4 text-primary" /></Button></Link></TooltipTrigger><TooltipContent><p>¡Apúntate al Match-Day!</p></TooltipContent></Tooltip>
