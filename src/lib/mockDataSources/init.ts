@@ -45,12 +45,13 @@ export function performInitialization() {
   isInitialized = true;
 
   // --- Initialize Clubs ---
-  const initialClubs = [
+  const initialClubs: import('@/types').Club[] = [
     {
         id: 'club-1',
         name: 'Padel Estrella',
         location: 'Madrid, España',
-        logoUrl: '/logo-padel-estrella.png',
+  // Use a remote placeholder to avoid missing local asset 404s in dev
+  logoUrl: 'https://placehold.co/80x80?text=PE',
         showClassesTabOnFrontend: true,
         showMatchesTabOnFrontend: true,
         isMatchDayEnabled: true,
@@ -59,10 +60,10 @@ export function performInitialization() {
         adminEmail: 'admin@padelestrella.com',
         adminPassword: 'adminpassword',
         levelRanges: [
-            { name: "Iniciación", min: '1.0', max: '2.0', color: 'hsl(142.1 76.2% 36.3%)' },
-            { name: "Intermedio", min: '2.5', max: '3.5', color: 'hsl(210 100% 56%)' },
-            { name: "Avanzado", min: '4.0', max: '5.5', color: 'hsl(24.6 95% 53.1%)' },
-            { name: "Competición", min: '6.0', max: '7.0', color: 'hsl(346.8 77.2% 49.8%)' },
+            { name: "Iniciación", min: '1.0' as import('@/types').NumericMatchPadelLevel, max: '2.0' as import('@/types').NumericMatchPadelLevel, color: 'hsl(142.1 76.2% 36.3%)' },
+            { name: "Intermedio", min: '2.5' as import('@/types').NumericMatchPadelLevel, max: '3.5' as import('@/types').NumericMatchPadelLevel, color: 'hsl(210 100% 56%)' },
+            { name: "Avanzado", min: '4.0' as import('@/types').NumericMatchPadelLevel, max: '5.5' as import('@/types').NumericMatchPadelLevel, color: 'hsl(24.6 95% 53.1%)' },
+            { name: "Competición", min: '6.0' as import('@/types').NumericMatchPadelLevel, max: '7.0' as import('@/types').NumericMatchPadelLevel, color: 'hsl(346.8 77.2% 49.8%)' },
         ],
         courtRateTiers: [
           { id: uuidv4(), name: "Valle", days: ["monday", "tuesday", "wednesday", "thursday", "friday"], startTime: "09:00", endTime: "18:00", rate: 20 },
@@ -95,13 +96,13 @@ export function performInitialization() {
   initializeMockPadelCourts(initialPadelCourts);
 
   // --- Initialize Users ---
-  const initialUserDatabase = [
+  const initialUserDatabase: import('@/types').UserDB[] = [
     {
       id: 'user-current',
       name: 'Alex García',
       email: 'alex.garcia@email.com',
       hashedPassword: 'hashed_password123',
-      level: '4.0',
+      level: '4.0' as import('@/types').MatchPadelLevel,
       credit: 125.50,
       blockedCredit: 0,
       loyaltyPoints: 50,
@@ -114,27 +115,27 @@ export function performInitialization() {
       createdAt: new Date(),
       clubId: 'club-1',
     },
-     { id: 'user-2', name: 'Beatriz López', email: 'beatriz.lopez@email.com', hashedPassword: 'hashed_password123', level: '3.5', credit: 80.00, loyaltyPoints: 450, profilePictureUrl: 'https://randomuser.me/api/portraits/women/44.jpg', genderCategory: 'femenino', createdAt: new Date(), clubId: 'club-1', },
-     { id: 'user-3', name: 'Carlos Fernández', email: 'carlos.fernandez@email.com', hashedPassword: 'hashed_password123', level: '4.5', credit: 25.00, loyaltyPoints: 800, profilePictureUrl: 'https://randomuser.me/api/portraits/men/45.jpg', genderCategory: 'masculino', createdAt: new Date(), clubId: 'club-1', },
-     { id: 'user-4', name: 'Diana Martínez', email: 'diana.martinez@email.com', hashedPassword: 'hashed_password123', level: '2.5', credit: 150.00, loyaltyPoints: 120, profilePictureUrl: 'https://randomuser.me/api/portraits/women/46.jpg', genderCategory: 'femenino', createdAt: new Date(), clubId: 'club-1', },
-     { id: 'user-5', name: 'Eduardo Ruiz', email: 'eduardo.ruiz@email.com', hashedPassword: 'hashed_password123', level: '3.0', credit: 10.00, loyaltyPoints: 300, profilePictureUrl: 'https://randomuser.me/api/portraits/men/47.jpg', genderCategory: 'masculino', createdAt: new Date(), clubId: 'club-1', },
-     { id: 'user-6', name: 'Fátima Jiménez', email: 'fatima.jimenez@email.com', hashedPassword: 'hashed_password123', level: '2.0', credit: 200.00, loyaltyPoints: 50, profilePictureUrl: 'https://randomuser.me/api/portraits/women/48.jpg', genderCategory: 'femenino', createdAt: new Date(), clubId: 'club-1', },
-     { id: 'user-7', name: 'Gustavo Herrero', email: 'gustavo.herrero@email.com', hashedPassword: 'hashed_password123', level: '5.0', credit: 5.00, loyaltyPoints: 1000, profilePictureUrl: 'https://randomuser.me/api/portraits/men/49.jpg', genderCategory: 'masculino', createdAt: new Date(), clubId: 'club-1', },
-     { id: 'user-8', name: 'Helena Moreno', email: 'helena.moreno@email.com', hashedPassword: 'hashed_password123', level: '4.0', credit: 55.00, loyaltyPoints: 220, profilePictureUrl: 'https://randomuser.me/api/portraits/women/50.jpg', genderCategory: 'femenino', createdAt: new Date(), clubId: 'club-1', },
-     { id: 'user-9', name: 'Iván Navarro', email: 'ivan.navarro@email.com', hashedPassword: 'hashed_password123', level: '3.5', credit: 75.00, loyaltyPoints: 150, profilePictureUrl: 'https://randomuser.me/api/portraits/men/51.jpg', genderCategory: 'masculino', createdAt: new Date(), clubId: 'club-1', },
-     { id: 'user-10', name: 'Juana Peña', email: 'juana.pena@email.com', hashedPassword: 'hashed_password123', level: '1.5', credit: 120.00, loyaltyPoints: 75, profilePictureUrl: 'https://randomuser.me/api/portraits/women/52.jpg', genderCategory: 'femenino', createdAt: new Date(), clubId: 'club-1', },
-     { id: 'user-11', name: 'Kevin Sáez', email: 'kevin.saez@email.com', hashedPassword: 'hashed_password123', level: '4.5', credit: 30.00, loyaltyPoints: 400, profilePictureUrl: 'https://randomuser.me/api/portraits/men/53.jpg', genderCategory: 'masculino', createdAt: new Date(), clubId: 'club-1', },
-     { id: 'user-12', name: 'Laura Vidal', email: 'laura.vidal@email.com', hashedPassword: 'hashed_password123', level: '3.0', credit: 90.00, loyaltyPoints: 180, profilePictureUrl: 'https://randomuser.me/api/portraits/women/54.jpg', genderCategory: 'femenino', createdAt: new Date(), clubId: 'club-1', },
-     { id: 'user-13', name: 'Marcos Ibáñez', email: 'marcos.ibanez@email.com', hashedPassword: 'hashed_password123', level: '2.5', credit: 40.00, loyaltyPoints: 90, profilePictureUrl: 'https://randomuser.me/api/portraits/men/55.jpg', genderCategory: 'masculino', createdAt: new Date(), clubId: 'club-1', },
-     { id: 'user-14', name: 'Nerea Campos', email: 'nerea.campos@email.com', hashedPassword: 'hashed_password123', level: '4.0', credit: 60.00, loyaltyPoints: 330, profilePictureUrl: 'https://randomuser.me/api/portraits/women/56.jpg', genderCategory: 'femenino', createdAt: new Date(), clubId: 'club-1', },
-     { id: 'user-15', name: 'Óscar Romero', email: 'oscar.romero@email.com', hashedPassword: 'hashed_password123', level: '5.5', credit: 15.00, loyaltyPoints: 600, profilePictureUrl: 'https://randomuser.me/api/portraits/men/57.jpg', genderCategory: 'masculino', createdAt: new Date(), clubId: 'club-1', },
-     { id: 'user-16', name: 'Patricia Soler', email: 'patricia.soler@email.com', hashedPassword: 'hashed_password123', level: '3.5', credit: 85.00, loyaltyPoints: 250, profilePictureUrl: 'https://randomuser.me/api/portraits/women/58.jpg', genderCategory: 'femenino', createdAt: new Date(), clubId: 'club-1', },
-     { id: 'user-17', name: 'Rubén Pascual', email: 'ruben.pascual@email.com', hashedPassword: 'hashed_password123', level: '4.0', credit: 45.00, loyaltyPoints: 190, profilePictureUrl: 'https://randomuser.me/api/portraits/men/59.jpg', genderCategory: 'masculino', createdAt: new Date(), clubId: 'club-1', },
-     { id: 'user-18', name: 'Sara Fuentes', email: 'sara.fuentes@email.com', hashedPassword: 'hashed_password123', level: '2.5', credit: 110.00, loyaltyPoints: 110, profilePictureUrl: 'https://randomuser.me/api/portraits/women/60.jpg', genderCategory: 'femenino', createdAt: new Date(), clubId: 'club-1', },
+     { id: 'user-2', name: 'Beatriz López', email: 'beatriz.lopez@email.com', hashedPassword: 'hashed_password123', level: '3.5' as import('@/types').MatchPadelLevel, credit: 80.00, loyaltyPoints: 450, profilePictureUrl: 'https://randomuser.me/api/portraits/women/44.jpg', genderCategory: 'femenino', createdAt: new Date(), clubId: 'club-1', },
+     { id: 'user-3', name: 'Carlos Fernández', email: 'carlos.fernandez@email.com', hashedPassword: 'hashed_password123', level: '4.5' as import('@/types').MatchPadelLevel, credit: 25.00, loyaltyPoints: 800, profilePictureUrl: 'https://randomuser.me/api/portraits/men/45.jpg', genderCategory: 'masculino', createdAt: new Date(), clubId: 'club-1', },
+  { id: 'user-4', name: 'Diana Martínez', email: 'diana.martinez@email.com', hashedPassword: 'hashed_password123', level: '2.5' as import('@/types').MatchPadelLevel, credit: 150.00, loyaltyPoints: 120, profilePictureUrl: 'https://randomuser.me/api/portraits/women/46.jpg', genderCategory: 'femenino', createdAt: new Date(), clubId: 'club-1', },
+  { id: 'user-5', name: 'Eduardo Ruiz', email: 'eduardo.ruiz@email.com', hashedPassword: 'hashed_password123', level: '3.0' as import('@/types').MatchPadelLevel, credit: 10.00, loyaltyPoints: 300, profilePictureUrl: 'https://randomuser.me/api/portraits/men/47.jpg', genderCategory: 'masculino', createdAt: new Date(), clubId: 'club-1', },
+  { id: 'user-6', name: 'Fátima Jiménez', email: 'fatima.jimenez@email.com', hashedPassword: 'hashed_password123', level: '2.0' as import('@/types').MatchPadelLevel, credit: 200.00, loyaltyPoints: 50, profilePictureUrl: 'https://randomuser.me/api/portraits/women/48.jpg', genderCategory: 'femenino', createdAt: new Date(), clubId: 'club-1', },
+  { id: 'user-7', name: 'Gustavo Herrero', email: 'gustavo.herrero@email.com', hashedPassword: 'hashed_password123', level: '5.0' as import('@/types').MatchPadelLevel, credit: 5.00, loyaltyPoints: 1000, profilePictureUrl: 'https://randomuser.me/api/portraits/men/49.jpg', genderCategory: 'masculino', createdAt: new Date(), clubId: 'club-1', },
+  { id: 'user-8', name: 'Helena Moreno', email: 'helena.moreno@email.com', hashedPassword: 'hashed_password123', level: '4.0' as import('@/types').MatchPadelLevel, credit: 55.00, loyaltyPoints: 220, profilePictureUrl: 'https://randomuser.me/api/portraits/women/50.jpg', genderCategory: 'femenino', createdAt: new Date(), clubId: 'club-1', },
+  { id: 'user-9', name: 'Iván Navarro', email: 'ivan.navarro@email.com', hashedPassword: 'hashed_password123', level: '3.5' as import('@/types').MatchPadelLevel, credit: 75.00, loyaltyPoints: 150, profilePictureUrl: 'https://randomuser.me/api/portraits/men/51.jpg', genderCategory: 'masculino', createdAt: new Date(), clubId: 'club-1', },
+  { id: 'user-10', name: 'Juana Peña', email: 'juana.pena@email.com', hashedPassword: 'hashed_password123', level: '1.5' as import('@/types').MatchPadelLevel, credit: 120.00, loyaltyPoints: 75, profilePictureUrl: 'https://randomuser.me/api/portraits/women/52.jpg', genderCategory: 'femenino', createdAt: new Date(), clubId: 'club-1', },
+  { id: 'user-11', name: 'Kevin Sáez', email: 'kevin.saez@email.com', hashedPassword: 'hashed_password123', level: '4.5' as import('@/types').MatchPadelLevel, credit: 30.00, loyaltyPoints: 400, profilePictureUrl: 'https://randomuser.me/api/portraits/men/53.jpg', genderCategory: 'masculino', createdAt: new Date(), clubId: 'club-1', },
+  { id: 'user-12', name: 'Laura Vidal', email: 'laura.vidal@email.com', hashedPassword: 'hashed_password123', level: '3.0' as import('@/types').MatchPadelLevel, credit: 90.00, loyaltyPoints: 180, profilePictureUrl: 'https://randomuser.me/api/portraits/women/54.jpg', genderCategory: 'femenino', createdAt: new Date(), clubId: 'club-1', },
+  { id: 'user-13', name: 'Marcos Ibáñez', email: 'marcos.ibanez@email.com', hashedPassword: 'hashed_password123', level: '2.5' as import('@/types').MatchPadelLevel, credit: 40.00, loyaltyPoints: 90, profilePictureUrl: 'https://randomuser.me/api/portraits/men/55.jpg', genderCategory: 'masculino', createdAt: new Date(), clubId: 'club-1', },
+  { id: 'user-14', name: 'Nerea Campos', email: 'nerea.campos@email.com', hashedPassword: 'hashed_password123', level: '4.0' as import('@/types').MatchPadelLevel, credit: 60.00, loyaltyPoints: 330, profilePictureUrl: 'https://randomuser.me/api/portraits/women/56.jpg', genderCategory: 'femenino', createdAt: new Date(), clubId: 'club-1', },
+  { id: 'user-15', name: 'Óscar Romero', email: 'oscar.romero@email.com', hashedPassword: 'hashed_password123', level: '5.5' as import('@/types').MatchPadelLevel, credit: 15.00, loyaltyPoints: 600, profilePictureUrl: 'https://randomuser.me/api/portraits/men/57.jpg', genderCategory: 'masculino', createdAt: new Date(), clubId: 'club-1', },
+  { id: 'user-16', name: 'Patricia Soler', email: 'patricia.soler@email.com', hashedPassword: 'hashed_password123', level: '3.5' as import('@/types').MatchPadelLevel, credit: 85.00, loyaltyPoints: 250, profilePictureUrl: 'https://randomuser.me/api/portraits/women/58.jpg', genderCategory: 'femenino', createdAt: new Date(), clubId: 'club-1', },
+  { id: 'user-17', name: 'Rubén Pascual', email: 'ruben.pascual@email.com', hashedPassword: 'hashed_password123', level: '4.0' as import('@/types').MatchPadelLevel, credit: 45.00, loyaltyPoints: 190, profilePictureUrl: 'https://randomuser.me/api/portraits/men/59.jpg', genderCategory: 'masculino', createdAt: new Date(), clubId: 'club-1', },
+  { id: 'user-18', name: 'Sara Fuentes', email: 'sara.fuentes@email.com', hashedPassword: 'hashed_password123', level: '2.5' as import('@/types').MatchPadelLevel, credit: 110.00, loyaltyPoints: 110, profilePictureUrl: 'https://randomuser.me/api/portraits/women/60.jpg', genderCategory: 'femenino', createdAt: new Date(), clubId: 'club-1', },
   ];
   initializeMockUserDatabase(initialUserDatabase);
   
-  const initialStudents = initialUserDatabase
+  const initialStudents: import('@/types').User[] = initialUserDatabase
     .filter(u => u.email && !u.email.includes('@padelestrella.com') && !u.email.includes('@padelapp.com') && !u.id.startsWith('instructor-'))
     .map(u => ({
         id: u.id, name: u.name, email: u.email, level: u.level, credit: u.credit,
@@ -155,9 +156,9 @@ export function performInitialization() {
   } : null);
 
   // --- Initialize Instructors ---
-  const initialInstructors = [
-      { id: 'inst-1', name: 'Carlos Santana', email: 'carlos.santana@padelestrella.com', profilePictureUrl: 'https://randomuser.me/api/portraits/men/1.jpg', level: '6.0', genderCategory: 'masculino', assignedClubId: 'club-1', isAvailable: true, defaultRatePerHour: 35, clubId: 'club-1' },
-      { id: 'inst-2', name: 'Ana García', email: 'ana.garcia@padelestrella.com', profilePictureUrl: 'https://randomuser.me/api/portraits/women/2.jpg', level: '5.5', genderCategory: 'femenino', assignedClubId: 'club-1', isAvailable: true, defaultRatePerHour: 30, assignedCourtNumber: 2, clubId: 'club-1' },
+  const initialInstructors: import('@/types').Instructor[] = [
+      { id: 'inst-1', name: 'Carlos Santana', email: 'carlos.santana@padelestrella.com', profilePictureUrl: 'https://randomuser.me/api/portraits/men/1.jpg', level: '6.0' as import('@/types').MatchPadelLevel, genderCategory: 'masculino', assignedClubId: 'club-1', isAvailable: true, defaultRatePerHour: 35 },
+      { id: 'inst-2', name: 'Ana García', email: 'ana.garcia@padelestrella.com', profilePictureUrl: 'https://randomuser.me/api/portraits/women/2.jpg', level: '5.5' as import('@/types').MatchPadelLevel, genderCategory: 'femenino', assignedClubId: 'club-1', isAvailable: true, defaultRatePerHour: 30, assignedCourtNumber: 2 },
   ];
   initializeMockInstructors(initialInstructors);
   
@@ -165,17 +166,35 @@ export function performInitialization() {
       const dbEntry = initialUserDatabase.find(u => u.id === inst.id);
       if (!dbEntry) {
         initialUserDatabase.push({
-          id: inst.id, name: inst.name, email: inst.email!, hashedPassword: `hashed_${inst.name}`, createdAt: new Date(), ...inst
+          id: inst.id,
+          name: inst.name,
+          email: inst.email!,
+          hashedPassword: `hashed_${inst.name}`,
+          createdAt: new Date(),
+          level: inst.level,
+          profilePictureUrl: inst.profilePictureUrl,
+          genderCategory: inst.genderCategory,
+          assignedClubId: inst.assignedClubId,
+          assignedCourtNumber: inst.assignedCourtNumber,
+          isAvailable: inst.isAvailable,
+          defaultRatePerHour: inst.defaultRatePerHour,
+          credit: 0,
+          blockedCredit: 0,
+          loyaltyPoints: 0,
+          blockedLoyaltyPoints: 0,
+          pendingBonusPoints: 0,
+          favoriteInstructorIds: [],
+          preferredGameType: 'clases',
         });
       }
   });
 
   // --- Initialize Shop Products ---
-  const initialShopProducts = [
-      { id: 'prod-1', clubId: 'club-1', name: 'Pala Bullpadel Vertex 04', images: ['/vertex-04.webp'], officialPrice: 280, offerPrice: 220, stock: 5, status: 'in-stock', category: 'pala', aiHint: 'Bullpadel Vertex racket' },
-      { id: 'prod-2', clubId: 'club-1', name: 'Cajón de Pelotas Head Pro', images: ['/head-pro-balls.webp'], officialPrice: 85, offerPrice: 75, stock: 20, status: 'in-stock', category: 'pelotas', aiHint: 'Head Pro balls' },
-      { id: 'prod-3', clubId: 'club-1', name: 'Zapatillas Joma T.SLAM', images: ['/joma-slam.webp'], officialPrice: 90, offerPrice: 70, stock: 12, status: 'in-stock', category: 'ropa', aiHint: 'Joma padel shoes' },
-      { id: 'prod-4', clubId: 'club-1', name: 'Paletero Siux', images: ['/siux-bag.webp'], officialPrice: 70, offerPrice: 60, stock: 8, status: 'in-stock', category: 'accesorios', aiHint: 'Siux padel bag' },
+  const initialShopProducts: import('@/types').Product[] = [
+      { id: 'prod-1', clubId: 'club-1', name: 'Pala Bullpadel Vertex 04', images: ['https://placehold.co/600x400?text=Vertex+04'], officialPrice: 280, offerPrice: 220, stock: 5, status: 'in-stock', category: 'pala', aiHint: 'Bullpadel Vertex racket' },
+      { id: 'prod-2', clubId: 'club-1', name: 'Cajón de Pelotas Head Pro', images: ['https://placehold.co/600x400?text=Head+Pro+Balls'], officialPrice: 85, offerPrice: 75, stock: 20, status: 'in-stock', category: 'pelotas', aiHint: 'Head Pro balls' },
+      { id: 'prod-3', clubId: 'club-1', name: 'Zapatillas Joma T.SLAM', images: ['https://placehold.co/600x400?text=Joma+T.SLAM'], officialPrice: 90, offerPrice: 70, stock: 12, status: 'in-stock', category: 'ropa', aiHint: 'Joma padel shoes' },
+      { id: 'prod-4', clubId: 'club-1', name: 'Paletero Siux', images: ['https://placehold.co/600x400?text=Siux+Bag'], officialPrice: 70, offerPrice: 60, stock: 8, status: 'in-stock', category: 'accesorios', aiHint: 'Siux padel bag' },
   ];
   initializeMockShopProducts(initialShopProducts);
 
@@ -214,14 +233,14 @@ export function performInitialization() {
   
   // --- Initialize Match-Day Inscriptions ---
   const inscribedUsers = initialUserDatabase.slice(0, 14); // Inscribe 14 users to leave 2 spots
-  const initialMatchDayInscriptions = inscribedUsers.map((user, index) => {
+  const initialMatchDayInscriptions: import('@/types').MatchDayInscription[] = inscribedUsers.map((user, index) => {
       // All 14 are on the main list
       return {
           id: `md-insc-${user.id}`,
           eventId: matchDayEventId,
           userId: user.id,
           userName: user.name || 'Unknown',
-          userLevel: user.level || 'abierto',
+          userLevel: (user.level ?? 'abierto') as import('@/types').MatchPadelLevel,
           userProfilePictureUrl: user.profilePictureUrl,
           status: 'main',
           inscriptionTime: addMinutes(new Date(), index),
