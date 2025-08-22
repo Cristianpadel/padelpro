@@ -5,7 +5,7 @@ import React, { useState, useEffect, useMemo, useCallback, useTransition } from 
 import type { Booking, User, Review, TimeSlot, PadelCourt, Instructor, UserActivityStatusForDay, MatchBooking, Match, Club, PadelCategoryForSlot, MatchBookingMatchDetails } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { List, Clock, Users, CalendarCheck, CalendarX, Loader2, Ban, Hash, Trophy, UserCircle, Gift, Info, MessageSquare, Euro, Users2 as CategoryIcon, Venus, Mars, Share2, Unlock, Lock, Repeat, Lightbulb, BarChartHorizontal, Plus } from 'lucide-react';
+import { List, Clock, Users, CalendarCheck, CalendarX, Loader2, Ban, Hash, Trophy, UserCircle, Gift, Info, MessageSquare, Euro, Users2 as CategoryIcon, Venus, Mars, Share2, Unlock, Lock, Repeat, Lightbulb, BarChartHorizontal, Plus, CheckCircle } from 'lucide-react';
 import { format, differenceInHours } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { fetchUserMatchBookings, cancelMatchBooking, getMockClubs, makeMatchPublic, cancelPrivateMatchAndReofferWithPoints, getMockMatches, renewRecurringMatch, fillMatchAndMakePrivate } from '@/lib/mockData';
@@ -122,13 +122,31 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
       setLoading(true);
       const fetchedBookings = await fetchUserMatchBookings(currentUser.id);
       
-      const enrichedBookings = fetchedBookings.map(booking => {
-          const matchDetails = state.getMockMatches().find(m => m.id === booking.activityId);
-          return {
-              ...booking,
-              matchDetails: matchDetails ? { ...matchDetails, startTime: new Date(matchDetails.startTime), endTime: new Date(matchDetails.endTime), bookedPlayers: [...(matchDetails.bookedPlayers || [])] } : undefined
-          };
+    const enrichedBookings = fetchedBookings.map(booking => {
+      const matchDetails = state.getMockMatches().find(m => m.id === booking.activityId);
+      if (!matchDetails) return { ...booking, matchDetails: undefined };
+
+      const resolvedBookedPlayers = (matchDetails.bookedPlayers || []).map(p => {
+        const student = state.getMockStudents().find(s => s.id === p.userId);
+        const userDb = state.getMockUserDatabase().find(u => u.id === p.userId);
+        const resolved = student || userDb || p;
+        return {
+          userId: p.userId,
+          name: (resolved as any)?.name || p.name,
+          profilePictureUrl: (resolved as any)?.profilePictureUrl || p.profilePictureUrl,
+        };
       });
+
+      return {
+        ...booking,
+        matchDetails: {
+          ...matchDetails,
+          startTime: new Date(matchDetails.startTime),
+          endTime: new Date(matchDetails.endTime),
+          bookedPlayers: resolvedBookedPlayers,
+        }
+      };
+    });
 
       enrichedBookings.sort((a, b) => (a.matchDetails?.startTime?.getTime() ?? 0) - (b.matchDetails?.startTime?.getTime() ?? 0));
       setBookings(enrichedBookings);
@@ -312,7 +330,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
       }
 
       const { id: matchId, startTime, endTime, courtNumber, level, category, bookedPlayers, totalCourtFee, clubId, status, organizerId, privateShareCode, isRecurring, nextRecurringMatchId, durationMinutes } = matchDetails;
-      const isMatchFull = (bookedPlayers || []).length >= 4;
+  const isMatchFull = (bookedPlayers || []).length >= 4;
       const wasBookedWithPoints = booking.bookedWithPoints === true;
       const clubDetails = getMockClubs().find(c => c.id === clubId);
       const isOrganizerOfPrivateMatch = status === 'confirmed_private' && organizerId === currentUser.id;
@@ -414,7 +432,13 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                     </div>
                 </div>
                   <div className="mt-0.5 flex flex-col items-end gap-1.5">
-                    {isUpcomingItem && status !== 'confirmed_private' && <Badge variant={isMatchFull ? 'destructive' : 'default'} className={cn('text-xs', isMatchFull ? 'bg-red-500' : 'bg-blue-500')}>{isMatchFull ? 'Completa' : 'Inscrito'}</Badge>}
+              {isUpcomingItem && status !== 'confirmed_private' && (
+                isUserInMatch ? (
+                  <Badge variant="default" className="text-xs bg-blue-500">Inscrito</Badge>
+                ) : (
+                  isMatchFull ? <Badge variant="destructive" className="text-xs bg-red-500">Completa</Badge> : null
+                )
+              )}
                     {isUpcomingItem && status === 'confirmed_private' && <Badge variant="outline" className="text-xs bg-purple-100 text-purple-700 border-purple-400">Privada</Badge>}
                     {!isUpcomingItem && <Badge variant="outline" className="text-xs">Finalizada</Badge>}
 

@@ -1,5 +1,12 @@
-// src/components/match/MatchSpotDisplay.tsx
+
 "use client";
+// DEBUG: Log temporal para depuración de plazas y avatares
+import { useEffect } from 'react';
+
+// ...existing code...
+
+// Hook temporal para log de depuración
+// (debe ir dentro del componente para tener acceso a match)
 
 import React from 'react';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -46,8 +53,10 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
   pointsToAward,
 }) => {
     const { toast } = useToast();
-    const player = match.bookedPlayers?.[spotIndex];
-    const isCurrentUserInSpot = !!(player && currentUser && player.userId === currentUser.id);
+    // Buscar el usuario real para este spot: solo mostrar el usuario si está en esta posición
+    let player = match.bookedPlayers?.[spotIndex];
+    let isSlotEmpty = !player || !player.userId;
+    let isCurrentUserInSpot = !!(player && currentUser && player.userId === currentUser.id);
     const isMatchFull = (match.bookedPlayers || []).length >= 4;
     const isPlaceholderMatch = match.isPlaceholder === true;
     
@@ -80,19 +89,35 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
         }
     };
 
-    const fullPlayer = player ? (getMockStudents().find(s => s.id === player.userId) || (currentUser?.id === player.userId ? currentUser : null)) : null;
 
-    if (player && fullPlayer) {
-        spotTooltipText = `${fullPlayer.name || 'Jugador'}${isCurrentUserInSpot ? ' (Tú)' : ''}`;
-        spotVariant = "solid";
-        isDisabled = true; 
+    // Siempre usar el usuario actual si coincide el userId, si no buscar en estudiantes o en user database
+    const userDb = require('@/lib/mockDataSources/state');
+    const fullPlayer = player && player.userId
+        ? (currentUser && player.userId === currentUser.id
+            ? currentUser
+        : getMockStudents().find(s => s.id === player.userId)
+            || userDb.getMockUserDatabase().find((u: any) => u.id === player.userId)
+                || player)
+        : null;
+
+    if (!isSlotEmpty && fullPlayer) {
+    spotTooltipText = `${fullPlayer.name || 'Jugador'}${isCurrentUserInSpot ? ' (Tú)' : ''}`;
+    spotVariant = "solid";
+    isDisabled = true;
+    } else if (isSlotEmpty) {
+    iconToShow = <Plus className="h-5 w-5 text-green-600 opacity-60 stroke-[3]" />;
+    spotTooltipText = isPlaceholderMatch ? `Iniciar Partida (Coste: ${pricePerPlayer.toFixed(2)}€)` : `Unirse (Coste: ${pricePerPlayer.toFixed(2)}€)`;
+    spotVariant = "dashed";
+    isDisabled = false;
+    actionHandler = () => onJoin(spotIndex, false);
     } else if (isPending) {
         iconToShow = <Loader2 className="h-5 w-5 animate-spin text-primary" />;
         spotTooltipText = "Procesando...";
         isDisabled = true;
     } else if (isUserAlreadyBooked) {
         spotTooltipText = "Ya estás inscrito en esta partida.";
-        isDisabled = true;
+            // Si el usuario ya tiene una RESERVA confirmada ese día, bloquear cualquier otra inscripción de ese día
+            spotTooltipText = "Ya tienes otra reserva confirmada hoy.";
     } else if (userHasOtherConfirmedActivityToday) {
         spotTooltipText = "Ya tienes otra actividad confirmada hoy.";
         isDisabled = true;
@@ -174,13 +199,13 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
         }
     }
     
-    const playerLevelDisplay = fullPlayer?.level && fullPlayer.level !== 'abierto' ? fullPlayer.level : (fullPlayer ? '?' : '');
-    
-     const spotLabel = player && fullPlayer
-      ? (fullPlayer.name || 'Jugador').split(' ')[0]
-      : (match.gratisSpotAvailable && (match.bookedPlayers || []).length === 3 && !player)
-      ? ""
-      : (pricePerPlayer > 0 ? `${pricePerPlayer.toFixed(2)}€` : "");
+        const playerLevelDisplay = fullPlayer?.level && fullPlayer.level !== 'abierto' ? fullPlayer.level : (fullPlayer && player && player.userId ? '?' : '');
+
+        const spotLabel = !isSlotEmpty && fullPlayer
+            ? (fullPlayer.name || 'Jugador').split(' ')[0]
+            : (match.gratisSpotAvailable && (match.bookedPlayers || []).length === 3 && isSlotEmpty)
+            ? ""
+            : (pricePerPlayer > 0 ? `${pricePerPlayer.toFixed(2)}€` : "");
 
 
     return (
@@ -201,18 +226,25 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
                         isCurrentUserInSpot && "border-4 border-primary shadow-lg",
                         isDisabled && !player && 'opacity-70 hover:bg-transparent'
                     )}>
-                        {player && fullPlayer ? (
-                            <>
-                                <Avatar className="h-[calc(100%-4px)] w-[calc(100%-4px)]">
-                                    <AvatarImage src={fullPlayer.profilePictureUrl} alt={`Avatar ${fullPlayer.name}`} data-ai-hint="player avatar large"/>
-                                    <AvatarFallback className="text-sm bg-muted text-muted-foreground">{getInitials(fullPlayer.name || 'P')}</AvatarFallback>
-                                </Avatar>
-                            </>
-                        ) : (
-                          <div className="w-full h-full rounded-full flex items-center justify-center">
+                    {player && player.userId ? (
+                        <>
+                            <Avatar className="h-[calc(100%-4px)] w-[calc(100%-4px)]">
+                                <AvatarImage
+                                    src={(fullPlayer as any)?.profilePictureUrl || player.profilePictureUrl || ''}
+                                    alt={`Avatar ${fullPlayer?.name || player.name || 'Sin nombre'}`}
+                                    onError={e => { e.currentTarget.style.display = 'none'; }}
+                                    data-ai-hint="player avatar large"
+                                />
+                                <AvatarFallback className="text-sm border border-border">
+                                    {getInitials((fullPlayer?.name || player.name || '').trim()) || '??'}
+                                </AvatarFallback>
+                            </Avatar>
+                        </>
+                    ) : (
+                        <div className="w-full h-full rounded-full flex items-center justify-center">
                             {iconToShow}
-                          </div>
-                        )}
+                        </div>
+                    )}
                         {player && playerLevelDisplay && (
                             <div className="absolute -top-1.5 -right-1.5 bg-background text-foreground border border-border rounded-md px-1 py-0.5 text-[10px] font-bold shadow-md z-20">{playerLevelDisplay}</div>
                         )}

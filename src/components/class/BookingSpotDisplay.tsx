@@ -92,15 +92,19 @@ const BookingSpotDisplay: React.FC<BookingSpotDisplayProps> = ({
   };
 
   if (playerInSpot) {
-    const student = getMockStudents().find(u => u.id === playerInSpot.userId);
+    const student = getMockStudents().find(u => u.id === playerInSpot.userId) 
+      || require('@/lib/mockDataSources/state').getMockUserDatabase().find((u: any) => u.id === playerInSpot.userId)
+      || null;
+    const avatarUrl = student?.profilePictureUrl || null;
+    const displayName = student?.name || '';
     return (
       <TooltipProvider delayDuration={100}>
         <Tooltip>
           <TooltipTrigger asChild>
             <div className="relative">
               <Avatar className={cn("h-10 w-10 p-0 overflow-hidden shadow-[inset_0_3px_6px_0_rgba(0,0,0,0.4)]", isCurrentUserInSpot ? "border-[3px] border-primary shadow-lg" : "border-gray-300")}>
-                <AvatarImage src={student?.profilePictureUrl} alt={student?.name} data-ai-hint="player avatar small" />
-                <AvatarFallback className="text-xs">{getInitials(student?.name || '')}</AvatarFallback>
+                <AvatarImage src={avatarUrl || ''} alt={displayName} data-ai-hint="player avatar small" onError={e => { e.currentTarget.style.display = 'none'; }} />
+                <AvatarFallback className="text-xs">{getInitials(displayName)}</AvatarFallback>
               </Avatar>
             </div>
           </TooltipTrigger>

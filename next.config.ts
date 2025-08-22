@@ -8,6 +8,32 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  async redirects() {
+    return [
+      // Strip the segment group from URLs like /app/... which are not routable
+      {
+        source: '/app',
+        destination: '/dashboard',
+        permanent: false,
+      },
+      {
+        source: '/app/:path*',
+        destination: '/:path*',
+        permanent: false,
+      },
+      // Legacy or alias routes
+      {
+        source: '/classfinder',
+        destination: '/activities',
+        permanent: false,
+      },
+      {
+        source: '/clases',
+        destination: '/activities',
+        permanent: false,
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {

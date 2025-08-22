@@ -3,7 +3,8 @@
 
 import React, { useState, useMemo, useEffect, useCallback, useTransition } from 'react';
 import type { Match, User, Club, PadelCourt } from '@/types';
-import { getMockStudents, getMockClubs, bookMatch, confirmMatchAsPrivate, joinPrivateMatch, makeMatchPublic, bookCourtForMatchWithPoints, calculateActivityPrice, getCourtAvailabilityForInterval, isUserLevelCompatibleWithActivity, isMatchBookableWithPoints } from '@/lib/mockData';
+import { getMockStudents, getMockClubs, bookMatch, confirmMatchAsPrivate, joinPrivateMatch, makeMatchPublic, bookCourtForMatchWithPoints, calculateActivityPrice, getCourtAvailabilityForInterval, isUserLevelCompatibleWithActivity } from '@/lib/mockData';
+import { isMatchBookableWithPoints } from '@/lib/mockDataSources/utils';
 import { displayClassCategory } from '@/types';
 import { format, differenceInMinutes, differenceInDays, startOfDay, parse, getDay } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -23,7 +24,7 @@ import { Input } from '@/components/ui/input';
 import { Clock, Users, Plus, Loader2, Gift, CreditCard, AlertTriangle, Lock, Star, Share2, Hash, Users2, Venus, Mars, BarChartHorizontal, Lightbulb, Euro, Trophy, PiggyBank, ThumbsUp, Scissors } from 'lucide-react';
 import { MatchSpotDisplay } from '@/components/match/MatchSpotDisplay';
 import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
-import { hasAnyActivityForDay } from '@/lib/mockData';
+import { hasAnyActivityForDay, countUserConfirmedActivitiesForDay } from '@/lib/mockData';
 
 const InfoDialog: React.FC<{
   isOpen: boolean;
@@ -87,7 +88,7 @@ interface MatchCardContentComponentProps extends MatchCardProps {
 
 // This is the inner component that contains all the logic and hooks.
 // It will only be rendered when currentUser and clubInfo are available.
-const MatchCardContentComponent: React.FC<MatchCardContentComponentProps> = React.memo(({ match: initialMatch, currentUser, clubInfo, onBookingSuccess, showPointsBonus }) => {
+const MatchCardContentComponent: React.FC<MatchCardContentComponentProps> = React.memo(({ match: initialMatch, currentUser, clubInfo, onBookingSuccess, onMatchUpdate, showPointsBonus }) => {
     const { toast } = useToast();
     const [isPending, startTransition] = useTransition();
     const [currentMatch, setCurrentMatch] = useState<Match>(initialMatch);
@@ -114,10 +115,13 @@ const MatchCardContentComponent: React.FC<MatchCardContentComponentProps> = Reac
     const isPlaceholderMatch = currentMatch.isPlaceholder === true;
     const isPrivateMatch = currentMatch.status === 'confirmed_private';
     const canJoinThisPrivateMatch = isPrivateMatch && !isUserBooked;
+    // Bloquear unirse a cualquier actividad de ese día si ya hay alguna RESERVA confirmada ese mismo día
     const userHasOtherConfirmedActivityToday = useMemo(() => {
         if (!currentUser) return false;
-        return hasAnyActivityForDay(currentUser.id, new Date(currentMatch.startTime), new Date(currentMatch.endTime));
-    }, [currentUser, currentMatch.startTime, currentMatch.endTime]);
+        const activityDate = new Date(currentMatch.startTime);
+        // Excluir esta misma actividad (match) del conteo
+        return countUserConfirmedActivitiesForDay(currentUser.id, activityDate, currentMatch.id, 'match') > 0;
+    }, [currentUser, currentMatch.startTime, currentMatch.id]);
 
 
     const pricePerPlayer = useMemo(() => {
@@ -160,6 +164,11 @@ const MatchCardContentComponent: React.FC<MatchCardContentComponentProps> = Reac
                 toast({ title: 'Error al Unirse', description: result.error, variant: 'destructive' });
             } else {
                 toast({ title: '¡Inscrito!', description: 'Te has unido a la partida.', className: 'bg-primary text-primary-foreground' });
+                // Refrescar la tarjeta con el match actualizado inmediatamente
+                if (result.updatedMatch) {
+                    setCurrentMatch(result.updatedMatch);
+                    onMatchUpdate?.(result.updatedMatch);
+                }
                 onBookingSuccess();
             }
             setShowConfirmDialog(false);
@@ -286,8 +295,14 @@ const MatchCardContentComponent: React.FC<MatchCardContentComponentProps> = Reac
                              {canBookPrivate && (
                                 <button
                                     className="flex items-center h-10 bg-purple-600 text-white rounded-lg shadow-lg cursor-pointer hover:bg-purple-700 transition-colors disabled:opacity-50"
-                                    onClick={() => setIsConfirmPrivateDialogOpen(true)}
-                                    disabled={isProcessingPrivateAction}
+                                    onClick={() => {
+                                        if (userHasOtherConfirmedActivityToday) {
+                                            toast({ title: "No disponible", description: "Ya tienes una reserva confirmada hoy.", variant: "default" });
+                                            return;
+                                        }
+                                        setIsConfirmPrivateDialogOpen(true);
+                                    }}
+                                    disabled={isProcessingPrivateAction || userHasOtherConfirmedActivityToday}
                                 >
                                     <div className="flex items-center justify-center h-full w-10 bg-purple-700 rounded-l-lg">
                                         {isProcessingPrivateAction ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-5 w-5" />}
@@ -318,8 +333,8 @@ const MatchCardContentComponent: React.FC<MatchCardContentComponentProps> = Reac
                                 onJoin={handleJoinClick}
                                 onJoinPrivate={handleJoinPrivate}
                                 isPending={isPending && dialogContent.spotIndex === index}
-                                userHasOtherConfirmedActivityToday={hasAnyActivityForDay(currentUser.id, new Date(currentMatch.startTime), new Date(currentMatch.endTime))}
-                                isUserLevelCompatible={isUserLevelCompatibleWithActivity(matchLevelToDisplay, currentUser.level, isPlaceholderMatch)}
+                                userHasOtherConfirmedActivityToday={userHasOtherConfirmedActivityToday}
+                                isUserLevelCompatible={isUserLevelCompatibleWithActivity(currentMatch.level, currentUser.level, isPlaceholderMatch)}
                                 canJoinThisPrivateMatch={canJoinThisPrivateMatch}
                                 isOrganizer={isOrganizer}
                                 canBookWithPoints={isBookableWithPointsBySchedule}
@@ -330,7 +345,7 @@ const MatchCardContentComponent: React.FC<MatchCardContentComponentProps> = Reac
                         ))}
                     </div>
                      <div className="mt-4">
-                        <CourtAvailabilityIndicator courts={[]} availableCourts={courtAvailability.available} occupiedCourts={courtAvailability.occupied} totalCourts={courtAvailability.total} />
+                        <CourtAvailabilityIndicator availableCourts={courtAvailability.available} occupiedCourts={courtAvailability.occupied} totalCourts={courtAvailability.total} />
                     </div>
                 </CardContent>
             </Card>

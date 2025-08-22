@@ -20,6 +20,10 @@ import { calculateActivityPrice } from './clubs';
 
 export const fetchMatches = async (clubId?: string): Promise<Match[]> => {
     await new Promise(resolve => setTimeout(resolve, config.MINIMAL_DELAY));
+    // Ejecutar migración de avatares antes de devolver los matches
+    if (typeof (state as any).migrateBookedPlayersProfilePictures === 'function') {
+        (state as any).migrateBookedPlayersProfilePictures();
+    }
     let matchesToReturn = JSON.parse(JSON.stringify(state.getMockMatches())) as Match[];
     if (clubId) {
         matchesToReturn = matchesToReturn.filter(match => match.clubId === clubId);
@@ -30,12 +34,22 @@ export const fetchMatches = async (clubId?: string): Promise<Match[]> => {
         endTime: new Date(match.endTime),
         level: match.level || matchPadelLevels[0],
         category: match.category || 'abierta', // Default to 'abierta'
-        bookedPlayers: (match.bookedPlayers || []).map(p => ({ userId: p.userId, name: p.name || getPlaceholderUserName(p.userId, state.getMockCurrentUser()?.id, state.getMockCurrentUser()?.name) })),
+        bookedPlayers: (match.bookedPlayers || [])
+            .filter(p => p.userId && p.userId.trim() !== '')
+            .map(p => {
+                const student = state.getMockStudents().find(s => s.id === p.userId);
+                const userDb = state.getMockUserDatabase().find(u => u.id === p.userId);
+                return {
+                    userId: p.userId,
+                    name: p.name || student?.name || userDb?.name || getPlaceholderUserName(p.userId, state.getMockCurrentUser()?.id, state.getMockCurrentUser()?.name),
+                    profilePictureUrl: p.profilePictureUrl || student?.profilePictureUrl || userDb?.profilePictureUrl || ''
+                };
+            }),
         isPlaceholder: match.isPlaceholder === undefined ? false : match.isPlaceholder,
         status: match.status || 'forming',
         organizerId: match.organizerId,
         privateShareCode: match.privateShareCode,
-        confirmedPrivateSize: match.confirmedPrivateSize,
+    // ...existing code...
         durationMinutes: match.durationMinutes || 90,
     }));
 };
@@ -44,124 +58,248 @@ export const bookMatch = async (
     userId: string,
     matchId: string,
     usePoints: boolean = false
-): Promise<{ newBooking: MatchBooking, updatedMatch: Match } | { error: string }> => {
-    await new Promise(resolve => setTimeout(resolve, config.MINIMAL_DELAY));
+): Promise<{ newBooking: MatchBooking | null, updatedMatch: Match } | { error: string }> => {
+    // 1. Validaciones previas y obtención de datos
     const user = state.getMockUserDatabase().find(u => u.id === userId);
     if (!user) return { error: "Usuario no encontrado." };
-
     const matchIndex = state.getMockMatches().findIndex(m => m.id === matchId);
     if (matchIndex === -1) return { error: "Partida no encontrada." };
-
     let match = { ...state.getMockMatches()[matchIndex] };
     const club = state.getMockClubs().find(c => c.id === match.clubId);
     if (!club) return { error: "Club no encontrado para esta partida." };
 
-    // Critical check: Ensure user is not already in the match.
+    // 2. Si el usuario ya está en bookedPlayers, actualiza todos sus datos (nombre, foto, nivel, categoría)
+    match.bookedPlayers = (match.bookedPlayers || []).map(p =>
+        p.userId === user.id
+            ? {
+                userId: user.id,
+                name: user.name,
+                profilePictureUrl: user.profilePictureUrl || p.profilePictureUrl || ''
+            }
+            : {
+                userId: p.userId,
+                name: p.name,
+                profilePictureUrl: p.profilePictureUrl || ''
+            }
+    );
+
+    // 3. No permitir doble inscripción
     if ((match.bookedPlayers || []).some(p => p.userId === userId)) {
         return { error: "Ya estás inscrito en esta partida." };
     }
-    
+
+    // 4. Comprobar solapamientos
     const targetEndTime = new Date(new Date(match.startTime).getTime() + (match.durationMinutes || 90) * 60000);
-    if (mockUtils.hasAnyActivityForDay(userId, new Date(match.startTime), targetEndTime)) {
+    if (mockUtils.hasAnyActivityForDay(userId, new Date(match.startTime), targetEndTime, matchId, 'match')) {
         return { error: 'Ya tienes otra actividad (clase o partida) que se solapa con este horario.' };
     }
 
+    // 5. Validaciones de plazas y nivel
     if ((match.bookedPlayers || []).length >= 4) {
         return { error: "Esta partida ya está completa." };
     }
-    
     if (match.level !== 'abierto' && !match.isProMatch && !isUserLevelCompatible(match.level, user.level, match.isPlaceholder)) {
         return { error: 'Tu nivel de juego no es compatible con el de esta partida.' };
     }
 
-    const pricePerPlayer = calculatePricePerPerson(calculateActivityPrice(club, new Date(match.startTime)), 4);
-    
-    if (match.totalCourtFee === undefined || match.totalCourtFee === 0) {
-        match.totalCourtFee = calculateActivityPrice(club, new Date(match.startTime));
-    }
-
-    const pointsCost = match.isPointsOnlyBooking 
-        ? (calculatePricePerPerson(match.totalCourtFee, 4) || 20)
-        : calculatePricePerPerson(match.totalCourtFee, 4);
-
-    if (usePoints) {
-        if ((user.loyaltyPoints ?? 0) < pointsCost) {
-            return { error: `No tienes suficientes puntos para unirte. Necesitas ${pointsCost} y tienes ${user.loyaltyPoints ?? 0}.` };
-        }
+    // 6. Añadir usuario a la primera plaza libre (sin persistir placeholders vacíos)
+    const hadNoPlayersBefore = Array.isArray(match.bookedPlayers) ? match.bookedPlayers.filter(p => p.userId && p.userId.trim() !== '').length === 0 : true;
+    if (!Array.isArray(match.bookedPlayers)) match.bookedPlayers = [];
+    // Intenta ocupar un hueco vacío si existe; si no, añade al final
+    const freeIndex = match.bookedPlayers.findIndex((p) => !p.userId);
+    if (freeIndex !== -1) {
+        match.bookedPlayers[freeIndex] = {
+            userId: user.id,
+            name: user.name,
+            profilePictureUrl: user.profilePictureUrl || ''
+        };
+    } else if (match.bookedPlayers.length < 4) {
+        match.bookedPlayers.push({ userId: user.id, name: user.name, profilePictureUrl: user.profilePictureUrl || '' });
     } else {
-        if (((user.credit ?? 0) - (user.blockedCredit ?? 0)) < pricePerPlayer) {
-            return { error: `Saldo insuficiente. Necesitas ${pricePerPlayer.toFixed(2)}€.` };
-        }
+        return { error: "Esta partida ya está completa." };
     }
-    
-    const isOriginalProposal = match.isPlaceholder === true && (match.bookedPlayers || []).length === 0;
 
-    if (isOriginalProposal) {
-        match.isPlaceholder = false;
-        if (match.level === 'abierto') {
+    // 7. Refuerza: actualizar nombre y foto en todas las plazas ocupadas por el usuario
+    // Refuerza: actualizar todos los datos del usuario en todas las plazas ocupadas por él
+    match.bookedPlayers = match.bookedPlayers.map((p) =>
+        p.userId === user.id
+            ? {
+                userId: user.id,
+                name: user.name,
+                profilePictureUrl: user.profilePictureUrl
+            }
+            : {
+                userId: p.userId,
+                name: p.name,
+                profilePictureUrl: p.profilePictureUrl
+            }
+    );
+    // Limpieza: elimina entradas vacías y limita a 4 jugadores reales
+    match.bookedPlayers = match.bookedPlayers.filter(p => p.userId && p.userId.trim() !== '').slice(0, 4);
+    // Persistir inmediatamente el cambio de jugadores en el estado global para que otras vistas lo reflejen
+    if (typeof (state as any).updateMatchInState === 'function') {
+        (state as any).updateMatchInState(match.id, match);
+    }
+    if (typeof (state as any).migrateBookedPlayersProfilePictures === 'function') {
+        (state as any).migrateBookedPlayersProfilePictures();
+    }
+
+    // 8. Si el usuario es el primero en inscribirse (tanto en placeholder como en partidas vacías), asignar nivel/categoría
+    const nowHasOnePlayer = (match.bookedPlayers || []).filter(p => p.userId && p.userId.trim() !== '').length === 1;
+    const isOriginalProposal = match.isPlaceholder === true && nowHasOnePlayer;
+    if (hadNoPlayersBefore && nowHasOnePlayer) {
+        // Para placeholders, marca como no-placeholder
+        if (match.isPlaceholder === true) {
+            match.isPlaceholder = false;
+        }
+        if (match.level === 'abierto' || !match.level) {
             match.level = user.level || '1.0';
         }
-        if (match.category === 'abierta') {
+        if (match.category === 'abierta' || !match.category) {
             match.category = user.genderCategory === 'femenino' ? 'chica' : user.genderCategory === 'masculino' ? 'chico' : 'abierta';
+        }
+        if (typeof (state as any).updateMatchInState === 'function') {
+            (state as any).updateMatchInState(match.id, match);
         }
     }
 
-    match.bookedPlayers.push({ userId: user.id, name: user.name });
+    // 9. Variables de control para inscripción y confirmación
+    const validPlayers = match.bookedPlayers.filter((p) => p.userId && p.userId.trim() !== '');
+    const uniquePlayerIds = new Set(validPlayers.map((p) => p.userId));
+    let shouldConfirm = validPlayers.length === 4 && uniquePlayerIds.size === 4;
 
-    const newBooking: MatchBooking = {
-        id: `matchbooking-${matchId}-${userId}-${Date.now()}`,
-        userId,
-        activityId: matchId,
-        activityType: 'match',
-        bookedAt: new Date(),
-        bookedWithPoints: usePoints,
-        matchDetails: { ...match }
-    };
+    // 10. Persistir el match tras inscripción (siempre)
+    if (typeof (state as any).persistMockMatches === 'function') {
+        (state as any).persistMockMatches();
+    }
 
-    state.addUserMatchBookingToState(newBooking);
-
-    if (match.bookedPlayers.length === 4) {
+    let newBooking: MatchBooking | null = null;
+    if (shouldConfirm) {
         match.status = 'confirmed';
-        const court = findAvailableCourt(match.clubId, new Date(match.startTime), new Date(match.endTime));
-        if (court) {
-            match.courtNumber = court.courtNumber;
+        const foundCourt = findAvailableCourt(match.clubId, new Date(match.startTime), new Date(match.endTime));
+        if (foundCourt && typeof foundCourt.courtNumber === 'number') {
+            match.courtNumber = foundCourt.courtNumber;
         } else {
             console.error(`CRITICAL: No court available for confirmed match ${matchId}.`);
             match.courtNumber = 99; // Indicate an issue
+        }
+        // Escribir el estado confirmado con pista en el estado global
+        if (typeof (state as any).updateMatchInState === 'function') {
+            (state as any).updateMatchInState(match.id, match);
         }
         _annulConflictingActivities(match);
         for (const player of match.bookedPlayers) {
             await removeUserPreInscriptionsForDay(player.userId, new Date(match.startTime), match.id, 'match');
         }
+        // Limpiar cualquier MatchBooking antiguo para este usuario y partida
+        if (typeof (state as any).removeUserMatchBookingFromState === 'function') {
+            (state as any).removeUserMatchBookingFromState(userId, matchId);
+        }
+        // Solo registrar el MatchBooking cuando la partida se confirma
+        newBooking = {
+            id: `matchbooking-${matchId}-${userId}-${Date.now()}`,
+            userId,
+            activityId: matchId,
+            activityType: 'match',
+            bookedAt: new Date(),
+            bookedWithPoints: usePoints,
+            matchDetails: { ...match }
+        };
+        state.addUserMatchBookingToState(newBooking);
+    } else {
+        // Si no está confirmada, asegurar que status es 'forming' y no hay pista asignada
+        match.status = 'forming';
+        match.courtNumber = undefined;
+        if (typeof (state as any).updateMatchInState === 'function') {
+            (state as any).updateMatchInState(match.id, match);
+        }
+        // Eliminar cualquier booking anterior para este usuario y partida
+        if (typeof (state as any).removeUserMatchBookingFromState === 'function') {
+            (state as any).removeUserMatchBookingFromState(userId, matchId);
+        }
+        // Solo crear booking si no existe ya uno
+        const alreadyBooked = state.getMockUserMatchBookings().some((b) => b.activityId === matchId && b.userId === userId);
+        if (!alreadyBooked) {
+            newBooking = {
+                id: `matchbooking-pre-${matchId}-${userId}-${Date.now()}`,
+                userId: userId,
+                activityId: matchId,
+                activityType: 'match',
+                bookedAt: new Date(),
+                bookedWithPoints: usePoints,
+                matchDetails: { ...match }
+            };
+            state.addUserMatchBookingToState(newBooking);
+        }
     }
 
-    state.updateMatchInState(matchId, match);
-    
+    // Recalcular y persistir siempre el precio total y los jugadores tras la inscripción
+    if (!match.totalCourtFee || match.totalCourtFee === 0) {
+        match.totalCourtFee = calculateActivityPrice(club, new Date(match.startTime));
+    }
+    match.bookedPlayers = (match.bookedPlayers || []).map(p => ({
+        userId: p.userId,
+        name: p.name,
+        profilePictureUrl: p.profilePictureUrl
+    }));
+    if (typeof (state as any).migrateBookedPlayersProfilePictures === 'function') {
+        (state as any).migrateBookedPlayersProfilePictures();
+    }
+    // Asegurar que el estado del match queda actualizado con totalCourtFee y jugadores definitivos
+    if (typeof (state as any).updateMatchInState === 'function') {
+        (state as any).updateMatchInState(match.id, match);
+    }
+    if (typeof (state as any).persistMockMatches === 'function') {
+        (state as any).persistMockMatches();
+    }
+
+    // Si era una propuesta original, crear la nueva partida abierta para otros usuarios
     if (isOriginalProposal) {
-      const newProposalMatch: Match = {
-          ...match, // Inherit properties like time, club, duration
-          id: `match-ph-${match.clubId}-${format(new Date(match.startTime), 'yyyyMMddHHmm')}-new`,
-          level: 'abierto',
-          category: 'abierta',
-          bookedPlayers: [],
-          isPlaceholder: true, // This is the new placeholder
-          isProMatch: match.isProMatch, // Preserve pro status if applicable
-          status: 'forming',
-          courtNumber: undefined,
-          organizerId: undefined,
-          privateShareCode: undefined,
-          confirmedPrivateSize: undefined,
-      };
-      state.addMatchToState(newProposalMatch);
+        const newProposalMatch: Match = {
+            ...match, // Inherit properties like time, club, duration
+            id: `match-ph-${match.clubId}-${format(new Date(match.startTime), 'yyyyMMddHHmm')}-new`,
+            level: 'abierto',
+            category: 'abierta',
+            bookedPlayers: [],
+            isPlaceholder: true, // This is the new placeholder
+            isProMatch: match.isProMatch, // Preserve pro status if applicable
+            status: 'forming',
+            courtNumber: undefined,
+            organizerId: undefined,
+            privateShareCode: undefined,
+            // ...existing code...
+        };
+        state.addMatchToState(newProposalMatch);
     }
 
     await recalculateAndSetBlockedBalances(userId);
 
+    // Recalcular y persistir siempre el precio total y los jugadores tras la inscripción
+    if (!match.totalCourtFee || match.totalCourtFee === 0) {
+        match.totalCourtFee = calculateActivityPrice(club, new Date(match.startTime));
+    }
+    match.bookedPlayers = (match.bookedPlayers || []).map(p => ({
+        userId: p.userId,
+        name: p.name,
+        profilePictureUrl: p.profilePictureUrl
+    }));
+    if (typeof (state as any).migrateBookedPlayersProfilePictures === 'function') {
+        (state as any).migrateBookedPlayersProfilePictures();
+    }
+    if (typeof (state as any).updateMatchInState === 'function') {
+        (state as any).updateMatchInState(match.id, match);
+    }
+    if (typeof (state as any).persistMockMatches === 'function') {
+        (state as any).persistMockMatches();
+    }
+    // DEBUG: Log temporal para depuración de bookedPlayers tras inscripción
+    // eslint-disable-next-line no-console
+    console.log('DEBUG [bookMatch] bookedPlayers:', JSON.stringify(match.bookedPlayers));
     return { newBooking, updatedMatch: match };
 };
 
 
-export const addMatch = async (matchData: Omit<Match, 'id' | 'status' | 'confirmedPrivateSize' | 'organizerId' | 'privateShareCode'> & { creatorId?: string }): Promise<Match | { error: string }> => {
+export const addMatch = async (matchData: Omit<Match, 'id' | 'status' | 'organizerId' | 'privateShareCode'> & { creatorId?: string }): Promise<Match | { error: string }> => {
     await new Promise(resolve => setTimeout(resolve, config.MINIMAL_DELAY));
     if (!matchData.clubId) return { error: "Se requiere el ID del club." };
     if (!matchData.startTime || !matchData.endTime || new Date(matchData.startTime) >= new Date(matchData.endTime)) {
@@ -169,7 +307,6 @@ export const addMatch = async (matchData: Omit<Match, 'id' | 'status' | 'confirm
     }
     const startTimeDate = new Date(matchData.startTime);
     const endTimeDate = new Date(matchData.endTime);
-
     if (matchData.creatorId) {
         const creator = state.getMockInstructors().find(inst => inst.id === matchData.creatorId);
         if (creator) {
@@ -189,7 +326,7 @@ export const addMatch = async (matchData: Omit<Match, 'id' | 'status' | 'confirm
                     return { error: `El creador (${creator.name}) no está disponible de ${unavailableRange.start} a ${unavailableRange.end} los ${format(startTimeDate, 'eeee', { locale: es })}.` };
                 }
             }
-             const instructorIsAlreadyBookedWithClass = state.getMockTimeSlots().find(
+            const instructorIsAlreadyBookedWithClass = state.getMockTimeSlots().find(
                 existingSlot => existingSlot.instructorId === creator.id &&
                                 existingSlot.clubId === matchData.clubId &&
                                 existingSlot.status !== 'cancelled' &&
@@ -210,8 +347,8 @@ export const addMatch = async (matchData: Omit<Match, 'id' | 'status' | 'confirm
             startTime: startTimeDate,
             endTime: endTimeDate,
             clubId: matchData.clubId,
-            courtNumber: matchData.courtNumber,
-        } as TimeSlot, state.getMockTimeSlots(), state.getMockMatches());
+            courtNumber: typeof matchData.courtNumber === 'number' ? matchData.courtNumber : -1,
+        } as any, state.getMockTimeSlots(), state.getMockMatches());
 
         if (existingBlockingActivity) {
             const activityType = 'instructorName' in existingBlockingActivity ? 'clase' : 'partida';
@@ -234,7 +371,7 @@ export const addMatch = async (matchData: Omit<Match, 'id' | 'status' | 'confirm
         status: (matchData.bookedPlayers || []).length === 4 ? 'confirmed' : 'forming',
         organizerId: undefined,
         privateShareCode: undefined,
-        confirmedPrivateSize: undefined,
+    // ...existing code...
         eventId: matchData.eventId,
         totalCourtFee: matchData.totalCourtFee,
         durationMinutes: matchData.durationMinutes || 90,
@@ -365,18 +502,18 @@ export const cancelMatchBooking = async (
 
 export const removePlayerFromMatch = async (matchId: string, userId: string, isSystemRemoval: boolean = false): Promise<{ success: true, updatedMatch: Match, message: string } | { error: string }> => {
     await new Promise(resolve => setTimeout(resolve, config.MINIMAL_DELAY));
-    const matchIndex = state.getMockMatches().findIndex(m => m.id === matchId);
+    const matchIndex = state.getMockMatches().findIndex((m: Match) => m.id === matchId);
     if (matchIndex === -1) return { error: 'Partida no encontrada.' };
+    const originalMatch = state.getMockMatches()[matchIndex];
 
-    const originalMatch = JSON.parse(JSON.stringify(state.getMockMatches()[matchIndex])) as Match;
-    const playerBooking = state.getMockUserMatchBookings().find(b => b.activityId === matchId && b.userId === userId);
+    const playerBooking = state.getMockUserMatchBookings().find((b: MatchBooking) => b.activityId === matchId && b.userId === userId);
     let message = "";
 
-    if (!originalMatch.bookedPlayers.some(p => p.userId === userId)) return { error: 'Jugador no encontrado en esta partida.' };
+    if (!originalMatch.bookedPlayers.some((p: any) => p.userId === userId)) return { error: 'Jugador no encontrado en esta partida.' };
     if (originalMatch.isPlaceholder && !isSystemRemoval) return { error: "No se pueden eliminar jugadores de una tarjeta de partida abierta placeholder."};
 
     if (!isSystemRemoval) {
-        const club = state.getMockClubs().find(c => c.id === originalMatch.clubId);
+        const club = state.getMockClubs().find((c: Club) => c.id === originalMatch.clubId);
         if (!club) return { error: "Club no encontrado" };
         const price = calculateActivityPrice(club, new Date(originalMatch.startTime));
         if (playerBooking?.bookedWithPoints) {
@@ -395,7 +532,7 @@ export const removePlayerFromMatch = async (matchId: string, userId: string, isS
     }
 
 
-    const updatedBookedPlayers = originalMatch.bookedPlayers.filter(p => p.userId !== userId);
+    const updatedBookedPlayers = originalMatch.bookedPlayers.filter((p: any) => p.userId !== userId);
     let newGratisSpotAvailable = originalMatch.gratisSpotAvailable;
 
     const wasConfirmed = originalMatch.bookedPlayers.length === 4;
@@ -435,9 +572,9 @@ export function createMatchesForDay(club: Club, date: Date): Match[] {
     const clubUnavailableRanges = club.unavailableMatchHours?.[dayKey] || [];
     
     // Check only for confirmed activities that would block a slot
-    const confirmedActivitiesToday = [
-        ...state.getMockTimeSlots().filter(s => isSameDay(new Date(s.startTime), date) && s.clubId === club.id && s.courtNumber !== undefined && (s.status === 'confirmed' || s.status === 'confirmed_private')),
-        ...state.getMockMatches().filter(m => isSameDay(new Date(m.startTime), date) && m.clubId === club.id && m.courtNumber !== undefined && (m.status === 'confirmed' || m.status === 'confirmed_private')),
+    const confirmedActivitiesToday: Array<{ startTime: Date|string; endTime?: Date|string; courtNumber?: number; status?: string; clubId?: string; }> = [
+        ...state.getMockTimeSlots().filter((s: any) => isSameDay(new Date(s.startTime), date) && s.clubId === club.id && s.courtNumber !== undefined && (s.status === 'confirmed' || s.status === 'confirmed_private')),
+        ...state.getMockMatches().filter((m: any) => isSameDay(new Date(m.startTime), date) && m.clubId === club.id && m.courtNumber !== undefined && (m.status === 'confirmed' || m.status === 'confirmed_private')),
     ];
 
     let currentTimeSlotStart = setMinutes(setHours(date, startHour), 0);
@@ -459,10 +596,10 @@ export function createMatchesForDay(club: Club, date: Date): Match[] {
             continue;
         }
         
-       const hasConfirmedConflict = confirmedActivitiesToday.some(activity => 
+       const hasConfirmedConflict = confirmedActivitiesToday.some((activity) => 
              areIntervalsOverlapping(
                 { start: matchStartTime, end: matchEndTime },
-                { start: new Date(activity.startTime), end: new Date('endTime' in activity ? activity.endTime : addMinutes(new Date(activity.startTime), 90)) },
+                { start: new Date(activity.startTime), end: activity.endTime ? new Date(activity.endTime) : addMinutes(new Date(activity.startTime), 90) },
                 { inclusive: false }
             )
         );
@@ -559,7 +696,7 @@ export const bookCourtForMatchWithPoints = async (
     match.status = 'confirmed_private';
     match.organizerId = userId;
     match.bookedPlayers = [{ userId: user.id, name: user.name }];
-    match.confirmedPrivateSize = 4;
+    // ...existing code...
     match.privateShareCode = privateShareCode;
     match.totalCourtFee = 0; // It's a points-based booking
 
@@ -625,7 +762,7 @@ export const confirmMatchAsPrivate = async (
     matchToConfirm.status = 'confirmed_private';
     matchToConfirm.organizerId = organizerUserId;
     matchToConfirm.privateShareCode = privateShareCode;
-    matchToConfirm.confirmedPrivateSize = 4;
+    // ...existing code...
     matchToConfirm.courtNumber = availableCourt.courtNumber;
     matchToConfirm.bookedPlayers = [{ userId: organizerUserId, name: organizerUser.name }];
     matchToConfirm.isPlaceholder = false; // It's no longer a placeholder
@@ -685,7 +822,7 @@ export const joinPrivateMatch = async (
         addCreditToStudent(match.organizerId, pricePerPerson, `Reembolso por invitado: ${inviteeUser.name}`);
     }
 
-    match.bookedPlayers.push({ userId: inviteeUserId, name: inviteeUser.name });
+    match.bookedPlayers.push({ userId: inviteeUserId, name: inviteeUser.name, profilePictureUrl: inviteeUser.profilePictureUrl });
     state.updateMatchInState(matchId, match);
 
     const newBooking: MatchBooking = {
@@ -717,7 +854,7 @@ export const makeMatchPublic = async (
     match.status = 'forming';
     match.organizerId = undefined;
     match.privateShareCode = undefined;
-    match.confirmedPrivateSize = undefined;
+    // ...existing code...
     // Don't modify bookedPlayers or fees, as payments are managed manually from this point.
     
     state.updateMatchInState(matchId, match);
@@ -816,13 +953,17 @@ export const fetchUserMatchBookings = async (userId: string): Promise<MatchBooki
     return userBookingsData.map(booking => {
         const match = allMatchesMap.get(booking.activityId);
         
-        let fullBookedPlayers: { userId: string, name?: string }[] = [];
+        let fullBookedPlayers: { userId: string, name?: string, profilePictureUrl?: string }[] = [];
         if (match && match.bookedPlayers) {
-            fullBookedPlayers = match.bookedPlayers.map(p => {
+            fullBookedPlayers = match.bookedPlayers
+                .filter(p => p.userId && p.userId.trim() !== '')
+                .map(p => {
                 const studentData = state.getMockStudents().find(s => s.id === p.userId);
+                const userDbData = state.getMockUserDatabase().find(u => u.id === p.userId);
                 return {
                     userId: p.userId,
-                    name: studentData?.name || p.name || 'Jugador',
+                    name: studentData?.name || userDbData?.name || p.name || 'Jugador',
+                    profilePictureUrl: studentData?.profilePictureUrl || userDbData?.profilePictureUrl || p.profilePictureUrl || undefined,
                 };
             });
         }

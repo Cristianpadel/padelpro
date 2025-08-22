@@ -16,7 +16,7 @@ import { BookingConfirmationDialog } from './ClassCard/BookingConfirmationDialog
 
 import type { TimeSlot, User, Club, PadelCourt, Instructor, ClassPadelLevel } from '@/types';
 import {
-    bookClass, isSlotEffectivelyCompleted, hasAnyActivityForDay,
+    bookClass, isSlotEffectivelyCompleted, hasAnyActivityForDay, countUserConfirmedActivitiesForDay,
     getMockClubs, calculateActivityPrice, getInstructorRate, getCourtAvailabilityForInterval, getMockInstructors,
     confirmClassAsPrivate
 } from '@/lib/mockData';
@@ -124,9 +124,9 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
 
     const userHasConfirmedActivityToday = useMemo(() => {
         if (!currentUser) return false;
-        const targetEndTime = new Date(new Date(currentSlot.startTime).getTime() + (currentSlot.durationMinutes || 60) * 60000);
-        return hasAnyActivityForDay(currentUser.id, new Date(currentSlot.startTime), targetEndTime);
-    }, [currentUser, currentSlot.startTime, currentSlot.durationMinutes]);
+        // Bloquear todas las tarjetas de ese día si ya hay una RESERVA confirmada ese día
+        return countUserConfirmedActivitiesForDay(currentUser.id, new Date(currentSlot.startTime), currentSlot.id, 'class') > 0;
+    }, [currentUser, currentSlot.startTime, currentSlot.id]);
 
     const anticipationBonus = useMemo(() => {
       try {
@@ -180,7 +180,7 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
     };
 
     const handleInfoClick = (type: 'level' | 'court' | 'category' | { type: 'price', optionSize: number }) => {
-        let dialogContent;
+        let dialogContent: { title: string; description: string; icon: React.ElementType } = { title: '', description: '', icon: Lightbulb };
         if (typeof type === 'object' && type.type === 'price') {
             const price = calculatePricePerPerson(totalPrice, type.optionSize);
             dialogContent = {
@@ -202,7 +202,7 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
                     break;
             }
         }
-        setInfoDialog({ open: true, ...dialogContent });
+    setInfoDialog({ open: true, title: dialogContent.title, description: dialogContent.description, icon: dialogContent.icon });
     };
     
     const handleConfirmAsPrivate = async () => {

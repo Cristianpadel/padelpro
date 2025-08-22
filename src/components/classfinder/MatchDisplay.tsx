@@ -6,7 +6,8 @@ import type { Match, User, MatchBooking, MatchPadelLevel, PadelCategoryForSlot, 
 import { matchPadelLevels, timeSlotFilterOptions } from '@/types';
 import MatchCard from '@/components/match/MatchCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { fetchMatches, getMockClubs, findAvailableCourt, fetchMatchDayEventsForDate, getUserActivityStatusForDay, getMatchDayInscriptions, isUserLevelCompatibleWithActivity, isMatchBookableWithPoints, getCourtAvailabilityForInterval } from '@/lib/mockData';
+import { fetchMatches, getMockClubs, findAvailableCourt, fetchMatchDayEventsForDate, getUserActivityStatusForDay, getMatchDayInscriptions, isUserLevelCompatibleWithActivity, getCourtAvailabilityForInterval } from '@/lib/mockData';
+import { isMatchBookableWithPoints } from '@/lib/mockDataSources/utils';
 import { Loader2, SearchX, CalendarDays, Plus, CheckCircle, PartyPopper, ArrowRight, Users, Sparkles, Euro, ThumbsUp, Lock, Scissors } from 'lucide-react';
 import { cn, getInitials } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -30,7 +31,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { PiggyBank, Star } from 'lucide-react';
+import { PiggyBank, Star, Rocket } from 'lucide-react';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 
@@ -68,7 +69,7 @@ const ITEMS_PER_PAGE = 9;
 
 type EnhancedEvent = MatchDayEvent & {
     isEventCard: true;
-    inscriptions: MatchDayInscription[];
+    inscriptionsDetailed: MatchDayInscription[];
 };
 
 
@@ -118,12 +119,12 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
         // Add MatchDayEvent as special cards if it exists for the date.
         if (selectedDate && matchDayEvents.length > 0) {
             const eventCards = await Promise.all(matchDayEvents.map(async (event) => {
-                const inscriptions = await getMatchDayInscriptions(event.id);
+                const inscriptionsDetailed = await getMatchDayInscriptions(event.id);
                 return {
                     ...event,
-                    id: `${event.id}`, // Use the original event ID
-                    isEventCard: true,
-                    inscriptions: inscriptions,
+                    id: `${event.id}`,
+                    isEventCard: true as const,
+                    inscriptionsDetailed,
                 };
             }));
             workingMatches.push(...eventCards);
@@ -148,7 +149,8 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
             workingMatches = workingMatches.filter(match => {
                 if ('isEventCard' in match) return false;
                 const regularMatch = match as Match;
-                return (regularMatch.bookedPlayers || []).some(p => p.userId === currentUser.id);
+                // Solo mostrar inscripciones del usuario que estén confirmadas o forming
+                return (regularMatch.bookedPlayers || []).some(p => p.userId === currentUser.id) && (regularMatch.status === 'forming' || regularMatch.status === 'confirmed' || regularMatch.status === 'confirmed_private');
             });
         } else if (viewPreference === 'myConfirmed') {
              workingMatches = workingMatches.filter(match => {
@@ -244,14 +246,19 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
             });
         }
         
-        // Final filter: check court availability
-        const availableActivities = [];
+        // Final filter: check court availability, but never drop matches where the user is inscribed
+        const availableActivities = [] as (Match | EnhancedEvent)[];
         for (const activity of workingMatches) {
             if ('isEventCard' in activity) {
-                availableActivities.push(activity); // Assume event courts are pre-booked
+                availableActivities.push(activity); // Events bypass availability
                 continue;
             }
             const match = activity as Match;
+            const isUserInscribed = (match.bookedPlayers || []).some(p => p.userId === currentUser.id);
+            if (isUserInscribed) {
+                availableActivities.push(match);
+                continue;
+            }
             const availability = await getCourtAvailabilityForInterval(match.clubId, new Date(match.startTime), new Date(match.endTime));
             if (availability.available.length > 0) {
                 availableActivities.push(match);
@@ -308,8 +315,17 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
 
     // Effect to update the displayed list based on pagination
     useEffect(() => {
-        setDisplayedMatches(filteredMatches.slice(0, ITEMS_PER_PAGE * currentPage));
-        setCanLoadMore(filteredMatches.length > ITEMS_PER_PAGE * currentPage);
+            // Siempre mostrar primero los partidos donde el usuario está inscrito
+            const userMatches = filteredMatches.filter(
+                m => !('isEventCard' in m) && (m as Match).bookedPlayers?.some(p => currentUser && p.userId === currentUser.id)
+            );
+            const otherMatches = filteredMatches.filter(
+                m => !userMatches.includes(m)
+            );
+            // Los partidos del usuario siempre visibles en la primera página
+            const paginatedOthers = otherMatches.slice(0, Math.max(0, ITEMS_PER_PAGE * currentPage - userMatches.length));
+            setDisplayedMatches([...userMatches, ...paginatedOthers]);
+            setCanLoadMore(otherMatches.length > paginatedOthers.length);
     }, [filteredMatches, currentPage]);
 
   const handleLoadMore = useCallback(() => {
@@ -334,9 +350,12 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
     return () => { if (currentRef) observer.unobserve(currentRef); observer.disconnect(); };
   }, [canLoadMore, isLoadingMore, handleLoadMore]);
 
-  const handleLocalMatchBookingUpdate = (updatedMatch: Match) => {
-    onBookingSuccess();
-  };
+    const handleLocalMatchBookingUpdate = async (updatedMatch: Match) => {
+        // Recargar los matches desde el mock tras inscribirse
+        const allNewMatches = await fetchMatches();
+        applyMatchFilters(allNewMatches);
+        onBookingSuccess();
+    };
   
   const findNextAvailableDay = (): Date | null => {
         const today = startOfDay(new Date());
@@ -410,9 +429,9 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
           <div className="grid grid-cols-[repeat(auto-fill,minmax(360px,1fr))] justify-center gap-6">
             {displayedMatches.map((activity) => {
                if ('isEventCard' in activity && activity.isEventCard) {
-                   const isFull = (activity.inscriptions?.length ?? 0) >= activity.maxPlayers;
+                   const isFull = (activity.inscriptionsDetailed?.length ?? 0) >= activity.maxPlayers;
                    const allSpots = Array.from({ length: activity.maxPlayers });
-                   const isUserInscribed = activity.inscriptions.some(i => i.userId === currentUser.id);
+                   const isUserInscribed = activity.inscriptionsDetailed.some((i: any) => i.userId === currentUser.id);
 
                    return (
                         <div key={activity.id} className="border-l-4 border-orange-500 bg-orange-50 rounded-lg p-4 h-full flex flex-col justify-between shadow-sm">
@@ -435,7 +454,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                             <AlertDialog>
                                 <div className="flex flex-wrap gap-2 mt-2">
                                     {allSpots.map((_, index) => {
-                                        const inscription = activity.inscriptions[index];
+                                        const inscription = activity.inscriptionsDetailed[index];
                                         if(inscription){
                                             return (
                                                  <div key={inscription?.id} className="relative inline-flex items-center justify-center h-12 w-12 rounded-full border-[3px] z-0 transition-all shadow-inner bg-slate-100 border-slate-300">
@@ -484,7 +503,6 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                                         <ul className="space-y-1.5">
                                             <li className="flex items-start"><ThumbsUp className="h-4 w-4 mr-2 mt-0.5 text-blue-500 flex-shrink-0" /><span>Cuando llegue la hora del sorteo, se formarán las partidas.</span></li>
                                             <li className="flex items-start"><Lock className="h-4 w-4 mr-2 mt-0.5 text-blue-500 flex-shrink-0" /><span>Tu saldo será bloqueado hasta que se juegue el evento.</span></li>
-                                            <li className="flex items-start"><Scissors className="h-4 w-4 mr-2 mt-0.5 text-blue-500 flex-shrink-0" /><span>**Si este evento se confirma**, tus otras inscripciones del día se anularán solas.</span></li>
                                         </ul>
                                     </div>
                                     <AlertDialogFooter className="grid grid-cols-2 gap-2 mt-4">
@@ -497,7 +515,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                             </AlertDialog>
                             <div className="flex justify-between items-end mt-2">
                                 <div className="text-sm font-medium text-muted-foreground">
-                                    {activity.inscriptions.length} / {activity.maxPlayers} inscritos
+                                    {activity.inscriptionsDetailed.length} / {activity.maxPlayers} inscritos
                                 </div>
                                 <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white rounded-full font-semibold" asChild>
                                      <Link href={`/match-day/${activity.id}`}>
@@ -515,7 +533,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                     <MatchCard
                         match={match}
                         currentUser={currentUser}
-                        onBookingSuccess={handleLocalMatchBookingUpdate}
+                        onBookingSuccess={() => handleLocalMatchBookingUpdate(match)}
                         onMatchUpdate={handleLocalMatchBookingUpdate}
                         matchShareCode={matchShareCode}
                         showPointsBonus={showPointsBonus}

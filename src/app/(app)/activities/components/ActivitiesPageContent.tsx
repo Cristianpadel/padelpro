@@ -59,8 +59,28 @@ export default function ActivitiesPageContent({ currentUser, onCurrentUserUpdate
 
 
     const handleBookingSuccess = useCallback(async () => {
-        triggerRefresh();
-    }, [triggerRefresh]);
+        if (currentClub) {
+            setIsInitialLoading(true);
+            try {
+                const matches = await fetchMatches(currentClub.id);
+                // Generate proposals first, then append fetched matches so fetched overwrite proposals on duplicate ids
+                let combinedMatches: Match[] = [];
+                for (let i = 0; i < 7; i++) {
+                    const date = addDays(new Date(), i);
+                    combinedMatches = [...combinedMatches, ...createMatchesForDay(currentClub, date)];
+                }
+                combinedMatches = [...combinedMatches, ...matches];
+                const uniqueMatches = Array.from(new Map(combinedMatches.map(item => [item['id'], item])).values());
+                setAllMatches(uniqueMatches);
+            } catch (error) {
+                console.error("Error refreshing matches after booking", error);
+            } finally {
+                setIsInitialLoading(false);
+            }
+        } else {
+            triggerRefresh();
+        }
+    }, [currentClub, triggerRefresh]);
     
     useEffect(() => {
         const loadInitialData = async () => {
@@ -82,13 +102,15 @@ export default function ActivitiesPageContent({ currentUser, onCurrentUserUpdate
 
                 setAllTimeSlots(slots);
                 
-                let combinedMatches = [...existingMatches];
+                // Generate proposals first, then append fetched matches so fetched overwrite proposals on duplicate ids
+                let combinedMatches: Match[] = [];
                 if (club) {
                     for (let i = 0; i < 7; i++) {
                         const date = addDays(new Date(), i);
                         combinedMatches = [...combinedMatches, ...createMatchesForDay(club, date)];
                     }
                 }
+                combinedMatches = [...combinedMatches, ...existingMatches];
                 const uniqueMatches = Array.from(new Map(combinedMatches.map(item => [item['id'], item])).values());
                 setAllMatches(uniqueMatches);
 
