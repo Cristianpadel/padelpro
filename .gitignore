@@ -82,4 +82,13 @@ pnpm-debug.log*
 .eslintcache
 .idx
 .modified
+<<<<<<< HEAD
 >>>>>>> afeb2c0e (chore(repo): restore .gitignore and .firebaserc; ignore build artifacts)
+=======
+
+/src/generated/prisma
+
+# Prisma local databases
+prisma/*.db
+prisma/*.db-journal
+>>>>>>> bbb914e2 (chore(db): seed script, ignore local SQLite, untrack dev.db)
