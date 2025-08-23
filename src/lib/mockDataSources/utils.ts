@@ -202,6 +202,36 @@ export const getPlaceholderUserName = (userId: string | undefined, currentUserId
   return student?.name || `Jugador ${userId.substring(userId.length - 4)}`;
 };
 
+/**
+ * Removes open proposal classes (pre_registration with 0 players) for the same instructor
+ * that overlap the given confirmed slot's interval. Returns number of proposals removed.
+ */
+export const removeOverlappingInstructorProposalsForSlot = (confirmedSlot: TimeSlot): number => {
+    if (!confirmedSlot || !confirmedSlot.instructorId) return 0;
+    const start = new Date(confirmedSlot.startTime);
+    const end = new Date(confirmedSlot.endTime);
+    let removed = 0;
+
+    // Collect candidates to avoid mutating while iterating original array
+    const candidates = state.getMockTimeSlots().filter(s =>
+        s.id !== confirmedSlot.id &&
+        s.instructorId === confirmedSlot.instructorId &&
+        s.status === 'pre_registration' &&
+        (!s.bookedPlayers || s.bookedPlayers.length === 0) &&
+        // Non-inclusive boundaries: proposals that start exactly when the class ends or end exactly when it starts are allowed
+        dateFnsAreIntervalsOverlapping({ start, end }, { start: new Date(s.startTime), end: new Date(s.endTime) }, { inclusive: false })
+    );
+
+    for (const c of candidates) {
+        state.removeTimeSlotFromState(c.id);
+        removed++;
+    }
+    if (removed > 0) {
+        console.log(`[Proposals] Removed ${removed} overlapping proposals for instructor ${confirmedSlot.instructorId} due to confirmed class ${confirmedSlot.id}.`);
+    }
+    return removed;
+};
+
 export const findAvailableCourt = (clubId: string, startTime: Date, endTime: Date): PadelCourt | undefined => {
     const allClubCourts = state.getMockPadelCourts().filter(c => c.clubId === clubId && c.isActive);
     if (allClubCourts.length === 0) return undefined;
@@ -219,7 +249,9 @@ export const findAvailableCourt = (clubId: string, startTime: Date, endTime: Dat
         .forEach(checkAndAdd);
 
     state.getMockMatches()
-        .filter(m => m.clubId === clubId && (m.status === 'confirmed' || m.status === 'confirmed_private'))
+        .filter(m => m.clubId === clubId && (
+            m.status === 'confirmed' || m.status === 'confirmed_private' || ((m as any).isProvisional === true && !!m.courtNumber)
+        ))
         .forEach(checkAndAdd);
     
     // Add Match-Day event bookings
@@ -451,7 +483,9 @@ export const getCourtAvailabilityForInterval = (
         .filter(s => s.clubId === clubId && (s.status === 'confirmed' || s.status === 'confirmed_private'))
         .forEach(checkAndAdd);
     state.getMockMatches()
-        .filter(m => m.clubId === clubId && (m.status === 'confirmed' || m.status === 'confirmed_private'))
+        .filter(m => m.clubId === clubId && (
+            m.status === 'confirmed' || m.status === 'confirmed_private' || ((m as any).isProvisional === true && !!m.courtNumber)
+        ))
         .forEach(checkAndAdd);
     
     // Add Match-Day event bookings

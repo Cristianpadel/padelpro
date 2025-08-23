@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SlidersHorizontal, Loader2, Heart, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import ManageFavoriteInstructorsDialog from './ManageFavoriteInstructorsDialog';
+import ManageFavoriteInstructorsDialog from '@/components/schedule/ManageFavoriteInstructorsDialog';
 import OpenClassesDialog from './OpenClassesDialog';
 
 interface ScheduleDisplayProps {

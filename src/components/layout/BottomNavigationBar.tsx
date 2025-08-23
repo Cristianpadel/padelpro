@@ -192,6 +192,7 @@ export function BottomNavigationBar({ onMobileFiltersClick }: BottomNavigationBa
             isActive: pathname === '/activities' && searchParams.get('view') === 'partidas',
             hidden: !currentUser || !(clubInfo?.showMatchesTabOnFrontend ?? true),
         },
+        // Optionally add classes tab on mobile if desired
         {
             key: 'filters',
             onClick: onMobileFiltersClick,

@@ -85,6 +85,7 @@ const TimeSlotCard: React.FC<TimeSlotCardProps> = ({ slot: initialSlot, currentU
     const userHasConfirmedActivityToday = (currentUser && currentSlot?.startTime) 
         ? hasAnyConfirmedActivityForDay(currentUser.id, new Date(currentSlot.startTime))
         : false;
+    const dayBlocked = userHasConfirmedActivityToday;
 
     const handleBook = async () => {
         if (!currentUser) { toast({ title: "Error", description: "Debes iniciar sesión para reservar.", variant: "destructive" }); return; }
@@ -142,7 +143,10 @@ const TimeSlotCard: React.FC<TimeSlotCardProps> = ({ slot: initialSlot, currentU
 
     return (
         <>
-            <Card className="flex flex-col h-full transition-shadow duration-300 hover:shadow-xl">
+            <Card
+                className={cn("flex flex-col h-full transition-shadow duration-300 hover:shadow-xl", dayBlocked && "opacity-60")}
+                onClick={() => { if (dayBlocked) { toast({ title: "No disponible", description: "Ya tienes una reserva este día. Máximo una reserva por día.", variant: "default" }); } }}
+            >
                 <CardHeader className="pb-2 pt-3 px-3"> 
                     <div className="flex justify-between items-start">
                         <div className="flex-grow">

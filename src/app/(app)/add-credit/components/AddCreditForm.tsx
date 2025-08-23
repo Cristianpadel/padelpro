@@ -32,6 +32,7 @@ import { getInitials } from '@/lib/utils'; // Import getInitials
 
 interface AddCreditFormProps {
   instructor: User; // Instructor might be needed for permissions/tracking
+  initialStudentId?: string; // Optional preselected student id from deep-link
 }
 
 // Schema for validation
@@ -42,7 +43,7 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
-const AddCreditForm: React.FC<AddCreditFormProps> = ({ instructor }) => {
+const AddCreditForm: React.FC<AddCreditFormProps> = ({ instructor, initialStudentId }) => {
   const [students, setStudents] = useState<User[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(true);
   const [isPending, startTransition] = useTransition();
@@ -73,10 +74,18 @@ const AddCreditForm: React.FC<AddCreditFormProps> = ({ instructor }) => {
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      studentId: "",
+      studentId: initialStudentId || "",
       amount: 10, // Default amount
     },
   });
+
+  // If an initialStudentId arrives later (e.g., hydration) or when students list is ready,
+  // ensure the form reflects it if still empty.
+  useEffect(() => {
+    if (initialStudentId && !form.getValues('studentId')) {
+      form.setValue('studentId', initialStudentId);
+    }
+  }, [initialStudentId, form]);
 
   const onSubmit = (values: FormData) => {
     startTransition(async () => {

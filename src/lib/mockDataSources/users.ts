@@ -1,7 +1,7 @@
 // src/lib/mockDataSources/users.ts
 "use client";
 
-import type { User, Booking, PointTransactionType, TimeSlot, Match, Product, Instructor, UserDB, MatchPadelLevel, UserGenderCategory, DayOfWeek, TimeRange, InstructorRateTier, MatchBooking, Review, Transaction, MatchDayEvent, UserActivityStatusForDay } from '@/types';
+import type { User, Booking, PointTransactionType, TimeSlot, Match, Product, Instructor, UserDB, MatchPadelLevel, UserGenderCategory, DayOfWeek, TimeRange, InstructorRateTier, MatchBooking, Review, Transaction, MatchDayEvent, UserActivityStatusForDay, PointTransaction } from '@/types';
 import * as state from './index'; 
 import * as config from '../config';
 import { areIntervalsOverlapping, parse, getDay, format, differenceInDays, startOfDay, isSameDay } from 'date-fns';
@@ -58,11 +58,12 @@ export const deductCredit = (userId: string, amount: number, activity: TimeSlot 
     
     const activityDate = 'eventDate' in activity ? activity.eventDate : activity.startTime;
 
+    const transactionType: Transaction['type'] = type === 'Clase' ? 'Reserva Clase' : 'Reserva Partida';
     state.addTransactionToState({
         id: `txn-deduct-${Date.now()}-${userId.slice(-4)}`,
         userId,
         date: new Date(),
-        type: `Reserva ${type}`,
+        type: transactionType,
         amount: -amount,
         description: `${type} con ${'instructorName' in activity ? activity.instructorName : 'varios'} el ${format(new Date(activityDate), "dd/MM")}`,
     });
@@ -269,7 +270,7 @@ export const addUserToDB = async (userData: Partial<Omit<UserDB, 'id' | 'created
     const newId = userData.id || `user-${Date.now()}-${Math.random().toString(36).substring(7)}`;
     const newUser: UserDB = {
         id: newId,
-        name: userData.name,
+        name: userData.name || 'Usuario',
         email: userData.email,
         hashedPassword: `hashed_${userData.password || 'default_password'}`,
         createdAt: new Date(),
@@ -339,7 +340,7 @@ export const registerStudent = async (
         isBlocked: false,
         favoriteInstructorIds: [],
         profilePictureUrl: `https://avatar.vercel.sh/${newId}.png?size=96`,
-        genderCategory: 'abierta', // Default gender
+    genderCategory: 'no_especificado', // Default gender category
         pendingBonusPoints: 0,
         blockedLoyaltyPoints: 0,
     };
@@ -753,7 +754,7 @@ export const simulateInviteFriend = async (userId: string, clubId: string): Prom
         undefined,
         clubId
     );
-    return { success: true, pointsAwarded };
+    return { success: true, pointsAwarded: pointsToAward };
 };
 
 export const reserveProductWithCredit = async (userId: string, productId: string): Promise<{ success: true, newBalance: number } | { error: string }> => {
@@ -861,12 +862,24 @@ export const getUserActivityStatusForDay = async (userId: string, date: Date): P
         }
     }
     
-    // Check confirmed classes
-    const hasConfirmedClass = state.getMockUserBookings().some(b => {
+    // Check confirmed classes (only truly confirmed, not just "effectively completed")
+    let hasConfirmedClass = state.getMockUserBookings().some(b => {
         if (b.userId !== userId) return false;
         const slot = state.getMockTimeSlots().find(s => s.id === b.activityId);
-        return slot && isSameDay(new Date(slot.startTime), todayStart) && isSlotEffectivelyCompleted(slot).completed;
+        return (
+            !!slot &&
+            isSameDay(new Date(slot.startTime), todayStart) &&
+            (slot.status === 'confirmed' || slot.status === 'confirmed_private')
+        );
     });
+    // Fallback: scan slots for user presence in bookedPlayers (in case booking records desync)
+    if (!hasConfirmedClass) {
+        hasConfirmedClass = state.getMockTimeSlots().some(slot =>
+            isSameDay(new Date(slot.startTime), todayStart) &&
+            (slot.status === 'confirmed' || slot.status === 'confirmed_private') &&
+            (slot.bookedPlayers || []).some(p => p.userId === userId)
+        );
+    }
 
     if (hasConfirmedClass) {
         result.activityStatus = 'confirmed';
@@ -874,11 +887,19 @@ export const getUserActivityStatusForDay = async (userId: string, date: Date): P
     }
 
     // Check confirmed matches
-    const hasConfirmedMatch = state.getMockUserMatchBookings().some(b => {
+    let hasConfirmedMatch = state.getMockUserMatchBookings().some(b => {
         if (b.userId !== userId) return false;
         const match = state.getMockMatches().find(m => m.id === b.activityId);
         return match && isSameDay(new Date(match.startTime), todayStart) && (match.status === 'confirmed' || match.status === 'confirmed_private');
     });
+    // Fallback: scan matches by bookedPlayers
+    if (!hasConfirmedMatch) {
+        hasConfirmedMatch = state.getMockMatches().some(match =>
+            isSameDay(new Date(match.startTime), todayStart) &&
+            (match.status === 'confirmed' || match.status === 'confirmed_private') &&
+            (match.bookedPlayers || []).some(p => p.userId === userId)
+        );
+    }
 
     if (hasConfirmedMatch) {
         result.activityStatus = 'confirmed';
@@ -891,11 +912,22 @@ export const getUserActivityStatusForDay = async (userId: string, date: Date): P
     }
 
     // Check inscribed classes
-    const hasInscribedClass = state.getMockUserBookings().some(b => {
+    let hasInscribedClass = state.getMockUserBookings().some(b => {
         if (b.userId !== userId) return false;
         const slot = state.getMockTimeSlots().find(s => s.id === b.activityId);
-        return slot && isSameDay(new Date(slot.startTime), todayStart) && slot.status === 'pre_registration';
+        return (
+            !!slot &&
+            isSameDay(new Date(slot.startTime), todayStart) &&
+            (slot.status === 'pre_registration' || slot.status === 'forming')
+        );
     });
+    if (!hasInscribedClass) {
+        hasInscribedClass = state.getMockTimeSlots().some(slot =>
+            isSameDay(new Date(slot.startTime), todayStart) &&
+            (slot.status === 'pre_registration' || slot.status === 'forming') &&
+            (slot.bookedPlayers || []).some(p => p.userId === userId)
+        );
+    }
 
     if (hasInscribedClass) {
         result.activityStatus = 'inscribed';
@@ -903,11 +935,18 @@ export const getUserActivityStatusForDay = async (userId: string, date: Date): P
     }
 
     // Check inscribed matches
-    const hasInscribedMatch = state.getMockUserMatchBookings().some(b => {
+    let hasInscribedMatch = state.getMockUserMatchBookings().some(b => {
         if (b.userId !== userId) return false;
         const match = state.getMockMatches().find(m => m.id === b.activityId);
         return match && isSameDay(new Date(match.startTime), todayStart) && match.status === 'forming';
     });
+    if (!hasInscribedMatch) {
+        hasInscribedMatch = state.getMockMatches().some(match =>
+            isSameDay(new Date(match.startTime), todayStart) &&
+            match.status === 'forming' &&
+            (match.bookedPlayers || []).some(p => p.userId === userId)
+        );
+    }
     
     if (hasInscribedMatch) {
         result.activityStatus = 'inscribed';

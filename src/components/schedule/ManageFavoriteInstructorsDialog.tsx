@@ -80,8 +80,11 @@ const ManageFavoriteInstructorsDialog: React.FC<ManageFavoriteInstructorsDialogP
   };
 
   const handleApply = () => {
+    const ids = [...selectedFavoriteIds];
+    // Close first to avoid portal/DOM race conditions when navigation occurs
+    onOpenChange(false);
     startSaveTransition(async () => {
-      const result = await updateUserFavoriteInstructors(currentUser.id, selectedFavoriteIds);
+      const result = await updateUserFavoriteInstructors(currentUser.id, ids);
       if ('error' in result) {
         toast({
           title: "Error al Guardar Favoritos",
@@ -89,13 +92,12 @@ const ManageFavoriteInstructorsDialog: React.FC<ManageFavoriteInstructorsDialogP
           variant: "destructive",
         });
       } else {
+        onApplyFavorites(ids);
         toast({
           title: "Favoritos Actualizados",
           description: "Tu lista de instructores favoritos ha sido guardada.",
           className: "bg-primary text-primary-foreground",
         });
-        onApplyFavorites(selectedFavoriteIds);
-        onOpenChange(false);
       }
     });
   };

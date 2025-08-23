@@ -5,10 +5,13 @@ import AddCreditForm from './components/AddCreditForm';
 import { getMockInstructors } from '@/lib/mockData'; // Assuming instructor is a user type
 import type { User } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useSearchParams } from 'next/navigation';
 
 export default function AddCreditPage() {
     const [instructor, setInstructor] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const searchParams = useSearchParams();
+    const initialStudentId = searchParams.get('userId') || undefined;
 
     useEffect(() => {
         const fetchInstructor = async () => {
@@ -57,6 +60,7 @@ export default function AddCreditPage() {
                 <div className="mx-auto max-w-2xl">
                     <AddCreditForm 
                         instructor={instructor}
+                        initialStudentId={initialStudentId}
                     />
                 </div>
             </main>

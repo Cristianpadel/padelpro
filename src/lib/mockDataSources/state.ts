@@ -1,8 +1,37 @@
+// Limpia todos los MatchBooking de partidas no confirmadas para todos los usuarios
+export function cleanUnconfirmedMatchBookings() {
+    if (!Array.isArray(_mockUserMatchBookings) || !Array.isArray(_mockMatches)) return;
+    const confirmedMatchIds = new Set(_mockMatches.filter(m => m.status === 'confirmed' || m.status === 'confirmed_private').map(m => m.id));
+    _mockUserMatchBookings = _mockUserMatchBookings.filter(b => confirmedMatchIds.has(b.activityId));
+    // Si usas persistencia, actualiza el storage
+    if (typeof window !== 'undefined' && window.localStorage) {
+        try {
+            window.localStorage.setItem('padelpro_mock_user_match_bookings', JSON.stringify(_mockUserMatchBookings));
+        } catch (e) { /* ignore */ }
+    }
+}
+// --- MIGRATION: Ensure all bookedPlayers in all matches have profilePictureUrl ---
+function migrateBookedPlayersProfilePictures() {
+    const users = [..._mockStudents, ..._mockUserDatabase];
+    for (const match of _mockMatches) {
+        if (!Array.isArray(match.bookedPlayers)) continue;
+        match.bookedPlayers = match.bookedPlayers.map(bp => {
+            if (bp.profilePictureUrl) return bp;
+            const user = users.find(u => u.id === bp.userId);
+            return {
+                ...bp,
+                profilePictureUrl: user?.profilePictureUrl || undefined
+            };
+        });
+    }
+}
+
 // lib/state.ts
 import type { TimeSlot, Club, Instructor, PadelCourt, CourtGridBooking, PointTransaction, User, Match, MatchDayEvent, Product, Booking, MatchBooking, DealOfTheDaySettings, UserDB, MatchDayInscription, Review, Transaction } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { startOfDay, addHours, addMinutes, subDays } from 'date-fns';
 import { isSlotEffectivelyCompleted as isSlotEffectivelyCompletedInternal } from './utils'; // Import the internal utility
+
 
 // --- Internal State Variables (not exported directly) ---
 let _mockStudents: User[] = [];
@@ -15,15 +44,41 @@ let _mockPadelCourts: PadelCourt[] = [];
 let _mockUserBookings: Booking[] = [];
 let _mockUserMatchBookings: MatchBooking[] = [];
 let _mockTimeSlots: TimeSlot[] = [];
-let _mockMatches: Match[] = [];
 let _mockUserDatabase: UserDB[] = [];
 let _mockReviews: Review[] = [];
 let _mockTransactions: Transaction[] = [];
 let _mockPointTransactions: PointTransaction[] = [];
 let _mockMatchDayEvents: MatchDayEvent[] = [];
 let _mockMatchDayInscriptions: MatchDayInscription[] = [];
-let _mockMatchDayCancelledInscriptions: MatchDayInscription[] = []; // New state
+let _mockMatchDayCancelledInscriptions: MatchDayInscription[] = [];
 let _mockShopProducts: Product[] = [];
+
+
+// --- Persistent Matches in localStorage (browser only) ---
+let _mockMatches: Match[] = [];
+const MATCHES_STORAGE_KEY = 'padelpro_mock_matches';
+if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+        const stored = window.localStorage.getItem(MATCHES_STORAGE_KEY);
+        if (stored) {
+            _mockMatches = JSON.parse(stored);
+        }
+    } catch (e) { /* ignore */ }
+    // Limpiar bookings antiguos al cargar los datos mock
+    if (typeof window !== 'undefined' && typeof (window as any).cleanUnconfirmedMatchBookings === 'function') {
+        (window as any).cleanUnconfirmedMatchBookings();
+    } else if (typeof cleanUnconfirmedMatchBookings === 'function') {
+        cleanUnconfirmedMatchBookings();
+    }
+}
+
+function persistMockMatches() {
+    if (typeof window !== 'undefined' && window.localStorage) {
+        try {
+            window.localStorage.setItem(MATCHES_STORAGE_KEY, JSON.stringify(_mockMatches));
+        } catch (e) { /* ignore */ }
+    }
+}
 
 
 let _hasNewGratisSpotNotification = false;
@@ -59,7 +114,7 @@ export const getChargedUsersForThisConfirmation = (): Set<string> => new Set(_ch
 export const getSemiFullMatchCount = (): number => _semiFullMatchCount;
 
 // --- Setters / Initializers (to be called by mockData.ts or specific modules) ---
-export const initializeMockStudents = (data: User[]): void => { _mockStudents = [...data]; };
+export const initializeMockStudents = (data: User[]): void => { _mockStudents = [...data]; migrateBookedPlayersProfilePictures(); };
 export const initializeMockCurrentUser = (data: User | null): void => { _mockCurrentUser = data ? { ...data } : null; };
 export const initializeMockAdminUser = (data: User): void => { _mockAdminUser = { ...data }; };
 export const initializeMockSuperAdminUser = (data: User): void => { _mockSuperAdminUser = { ...data }; };
@@ -69,8 +124,8 @@ export const initializeMockPadelCourts = (data: PadelCourt[]): void => { _mockPa
 export const initializeMockUserBookings = (data: Booking[]): void => { _mockUserBookings = data.map(b => ({...b})); };
 export const initializeMockUserMatchBookings = (data: MatchBooking[]): void => { _mockUserMatchBookings = data.map(b => ({...b})); };
 export const initializeMockTimeSlots = (data: TimeSlot[]): void => { _mockTimeSlots = data.map(ts => ({...ts})); };
-export const initializeMockMatches = (data: Match[]): void => { _mockMatches = data.map(m => ({...m})); };
-export const initializeMockUserDatabase = (data: UserDB[]): void => { _mockUserDatabase = [...data]; };
+export const initializeMockMatches = (data: Match[]): void => { _mockMatches = data.map(m => ({...m})); migrateBookedPlayersProfilePictures(); persistMockMatches(); };
+export const initializeMockUserDatabase = (data: UserDB[]): void => { _mockUserDatabase = [...data]; migrateBookedPlayersProfilePictures(); };
 export const initializeMockReviews = (data: Review[]): void => { _mockReviews = [...data]; };
 export const initializeMockPointTransactions = (data: PointTransaction[]): void => { _mockPointTransactions = [...data]; };
 export const initializeMockMatchDayEvents = (data: MatchDayEvent[]): void => { _mockMatchDayEvents = data.map(e => ({...e})); };
@@ -193,7 +248,8 @@ export const removeBookingFromTimeSlotInState = (slotId: string, userId: string,
     const slotIndex = _mockTimeSlots.findIndex(s => s.id === slotId);
     if (slotIndex !== -1) {
         const slot = { ..._mockTimeSlots[slotIndex] };
-        slot.bookedPlayers = (slot.bookedPlayers || []).filter(p => !(p.userId === userId && p.groupSize === groupSize));
+        // Only filter by groupSize if it exists (for classes, not matches)
+        slot.bookedPlayers = (slot.bookedPlayers || []).filter(p => !(p.userId === userId && ('groupSize' in p ? p.groupSize === groupSize : false)));
 
         if (slot.status === 'confirmed' && !isSlotEffectivelyCompletedInternal(slot).completed) {
             slot.status = 'pre_registration';
@@ -218,18 +274,21 @@ export const removeBookingFromTimeSlotInState = (slotId: string, userId: string,
 export const addMatchToState = (match: Match): void => {
     _mockMatches.push({ ...match });
     _mockMatches.sort((a,b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+    persistMockMatches();
 };
 
 export const updateMatchInState = (matchId: string, updatedMatchData: Match): void => {
     const index = _mockMatches.findIndex(m => m.id === matchId);
     if (index !== -1) {
         _mockMatches[index] = { ...updatedMatchData };
+        persistMockMatches();
     }
 };
 
 export const removeMatchFromState = (matchId: string): boolean => {
     const initialLength = _mockMatches.length;
     _mockMatches = _mockMatches.filter(m => m.id !== matchId);
+    persistMockMatches();
     return _mockMatches.length < initialLength;
 };
 

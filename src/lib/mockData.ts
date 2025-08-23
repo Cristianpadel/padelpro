@@ -18,11 +18,10 @@ import { hasAnyActivityForDay as hasAnyActivityForDayFromUtils } from './mockDat
 
 // Re-export all functions from the index
 export * from './mockDataSources';
-export const isMatchBookableWithPoints = isMatchBookableWithPointsFromUtils;
-export const getCourtAvailabilityForInterval = getCourtAvailabilityForIntervalFromUtils;
-export const isSlotEffectivelyCompleted = isSlotEffectivelyCompletedFromUtils;
-export const getUserActivityStatusForDay = getUserActivityStatusForDayFromUsers;
-export const hasAnyActivityForDay = hasAnyActivityForDayFromUtils;
+// Convenience re-exports for organizer actions in agenda
+export { removePlayerFromMatch, deleteMatch as deleteFixedMatch, updateMatchLevelAndCategory } from './mockDataSources/matches';
+
+// (Removed explicit re-exports of utility functions to avoid circular dependency)
 
 
 // --- New composite functions ---

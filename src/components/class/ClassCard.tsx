@@ -237,9 +237,19 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
         ? { boxShadow: `0 0 25px ${hexToRgba(shadowEffect.color, shadowEffect.intensity)}` } 
         : {};
 
+    const dayBlocked = userHasConfirmedActivityToday;
+
     return (
         <div className="relative">
-            <Card className="flex flex-col h-full rounded-lg overflow-hidden border bg-background" style={shadowStyle}>
+            <Card
+                className={cn("flex flex-col h-full rounded-lg overflow-hidden border bg-background", dayBlocked && "opacity-60")}
+                style={shadowStyle}
+                onClick={() => {
+                    if (dayBlocked) {
+                        toast({ title: "No disponible", description: "Ya tienes una reserva este día. Máximo una reserva por día.", variant: "default" });
+                    }
+                }}
+            >
                 <ClassCardHeader
                     currentSlot={currentSlot}
                     instructor={instructor}
@@ -249,9 +259,16 @@ const ClassCard: React.FC<ClassCardProps> = React.memo(({ classData: initialSlot
                     isSlotEffectivelyFull={isSlotEffectivelyFull}
                     handleShareClass={handleShareClass}
                     onInfoClick={(type) => handleInfoClick(type)}
-                    onReservarPrivadaClick={() => setIsConfirmPrivateDialogOpen(true)}
+                    onReservarPrivadaClick={() => {
+                        if (dayBlocked) {
+                            toast({ title: "No disponible", description: "Ya tienes una reserva este día. Máximo una reserva por día.", variant: "default" });
+                            return;
+                        }
+                        setIsConfirmPrivateDialogOpen(true);
+                    }}
                     isProcessingPrivateAction={isProcessingPrivateAction}
                     bookings={bookingsByGroupSize}
+                    dayBlocked={dayBlocked}
                 />
                 <ClassCardContent
                     currentUser={currentUser}

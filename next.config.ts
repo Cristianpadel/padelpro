@@ -54,6 +54,18 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'www.padelnuestro.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'padelnuestro.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };

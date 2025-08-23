@@ -28,7 +28,7 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 
 interface InstructorPanelProps {
-  instructor: User;
+  instructor: InstructorType;
 }
 
 const rateTierSchema = z.object({
@@ -60,7 +60,7 @@ const timeOptions = Array.from({ length: 48 }, (_, i) => {
 const InstructorPanelComponent: React.FC<InstructorPanelProps> = ({ instructor: initialInstructor }) => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [refreshMatchesKey, setRefreshMatchesKey] = useState(0);
-  const [instructorData, setInstructorData] = useState<InstructorType>(initialInstructor as InstructorType);
+  const [instructorData, setInstructorData] = useState<InstructorType>(initialInstructor);
   const [availableClubs, setAvailableClubs] = useState<Club[]>([]);
   const [availableCourtsForSelectedClub, setAvailableCourtsForSelectedClub] = useState<PadelCourt[]>([]);
   const [isSavingSettings, startSettingsTransition] = useTransition();
@@ -72,8 +72,8 @@ const InstructorPanelComponent: React.FC<InstructorPanelProps> = ({ instructor: 
       assignedClubId: initialInstructor.assignedClubId,
       assignedCourtNumber: initialInstructor.assignedCourtNumber,
       isAvailable: initialInstructor.isAvailable ?? true,
-      defaultRatePerHour: (initialInstructor as InstructorType).defaultRatePerHour || 28,
-      rateTiers: (initialInstructor as InstructorType).rateTiers || [],
+      defaultRatePerHour: initialInstructor.defaultRatePerHour || 28,
+      rateTiers: initialInstructor.rateTiers || [],
     },
   });
   
@@ -85,13 +85,13 @@ const InstructorPanelComponent: React.FC<InstructorPanelProps> = ({ instructor: 
   const watchedAssignedClubId = preferencesForm.watch('assignedClubId');
 
   useEffect(() => {
-    setInstructorData(initialInstructor as InstructorType);
+    setInstructorData(initialInstructor);
     preferencesForm.reset({
       assignedClubId: initialInstructor.assignedClubId,
       assignedCourtNumber: initialInstructor.assignedCourtNumber,
       isAvailable: initialInstructor.isAvailable ?? true,
-      defaultRatePerHour: (initialInstructor as InstructorType).defaultRatePerHour || 28,
-      rateTiers: (initialInstructor as InstructorType).rateTiers || [],
+      defaultRatePerHour: initialInstructor.defaultRatePerHour || 28,
+      rateTiers: initialInstructor.rateTiers || [],
     });
   }, [initialInstructor, preferencesForm]);
 
@@ -114,7 +114,7 @@ const InstructorPanelComponent: React.FC<InstructorPanelProps> = ({ instructor: 
     }
   }, [watchedAssignedClubId, preferencesForm]);
 
-  const handleClassAdded = useCallback((newSlot: TimeSlot) => {
+  const handleClassAdded = useCallback((_newSlot?: TimeSlot) => {
     setRefreshKey(prevKey => prevKey + 1);
   }, []);
 
@@ -124,10 +124,15 @@ const InstructorPanelComponent: React.FC<InstructorPanelProps> = ({ instructor: 
 
   const handleSaveInstructorPreferences = (values: PreferencesFormData) => {
     startSettingsTransition(async () => {
+      const safeRateTiers = values.rateTiers?.map(t => ({
+        ...t,
+        days: (t.days as unknown as DayOfWeek[]),
+      }));
       const updatePayload: Partial<Omit<InstructorType, 'id'>> = {
         ...values,
         assignedClubId: values.assignedClubId || undefined,
         assignedCourtNumber: values.assignedCourtNumber || undefined,
+        rateTiers: safeRateTiers,
       };
       const result = await updateInstructor(instructorData.id, updatePayload);
       if ('error'in result) {
@@ -135,13 +140,13 @@ const InstructorPanelComponent: React.FC<InstructorPanelProps> = ({ instructor: 
       } else {
         const updatedInstructor = result as InstructorType;
         setInstructorData(prev => ({ ...prev, ...updatedInstructor }));
-        const currentUser = await getMockCurrentUser();
-        if (currentUser && currentUser.id === instructorData.id) {
-            setGlobalCurrentUser({ ...currentUser, ...updatedInstructor });
-        }
+    const currentUser = await getMockCurrentUser();
+    if (currentUser && currentUser.id === instructorData.id) {
+      setGlobalCurrentUser({ ...(currentUser as any), ...updatedInstructor } as any);
+    }
         toast({ title: "Preferencias Guardadas", description: "Tus preferencias y tarifas de instructor han sido actualizadas.", className: "bg-primary text-primary-foreground" });
-        preferencesForm.reset(values); // Reset form with new values to remove dirty state
-        handleClassAdded(); // Trigger a refresh of the class list to show new prices
+    preferencesForm.reset(values); // Reset form with new values to remove dirty state
+    handleClassAdded(); // Trigger a refresh of the class list to show new prices
       }
     });
   };
@@ -153,12 +158,12 @@ const InstructorPanelComponent: React.FC<InstructorPanelProps> = ({ instructor: 
             toast({ title: "Error al Guardar Disponibilidad", description: result.error, variant: "destructive"});
         } else {
             setInstructorData(prev => ({ ...prev, ...result })); // Update local instructor data
-            const currentUser = await getMockCurrentUser();
-            if (currentUser && currentUser.id === instructorData.id) { // Also update global state if current user is this instructor
-                setGlobalCurrentUser({ ...currentUser, unavailableHours: result.unavailableHours || {} });
-            }
+      const currentUser = await getMockCurrentUser();
+      if (currentUser && currentUser.id === instructorData.id) { // Also update global state if current user is this instructor
+        setGlobalCurrentUser({ ...(currentUser as any), unavailableHours: result.unavailableHours || {} } as any);
+      }
             toast({ title: "Disponibilidad Guardada", description: "Tu horario de disponibilidad ha sido actualizado.", className: "bg-primary text-primary-foreground" });
-            handleClassAdded(); // Refresh classes to respect new availability
+      handleClassAdded(); // Refresh classes to respect new availability
         }
     });
   };
@@ -167,7 +172,7 @@ const InstructorPanelComponent: React.FC<InstructorPanelProps> = ({ instructor: 
 
   return (
     <Tabs defaultValue="manageClasses" className="space-y-4">
-      <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-1 h-auto flex-wrap">
+  <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-1 h-auto flex-wrap">
         <TabsTrigger value="manageClasses" className="text-xs sm:text-sm py-1.5 px-2">Gestionar Clases</TabsTrigger>
         <TabsTrigger value="addCredits" className="text-xs sm:text-sm py-1.5 px-2">Añadir Crédito</TabsTrigger>
         <TabsTrigger value="openMatch" className="text-xs sm:text-sm py-1.5 px-2">Abrir Partida</TabsTrigger>
@@ -218,6 +223,13 @@ const InstructorPanelComponent: React.FC<InstructorPanelProps> = ({ instructor: 
              <CardTitle className="flex items-center text-lg"><Wallet className="mr-2 h-5 w-5 text-primary" /> Añadir Crédito a Alumnos</CardTitle>
            </CardHeader>
            <CardContent>
+             <div className="flex justify-end mb-2">
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/add-credit">
+                    <Euro className="mr-2 h-4 w-4" /> Ir al panel de recargas
+                  </Link>
+                </Button>
+             </div>
               <AddCreditForm instructor={instructorData} />
            </CardContent>
         </Card>

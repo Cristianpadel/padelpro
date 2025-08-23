@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Settings, Edit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import PageSkeleton from '@/components/layout/PageSkeleton';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import UserProfileSheet from '@/components/user/profile/UserProfileSheet';
 import { matchPadelLevels } from '@/types';
 import EditableInfoRow from '@/components/user/profile/EditableInfoRow';
@@ -50,6 +50,7 @@ function DashboardPageContent() {
 
     const { toast } = useToast();
     const router = useRouter();
+    const searchParams = useSearchParams();
 
     useEffect(() => {
         setIsClient(true);
@@ -61,6 +62,16 @@ function DashboardPageContent() {
         };
         checkUser();
     }, [router]);
+
+    // Optionally auto-open Add Credit when coming from store link
+    useEffect(() => {
+        if (!isClient) return;
+        const openAdd = searchParams?.get('openAddCredit');
+        if (openAdd && !isAddCreditDialogOpen) {
+            setIsAddCreditDialogOpen(true);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isClient, searchParams]);
     
     const handleDataChange = useCallback(() => {
         setRefreshKey(prev => prev + 1);

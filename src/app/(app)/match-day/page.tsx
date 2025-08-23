@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -29,6 +30,7 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 
 export default function MatchDayPage() {
+    const router = useRouter();
     const [event, setEvent] = useState<MatchDayEvent | null>(null);
     const [inscriptions, setInscriptions] = useState<MatchDayInscription[]>([]);
     const [matches, setMatches] = useState<Match[]>([]);
@@ -79,6 +81,18 @@ export default function MatchDayPage() {
     useEffect(() => {
         loadEventData();
     }, [loadEventData]);
+
+    // Guard: if club disables Match-Day, redirect to dashboard with toast
+    useEffect(() => {
+        (async () => {
+            const clubs = await import('@/lib/mockData').then(m => m.getMockClubs());
+            const club = clubs && clubs[0];
+            if (club && !(club.isMatchDayEnabled ?? false)) {
+                toast({ title: 'Sección deshabilitada', description: 'Match-Day no está disponible en tu club.' });
+                router.replace('/dashboard');
+            }
+        })();
+    }, []);
 
     const handleSignUp = () => {
         if (!event || !currentUser) return;

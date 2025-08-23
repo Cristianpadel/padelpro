@@ -5,10 +5,10 @@ import React, { useState, useEffect, useMemo, useCallback, useTransition } from 
 import type { Booking, User, Review, TimeSlot, PadelCourt, Instructor, UserActivityStatusForDay, MatchBooking, Match, Club, PadelCategoryForSlot, MatchBookingMatchDetails } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { List, Clock, Users, CalendarCheck, CalendarX, Loader2, Ban, Hash, Trophy, UserCircle, Gift, Info, MessageSquare, Euro, Users2 as CategoryIcon, Venus, Mars, Share2, Unlock, Lock, Repeat, Lightbulb, BarChartHorizontal, Plus, CheckCircle } from 'lucide-react';
-import { format, differenceInHours } from 'date-fns';
+import { List, Clock, Users, CalendarCheck, CalendarX, Loader2, Ban, Hash, Trophy, UserCircle, Gift, Info, MessageSquare, Euro, Users2 as CategoryIcon, Venus, Mars, Share2, Unlock, Lock, Repeat, Lightbulb, BarChartHorizontal, Plus, CheckCircle, Edit } from 'lucide-react';
+import { format, differenceInHours, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { fetchUserMatchBookings, cancelMatchBooking, getMockClubs, makeMatchPublic, cancelPrivateMatchAndReofferWithPoints, getMockMatches, renewRecurringMatch, fillMatchAndMakePrivate } from '@/lib/mockData';
+import { fetchUserMatchBookings, cancelMatchBooking, getMockClubs, makeMatchPublic, cancelPrivateMatchAndReofferWithPoints, getMockMatches, renewRecurringMatch, fillMatchAndMakePrivate, updateMatchLevelAndCategory, removePlayerFromMatch, deleteFixedMatch, getMockUserDatabase } from '@/lib/mockData';
 import * as state from '@/lib/mockDataSources/state';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -28,16 +28,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials, getPlaceholderUserName, calculatePricePerPerson } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import MatchChatDialog from '@/components/chat/MatchChatDialog';
+import dynamic from 'next/dynamic';
+const MatchChatDialog = dynamic(() => import('@/components/chat/MatchChatDialog'), { ssr: false });
 import { displayClassCategory } from '@/types';
-import { InfoCard } from '@/components/schedule/InfoCard'; 
-import { useRouter } from 'next/navigation'; 
+ 
 import { Separator } from '../ui/separator';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+// Removed horizontal ScrollArea for vertical stacking of cards
 import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
 import { hasAnyActivityForDay, getCourtAvailabilityForInterval } from '@/lib/mockData';
 import { MatchSpotDisplay } from '@/components/match/MatchSpotDisplay';
+import MatchCard from '@/components/match/MatchCard';
 
 
 interface PersonalMatchesProps {
@@ -104,9 +105,8 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isProcessingAction, startProcessingTransition] = useTransition();
-  const [currentActionInfo, setCurrentActionInfo] = useState<{ type: 'cancel' | 'cede' | 'cancelAndReoffer' | 'renew' | 'makePrivate', bookingId: string, matchId?: string } | null>(null);
+  const [currentActionInfo, setCurrentActionInfo] = useState<{ type: 'cancel' | 'cede' | 'cancelAndReoffer' | 'renew' | 'makePrivate' | 'removePlayer' | 'deleteFixed', bookingId: string, matchId?: string, targetUserId?: string } | null>(null);
   const { toast } = useToast();
-  const router = useRouter();
 
   const [isChatDialogOpen, setIsChatDialogOpen] = useState(false);
   const [selectedMatchForChat, setSelectedMatchForChat] = useState<Match | null | undefined>(null);
@@ -115,6 +115,12 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
   const [infoDialog, setInfoDialog] = useState<{ open: boolean, title: string, description: string, icon: React.ElementType }>({ open: false, title: '', description: '', icon: Lightbulb });
   const [isConfirmPrivateDialogOpen, setIsConfirmPrivateDialogOpen] = useState(false);
   const [isProcessingPrivateAction, setIsProcessingPrivateAction] = useState(false);
+
+  // Edit config for fixed matches (Mi agenda)
+  const [editConfig, setEditConfig] = useState<{ open: boolean; matchId: string | null; level: string; category: 'abierta' | 'chico' | 'chica' }>(
+    { open: false, matchId: null, level: 'abierto', category: 'abierta' }
+  );
+  const [isSavingConfig, setIsSavingConfig] = useState(false);
 
 
   const loadData = useCallback(async () => {
@@ -152,15 +158,16 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
       setBookings(enrichedBookings);
       setError(null);
 
-      const upcoming = enrichedBookings.filter(b => b.matchDetails && new Date(b.matchDetails.endTime) > new Date());
-      const newAvailabilityData: Record<string, CourtAvailabilityState> = {};
-      for (const booking of upcoming) {
-          if (booking.matchDetails) {
-              const availability = await getCourtAvailabilityForInterval(booking.matchDetails.clubId, new Date(booking.matchDetails.startTime), new Date(booking.matchDetails.endTime));
-              newAvailabilityData[booking.activityId] = availability;
-          }
+    const upcoming = enrichedBookings.filter(b => b.matchDetails && new Date(b.matchDetails.endTime) > new Date());
+    const PREFETCH_LIMIT = 5;
+    const newAvailabilityData: Record<string, CourtAvailabilityState> = {};
+    for (const booking of upcoming.slice(0, PREFETCH_LIMIT)) {
+      if (booking.matchDetails) {
+        const availability = await getCourtAvailabilityForInterval(booking.matchDetails.clubId, new Date(booking.matchDetails.startTime), new Date(booking.matchDetails.endTime));
+        newAvailabilityData[booking.activityId] = availability;
       }
-      setAvailabilityData(newAvailabilityData);
+    }
+    setAvailabilityData(prev => ({ ...prev, ...newAvailabilityData }));
 
     } catch (err) {
       console.error("Failed to fetch user match bookings:", err);
@@ -172,7 +179,8 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
 
   useEffect(() => {
     loadData();
-    const timer = setInterval(() => setNow(new Date()), 1000);
+    // Reduce re-render frequency
+    const timer = setInterval(() => setNow(new Date()), 5000);
     return () => clearInterval(timer);
   }, [currentUser.id, newMatchBooking, onBookingActionSuccess, loadData]);
 
@@ -269,14 +277,16 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
             toast({ title: "Error al Renovar", description: result.error, variant: "destructive" });
         } else {
             toast({ title: "¡Reserva Renovada!", description: "Tu partida para la próxima semana ha sido confirmada." });
+            // Refresh local bookings so the renewed match appears immediately in Mi agenda
+            await loadData();
             onBookingActionSuccess();
         }
         setCurrentActionInfo(null);
     });
   };
 
-  const upcomingBookings = bookings.filter(b => b.matchDetails && new Date(b.matchDetails.endTime) > now);
-  const pastBookings = bookings.filter(b => b.matchDetails && new Date(b.matchDetails.endTime) <= now);
+  const upcomingBookings = useMemo(() => bookings.filter(b => b.matchDetails && new Date(b.matchDetails.endTime) > now), [bookings, now]);
+  const pastBookings = useMemo(() => bookings.filter(b => b.matchDetails && new Date(b.matchDetails.endTime) <= now), [bookings, now]);
 
 
   if (loading) {
@@ -301,16 +311,12 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
   const hasPastBookings = pastBookings.length > 0;
   
   if (!hasUpcomingBookings && !hasPastBookings) {
-     return (
-        <InfoCard
-            icon={Trophy}
-            title="¿Echamos una Partida?"
-            description="Parece que no tienes partidas en tu agenda. ¡Únete a una y demuestra tu nivel!"
-            actionText="Ver Partidas"
-            onActionClick={() => router.push('/activities?view=partidas')}
-            storageKey="dismissed_match_suggestion"
-        />
-     );
+    return (
+     <div className="p-6 text-center text-muted-foreground flex flex-col items-center justify-center gap-2">
+       <Trophy className="h-6 w-6 opacity-60" />
+       <p className="text-sm">Aún no tienes partidas en tu agenda.</p>
+     </div>
+    );
   }
 
   const renderBookingItem = (booking: MatchBooking, isUpcomingItem: boolean) => {
@@ -329,11 +335,13 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
           );
       }
 
-      const { id: matchId, startTime, endTime, courtNumber, level, category, bookedPlayers, totalCourtFee, clubId, status, organizerId, privateShareCode, isRecurring, nextRecurringMatchId, durationMinutes } = matchDetails;
+  const { id: matchId, startTime, endTime, courtNumber, level, category, bookedPlayers, totalCourtFee, clubId, status, organizerId, privateShareCode, isRecurring, nextRecurringMatchId, durationMinutes } = matchDetails;
   const isMatchFull = (bookedPlayers || []).length >= 4;
       const wasBookedWithPoints = booking.bookedWithPoints === true;
       const clubDetails = getMockClubs().find(c => c.id === clubId);
-      const isOrganizerOfPrivateMatch = status === 'confirmed_private' && organizerId === currentUser.id;
+  const isOrganizerOfPrivateMatch = status === 'confirmed_private' && organizerId === currentUser.id;
+  const isFixedMatch = (matchDetails as any).isFixedMatch === true;
+  const isOrganizerOfFixed = isFixedMatch && organizerId === currentUser.id;
       const availability = availabilityData[booking.activityId];
       const pricePerPlayer = calculatePricePerPerson(totalCourtFee || 0, 4);
       const isUserInMatch = (bookedPlayers || []).some(p => p.userId === currentUser.id);
@@ -398,6 +406,10 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
       };
       
       const provisionalMatch = !isUpcomingItem && nextRecurringMatchId ? state.getMockMatches().find(m => m.id === nextRecurringMatchId) : undefined;
+      // Detect +14 días hold at same hour for the organizer's fixed match
+      const secondHold = (matchDetails as any).isFixedMatch
+        ? state.getMockMatches().find(m => (m as any).isProvisional === true && m.isFixedMatch === true && m.clubId === clubId && new Date(m.startTime).getTime() === addDays(new Date(startTime), 14).getTime())
+        : undefined;
       let renewalTimeLeft = '';
       let isRenewalExpired = false;
       if (provisionalMatch?.provisionalExpiresAt) {
@@ -411,13 +423,213 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
           }
       }
 
-      const canMakePrivate = isUpcomingItem && isUserInMatch && !isMatchFull && status !== 'confirmed_private';
+  const canMakePrivate = isUpcomingItem && isUserInMatch && !isMatchFull && status !== 'confirmed_private';
+  const canEditFixedConfig = isUserInMatch && (matchDetails as any).isFixedMatch === true;
       const cardBorderColor = isUpcomingItem
         ? (status === 'confirmed_private' ? 'border-l-purple-600' : (isMatchFull ? 'border-l-red-500' : 'border-l-blue-500'))
         : 'border-l-gray-400';
 
+      // Fixed matches: render using shared MatchCard for identical look/behavior
+      if (isFixedMatch) {
+        return (
+      <div
+            key={booking.id}
+            className={cn(
+        "flex flex-col space-y-2 w-full overflow-visible",
+              isUpcomingItem ? '' : ''
+            )}
+          >
+            <MatchCard
+              match={matchDetails as any}
+              currentUser={currentUser}
+              onBookingSuccess={onBookingActionSuccess}
+              onMatchUpdate={(updated) => {
+                setBookings(prev => prev.map(b => b.activityId === updated.id ? {
+                  ...b,
+                  matchDetails: {
+                    ...(updated as any),
+                    startTime: new Date(updated.startTime),
+                    endTime: new Date(updated.endTime),
+                  }
+                } : b));
+              }}
+              showPointsBonus={false}
+              compact
+              inlineRemovalEnabled={isOrganizerOfFixed && status !== 'confirmed'}
+              onRemovePlayer={(userId: string) => {
+                if (!userId) return;
+                startProcessingTransition(async () => {
+                  const res = await removePlayerFromMatch(booking.activityId, userId);
+                  if ('error' in res) {
+                    toast({ title: 'No eliminado', description: res.error, variant: 'destructive' });
+                  } else {
+                    // Update local state to reflect removal instantly
+                    setBookings(prev => prev.map(b => b.activityId === booking.activityId ? {
+                      ...b,
+                      matchDetails: b.matchDetails ? {
+                        ...b.matchDetails,
+                        bookedPlayers: (b.matchDetails.bookedPlayers || []).filter(p => p.userId !== userId)
+                      } : b.matchDetails
+                    } : b));
+                    toast({ title: 'Jugador eliminado', description: res.message || 'Se ha quitado al jugador.' });
+                    onBookingActionSuccess();
+                  }
+                });
+              }}
+            />
+            {/* Explicit organizer reservation label for fixed private auto-reservations (not an inscription) */}
+            {booking.isOrganizerBooking && !isUserInMatch && status === 'confirmed_private' && (
+              <div className="-mt-1">
+                <Badge variant="outline" className="text-[11px] bg-slate-100 text-slate-700 border-slate-300">Reserva</Badge>
+              </div>
+            )}
+            {/* Compact court availability bar: available (green), occupied (gray), assigned (blue) */}
+            {(availability && availability.total > 0) && (
+              <div className="mt-1">
+                <div className="mx-auto w-full sm:w-auto bg-white/90 rounded-xl shadow border border-slate-200 px-2 py-1">
+                  <div className="flex items-center justify-center gap-1">
+                    {Array.from({ length: availability.total }).map((_, idx) => {
+                      const n = idx + 1;
+                      const isAssigned = !!courtNumber && n === courtNumber;
+                      const isAvailable = (availability.available || []).some(c => c.courtNumber === n);
+                      const isOccupied = (availability.occupied || []).some(c => c.courtNumber === n);
+                      const baseCls = "h-6 w-6 rounded-md flex items-center justify-center text-[11px] font-semibold shadow-sm";
+                      if (isAssigned) {
+                        return (
+                          <div key={n} className={cn(baseCls, "bg-blue-600 text-white border border-blue-700")}>{n}</div>
+                        );
+                      }
+                      if (isAvailable) {
+                        return (
+                          <div key={n} className={cn(baseCls, "bg-green-500 border border-green-600")} />
+                        );
+                      }
+                      // Fallback to occupied/unknown as gray
+                      return (
+                        <div key={n} className={cn(baseCls, "bg-slate-300 border border-slate-400")} />
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+            {/* Organizer extra actions below the card (Mi agenda specific) */}
+            {(isOrganizerOfFixed) && isUpcomingItem && (
+              <div className="pt-2 grid grid-cols-2 gap-1 w-full sm:flex sm:gap-2">
+                {/* Compartir */}
+                <Button variant="outline" size="sm" className="flex-1 h-8 sm:h-9 text-[11px] sm:text-xs px-2 sm:px-3 bg-purple-500 text-white border-purple-600 hover:bg-purple-600" onClick={() => handleSharePrivateMatch()} disabled={isProcessingAction}><Share2 className="mr-1.5 h-3.5 w-3.5" /> Compartir</Button>
+                {/* Cancelar y Ofrecer por puntos */}
+                <AlertDialog>
+                  <AlertDialogTrigger asChild><Button variant="outline" size="sm" className="flex-1 h-8 sm:h-9 text-[11px] sm:text-xs px-2 sm:px-3 text-destructive border-destructive hover:bg-destructive/10" disabled={isProcessingAction}><Ban className="mr-1.5 h-3.5 w-3.5" /> Ofrecer</Button></AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader><AlertDialogTitle>Cancelar y Ofrecer por Puntos</AlertDialogTitle><AlertDialogDescription>Se te reembolsará el coste total de la pista ({totalCourtFee?.toFixed(2)}€). La pista quedará disponible para que otro jugador la reserve únicamente con puntos de fidelidad. ¿Estás seguro?</AlertDialogDescription></AlertDialogHeader>
+                    <AlertDialogFooter><AlertDialogCancel disabled={isProcessingAction}>Cerrar</AlertDialogCancel><AlertDialogAction onClick={() => handleCancelAndReoffer(booking.activityId)} disabled={isProcessingAction && currentActionInfo?.type === 'cancelAndReoffer'} className="bg-destructive hover:bg-destructive/90">{currentActionInfo?.type === 'cancelAndReoffer' && isProcessingAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Sí, Cancelar y Ofrecer"}</AlertDialogAction></AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+                {/* Quitar jugador (si no está confirmada) */}
+                {status !== 'confirmed' && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="outline" size="sm" className="flex-1 h-8 sm:h-9 text-[11px] sm:text-xs px-2 sm:px-3 border-red-400 text-red-600 hover:bg-red-50" disabled={isProcessingAction}>
+                        <Ban className="mr-1.5 h-3.5 w-3.5" /> Quitar<span className="hidden sm:inline"> Jugador</span>
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Eliminar jugador</AlertDialogTitle>
+                        <AlertDialogDescription>Selecciona a quién quieres quitar de esta partida fija.</AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <div className="grid grid-cols-1 gap-2">
+                        {(bookedPlayers || []).map(p => (
+                          <Button key={p.userId} variant="outline" className="justify-start" onClick={() => {
+                            setCurrentActionInfo({ type: 'removePlayer', bookingId: booking.id, matchId: booking.activityId, targetUserId: p.userId });
+                            startProcessingTransition(async () => {
+                              const res = await removePlayerFromMatch(booking.activityId, p.userId!);
+                              if ('error' in res) {
+                                toast({ title: 'No eliminado', description: res.error, variant: 'destructive' });
+                              } else {
+                                toast({ title: 'Jugador eliminado', description: res.message || 'Se ha quitado al jugador.' });
+                                onBookingActionSuccess();
+                              }
+                              setCurrentActionInfo(null);
+                            });
+                          }}>
+                            {p.name || p.userId}
+                          </Button>
+                        ))}
+                      </div>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cerrar</AlertDialogCancel>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+                {/* Editar nivel/categoría */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 h-8 sm:h-9 text-[11px] sm:text-xs px-2 sm:px-3 border-blue-400 text-blue-700 hover:bg-blue-50"
+                  onClick={() => setEditConfig({ open: true, matchId, level: (level as string) || 'abierto', category: (category as any) || 'abierta' })}
+                >
+                  <Edit className="mr-1.5 h-3.5 w-3.5" /> Editar<span className="hidden sm:inline"> Nivel/Cat.</span>
+                </Button>
+                {/* Cancelar partida fija */}
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="flex-1 h-8 sm:h-9 text-[11px] sm:text-xs px-2 sm:px-3 border-slate-400 text-slate-700 hover:bg-slate-50" disabled={isProcessingAction}>
+                      <CalendarX className="mr-1.5 h-3.5 w-3.5" /> Cancelar<span className="hidden sm:inline"> Partida</span>
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Cancelar partida fija</AlertDialogTitle>
+                      <AlertDialogDescription>Se eliminará la partida. Si está confirmada/privada, se gestionarán reembolsos según el flujo actual.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel disabled={isProcessingAction}>Volver</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => {
+                          setCurrentActionInfo({ type: 'deleteFixed', bookingId: booking.id, matchId: booking.activityId });
+                          startProcessingTransition(async () => {
+                            const res = await deleteFixedMatch(booking.activityId);
+                            if ('error' in res) {
+                              toast({ title: 'No cancelada', description: res.error, variant: 'destructive' });
+                            } else {
+                              toast({ title: 'Partida cancelada', description: res.message || 'Partida eliminada.' });
+                              onBookingActionSuccess();
+                            }
+                            setCurrentActionInfo(null);
+                          });
+                        }}
+                        disabled={isProcessingAction}
+                        className="bg-slate-700 text-white hover:bg-slate-800"
+                      >{isProcessingAction && currentActionInfo?.type === 'deleteFixed' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : 'Sí, Cancelar'}</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            )}
+            {/* Renew banner for completed fixed matches */}
+            {!isUpcomingItem && provisionalMatch && !isRenewalExpired && (
+              <div className="w-full flex flex-col sm:flex-row items-center sm:items-center justify-center sm:justify-between gap-2 p-2 bg-blue-50 border border-blue-200 text-center rounded-md">
+                <span className="text-[11px] sm:text-xs text-blue-700 font-medium break-words whitespace-normal leading-snug min-w-0 w-full sm:flex-1">Renovar para la próxima semana (expira en {renewalTimeLeft}):</span>
+                <Button onClick={() => handleRenew(booking.activityId)} size="sm" className="h-8 bg-blue-600 hover:bg-blue-700 w-full sm:w-auto shrink-0" disabled={isProcessingAction}>{isProcessingAction && currentActionInfo?.type === 'renew' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Repeat className="mr-2 h-4 w-4"/>} Renovar Reserva</Button>
+              </div>
+            )}
+            {/* Indicator for +14d hold (retained slot) */}
+            {secondHold && (
+              <div className="w-full flex items-center gap-2 text-[11px] text-slate-600 mt-1">
+                <Badge variant="outline" className="h-5 px-2 rounded-full bg-slate-100 text-slate-700 border-slate-300">Retención +14 días</Badge>
+                {secondHold.courtNumber && <span className="text-xs">Pista {secondHold.courtNumber} retenida</span>}
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      // Non-fixed matches: keep existing compact agenda card
       return (
-        <div key={booking.id} className={cn("flex flex-col p-3 rounded-lg shadow-md space-y-2 border-l-4 w-80", cardBorderColor, isUpcomingItem ? 'bg-card border' : 'bg-muted/60 border border-border/50')}>
+        <div key={booking.id} className={cn("flex flex-col p-3 rounded-lg shadow-md space-y-2 border-l-4 w-full overflow-hidden", cardBorderColor, isUpcomingItem ? 'bg-card border' : 'bg-muted/60 border border-border/50')}>
              <div className="flex items-start justify-between">
                  <div className="flex items-center space-x-3">
                      <div className="flex-shrink-0 text-center font-bold bg-white p-1 rounded-md w-14 shadow-lg border border-border/20">
@@ -432,62 +644,122 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                     </div>
                 </div>
                   <div className="mt-0.5 flex flex-col items-end gap-1.5">
-              {isUpcomingItem && status !== 'confirmed_private' && (
-                isUserInMatch ? (
-                  <Badge variant="default" className="text-xs bg-blue-500">Inscrito</Badge>
-                ) : (
-                  isMatchFull ? <Badge variant="destructive" className="text-xs bg-red-500">Completa</Badge> : null
-                )
-              )}
+                    {isFixedMatch && (
+                      <div className="flex items-center gap-2">
+                        <div className="relative">
+                          <Avatar className="h-12 w-12 bg-gradient-to-b from-white to-slate-50 shadow-sm">
+                            <AvatarImage loading="lazy" src={organizerId ? (getMockUserDatabase().find(u => u.id === organizerId)?.profilePictureUrl || '') : ''} alt="Organizador" />
+                            <AvatarFallback>{organizerId ? getInitials(getMockUserDatabase().find(u => u.id === organizerId)?.name || 'Org') : ''}</AvatarFallback>
+                          </Avatar>
+                        </div>
+                        <div className="leading-tight hidden sm:block">
+                          <div className="text-sm font-semibold truncate max-w-[140px]">
+                            {organizerId ? (getMockUserDatabase().find(u => u.id === organizerId)?.name || 'Organizador') : 'Organizador'}
+                          </div>
+                          <div className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Badge className="px-2 py-0.5 h-5 rounded-full bg-sky-600 text-white hover:bg-sky-600">Partida Fija</Badge>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {isUpcomingItem && status !== 'confirmed_private' && (
+                      isUserInMatch ? (
+                        <Badge variant="default" className="text-xs bg-blue-500">Inscrito</Badge>
+                      ) : (
+                        isMatchFull ? <Badge variant="destructive" className="text-xs bg-red-500">Completa</Badge> : null
+                      )
+                    )}
                     {isUpcomingItem && status === 'confirmed_private' && <Badge variant="outline" className="text-xs bg-purple-100 text-purple-700 border-purple-400">Privada</Badge>}
                     {!isUpcomingItem && <Badge variant="outline" className="text-xs">Finalizada</Badge>}
-
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground"><Share2 className="h-4 w-4"/></Button>
                   </div>
              </div>
              
              <div className="flex justify-around items-center gap-1.5 my-1">
-                <InfoButton icon={CategoryIconDisplay} text={displayClassCategory(category, true)} onClick={() => handleInfoClick('category', booking.matchDetails!)} className={cn(isCategoryAssigned && classifiedBadgeClass)} />
+                <InfoButton
+                  icon={CategoryIconDisplay}
+                  text={displayClassCategory(category, true)}
+                  onClick={() => {
+                    if (canEditFixedConfig) {
+                      setEditConfig({ open: true, matchId, level: (level as string) || 'abierto', category: (category as any) || 'abierta' });
+                    } else {
+                      handleInfoClick('category', booking.matchDetails!);
+                    }
+                  }}
+                  className={cn(isCategoryAssigned && classifiedBadgeClass)}
+                />
                 <InfoButton icon={Hash} text={courtDisplay} onClick={() => handleInfoClick('court', booking.matchDetails!)} className={cn(isCourtAssigned && classifiedBadgeClass)} />
-                <InfoButton icon={BarChartHorizontal} text={levelToDisplay} onClick={() => handleInfoClick('level', booking.matchDetails!)} className={cn(isLevelAssigned && classifiedBadgeClass)} />
+                <InfoButton
+                  icon={BarChartHorizontal}
+                  text={levelToDisplay}
+                  onClick={() => {
+                    if (canEditFixedConfig) {
+                      setEditConfig({ open: true, matchId, level: (level as string) || 'abierto', category: (category as any) || 'abierta' });
+                    } else {
+                      handleInfoClick('level', booking.matchDetails!);
+                    }
+                  }}
+                  className={cn(isLevelAssigned && classifiedBadgeClass)}
+                />
              </div>
            
             <div className="grid grid-cols-4 gap-2 items-start justify-items-center mt-1">
-                {Array.from({ length: 4 }).map((_, idx) => (
-                    <MatchSpotDisplay
-                        key={idx}
-                        spotIndex={idx}
-                        match={matchDetails}
-                        currentUser={currentUser}
-                        onJoin={()=>{}}
-                        onJoinPrivate={()=>{}}
-                        isPending={false}
-                        userHasOtherConfirmedActivityToday={false}
-                        isUserLevelCompatible={true}
-                        canJoinThisPrivateMatch={false}
-                        isOrganizer={isOrganizerOfPrivateMatch}
-                        canBookWithPoints={false}
-                        showPointsBonus={false}
-                        pricePerPlayer={pricePerPlayer}
-                        pointsToAward={0}
-                    />
-                ))}
+              {Array.from({ length: 4 }).map((_, idx) => (
+                <MatchSpotDisplay
+                  key={idx}
+                  spotIndex={idx}
+                  match={matchDetails}
+                  currentUser={currentUser}
+                  onJoin={() => {}}
+                  onJoinPrivate={() => {}}
+                  isPending={false}
+                  userHasOtherConfirmedActivityToday={true}
+                  isUserLevelCompatible={true}
+                  canJoinThisPrivateMatch={false}
+                  isOrganizer={isOrganizerOfPrivateMatch || isOrganizerOfFixed}
+                  canBookWithPoints={false}
+                  showPointsBonus={false}
+                  pricePerPlayer={pricePerPlayer}
+                  pointsToAward={0}
+                  inlineRemovalEnabled={isOrganizerOfFixed && status !== 'confirmed'}
+                  onRemovePlayer={(userId: string) => {
+                    if (!userId) return;
+                    startProcessingTransition(async () => {
+                      const res = await removePlayerFromMatch(booking.activityId, userId);
+                      if ('error' in res) {
+                        toast({ title: 'No eliminado', description: res.error, variant: 'destructive' });
+                      } else {
+                        // Update local UI quickly
+                        setBookings(prev => prev.map(b => b.activityId === booking.activityId ? {
+                          ...b,
+                          matchDetails: b.matchDetails ? {
+                            ...b.matchDetails,
+                            bookedPlayers: (b.matchDetails.bookedPlayers || []).filter(p => p.userId !== userId)
+                          } : b.matchDetails
+                        } : b));
+                        toast({ title: 'Jugador eliminado', description: res.message || 'Se ha quitado al jugador.' });
+                        onBookingActionSuccess();
+                      }
+                    });
+                  }}
+                />
+              ))}
             </div>
 
-            {isUpcomingItem && availability && (
-                <div className="pt-2 border-t mt-2">
-                    <CourtAvailabilityIndicator
-                        availableCourts={availability.available}
-                        occupiedCourts={availability.occupied}
-                        totalCourts={availability.total}
-                    />
-                </div>
-            )}
+            <div className="pt-2 border-t mt-2">
+              {availability && (
+                <CourtAvailabilityIndicator
+                  availableCourts={availability.available}
+                  occupiedCourts={availability.occupied}
+                  totalCourts={availability.total}
+                />
+              )}
+            </div>
 
 
               <div className="pt-2 border-t mt-2 flex flex-col items-center justify-center space-y-2">
-                 {isOrganizerOfPrivateMatch && isUpcomingItem && (
-                     <div className="flex w-full gap-2">
+         {(isOrganizerOfPrivateMatch || isOrganizerOfFixed) && isUpcomingItem && (
+           <div className="flex w-full gap-2">
                          <Button variant="outline" size="sm" className="flex-1 text-xs bg-purple-500 text-white border-purple-600 hover:bg-purple-600" onClick={handleSharePrivateMatch} disabled={isProcessingAction}><Share2 className="mr-1.5 h-3.5 w-3.5" /> Compartir</Button>
                          <AlertDialog>
                              <AlertDialogTrigger asChild><Button variant="outline" size="sm" className="flex-1 text-xs border-orange-500 text-orange-600 hover:bg-orange-500/10 hover:text-orange-700" disabled={isProcessingAction}>{isProcessingAction ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin"/> : <Unlock className="mr-1.5 h-3.5 w-3.5"/>} Pública</Button></AlertDialogTrigger>
@@ -503,6 +775,90 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                                  <AlertDialogFooter><AlertDialogCancel disabled={isProcessingAction}>Cerrar</AlertDialogCancel><AlertDialogAction onClick={() => handleCancelAndReoffer(booking.activityId)} disabled={isProcessingAction && currentActionInfo?.type === 'cancelAndReoffer'} className="bg-destructive hover:bg-destructive/90">{currentActionInfo?.type === 'cancelAndReoffer' && isProcessingAction ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Sí, Cancelar y Ofrecer"}</AlertDialogAction></AlertDialogFooter>
                               </AlertDialogContent>
                          </AlertDialog>
+                         {/* Organizer: remove player from fixed match while forming */}
+                         {isOrganizerOfFixed && status !== 'confirmed' && (
+                           <AlertDialog>
+                             <AlertDialogTrigger asChild>
+                               <Button variant="outline" size="sm" className="flex-1 text-xs border-red-400 text-red-600 hover:bg-red-50" disabled={isProcessingAction}>
+                                 <Ban className="mr-1.5 h-3.5 w-3.5" /> Quitar Jugador
+                               </Button>
+                             </AlertDialogTrigger>
+                             <AlertDialogContent>
+                               <AlertDialogHeader>
+                                 <AlertDialogTitle>Eliminar jugador</AlertDialogTitle>
+                                 <AlertDialogDescription>Selecciona a quién quieres quitar de esta partida fija.</AlertDialogDescription>
+                               </AlertDialogHeader>
+                               <div className="grid grid-cols-1 gap-2">
+                                 {(bookedPlayers || []).map(p => (
+                                   <Button key={p.userId} variant="outline" className="justify-start" onClick={() => {
+                                     setCurrentActionInfo({ type: 'removePlayer', bookingId: booking.id, matchId: booking.activityId, targetUserId: p.userId });
+                                     startProcessingTransition(async () => {
+                                       const res = await removePlayerFromMatch(booking.activityId, p.userId!);
+                                       if ('error' in res) {
+                                         toast({ title: 'No eliminado', description: res.error, variant: 'destructive' });
+                                       } else {
+                                         toast({ title: 'Jugador eliminado', description: res.message || 'Se ha quitado al jugador.' });
+                                         onBookingActionSuccess();
+                                       }
+                                       setCurrentActionInfo(null);
+                                     });
+                                   }}>
+                                     {p.name || p.userId}
+                                   </Button>
+                                 ))}
+                               </div>
+                               <AlertDialogFooter>
+                                 <AlertDialogCancel>Cerrar</AlertDialogCancel>
+                               </AlertDialogFooter>
+                             </AlertDialogContent>
+                           </AlertDialog>
+                         )}
+                         {/* Organizer: cancel entire fixed match */}
+                         {isOrganizerOfFixed && (
+                           <AlertDialog>
+                             <AlertDialogTrigger asChild>
+                               <Button variant="outline" size="sm" className="flex-1 text-xs border-slate-400 text-slate-700 hover:bg-slate-50" disabled={isProcessingAction}>
+                                 <CalendarX className="mr-1.5 h-3.5 w-3.5" /> Cancelar Partida
+                               </Button>
+                             </AlertDialogTrigger>
+                             <AlertDialogContent>
+                               <AlertDialogHeader>
+                                 <AlertDialogTitle>Cancelar partida fija</AlertDialogTitle>
+                                 <AlertDialogDescription>Se eliminará la partida. Si está confirmada/privada, se gestionarán reembolsos según el flujo actual.</AlertDialogDescription>
+                               </AlertDialogHeader>
+                               <AlertDialogFooter>
+                                 <AlertDialogCancel disabled={isProcessingAction}>Volver</AlertDialogCancel>
+                                 <AlertDialogAction
+                                   onClick={() => {
+                                     setCurrentActionInfo({ type: 'deleteFixed', bookingId: booking.id, matchId: booking.activityId });
+                                     startProcessingTransition(async () => {
+                                       const res = await deleteFixedMatch(booking.activityId);
+                                       if ('error' in res) {
+                                         toast({ title: 'No cancelada', description: res.error, variant: 'destructive' });
+                                       } else {
+                                         toast({ title: 'Partida cancelada', description: res.message || 'Partida eliminada.' });
+                                         onBookingActionSuccess();
+                                       }
+                                       setCurrentActionInfo(null);
+                                     });
+                                   }}
+                                   disabled={isProcessingAction}
+                                   className="bg-slate-700 text-white hover:bg-slate-800"
+                                 >{isProcessingAction && currentActionInfo?.type === 'deleteFixed' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : 'Sí, Cancelar'}</AlertDialogAction>
+                               </AlertDialogFooter>
+                             </AlertDialogContent>
+                           </AlertDialog>
+                         )}
+                         {canEditFixedConfig && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 text-xs border-blue-400 text-blue-700 hover:bg-blue-50"
+                              onClick={() => setEditConfig({ open: true, matchId, level: (level as string) || 'abierto', category: (category as any) || 'abierta' })}
+                            >
+                              <Edit className="mr-1.5 h-3.5 w-3.5" /> Editar Nivel/Cat.
+                            </Button>
+                         )}
                       </div>
                  )}
                  {isUpcomingItem && !isOrganizerOfPrivateMatch && (
@@ -543,12 +899,12 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                         )}
                      </div>
                  )}
-                {!isUpcomingItem && provisionalMatch && !isRenewalExpired && (
-                    <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-2 p-2 bg-blue-50 border-t border-blue-200">
-                        <span className="text-xs text-blue-700 font-medium">Renovar para la próxima semana (expira en {renewalTimeLeft}):</span>
-                        <Button onClick={() => handleRenew(booking.activityId)} size="sm" className="h-8 bg-blue-600 hover:bg-blue-700" disabled={isProcessingAction}>{isProcessingAction && currentActionInfo?.type === 'renew' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Repeat className="mr-2 h-4 w-4"/>} Renovar Reserva</Button>
-                    </div>
-                )}
+        {!isUpcomingItem && provisionalMatch && !isRenewalExpired && (
+          <div className="w-full flex flex-col sm:flex-row items-center sm:items-center justify-center sm:justify-between gap-2 p-2 bg-blue-50 border-t border-blue-200 text-center">
+            <span className="text-[11px] sm:text-xs text-blue-700 font-medium break-words whitespace-normal leading-snug min-w-0 w-full sm:flex-1">Renovar para la próxima semana (expira en {renewalTimeLeft}):</span>
+            <Button onClick={() => handleRenew(booking.activityId)} size="sm" className="h-8 bg-blue-600 hover:bg-blue-700 w-full sm:w-auto shrink-0" disabled={isProcessingAction}>{isProcessingAction && currentActionInfo?.type === 'renew' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Repeat className="mr-2 h-4 w-4"/>} Renovar Reserva</Button>
+          </div>
+        )}
              </div>
          </div>
        );
@@ -563,28 +919,93 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
           {hasUpcomingBookings && (
               <div>
                 <h4 className="text-base font-semibold mb-3 text-foreground flex items-center"><Clock className="mr-2 h-4 w-4" /> Próximas</h4>
-                  <ScrollArea className="w-full whitespace-nowrap">
-                    <div className="flex pb-4 space-x-4">
-                        {upcomingBookings.map(b => renderBookingItem(b, true))}
-                    </div>
-                    <ScrollBar orientation="horizontal" />
-                  </ScrollArea>
+                <div className="w-full px-1">
+                  <div className="flex flex-col gap-4 pb-4">
+                    {upcomingBookings.map(b => renderBookingItem(b, true))}
+                  </div>
+                </div>
               </div>
           )}
           {hasUpcomingBookings && hasPastBookings && <Separator />}
           {hasPastBookings && (
               <div>
                 <h4 className="text-base font-semibold mb-3 text-muted-foreground flex items-center"><CheckCircle className="mr-2 h-4 w-4" /> Historial</h4>
-                 <ScrollArea className="w-full whitespace-nowrap">
-                    <div className="flex pb-4 space-x-4">
-                      {pastBookings.map(b => renderBookingItem(b, false))}
-                    </div>
-                    <ScrollBar orientation="horizontal" />
-                 </ScrollArea>
+                <div className="w-full px-1">
+                  <div className="flex flex-col gap-4 pb-4">
+                    {pastBookings.map(b => renderBookingItem(b, false))}
+                  </div>
+                </div>
               </div>
           )}
       </div>
       <DialogInfo isOpen={infoDialog.open} onOpenChange={(open) => setInfoDialog(prev => ({ ...prev, open }))} title={infoDialog.title} description={infoDialog.description} icon={infoDialog.icon} />
+      {/* Edit fixed match config dialog */}
+      <InfoDialog open={editConfig.open} onOpenChange={(open) => setEditConfig(prev => ({ ...prev, open }))}>
+        <InfoDialogContent>
+          <InfoDialogHeader>
+            <InfoDialogTitle>Editar partida fija</InfoDialogTitle>
+          </InfoDialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-slate-700">Categoría:</span>
+              <div className="flex gap-2">
+                {(['abierta','chico','chica'] as const).map(cat => (
+                  <button
+                    key={cat}
+                    className={cn('text-xs px-2 py-1 rounded border', (editConfig.category) === cat ? 'bg-blue-600 text-white border-blue-700' : 'bg-white')}
+                    onClick={() => setEditConfig(prev => ({ ...prev, category: cat }))}
+                  >{cat}</button>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-slate-700">Nivel:</span>
+              <select
+                className="text-xs border rounded px-2 py-1"
+                value={editConfig.level}
+                onChange={e => setEditConfig(prev => ({ ...prev, level: e.target.value }))}
+              >
+                <option value="abierto">Abierto</option>
+                {['1.0','1.5','2.0','2.5','3.0','3.5','4.0','4.5','5.0','5.5','6.0','6.5','7.0'].map(l => (
+                  <option key={l} value={l}>{l}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <InfoDialogFooter>
+            <InfoDialogClose asChild>
+              <Button variant="outline" disabled={isSavingConfig}>Cancelar</Button>
+            </InfoDialogClose>
+            <Button
+              onClick={async () => {
+                if (!editConfig.matchId) return;
+                try {
+                  setIsSavingConfig(true);
+                  const updates: any = {};
+                  if (editConfig.level) updates.level = editConfig.level as any;
+                  if (editConfig.category) updates.category = editConfig.category;
+                  const res = await updateMatchLevelAndCategory(currentUser.id, editConfig.matchId, updates);
+                  if ('error' in res) {
+                    toast({ title: 'No actualizado', description: res.error, variant: 'destructive' });
+                  } else {
+                    // Update local state
+                    setBookings(prev => prev.map(b => b.activityId === editConfig.matchId ? {
+                      ...b,
+                      matchDetails: b.matchDetails ? { ...b.matchDetails, level: res.updatedMatch.level, category: res.updatedMatch.category } : b.matchDetails
+                    } : b));
+                    toast({ title: 'Partida actualizada', description: 'Nivel y/o categoría guardados.' });
+                    setEditConfig({ open: false, matchId: null, level: 'abierto', category: 'abierta' });
+                  }
+                } finally {
+                  setIsSavingConfig(false);
+                }
+              }}
+              disabled={isSavingConfig}
+              className="bg-blue-600 text-white hover:bg-blue-700"
+            >{isSavingConfig ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Guardar'}</Button>
+          </InfoDialogFooter>
+        </InfoDialogContent>
+      </InfoDialog>
       {selectedMatchForChat && (
           <MatchChatDialog
               isOpen={isChatDialogOpen}

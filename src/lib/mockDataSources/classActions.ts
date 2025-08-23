@@ -7,7 +7,7 @@ import type { TimeSlot, Booking, User, Instructor, ClassPadelLevel, PadelCategor
 import * as state from './index';
 import * as config from '../config';
 import { _classifyLevelAndCategoryForSlot } from './classProposals';
-import { _annulConflictingActivities, findAvailableCourt, removeUserPreInscriptionsForDay, isUserLevelCompatibleWithActivity, hasAnyActivityForDay, isSlotEffectivelyCompleted } from './utils';
+import { _annulConflictingActivities, findAvailableCourt, removeUserPreInscriptionsForDay, isUserLevelCompatibleWithActivity, hasAnyActivityForDay, isSlotEffectivelyCompleted, removeOverlappingInstructorProposalsForSlot, countUserConfirmedActivitiesForDay } from './utils';
 import { addUserPointsAndAddTransaction, deductCredit, recalculateAndSetBlockedBalances, confirmAndAwardPendingPoints } from './users';
 import { calculatePricePerPerson } from '@/lib/utils';
 import { v4 as uuidv4 } from 'uuid';
@@ -99,7 +99,8 @@ export const bookClass = async (
   const club = state.getMockClubs().find(c => c.id === slot.clubId);
   if (!club) return { error: "Club no encontrado." };
   
-  const isOriginalProposal = (slot.bookedPlayers || []).length === 0 && slot.level === 'abierto';
+    // Consider it an original proposal only if it was an open, empty, pre-registration slot
+    const isOriginalProposal = (slot.bookedPlayers || []).length === 0 && slot.level === 'abierto' && slot.status === 'pre_registration';
 
   if ((slot.bookedPlayers || []).some(p => p.userId === userId && p.groupSize === groupSize)) {
     return { error: "Ya estás inscrito en esta opción de clase." };
@@ -108,10 +109,22 @@ export const bookClass = async (
     return { error: 'Tu nivel de juego no es compatible con el de esta clase.' };
   }
   
-  const targetEndTime = new Date(new Date(slot.startTime).getTime() + (slot.durationMinutes || 60) * 60000);
-  if (hasAnyActivityForDay(userId, new Date(slot.startTime), targetEndTime)) {
-      return { error: 'Ya tienes otra actividad que se solapa con este horario.' };
-  }
+    const targetEndTime = new Date(new Date(slot.startTime).getTime() + (slot.durationMinutes || 60) * 60000);
+    // Bloqueo por día: si ya tiene alguna actividad confirmada ese mismo día, no permitir inscribir
+    if (countUserConfirmedActivitiesForDay(userId, new Date(slot.startTime), slotId, 'class') > 0) {
+        return { error: 'Ya tienes otra actividad confirmada hoy.' };
+    }
+    // Además, bloquear solapamientos con actividades confirmadas (no inclusivo)
+    const targetInterval = { start: new Date(slot.startTime), end: targetEndTime };
+    const hasConfirmedConflict = state.getMockUserBookings().some(b => {
+        if (b.userId !== userId) return false;
+        const s = state.getMockTimeSlots().find(ts => ts.id === b.activityId);
+        if (!s || (s.status !== 'confirmed' && s.status !== 'confirmed_private')) return false;
+        return require('date-fns').areIntervalsOverlapping(targetInterval, { start: new Date(s.startTime), end: new Date(s.endTime) }, { inclusive: false });
+    });
+    if (hasConfirmedConflict) {
+        return { error: 'Ya tienes otra actividad confirmada que se solapa con este horario.' };
+    }
 
   const isGratisSpot = slot.designatedGratisSpotPlaceholderIndexForOption?.[groupSize] === spotIndexPlaceholder;
   const pricePerPerson = calculatePricePerPerson(slot.totalPrice, groupSize);
@@ -139,7 +152,8 @@ export const bookClass = async (
   slot.level = newLevel;
   slot.category = newCategory;
   
-  slot.bookedPlayers.push({ userId, groupSize, name: student.name });
+    // Ensure avatar/name are persisted for UI rendering
+    slot.bookedPlayers.push({ userId, groupSize, name: student.name, profilePictureUrl: student.profilePictureUrl });
   
   const newBooking: Booking = {
     id: `booking-${slotId}-${userId}-${Date.now()}`,
@@ -158,8 +172,8 @@ export const bookClass = async (
   // This ensures pending points are calculated for the new booking
   await recalculateAndSetBlockedBalances(userId);
 
-  const { completed, size: completedSize } = isSlotEffectivelyCompleted(slot);
-  if (completed) {
+    const { completed, size: completedSize } = isSlotEffectivelyCompleted(slot);
+    if (completed) {
       slot.status = 'confirmed';
       newBooking.status = 'confirmed'; // Update booking status
       state.updateUserBookingInState(newBooking.id, { status: 'confirmed' });
@@ -181,24 +195,31 @@ export const bookClass = async (
         state.addChargedUserForConfirmation(chargeKey);
       }
       
-      _annulConflictingActivities(slot);
+    _annulConflictingActivities(slot);
+    // Remove overlapping proposals for this instructor during the confirmed interval
+    removeOverlappingInstructorProposalsForSlot(slot);
       await removeUserPreInscriptionsForDay(userId, new Date(slot.startTime), slot.id, 'class');
-  } 
+  } else {
+      // Not completed yet: mark as forming (mirrors match behavior)
+      if (slot.status !== 'forming') {
+          slot.status = 'forming';
+      }
+  }
 
   // Recalculate again after potential confirmation and credit deduction
   await recalculateAndSetBlockedBalances(userId);
 
   state.updateTimeSlotInState(slot.id, slot);
   
-  // *** NEW LOGIC: Create a new proposal if the original was a proposal ***
-  if (isOriginalProposal) {
+    // Create a fresh open proposal if this was an original proposal and just got its first signup
+    if (isOriginalProposal) {
       const newProposalSlot: TimeSlot = {
           ...slot, // Inherit most properties
           id: `ts-proposal-${slot.clubId}-${slot.instructorId}-${format(new Date(slot.startTime), 'yyyyMMddHHmm')}-new`,
           level: 'abierto',
           category: 'abierta',
           bookedPlayers: [], // Empty
-          status: 'pre_registration',
+                    status: 'pre_registration', // proposals start in pre-registration
           organizerId: undefined,
           privateShareCode: undefined,
           confirmedPrivateSize: undefined,
@@ -336,6 +357,11 @@ export const confirmClassAsPrivate = async (
 
     let slot = { ...state.getMockTimeSlots()[slotIndex] };
 
+    // Bloqueo por día: si ya tiene alguna actividad confirmada ese mismo día, no permitir confirmar privada
+    if (countUserConfirmedActivitiesForDay(organizerUserId, new Date(slot.startTime), slotId, 'class') > 0) {
+        return { error: 'Ya tienes otra actividad confirmada hoy.' };
+    }
+
     if (slot.status !== 'pre_registration' || (slot.bookedPlayers && slot.bookedPlayers.length > 0)) {
         return { error: "Solo se pueden confirmar como privadas las clases nuevas sin alumnos." };
     }
@@ -363,9 +389,12 @@ export const confirmClassAsPrivate = async (
     slot.privateShareCode = privateShareCode;
     slot.confirmedPrivateSize = confirmedSize;
     slot.courtNumber = availableCourt.courtNumber;
-    slot.bookedPlayers.push({ userId: organizerUserId, groupSize: confirmedSize, name: organizerUser.name });
+    // Persist organizer avatar for private class cards
+    slot.bookedPlayers.push({ userId: organizerUserId, groupSize: confirmedSize, name: organizerUser.name, profilePictureUrl: organizerUser.profilePictureUrl });
     
     state.updateTimeSlotInState(slot.id, slot);
+    // Remove overlapping proposals for this instructor during the confirmed interval
+    removeOverlappingInstructorProposalsForSlot(slot);
 
     // Create the organizer's booking record
     const newOrganizerBooking: Booking = {
@@ -402,6 +431,10 @@ export const joinPrivateClass = async (
     if (slotIndex === -1) return { error: "Clase privada no encontrada o código incorrecto." };
 
     let slot = { ...state.getMockTimeSlots()[slotIndex] };
+    // Bloqueo por día para invitado
+    if (countUserConfirmedActivitiesForDay(inviteeUserId, new Date(slot.startTime), slotId, 'class') > 0) {
+        return { error: 'Ya tienes otra actividad confirmada hoy.' };
+    }
     if (slot.status !== 'confirmed_private' || !slot.confirmedPrivateSize) return { error: "Esta clase no es privada." };
     if ((slot.bookedPlayers || []).length >= slot.confirmedPrivateSize) return { error: "Esta clase privada ya está completa." };
     if ((slot.bookedPlayers || []).some(p => p.userId === inviteeUserId)) return { error: "Ya estás en esta clase." };
@@ -418,7 +451,8 @@ export const joinPrivateClass = async (
         state.addCreditToStudent(slot.organizerId, pricePerPerson, `Reembolso por invitado: ${inviteeUser.name}`);
     }
 
-    slot.bookedPlayers.push({ userId: inviteeUserId, groupSize: slot.confirmedPrivateSize, name: inviteeUser.name });
+    // Persist invitee avatar for UI
+    slot.bookedPlayers.push({ userId: inviteeUserId, groupSize: slot.confirmedPrivateSize, name: inviteeUser.name, profilePictureUrl: inviteeUser.profilePictureUrl });
     state.updateTimeSlotInState(slotId, slot);
 
     const newBooking: Booking = {
@@ -478,6 +512,10 @@ export const fillClassAndMakePrivate = async (userId: string, slotId: string): P
     if (slotIndex === -1) return { error: "Clase no encontrada." };
 
     let slot = { ...state.getMockTimeSlots()[slotIndex] };
+    // Bloqueo por día al intentar completar y hacer privada
+    if (countUserConfirmedActivitiesForDay(userId, new Date(slot.startTime), slotId, 'class') > 0) {
+        return { error: 'Ya tienes otra actividad confirmada hoy.' };
+    }
     if (slot.status !== 'pre_registration') {
         return { error: "Solo se pueden hacer privadas las clases en formación." };
     }
@@ -519,6 +557,8 @@ export const fillClassAndMakePrivate = async (userId: string, slotId: string): P
     slot.privateShareCode = `privclass-${slotId.slice(-6)}-${Date.now().toString().slice(-6)}`;
     
     state.updateTimeSlotInState(slotId, slot);
+    // Remove overlapping proposals for this instructor during the confirmed interval
+    removeOverlappingInstructorProposalsForSlot(slot);
     _annulConflictingActivities(slot);
     
     // Update all bookings for this slot to 'confirmed'

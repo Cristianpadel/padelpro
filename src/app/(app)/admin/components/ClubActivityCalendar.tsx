@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { format, addMinutes, startOfDay, setHours, setMinutes, isBefore, isSameDay, isAfter, differenceInMinutes, parseISO, addDays, isEqual, getDay, parse } from 'date-fns';
+import { format, addMinutes, startOfDay, setHours, setMinutes, isBefore, isSameDay, isAfter, differenceInMinutes, parseISO, addDays, isEqual, getDay, parse, areIntervalsOverlapping } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { Club, ClubLevelRange, TimeSlot, Match, PadelCourt, PadelLevelRange, DayOfWeek, MatchPadelLevel, ClassPadelLevel, PadelCategoryForSlot, User, Instructor, MatchDayEvent } from '@/types';
 import { getMockTimeSlots, fetchMatches, fetchPadelCourtsByClub, isSlotEffectivelyCompleted, getMockClubs, getMockStudents, getMockInstructors, fetchMatchDayEventsForDate, findAvailableCourt } from '@/lib/mockData';
@@ -135,13 +135,14 @@ const ClubActivityCalendar: React.FC<ClubActivityCalendarProps> = ({ club, refre
     setLoading(true);
     try {
       const now = new Date();
-      const [fetchedTimeSlots, fetchedMatches, fetchedCourts, fetchedInstructors, fetchedMatchDayEvents] = await Promise.all([
-        getMockTimeSlots(club.id),
+      const [fetchedTimeSlotsAll, fetchedMatches, fetchedCourts, fetchedInstructors, fetchedMatchDayEvents] = await Promise.all([
+        getMockTimeSlots(),
         fetchMatches(club.id),
         fetchPadelCourtsByClub(club.id),
         getMockInstructors(),
         fetchMatchDayEventsForDate(currentDate, club.id),
       ]);
+      const fetchedTimeSlots = (fetchedTimeSlotsAll || []).filter(s => s.clubId === club.id);
       setAllInstructors(fetchedInstructors);
 
       const activeCourts = fetchedCourts.filter(c => c.isActive).sort((a, b) => a.courtNumber - b.courtNumber);
@@ -181,20 +182,41 @@ const ClubActivityCalendar: React.FC<ClubActivityCalendarProps> = ({ club, refre
           ).map(m => ({...m, _activityType: 'match'} as const))
       ];
 
+  // Build a quick lookup of confirmed class intervals per instructor for the selected date
+      const confirmedIntervalsByInstructor = new Map<string, { start: Date, end: Date }[]>();
+      fetchedTimeSlots
+        .filter(s => (s.status === 'confirmed' || s.status === 'confirmed_private') && isSameDay(new Date(s.startTime), currentDate))
+        .forEach(s => {
+          const key = s.instructorId;
+          const arr = confirmedIntervalsByInstructor.get(key) || [];
+          arr.push({ start: new Date(s.startTime), end: new Date(s.endTime) });
+          confirmedIntervalsByInstructor.set(key, arr);
+        });
+
       const occupiedCourtIntervals: Record<number, {start: Date, end: Date}[]> = {};
 
       activitiesForSelectedDate.forEach(activity => {
         const activityStartTime = new Date(activity.startTime);
         const activityEndTime = new Date(activity.endTime);
 
-        let assignedCourtNumber: number | undefined = activity.courtNumber;
-        let isProposal = (activity.bookedPlayers || []).length === 0;
+    let assignedCourtNumber: number | undefined = activity.courtNumber;
+    let isProposal = (activity.bookedPlayers || []).length === 0;
+
+    // Hide proposals that overlap a confirmed class for the same instructor (non-inclusive)
+    if (activity._activityType === 'class' && isProposal) {
+      const slot = activity as TimeSlot;
+      const intervals = confirmedIntervalsByInstructor.get(slot.instructorId) || [];
+      const overlapsConfirmed = intervals.some(iv => areIntervalsOverlapping({ start: activityStartTime, end: activityEndTime }, iv, { inclusive: false }));
+      if (overlapsConfirmed) {
+        return; // Skip adding this proposal to the calendar
+      }
+    }
 
         if (isProposal) {
             assignedCourtNumber = activity._activityType === 'class' ? VIRTUAL_ROW_CLASSES.courtNumber : VIRTUAL_ROW_MATCHES.courtNumber;
         } else if (!assignedCourtNumber) {
             // Find an available court for activities with players but no assigned court yet
-            const court = findAvailableCourt(club.id, activityStartTime, activityEndTime, occupiedCourtIntervals);
+            const court = findAvailableCourt(club.id, activityStartTime, activityEndTime);
             if (court) {
                 assignedCourtNumber = court.courtNumber;
                  if (!occupiedCourtIntervals[assignedCourtNumber]) occupiedCourtIntervals[assignedCourtNumber] = [];
@@ -264,7 +286,7 @@ const ClubActivityCalendar: React.FC<ClubActivityCalendarProps> = ({ club, refre
               isConfirmed: isMatchFullConfirmedOrPrivate, 
               confirmedSize: match.status === 'confirmed_private' ? 4 : (isMatchFullConfirmedOrPrivate ? 4 : null), 
               rawActivity: match,
-              levelDisplay: displayClassLevel(match.level), categoryDisplay: displayClassCategory(match.category),
+              levelDisplay: (match.level === 'abierto' ? 'Nivel Abierto' : String(match.level)), categoryDisplay: displayClassCategory(match.category),
               bookedCount: (match.bookedPlayers || []).length, maxCapacity: 4,
               participants, status: match.status, levelRangeName: rangeName, levelRangeColor: rangeColor,
               assignedCourtNumber: assignedCourtNumber,
@@ -495,7 +517,12 @@ const ClubActivityCalendar: React.FC<ClubActivityCalendarProps> = ({ club, refre
                             )}
                             <p>Nivel: {activity.levelDisplay}, Cat: {activity.categoryDisplay}</p>
                             <p>Inscritos: {activity.bookedCount}/{activity.maxCapacity}</p>
-                            {activity.status && <p>Estado: {displayActivityStatusWithDetails(activity, allInstructors.find(i => i.id === (activity.rawActivity as TimeSlot).instructorId))}</p>}
+                            {activity.status && (
+                              <p>Estado: {displayActivityStatusWithDetails(
+                                { rawActivity: activity.rawActivity as (TimeSlot | Match), status: activity.status },
+                                activity.type === 'class' ? allInstructors.find(i => i.id === (activity.rawActivity as TimeSlot).instructorId) : undefined
+                              )}</p>
+                            )}
                             {activity.participants.length > 0 && (
                                 <div className="mt-1 pt-1 border-t">
                                     <p className="font-medium text-[10px] mb-0.5">Participantes:</p>

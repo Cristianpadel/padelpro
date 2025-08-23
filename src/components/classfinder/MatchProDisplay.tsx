@@ -18,7 +18,7 @@ interface MatchProDisplayProps {
 
 const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, onBookingSuccess, selectedDate, onDateChange }) => {
 
-    const [matchProGames, setMatchProGames] = useState<Match[]>([]);
+    const [fixedMatches, setFixedMatches] = useState<Match[]>([]);
     const [loading, setLoading] = useState(true);
     const [localCurrentUser, setLocalCurrentUser] = useState<User | null>(null);
 
@@ -31,14 +31,14 @@ const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, onBookin
                     getMockCurrentUser()
                 ]);
 
-                let proMatches = allMatches.filter(m => m.isProMatch);
+                let proMatches = allMatches.filter(m => m.isFixedMatch);
 
                 // Filter by selectedDate if it exists
                 if (selectedDate) {
                     proMatches = proMatches.filter(m => isSameDay(new Date(m.startTime), selectedDate));
                 }
 
-                setMatchProGames(proMatches);
+                setFixedMatches(proMatches);
                 setLocalCurrentUser(user);
 
             } catch (error) {
@@ -51,7 +51,7 @@ const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, onBookin
     }, [selectedDate]); // Refetch if date changes
 
     const handleMatchUpdate = (updatedMatch: Match) => {
-        setMatchProGames(prev => prev.map(m => m.id === updatedMatch.id ? updatedMatch : m));
+    setFixedMatches(prev => prev.map(m => m.id === updatedMatch.id ? updatedMatch : m));
         onBookingSuccess();
     };
 
@@ -73,9 +73,9 @@ const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, onBookin
 
     return (
         <div className="space-y-4">
-            {matchProGames.length > 0 ? (
+        {fixedMatches.length > 0 ? (
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(360px,1fr))] justify-center gap-6">
-                    {matchProGames.map(match => (
+            {fixedMatches.map(match => (
                         <MatchCard 
                             key={match.id} 
                             match={match} 
@@ -87,7 +87,7 @@ const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, onBookin
                     ))}
                 </div>
             ) : (
-                <p className="text-center text-muted-foreground p-8">No hay partidas Matchpro programadas para el día seleccionado.</p>
+                <p className="text-center text-muted-foreground p-8">No hay partidas fijas programadas para el día seleccionado.</p>
             )}
         </div>
     );

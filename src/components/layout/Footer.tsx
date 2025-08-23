@@ -29,6 +29,11 @@ const Footer: React.FC<FooterProps> = ({ className }) => {
         fetchUser();
     }, []);
 
+  // Render nothing on the server and until mounted to avoid hydration mismatches
+  if (!isClient) {
+    return null;
+  }
+
     const handleInviteSent = async (friendEmail: string) => {
         if (!currentUser) {
             toast({ title: "Error", description: "Debes iniciar sesión para invitar a un amigo.", variant: "destructive"});
@@ -52,9 +57,9 @@ const Footer: React.FC<FooterProps> = ({ className }) => {
         setIsInviteFriendDialogOpen(false);
     };
 
-    return (
-        <>
-            <footer className={cn("bg-card text-card-foreground py-8 mt-16 border-t border-border", className)}>
+  return (
+    <>
+      <footer className={cn("bg-card text-card-foreground py-8 mt-16 border-t border-border", className)}>
               <div className="container mx-auto px-4 text-center">
                 <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-center">
                   <div className="flex justify-center lg:justify-start">
@@ -85,7 +90,7 @@ const Footer: React.FC<FooterProps> = ({ className }) => {
                 </p>
               </div>
             </footer>
-            {isClient && currentUser && (
+            {currentUser && (
                 <InviteFriendDialog
                     isOpen={isInviteFriendDialogOpen}
                     onOpenChange={setIsInviteFriendDialogOpen}

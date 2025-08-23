@@ -195,6 +195,7 @@ export interface Club {
     showMatchesTabOnFrontend?: boolean;
     isMatchDayEnabled?: boolean;
     isMatchProEnabled?: boolean;
+    isStoreEnabled?: boolean;
     pointSettings?: PointSettings;
     levelRanges?: ClubLevelRange[];
     unavailableMatchHours?: Partial<Record<DayOfWeek, TimeRange[]>>;
@@ -240,7 +241,7 @@ export interface TimeSlot {
     level: ClassPadelLevel;
     category: PadelCategoryForSlot;
     status: 'pre_registration' | 'forming' | 'confirmed' | 'confirmed_private' | 'cancelled';
-    bookedPlayers: { userId: string, name?: string, isSimulated?: boolean, groupSize: 1|2|3|4 }[];
+    bookedPlayers: { userId: string, name?: string, isSimulated?: boolean, profilePictureUrl?: string, groupSize: 1 | 2 | 3 | 4 }[];
     designatedGratisSpotPlaceholderIndexForOption?: { [key in 1 | 2 | 3 | 4]?: number | null };
     organizerId?: string;
     privateShareCode?: string;
@@ -276,9 +277,18 @@ export interface Match {
     level: MatchPadelLevel;
     category: PadelCategoryForSlot;
     status: 'forming' | 'confirmed' | 'confirmed_private' | 'cancelled';
-    bookedPlayers: { userId: string, name?: string, isSimulated?: boolean }[];
+    bookedPlayers: { userId: string, name?: string, isSimulated?: boolean, profilePictureUrl?: string, level?: MatchPadelLevel, category?: PadelCategoryForSlot }[];
     isPlaceholder?: boolean;
     isProMatch?: boolean;
+        // New concept: Partida fija (Fixed Match)
+        isFixedMatch?: boolean;
+        fixedSchedule?: {
+            dayOfWeek: DayOfWeek;
+            time: string; // HH:mm
+            hasReservedCourt?: boolean;
+        };
+    // Optional display-only range for fixed matches (guidance; matching stays open or single-level)
+    fixedLevelRange?: PadelLevelRange;
     isProvisional?: boolean;
     provisionalForUserId?: string;
     provisionalExpiresAt?: Date;
@@ -300,7 +310,7 @@ export interface MatchBookingMatchDetails {
     courtNumber?: number;
     level: MatchPadelLevel;
     category: PadelCategoryForSlot;
-    bookedPlayers: { userId: string, name?: string }[];
+    bookedPlayers: { userId: string, name?: string, profilePictureUrl?: string, level?: MatchPadelLevel, category?: PadelCategoryForSlot }[];
     totalCourtFee?: number;
     clubId: string;
     status: Match['status'];

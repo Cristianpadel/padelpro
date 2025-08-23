@@ -10,7 +10,24 @@ const Dialog = DialogPrimitive.Root
 
 const DialogTrigger = DialogPrimitive.Trigger
 
-const DialogPortal = DialogPrimitive.Portal
+// Use a stable container inside the app layout if present to avoid document.body insertBefore races.
+// Falls back to document.body when the container is not found.
+const DialogPortal: React.FC<React.ComponentPropsWithoutRef<typeof DialogPrimitive.Portal>> = ({ children, ...props }) => {
+  const [container, setContainer] = React.useState<HTMLElement | undefined>(undefined)
+
+  React.useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const el = document.getElementById('radix-portal-root') as HTMLElement | null
+      setContainer(el ?? document.body)
+    }
+  }, [])
+
+  return (
+    <DialogPrimitive.Portal container={container} {...props}>
+      {children}
+    </DialogPrimitive.Portal>
+  )
+}
 
 const DialogClose = DialogPrimitive.Close
 

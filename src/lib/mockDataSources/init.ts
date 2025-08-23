@@ -20,6 +20,7 @@ import {
   initializeMockMatchDayInscriptions,
   initializeMockMatchDayCancelledInscriptions,
   initializeMockShopProducts,
+  addUserToUserDatabaseState,
   getMockClubs as clubs,
   getMockPadelCourts as padelCourts,
   getMockUserDatabase as userDatabase,
@@ -51,11 +52,12 @@ export function performInitialization() {
         name: 'Padel Estrella',
         location: 'Madrid, España',
   // Use a remote placeholder to avoid missing local asset 404s in dev
-  logoUrl: 'https://placehold.co/80x80?text=PE',
+  logoUrl: 'https://placehold.co/80x80.png?text=PE',
         showClassesTabOnFrontend: true,
         showMatchesTabOnFrontend: true,
         isMatchDayEnabled: true,
         isMatchProEnabled: true, // Set to false by default
+  isStoreEnabled: true,
         pointSettings: defaultPointSettings,
         adminEmail: 'admin@padelestrella.com',
         adminPassword: 'adminpassword',
@@ -79,7 +81,7 @@ export function performInitialization() {
             color: '#808080',
             intensity: 0.7,
         },
-        shopReservationFee: 1, // Add default reservation fee
+  shopReservationFee: 10, // Default reservation fee for store reservations (in euros)
     },
     // ... other clubs
   ];
@@ -165,7 +167,7 @@ export function performInitialization() {
   initialInstructors.forEach(inst => {
       const dbEntry = initialUserDatabase.find(u => u.id === inst.id);
       if (!dbEntry) {
-        initialUserDatabase.push({
+  const newInstructorAsUser = {
           id: inst.id,
           name: inst.name,
           email: inst.email!,
@@ -185,17 +187,28 @@ export function performInitialization() {
           pendingBonusPoints: 0,
           favoriteInstructorIds: [],
           preferredGameType: 'clases',
-        });
+  } as import('@/types').UserDB;
+  // Keep local array in sync for any later consumers
+  initialUserDatabase.push(newInstructorAsUser);
+  // Also persist into the initialized user database state so fetchInstructors can read them
+  addUserToUserDatabaseState(newInstructorAsUser);
       }
   });
 
   // --- Initialize Shop Products ---
   const initialShopProducts: import('@/types').Product[] = [
-      { id: 'prod-1', clubId: 'club-1', name: 'Pala Bullpadel Vertex 04', images: ['https://placehold.co/600x400?text=Vertex+04'], officialPrice: 280, offerPrice: 220, stock: 5, status: 'in-stock', category: 'pala', aiHint: 'Bullpadel Vertex racket' },
-      { id: 'prod-2', clubId: 'club-1', name: 'Cajón de Pelotas Head Pro', images: ['https://placehold.co/600x400?text=Head+Pro+Balls'], officialPrice: 85, offerPrice: 75, stock: 20, status: 'in-stock', category: 'pelotas', aiHint: 'Head Pro balls' },
-      { id: 'prod-3', clubId: 'club-1', name: 'Zapatillas Joma T.SLAM', images: ['https://placehold.co/600x400?text=Joma+T.SLAM'], officialPrice: 90, offerPrice: 70, stock: 12, status: 'in-stock', category: 'ropa', aiHint: 'Joma padel shoes' },
-      { id: 'prod-4', clubId: 'club-1', name: 'Paletero Siux', images: ['https://placehold.co/600x400?text=Siux+Bag'], officialPrice: 70, offerPrice: 60, stock: 8, status: 'in-stock', category: 'accesorios', aiHint: 'Siux padel bag' },
-  ];
+  { id: 'prod-1', clubId: 'club-1', name: 'Pala Bullpadel Vertex 04', images: ['https://www.padelnuestro.com/media/catalog/product/1/1/113540_pala_nox_at10_genius_18k_alum_by_agustin_tapia_pat10genius1825_1500x1500_6e6f.jpg?optimize=high&bg-color=255,255,255&fit=bounds&height=&width=&canvas='], officialPrice: 280, offerPrice: 220, stock: 5, status: 'in-stock', category: 'pala', aiHint: 'Bullpadel Vertex racket' },
+      { id: 'prod-2', clubId: 'club-1', name: 'Cajón de Pelotas Head Pro', images: ['https://placehold.co/600x400.png?text=Head+Pro+Balls'], officialPrice: 85, offerPrice: 75, stock: 20, status: 'in-stock', category: 'pelotas', aiHint: 'Head Pro balls' },
+      { id: 'prod-3', clubId: 'club-1', name: 'Zapatillas Joma T.SLAM', images: ['https://placehold.co/600x400.png?text=Joma+T.SLAM'], officialPrice: 90, offerPrice: 70, stock: 12, status: 'in-stock', category: 'ropa', aiHint: 'Joma padel shoes' },
+      { id: 'prod-4', clubId: 'club-1', name: 'Paletero Siux', images: ['https://placehold.co/600x400.png?text=Siux+Bag'], officialPrice: 70, offerPrice: 60, stock: 8, status: 'in-stock', category: 'accesorios', aiHint: 'Siux padel bag' },
+      // New Padel rackets with online images
+  { id: 'prod-5', clubId: 'club-1', name: 'Pala NOX AT10 Genius', images: ['https://www.padelnuestro.com/media/catalog/product/1/1/113540_pala_nox_at10_genius_18k_alum_by_agustin_tapia_pat10genius1825_1500x1500_6e6f.jpg?optimize=high&bg-color=255,255,255&fit=bounds&height=&width=&canvas='], officialPrice: 299, offerPrice: 249, stock: 7, status: 'in-stock', category: 'pala', aiHint: 'NOX AT10 Genius racket', isDealOfTheDay: true, discountPercentage: 15 },
+  { id: 'prod-6', clubId: 'club-1', name: 'Pala HEAD Alpha Pro', images: ['https://www.padelnuestro.com/media/catalog/product/1/1/113540_pala_nox_at10_genius_18k_alum_by_agustin_tapia_pat10genius1825_1500x1500_6e6f.jpg?optimize=high&bg-color=255,255,255&fit=bounds&height=&width=&canvas='], officialPrice: 280, offerPrice: 235, stock: 6, status: 'in-stock', category: 'pala', aiHint: 'HEAD Alpha Pro racket' },
+  { id: 'prod-7', clubId: 'club-1', name: 'Pala Babolat Technical Viper', images: ['https://www.padelnuestro.com/media/catalog/product/1/1/113540_pala_nox_at10_genius_18k_alum_by_agustin_tapia_pat10genius1825_1500x1500_6e6f.jpg?optimize=high&bg-color=255,255,255&fit=bounds&height=&width=&canvas='], officialPrice: 320, offerPrice: 269, stock: 4, status: 'in-stock', category: 'pala', aiHint: 'Babolat Technical Viper racket' },
+  { id: 'prod-8', clubId: 'club-1', name: 'Pala Adidas Adipower', images: ['https://www.padelnuestro.com/media/catalog/product/1/1/113540_pala_nox_at10_genius_18k_alum_by_agustin_tapia_pat10genius1825_1500x1500_6e6f.jpg?optimize=high&bg-color=255,255,255&fit=bounds&height=&width=&canvas='], officialPrice: 260, offerPrice: 219, stock: 10, status: 'in-stock', category: 'pala', aiHint: 'Adidas Adipower racket' },
+  { id: 'prod-9', clubId: 'club-1', name: 'Pala Wilson Blade', images: ['https://www.padelnuestro.com/media/catalog/product/1/1/113540_pala_nox_at10_genius_18k_alum_by_agustin_tapia_pat10genius1825_1500x1500_6e6f.jpg?optimize=high&bg-color=255,255,255&fit=bounds&height=&width=&canvas='], officialPrice: 240, offerPrice: 199, stock: 9, status: 'in-stock', category: 'pala', aiHint: 'Wilson Blade racket' },
+  { id: 'prod-10', clubId: 'club-1', name: 'Pala Siux Pegasus', images: ['https://www.padelnuestro.com/media/catalog/product/1/1/113540_pala_nox_at10_genius_18k_alum_by_agustin_tapia_pat10genius1825_1500x1500_6e6f.jpg?optimize=high&bg-color=255,255,255&fit=bounds&height=&width=&canvas='], officialPrice: 350, offerPrice: 295, stock: 3, status: 'in-stock', category: 'pala', aiHint: 'Siux Pegasus racket' },
+   ];
   initializeMockShopProducts(initialShopProducts);
 
 

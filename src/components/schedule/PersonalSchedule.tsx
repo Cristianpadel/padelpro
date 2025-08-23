@@ -13,8 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { displayClassLevel, displayClassCategory } from '@/types';
 import { cancelBooking, fetchUserBookings, addReviewToState, getMockStudents, getMockInstructors, isSlotEffectivelyCompleted, getCourtAvailabilityForInterval, fillClassAndMakePrivate } from '@/lib/mockData';
-import { useRouter } from 'next/navigation';
-import { InfoCard } from './InfoCard';
+ 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from '@/lib/utils';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
@@ -396,7 +395,7 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [availabilityData, setAvailabilityData] = useState<Record<string, CourtAvailabilityState>>({});
   const { toast } = useToast();
-  const router = useRouter();
+  
 
 
   const loadData = useCallback(async () => {
@@ -507,14 +506,10 @@ const PersonalSchedule: React.FC<PersonalScheduleProps> = ({ currentUser, onBook
   
   if (!hasUpcomingBookings && !hasPastBookings) {
     return (
-       <InfoCard
-          icon={Activity}
-          title="Tu Agenda de Clases está Vacía"
-          description="Aquí verás tus próximas clases y tu historial. ¡Anímate a reservar tu primera clase!"
-          actionText="Ver Clases Disponibles"
-          onActionClick={() => router.push('/activities')}
-          storageKey="dismissed_class_suggestion"
-      />
+      <div className="p-6 text-center text-muted-foreground flex flex-col items-center justify-center gap-2">
+         <Activity className="h-6 w-6 opacity-60" />
+         <p className="text-sm">Aún no tienes clases en tu agenda.</p>
+      </div>
     );
   }
 

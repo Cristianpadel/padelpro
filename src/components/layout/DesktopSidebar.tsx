@@ -89,15 +89,17 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
     }, [viewPreference]);
 
     const handleFavoritesClick = () => {
-        if (filterByFavorites) {
-            updateUrlFilter('favorites', false);
-        } else {
-            setIsManageFavoritesOpen(true);
-        }
+        // Always open the manage favorites dialog so the user can adjust selections.
+        // They can disable the filter by clearing all selections.
+        setIsManageFavoritesOpen(true);
     };
 
     const isMatchProEnabled = clubInfo?.isMatchProEnabled ?? false;
-    const navItemCount = 3 + (isMatchProEnabled ? 1 : 0) + (clubInfo?.isMatchDayEnabled ? 1 : 0) + 1; // Base + Pro + MD + Store
+    const isClassesEnabled = clubInfo?.showClassesTabOnFrontend ?? true;
+    const isMatchesEnabled = clubInfo?.showMatchesTabOnFrontend ?? true;
+    const isMatchDayEnabled = clubInfo?.isMatchDayEnabled ?? false;
+    const isStoreEnabled = clubInfo?.isStoreEnabled ?? true;
+    const navItemCount = 1 + (isClassesEnabled ? 1 : 0) + (isMatchProEnabled ? 1 : 0) + (isMatchesEnabled ? 1 : 0) + (isMatchDayEnabled ? 1 : 0) + (isStoreEnabled ? 1 : 0);
     const navGridClass = `grid-cols-${navItemCount}`;
 
 
@@ -163,12 +165,22 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                     <Separator />
 
                     <div className="p-1 space-y-3">
-                        <Link href="/dashboard" className="w-full"><Button variant={pathname.startsWith('/dashboard') || pathname.startsWith('/schedule') ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-md" style={navButtonShadowStyle}><ClipboardList className="mr-3 h-5 w-5" /> Agenda</Button></Link>
-                        <Link href="/activities?view=clases" className="w-full"><Button variant={isActivitiesPage && activeView === 'clases' ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-md" style={navButtonShadowStyle}><Activity className="mr-3 h-5 w-5" /> Clases</Button></Link>
-                        {isMatchProEnabled && (<Link href="/activities?view=matchpro" className="w-full"><Button variant={isActivitiesPage && activeView === 'matchpro' ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-md" style={navButtonShadowStyle}><Trophy className="mr-3 h-5 w-5" /> Matchpro</Button></Link>)}
-                        <Link href="/activities?view=partidas" className="w-full"><Button variant={isActivitiesPage && activeView === 'partidas' ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-md" style={navButtonShadowStyle}><Users className="mr-3 h-5 w-5" /> Partidas</Button></Link>
-                        {clubInfo?.isMatchDayEnabled && (<Link href="/match-day" className="w-full"><Button variant={pathname.startsWith('/match-day') ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-md" style={navButtonShadowStyle}><PartyPopper className="mr-3 h-5 w-5" /> Match-Day</Button></Link>)}
-                        <Link href="/store" className="w-full"><Button variant={pathname.startsWith('/store') ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-md" style={navButtonShadowStyle}><ShoppingBag className="mr-3 h-5 w-5" /> Tienda</Button></Link>
+                                                <Link href="/dashboard" className="w-full"><Button variant={pathname.startsWith('/dashboard') || pathname.startsWith('/schedule') ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-md" style={navButtonShadowStyle}><ClipboardList className="mr-3 h-5 w-5" /> Agenda</Button></Link>
+                                                {isClassesEnabled && (
+                                                    <Link href="/activities?view=clases" className="w-full"><Button variant={isActivitiesPage && activeView === 'clases' ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-md" style={navButtonShadowStyle}><Activity className="mr-3 h-5 w-5" /> Clases</Button></Link>
+                                                )}
+                                                {isMatchProEnabled && (
+                                                    <Link href="/activities?view=matchpro" className="w-full"><Button variant={isActivitiesPage && activeView === 'matchpro' ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-md" style={navButtonShadowStyle}><Trophy className="mr-3 h-5 w-5" /> Partidas fijas</Button></Link>
+                                                )}
+                                                {isMatchesEnabled && (
+                                                    <Link href="/activities?view=partidas" className="w-full"><Button variant={isActivitiesPage && activeView === 'partidas' ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-md" style={navButtonShadowStyle}><Users className="mr-3 h-5 w-5" /> Partidas</Button></Link>
+                                                )}
+                                                {isMatchDayEnabled && (
+                                                    <Link href="/match-day" className="w-full"><Button variant={pathname.startsWith('/match-day') ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-md" style={navButtonShadowStyle}><PartyPopper className="mr-3 h-5 w-5" /> Match-Day</Button></Link>
+                                                )}
+                                                {isStoreEnabled && (
+                                                    <Link href="/store" className="w-full"><Button variant={pathname.startsWith('/store') ? "default" : "outline"} className="w-full justify-start text-base h-12 rounded-md" style={navButtonShadowStyle}><ShoppingBag className="mr-3 h-5 w-5" /> Tienda</Button></Link>
+                                                )}
                     </div>
                     
                     {isActivitiesPage && (
@@ -179,7 +191,17 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                                 <Button variant="ghost" style={timeSlotFilter === 'all' ? inactiveFilterShadowStyle : {}} className={cn("w-full justify-start text-sm h-10 rounded-full", timeSlotFilter !== 'all' && activeFilterClasses)} onClick={() => setIsTimeFilterOpen(true)}><Clock className="mr-3 h-4 w-4" /> {timeFilterLabel}</Button>
                                 <Button variant="ghost" style={selectedLevel === 'all' ? inactiveFilterShadowStyle : {}} className={cn("w-full justify-start text-sm h-10 rounded-full", selectedLevel !== 'all' && activeFilterClasses)} onClick={() => setIsLevelFilterOpen(true)}><BarChartHorizontal className="mr-3 h-4 w-4" /> {levelFilterLabel}</Button>
                                 <Button variant="ghost" style={viewPreference === 'normal' ? inactiveFilterShadowStyle : {}} className={cn("w-full justify-start text-sm h-10 rounded-full", viewPreference !== 'normal' && activeFilterClasses)} onClick={() => setIsViewOptionsOpen(true)}><Eye className="mr-3 h-4 w-4" /> {viewPreferenceLabel}</Button>
-                                {activeView === 'clases' && (<Button variant="ghost" style={!filterByFavorites ? inactiveFilterShadowStyle : {}} className={cn("w-full justify-start text-sm h-10 rounded-full", filterByFavorites && activeFilterClasses)} onClick={handleFavoritesClick}><Heart className={cn("mr-3 h-4 w-4", filterByFavorites && "fill-current text-destructive")} /> Favoritos</Button>)}
+                                {activeView === 'clases' && (
+                                    <Button
+                                        variant="ghost"
+                                        style={!filterByFavorites ? inactiveFilterShadowStyle : {}}
+                                        className={cn("w-full justify-start text-sm h-10 rounded-full", filterByFavorites && activeFilterClasses)}
+                                        onClick={handleFavoritesClick}
+                                    >
+                                        <Heart className={cn("mr-3 h-4 w-4", filterByFavorites && "fill-current text-destructive")} />
+                                        {`Favoritos${currentUser?.favoriteInstructorIds && currentUser.favoriteInstructorIds.length > 0 ? ` (${currentUser.favoriteInstructorIds.length})` : ''}`}
+                                    </Button>
+                                )}
                                 <Button variant="ghost" style={!showPointsBonus ? inactiveFilterShadowStyle : {}} className={cn("w-full justify-start text-sm h-10 rounded-full", showPointsBonus && activeFilterClasses)} onClick={handleTogglePointsBonus}><Sparkles className="mr-3 h-4 w-4 text-amber-500" /> + Puntos</Button>
                             </div>
                         </>
@@ -207,11 +229,11 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                         <SlidersHorizontal />
                     </Button>
                 </div>
-                {isActivitiesPage && (
+        {isActivitiesPage && (
                 <div className="mt-4">
                     <div className="grid grid-cols-2 gap-2">
-                        <Button size="sm" variant={activeView === 'clases' ? 'default' : 'outline'} onClick={() => updateUrlFilter('view', 'clases')}><Activity className="mr-2 h-4 w-4" />Clases</Button>
-                        <Button size="sm" variant={activeView === 'partidas' ? 'default' : 'outline'} onClick={() => updateUrlFilter('view', 'partidas')}><Users className="mr-2 h-4 w-4" />Partidas</Button>
+            {isClassesEnabled && <Button size="sm" variant={activeView === 'clases' ? 'default' : 'outline'} onClick={() => updateUrlFilter('view', 'clases')}><Activity className="mr-2 h-4 w-4" />Clases</Button>}
+            {isMatchesEnabled && <Button size="sm" variant={activeView === 'partidas' ? 'default' : 'outline'} onClick={() => updateUrlFilter('view', 'partidas')}><Users className="mr-2 h-4 w-4" />Partidas</Button>}
                     </div>
                 </div>
                 )}

@@ -1,14 +1,14 @@
 // src/app/(app)/activities/components/ActivitiesPageContent.tsx
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import ClassDisplay from '@/components/classfinder/ClassDisplay';
 import MatchDisplay from '@/components/classfinder/MatchDisplay';
 import MatchProDisplay from '@/app/(app)/classfinder/MatchProDisplay';
 import { getMockTimeSlots, fetchMatches, fetchMatchDayEventsForDate, createMatchesForDay, getMockClubs } from '@/lib/mockData';
-import type { TimeSlot, User, Match, MatchDayEvent, Club } from '@/types';
+import type { TimeSlot, User, Match, MatchDayEvent, Club, ActivityViewType } from '@/types';
 import { addDays, isSameDay, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import PageSkeleton from '@/components/layout/PageSkeleton';
@@ -57,6 +57,23 @@ export default function ActivitiesPageContent({ currentUser, onCurrentUserUpdate
         types: ('class' | 'match')[];
     }>({ isOpen: false, date: null, preference: null, types: [] });
 
+    // Guard against disabled sections based on club settings
+    useEffect(() => {
+        if (!currentClub) return;
+        const isClassesEnabled = currentClub.showClassesTabOnFrontend ?? true;
+        const isMatchesEnabled = currentClub.showMatchesTabOnFrontend ?? true;
+        const isMatchProEnabled = currentClub.isMatchProEnabled ?? false;
+        if ((activityFilters.activeView === 'clases' && !isClassesEnabled) ||
+            (activityFilters.activeView === 'partidas' && !isMatchesEnabled) ||
+            (activityFilters.activeView === 'matchpro' && !isMatchProEnabled)) {
+            const fallback: ActivityViewType = isClassesEnabled ? 'clases' : (isMatchesEnabled ? 'partidas' : (isMatchProEnabled ? 'matchpro' : 'clases'));
+            if (activityFilters.activeView !== fallback) {
+                toast({ title: 'Sección deshabilitada', description: 'Esta actividad no está disponible en tu club.', variant: 'default' });
+                activityFilters.handleViewPrefChange(activityFilters.viewPreference, fallback);
+            }
+        }
+    }, [currentClub, activityFilters.activeView, activityFilters.viewPreference]);
+
 
     const handleBookingSuccess = useCallback(async () => {
         if (currentClub) {
@@ -76,6 +93,8 @@ export default function ActivitiesPageContent({ currentUser, onCurrentUserUpdate
                 console.error("Error refreshing matches after booking", error);
             } finally {
                 setIsInitialLoading(false);
+                // Force refresh of date strip indicators and other derived data
+                triggerRefresh();
             }
         } else {
             triggerRefresh();
@@ -94,10 +113,12 @@ export default function ActivitiesPageContent({ currentUser, onCurrentUserUpdate
                 let existingMatches: Match[] = [];
 
                 if (club) {
-                    [slots, existingMatches] = await Promise.all([
-                        getMockTimeSlots(club.id),
+                    const [allSlots, fetchedMatches] = await Promise.all([
+                        Promise.resolve(getMockTimeSlots()),
                         fetchMatches(club.id),
                     ]);
+                    slots = allSlots.filter(s => s.clubId === club.id);
+                    existingMatches = fetchedMatches;
                 }
 
                 setAllTimeSlots(slots);
@@ -137,27 +158,68 @@ export default function ActivitiesPageContent({ currentUser, onCurrentUserUpdate
     }, [selectedDate, currentClub]);
     
 
-    const onViewPrefChange = (date: Date, pref: any, types: ('class' | 'match' | 'event')[], eventId?: string) => {
-        const relevantTypes = types.filter(t => t !== 'event') as ('class' | 'match')[];
-    
+    // Helper to map dialog types to ActivityViewType used in URL/state
+    const toActivityViewType = (t: 'class' | 'match' | 'clases' | 'partidas'): ActivityViewType => {
+        if (t === 'class') return 'clases';
+        if (t === 'match') return 'partidas';
+        return t as ActivityViewType;
+    };
+
+    // Accept either a single type string or an array (defensive), and normalize.
+    const onViewPrefChange = (
+        date: Date,
+        pref: any,
+        types: ('class' | 'match' | 'event')[] | 'class' | 'match' | 'clases' | 'partidas',
+        eventId?: string
+    ) => {
+        const arr = Array.isArray(types) ? types : [types];
+        // Normalize any 'clases'/'partidas' inputs into 'class'/'match' for internal branching
+        const normalized = arr.map((t) => (t === 'clases' ? 'class' : t === 'partidas' ? 'match' : t)) as ('class'|'match'|'event')[];
+        const relevantTypes = normalized.filter(t => t !== 'event') as ('class' | 'match')[];
+
         if (relevantTypes.length > 1) {
             setActivitySelection({ isOpen: true, date, preference: pref, types: relevantTypes });
         } else if (relevantTypes.length === 1) {
-            handleViewPrefChange(relevantTypes[0], pref, date);
-            handleViewPrefChange(relevantTypes[0], pref, date);
-        } else if (types.includes('event') && eventId) {
+            // IMPORTANT: handleViewPrefChange expects (pref, type, date)
+            handleViewPrefChange(pref, toActivityViewType(relevantTypes[0]), date);
+        } else if (normalized.includes('event') && eventId) {
             router.push(`/match-day/${eventId}`);
         } else {
-            handleViewPrefChange(activeView, pref, date);
+            handleViewPrefChange(pref, activeView, date);
         }
+    };
+
+    // Prop-compatible wrapper to match child components' expected signature
+    const onViewPrefChangeCompat = (
+        date: Date,
+        pref: any,
+        type: 'class' | 'match' | 'event',
+        eventId?: string
+    ) => {
+        if (type === 'event') {
+            if (eventId) router.push(`/match-day/${eventId}`);
+            return;
+        }
+        const mapped: ActivityViewType = type === 'class' ? 'clases' : 'partidas';
+        handleViewPrefChange(pref, mapped, date);
     };
     
     const handleActivityTypeSelect = (type: 'class' | 'match') => {
         if (activitySelection.date && activitySelection.preference) {
-            handleViewPrefChange(type, activitySelection.preference, activitySelection.date);
+            // Map to ActivityViewType and call with correct parameter order
+            handleViewPrefChange(activitySelection.preference, toActivityViewType(type), activitySelection.date);
         }
         setActivitySelection({ isOpen: false, date: null, preference: null, types: [] });
     };
+
+    // Pre-filter classes by favorites as an extra safety net (top-level to respect Hooks rules)
+    const preFilteredClasses = useMemo(() => {
+        const favoritesActive = activityFilters.filterByFavorites || ((currentUser?.favoriteInstructorIds?.length || 0) > 0);
+        if (!favoritesActive) return allTimeSlots;
+        const favIds = currentUser?.favoriteInstructorIds || [];
+        if (!favIds.length) return [];
+        return allTimeSlots.filter(cls => favIds.includes(cls.instructorId || ''));
+    }, [activityFilters.filterByFavorites, allTimeSlots, currentUser?.favoriteInstructorIds]);
 
     const renderContent = () => {
         if (isInitialLoading) return <PageSkeleton />;
@@ -170,11 +232,16 @@ export default function ActivitiesPageContent({ currentUser, onCurrentUserUpdate
                             onBookingSuccess={handleBookingSuccess}
                             selectedDate={selectedDate}
                             onDateChange={handleDateChange}
-                            allClasses={allTimeSlots}
+                            filterByFavoriteInstructors={activityFilters.filterByFavorites}
+                            allClasses={preFilteredClasses}
                             isLoading={isInitialLoading}
                             dateStripIndicators={dateStripIndicators}
                             dateStripDates={dateStripDates}
-                            onViewPrefChange={onViewPrefChange}
+                            onViewPrefChange={onViewPrefChangeCompat}
+                            selectedLevelsSheet={[]}
+                            sortBy={'time'}
+                            filterAlsoConfirmedClasses={false}
+                            proposalView={'join'}
                             showPointsBonus={showPointsBonus}
                         />;
             case 'partidas':
@@ -189,17 +256,22 @@ export default function ActivitiesPageContent({ currentUser, onCurrentUserUpdate
                             matchDayEvents={matchDayEvents}
                             dateStripIndicators={dateStripIndicators}
                             dateStripDates={dateStripDates}
-                            onViewPrefChange={onViewPrefChange}
+                            onViewPrefChange={onViewPrefChangeCompat}
+                            sortBy={'time'}
+                            filterAlsoConfirmedMatches={false}
+                            proposalView={'join'}
                             showPointsBonus={showPointsBonus}
                         />;
-            case 'matchpro':
-                 return <MatchProDisplay
-                            {...restOfFilters}
-                            currentUser={currentUser}
-                            onBookingSuccess={handleBookingSuccess}
-                            selectedDate={selectedDate}
-                            onDateChange={handleDateChange}
-                        />;
+                        case 'matchpro':
+                             return <MatchProDisplay
+                                        {...restOfFilters}
+                                        currentUser={currentUser}
+                                        onBookingSuccess={handleBookingSuccess}
+                                        selectedDate={selectedDate}
+                                        onDateChange={handleDateChange}
+                                        timeSlotFilter={activityFilters.timeSlotFilter}
+                                        selectedLevel={activityFilters.selectedLevel}
+                                    />;
             default:
                 return null;
         }
@@ -241,12 +313,38 @@ export default function ActivitiesPageContent({ currentUser, onCurrentUserUpdate
 
                                 <div className="h-10 w-8 flex flex-col items-center justify-center relative space-y-0.5">
                                     <TooltipProvider delayDuration={150}>
-                                        {indicators.activityStatus === 'confirmed' && (
-                                            <Tooltip><TooltipTrigger asChild><button onClick={() => onViewPrefChange(day, 'myConfirmed', indicators.activityTypes.includes('clases') ? 'clases' : 'partidas')} className="h-6 w-6 flex items-center justify-center bg-destructive text-destructive-foreground rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">R</button></TooltipTrigger><TooltipContent><p>Ver mis reservas</p></TooltipContent></Tooltip>
-                                        )}
-                                        {indicators.activityStatus === 'inscribed' && (
-                                            <Tooltip><TooltipTrigger asChild><button onClick={() => onViewPrefChange(day, 'myInscriptions', indicators.activityTypes[0], indicators.eventId)} className="h-6 w-6 flex items-center justify-center bg-blue-500 text-white rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform">I</button></TooltipTrigger><TooltipContent><p>Ver mis inscripciones</p></TooltipContent></Tooltip>
-                                        )}
+                                                                                                                        {indicators.activityStatus === 'confirmed' && (
+                                                                                                                                <Tooltip>
+                                                                                                                                    <TooltipTrigger asChild>
+                                                                                                                                        <button
+                                                                                                                                            onClick={() => onViewPrefChangeCompat(day, 'myConfirmed', indicators.activityTypes.includes('class') ? 'class' : 'match')}
+                                                                                                                                            className="h-6 w-6 flex items-center justify-center bg-destructive text-destructive-foreground rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform"
+                                                                                                                                        >
+                                                                                                                                            R
+                                                                                                                                        </button>
+                                                                                                                                    </TooltipTrigger>
+                                                                                                                                    <TooltipContent><p>Ver mis reservas</p></TooltipContent>
+                                                                                                                                </Tooltip>
+                                                                                                                        )}
+                                                                                                                                                                {indicators.activityStatus === 'inscribed' && (
+                                                                                                                                                                        <Tooltip>
+                                                                                                                                                                            <TooltipTrigger asChild>
+                                                                                                                                                                                {indicators.activityTypes.includes('event') && indicators.eventId ? (
+                                                                                                                                                                                    <Link href={`/match-day/${indicators.eventId}`} passHref>
+                                                                                                                                                                                        <Button variant="ghost" size="icon" className="h-6 w-6 rounded-md bg-blue-500 text-white hover:bg-blue-600">I</Button>
+                                                                                                                                                                                    </Link>
+                                                                                                                                                                                ) : (
+                                                                                                                                                                                    <button
+                                                                                                                                                                                        onClick={() => onViewPrefChangeCompat(day, 'myInscriptions', indicators.activityTypes.includes('class') ? 'class' : 'match')}
+                                                                                                                                                                                        className="h-6 w-6 flex items-center justify-center bg-blue-500 text-white rounded-md font-bold text-xs leading-none cursor-pointer hover:scale-110 transition-transform"
+                                                                                                                                                                                    >
+                                                                                                                                                                                        I
+                                                                                                                                                                                    </button>
+                                                                                                                                                                                )}
+                                                                                                                                                                            </TooltipTrigger>
+                                                                                                                                                                            <TooltipContent><p>Ver mis inscripciones</p></TooltipContent>
+                                                                                                                                                                        </Tooltip>
+                                                                                                                                                                )}
                                         {indicators.hasEvent && indicators.activityStatus === 'none' && (
                                             <Tooltip><TooltipTrigger asChild><Link href={`/match-day/${indicators.eventId}`} passHref><Button variant="ghost" size="icon" className="h-6 w-6 rounded-md bg-primary/10 hover:bg-primary/20 animate-pulse-blue border border-primary/50"><Plus className="h-4 w-4 text-primary" /></Button></Link></TooltipTrigger><TooltipContent><p>¡Apúntate al Match-Day!</p></TooltipContent></Tooltip>
                                         )}

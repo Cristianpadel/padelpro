@@ -70,7 +70,7 @@ const BookingSpotDisplay: React.FC<BookingSpotDisplayProps> = ({
     if (isUserBookedInThisOption) return "Ya estás inscrito en esta opción.";
     if (canJoinGratis) return `Unirse (Gratis con ${pointsCostForGratisSpot} Puntos)`;
     if (canJoinStandard) return `Unirse (Coste: ${pricePerPersonForThisOption.toFixed(2)}€)`;
-    if (userHasConfirmedActivityToday && !isGratisSpotEffectivelyAvailable) return "Ya tienes otra actividad confirmada hoy.";
+  if (userHasConfirmedActivityToday && !isGratisSpotEffectivelyAvailable) return "Ya tienes una reserva este día. Máximo una reserva por día.";
     if (isGratisSpotEffectivelyAvailable && !hasEnoughPointsForGratis) return `Puntos insuficientes (${currentUser?.loyaltyPoints ?? 0} / ${pointsCostForGratisSpot}).`;
     if (!isDesignatedGratisSpot && !hasEnoughCredit) return `Saldo insuficiente (${((currentUser?.credit ?? 0) - (currentUser?.blockedCredit ?? 0)).toFixed(2)}€ / ${pricePerPersonForThisOption.toFixed(2)}€).`;
     if (isSlotOverallConfirmed) return `Clase confirmada para ${confirmedGroupSize}p.`;

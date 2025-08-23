@@ -7,11 +7,12 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Loader2, AlertTriangle, SearchX, CalendarDays, Plus, CheckCircle, Eye, Users, Sparkles, ArrowRight } from 'lucide-react';
 import ClassCard from '@/components/class/ClassCard';
 import { isProposalSlot as checkIsProposalSlot } from '@/lib/mockDataSources/classProposals';
 import PageSkeleton from '@/components/layout/PageSkeleton';
-import { fetchTimeSlots, getMockCurrentUser, isSlotEffectivelyCompleted, findAvailableCourt, isSlotGratisAndAvailable, fetchMatchDayEventsForDate, getUserActivityStatusForDay, getMockClubs, getCourtAvailabilityForInterval } from '@/lib/mockData';
+import { fetchTimeSlots, getMockCurrentUser, isSlotEffectivelyCompleted, findAvailableCourt, isSlotGratisAndAvailable, fetchMatchDayEventsForDate, getUserActivityStatusForDay, getMockClubs, getCourtAvailabilityForInterval, getMockInstructors } from '@/lib/mockData';
 import type { TimeSlot, User, Booking, MatchPadelLevel, SortOption, Instructor, MatchDayEvent, UserActivityStatusForDay, ViewPreference } from '@/types';
 import { format, isSameDay, addDays, startOfDay, isAfter } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -69,6 +70,8 @@ const ClassDisplay: React.FC<ClassDisplayProps> = ({
     const loadMoreRef = useRef<HTMLDivElement>(null);
     
     const selectedLevel = searchParams.get('level') as MatchPadelLevel | 'all' || 'all';
+    const favoritesFlagFromUrl = searchParams.get('favorites') === 'true';
+    const favoritesActive = filterByFavoriteInstructors || favoritesFlagFromUrl;
 
     const calculateOptionOccupancy = (slot: TimeSlot): number => {
         if (!slot.bookedPlayers || slot.bookedPlayers.length === 0) return 0;
@@ -87,7 +90,7 @@ const ClassDisplay: React.FC<ClassDisplayProps> = ({
 
         let workingClasses = [...classesToFilter];
         
-        if (filterByLiberadasOnly) {
+    if (filterByLiberadasOnly) {
             workingClasses = workingClasses.filter(cls => {
                 const isLiberada = (cls.status === 'confirmed' || cls.status === 'confirmed_private') && isSlotGratisAndAvailable(cls);
                 if (!isLiberada) return false;
@@ -117,11 +120,6 @@ const ClassDisplay: React.FC<ClassDisplayProps> = ({
                     if (timeSlotFilter === 'evening') return classHour >= 18 && classHour <= 22;
                     return true;
                 });
-            }
-            
-            if (filterByFavoriteInstructors && currentUser?.favoriteInstructorIds?.length > 0) {
-                const favoriteInstructorIds = currentUser.favoriteInstructorIds;
-                workingClasses = workingClasses.filter(cls => favoriteInstructorIds.includes(cls.instructorId || ''));
             }
 
             if (selectedLevel && selectedLevel !== 'all') {
@@ -175,6 +173,32 @@ const ClassDisplay: React.FC<ClassDisplayProps> = ({
             }
         }
         
+        // Apply favorites filter across all branches, if active
+    if (favoritesActive) {
+            let favoriteInstructorIds: string[] = [];
+            try {
+                const fresh = await getMockCurrentUser();
+                favoriteInstructorIds = fresh?.favoriteInstructorIds || [];
+            } catch {
+                favoriteInstructorIds = currentUser?.favoriteInstructorIds || [];
+            }
+            if (favoriteInstructorIds.length > 0) {
+                const instructors = getMockInstructors();
+                const favoritesByName = new Set(
+                    instructors
+                        .filter(inst => favoriteInstructorIds.includes(inst.id))
+                        .map(inst => (inst.name || '').trim().toLowerCase())
+                );
+                workingClasses = workingClasses.filter(cls => {
+                    if (cls.instructorId && favoriteInstructorIds.includes(cls.instructorId)) return true;
+                    const name = (cls.instructorName || '').trim().toLowerCase();
+                    return !cls.instructorId && name && favoritesByName.has(name);
+                });
+            } else {
+                workingClasses = [];
+            }
+        }
+
         // Final filter: check court availability
         const availableClasses = [];
         for (const cls of workingClasses) {
@@ -207,13 +231,13 @@ const ClassDisplay: React.FC<ClassDisplayProps> = ({
 
 
         setFilteredClasses(availableClasses);
-    }, [filterByGratisOnly, filterByLiberadasOnly, selectedDate, timeSlotFilter, selectedLevel, filterByFavoriteInstructors, filterAlsoConfirmedClasses, sortBy, currentUser, viewPreference, filterByClubId]);
+    }, [filterByGratisOnly, filterByLiberadasOnly, selectedDate, timeSlotFilter, selectedLevel, favoritesActive, filterAlsoConfirmedClasses, sortBy, currentUser, viewPreference, filterByClubId]);
     
     useEffect(() => {
         if (!isLoading) {
             applyClassFilters(allClasses);
         }
-    }, [applyClassFilters, refreshKey, selectedDate, selectedLevel, allClasses, isLoading, viewPreference, timeSlotFilter, filterByFavoriteInstructors, filterAlsoConfirmedClasses]);
+    }, [applyClassFilters, refreshKey, selectedDate, selectedLevel, allClasses, isLoading, viewPreference, timeSlotFilter, favoritesActive, filterAlsoConfirmedClasses]);
 
      // Effect to reset pagination when filters change
     useEffect(() => {
@@ -287,9 +311,37 @@ const ClassDisplay: React.FC<ClassDisplayProps> = ({
     };
 
 
+    const activeFavoriteIds = (filterByFavoriteInstructors || favoritesActive) ? (currentUser?.favoriteInstructorIds || []) : [];
+    const activeFavoriteNames = useMemo(() => {
+        if (!activeFavoriteIds.length) return [] as string[];
+        const all = getMockInstructors();
+        return all.filter(i => activeFavoriteIds.includes(i.id)).map(i => i.name || i.id);
+    }, [activeFavoriteIds]);
+
     return (
         <div>
             <div className="mt-2">
+                {(filterByFavoriteInstructors || favoritesActive) && activeFavoriteNames.length > 0 && (
+                    <div className="flex items-center flex-wrap gap-2 mb-3">
+                        <span className="text-sm text-muted-foreground">Filtrando por:</span>
+                        {activeFavoriteNames.map(name => (
+                            <Badge key={name} variant="secondary" className="rounded-full px-2 py-1 text-xs">{name}</Badge>
+                        ))}
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="ml-2 h-7 px-2 text-xs"
+                            onClick={() => {
+                                const params = new URLSearchParams(searchParams.toString());
+                                params.delete('favorites');
+                                const qs = params.toString();
+                                router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+                            }}
+                        >
+                            Quitar filtro
+                        </Button>
+                    </div>
+                )}
                 
                 {((!selectedDate && !filterByGratisOnly && !filterByLiberadasOnly)) && (
                     <div className="text-center py-16">

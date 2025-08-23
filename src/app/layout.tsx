@@ -22,6 +22,8 @@ export default function RootLayout({
       <body className="font-body antialiased">
         {children}
         <Toaster />
+  {/* Global stable portal container for Radix dialogs and overlays */}
+  <div id="radix-portal-root" />
       </body>
     </html>
   );

@@ -12,7 +12,7 @@ import React from 'react';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { User as UserIcon, Plus, Loader2, Gift, CreditCard, AlertTriangle, Lock, Star } from 'lucide-react';
+import { User as UserIcon, Plus, Loader2, Gift, CreditCard, AlertTriangle, Lock, Star, X as XIcon } from 'lucide-react';
 import type { Match, User } from '@/types';
 import { cn, getInitials, calculatePricePerPerson } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -34,6 +34,9 @@ interface MatchSpotDisplayProps {
   showPointsBonus: boolean;
   pricePerPlayer: number;
   pointsToAward: number;
+    // Optional: when viewing in "Mi agenda" as organizer, show an inline X to remove player
+    inlineRemovalEnabled?: boolean;
+    onRemovePlayer?: (userId: string) => void;
 }
 
 const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
@@ -51,6 +54,8 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
   showPointsBonus,
   pricePerPlayer,
   pointsToAward,
+    inlineRemovalEnabled,
+    onRemovePlayer,
 }) => {
     const { toast } = useToast();
     // Buscar el usuario real para este spot: solo mostrar el usuario si está en esta posición
@@ -60,6 +65,9 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
     const isMatchFull = (match.bookedPlayers || []).length >= 4;
     const isPlaceholderMatch = match.isPlaceholder === true;
     
+    // 1) If the spot is already occupied, always show avatar and disable
+    // 2) Global day-block: if user already has a confirmed activity today, disable everything
+
     const pointsCost = match.isPointsOnlyBooking 
         ? (calculatePricePerPerson(match.totalCourtFee, 4) || 20)
         : pricePerPlayer;
@@ -95,31 +103,35 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
     const fullPlayer = player && player.userId
         ? (currentUser && player.userId === currentUser.id
             ? currentUser
-        : getMockStudents().find(s => s.id === player.userId)
-            || userDb.getMockUserDatabase().find((u: any) => u.id === player.userId)
-                || player)
+            : getMockStudents().find(s => s.id === player.userId)
+              || userDb.getMockUserDatabase().find((u: any) => u.id === player.userId)
+              || player)
         : null;
 
-    if (!isSlotEmpty && fullPlayer) {
-    spotTooltipText = `${fullPlayer.name || 'Jugador'}${isCurrentUserInSpot ? ' (Tú)' : ''}`;
-    spotVariant = "solid";
-    isDisabled = true;
+    // Día bloqueado: si el usuario tiene otra actividad confirmada hoy, bloquear todas las plazas vacías
+    if (userHasOtherConfirmedActivityToday && isSlotEmpty) {
+        iconToShow = <Plus className="h-5 w-5 text-muted-foreground opacity-60" />;
+        spotTooltipText = "Ya tienes una reserva este día. Máximo una reserva por día.";
+        spotVariant = "dashed";
+        isDisabled = true;
+    } else if (!isSlotEmpty && fullPlayer) {
+        spotTooltipText = `${fullPlayer.name || 'Jugador'}${isCurrentUserInSpot ? ' (Tú)' : ''}`;
+        spotVariant = "solid";
+        isDisabled = true;
     } else if (isSlotEmpty) {
-    iconToShow = <Plus className="h-5 w-5 text-green-600 opacity-60 stroke-[3]" />;
-    spotTooltipText = isPlaceholderMatch ? `Iniciar Partida (Coste: ${pricePerPlayer.toFixed(2)}€)` : `Unirse (Coste: ${pricePerPlayer.toFixed(2)}€)`;
-    spotVariant = "dashed";
-    isDisabled = false;
-    actionHandler = () => onJoin(spotIndex, false);
+        iconToShow = <Plus className="h-5 w-5 text-green-600 opacity-60 stroke-[3]" />;
+        spotTooltipText = isPlaceholderMatch ? `Iniciar Partida (Coste: ${pricePerPlayer.toFixed(2)}€)` : `Unirse (Coste: ${pricePerPlayer.toFixed(2)}€)`;
+        spotVariant = "dashed";
+        isDisabled = false;
+        actionHandler = () => onJoin(spotIndex, false);
     } else if (isPending) {
-        iconToShow = <Loader2 className="h-5 w-5 animate-spin text-primary" />;
         spotTooltipText = "Procesando...";
         isDisabled = true;
     } else if (isUserAlreadyBooked) {
         spotTooltipText = "Ya estás inscrito en esta partida.";
-            // Si el usuario ya tiene una RESERVA confirmada ese día, bloquear cualquier otra inscripción de ese día
-            spotTooltipText = "Ya tienes otra reserva confirmada hoy.";
     } else if (userHasOtherConfirmedActivityToday) {
-        spotTooltipText = "Ya tienes otra actividad confirmada hoy.";
+        // Safety net (should already be handled above for empty spots)
+        spotTooltipText = "Ya tienes una reserva este día. Máximo una reserva por día.";
         isDisabled = true;
     } else if (match.status === 'confirmed_private') {
         if(canJoinThisPrivateMatch) {
@@ -239,6 +251,20 @@ const MatchSpotDisplayComponent: React.FC<MatchSpotDisplayProps> = ({
                                     {getInitials((fullPlayer?.name || player.name || '').trim()) || '??'}
                                 </AvatarFallback>
                             </Avatar>
+                                                        {inlineRemovalEnabled && onRemovePlayer && (
+                                                            <button
+                                                                type="button"
+                                                                aria-label="Quitar jugador"
+                                                                className="absolute -top-1.5 -left-1.5 z-30 h-5 w-5 rounded-full bg-red-600 text-white flex items-center justify-center shadow hover:bg-red-700 focus:outline-none"
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                    if (player?.userId) onRemovePlayer(player.userId);
+                                                                }}
+                                                            >
+                                                                <XIcon className="h-3.5 w-3.5" />
+                                                            </button>
+                                                        )}
                         </>
                     ) : (
                         <div className="w-full h-full rounded-full flex items-center justify-center">

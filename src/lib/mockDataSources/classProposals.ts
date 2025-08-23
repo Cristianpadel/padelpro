@@ -110,13 +110,13 @@ export const createProposedClassesForDay = (club: Club, date: Date): TimeSlot[] 
 
             // Check for conflict with an existing CONFIRMED class for the same instructor
             const instructorHasConfirmedConflict = state.getMockTimeSlots().find(
-                existingSlot => existingSlot.instructorId === instructor.id &&
-                                (existingSlot.status === 'confirmed' || existingSlot.status === 'confirmed_private') &&
-                                areIntervalsOverlapping(
-                                    { start: startTime, end: endTime },
-                                    { start: new Date(existingSlot.startTime), end: new Date(existingSlot.endTime) },
-                                    { inclusive: false }
-                                )
+                existingSlot => {
+                    if (existingSlot.instructorId !== instructor.id) return false;
+                    if (!(existingSlot.status === 'confirmed' || existingSlot.status === 'confirmed_private')) return false;
+                    const classStart = new Date(existingSlot.startTime);
+                    // Block proposals that begin before or exactly at class start and extend past it (hour of the class and 30min before)
+                    return (startTime.getTime() <= classStart.getTime()) && (endTime.getTime() > classStart.getTime());
+                }
             );
 
             if (instructorHasConfirmedConflict) {

@@ -27,6 +27,7 @@ interface ClassCardHeaderProps {
   onReservarPrivadaClick: () => void;
   isProcessingPrivateAction: boolean;
   bookings: Record<number, { userId: string; groupSize: 1 | 2 | 3 | 4; }[]>;
+  dayBlocked?: boolean;
 }
 
 const renderStarsDisplay = (rating: number) => {
@@ -57,7 +58,8 @@ export const ClassCardHeader: React.FC<ClassCardHeaderProps> = ({
   onInfoClick,
   onReservarPrivadaClick,
   isProcessingPrivateAction,
-  bookings
+  bookings,
+  dayBlocked
 }) => {
   
   const canBookPrivate = (bookings[1] || []).length === 0 && (bookings[2] || []).length === 0 && (bookings[3] || []).length === 0 && (bookings[4] || []).length === 0;
@@ -95,12 +97,12 @@ export const ClassCardHeader: React.FC<ClassCardHeaderProps> = ({
               {renderStarsDisplay(instructorRating)}
            </div>
         </div>
-        {canBookPrivate && (
+    {canBookPrivate && (
             <Button 
               size="sm" 
               className="bg-purple-600 text-white rounded-lg h-auto py-1 px-3 flex flex-col items-center leading-none shadow-md hover:bg-purple-700" 
-              onClick={onReservarPrivadaClick}
-              disabled={isProcessingPrivateAction}
+      onClick={onReservarPrivadaClick}
+      disabled={isProcessingPrivateAction || dayBlocked}
             >
               <div className="flex items-center gap-1.5">
                  <Plus className="h-4 w-4"/>

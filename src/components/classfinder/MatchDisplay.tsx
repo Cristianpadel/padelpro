@@ -114,7 +114,7 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
         const singleMatch = matchesToFilter.find(m => m.privateShareCode === matchShareCode);
         finalMatches = singleMatch ? [singleMatch] : [];
     } else {
-        let workingMatches: (Match | EnhancedEvent)[] = [...matchesToFilter];
+    let workingMatches: (Match | EnhancedEvent)[] = [...matchesToFilter];
 
         // Add MatchDayEvent as special cards if it exists for the date.
         if (selectedDate && matchDayEvents.length > 0) {
@@ -133,6 +133,8 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
         workingMatches = workingMatches.filter((match) => {
             if ('isEventCard' in match && match.isEventCard) return true; // Always include event cards for the selected date
             const regularMatch = match as Match;
+            // EXCLUDE fixed matches from normal list
+            if (regularMatch.isFixedMatch) return false;
             // Allow user to see their own private matches
             if (regularMatch.status === 'confirmed_private') return regularMatch.organizerId === currentUser.id;
             // Don't show pro matches unless the pro filter is on
