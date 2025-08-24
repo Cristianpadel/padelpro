@@ -4,6 +4,9 @@
 export const MINIMAL_DELAY = 10; // Milliseconds for simulated API calls
 export const today = new Date(); // Initialized once
 
+// Feature flags
+export const USE_DB_FIXED = (process.env.NEXT_PUBLIC_USE_DB_FIXED || '0') === '1';
+
 // Default settings for club points
 export const defaultPointSettings = {
     cancellationPointPerEuro: 1, // Puntos otorgados por € en cancelación de clase/partida confirmada > 24h (cuando aplica)

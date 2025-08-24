@@ -2,7 +2,9 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import type { Match, User, Club } from '@/types';
-import { fetchMatches, getMockClubs, getMockCurrentUser } from '@/lib/mockData';
+import { fetchMatches as fetchMatchesMock, getMockClubs, getMockCurrentUser } from '@/lib/mockData';
+import { USE_DB_FIXED } from '@/lib/config';
+import { fetchFixedMatches } from '@/lib/db/repositories/fixedMatches';
 import { format, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,10 +29,10 @@ export default function FixedMatchesPanel({ selectedDate }: FixedMatchesPanelPro
         const c = clubs[0];
         setClub(c || null);
         const [ms, u] = await Promise.all([
-          fetchMatches(c?.id),
+          USE_DB_FIXED ? fetchFixedMatches(c?.id) : fetchMatchesMock(c?.id),
           getMockCurrentUser()
         ]);
-        setMatches(ms.filter(m => m.isFixedMatch));
+        setMatches((ms || []).filter(m => m.isFixedMatch));
         setCurrentUser(u);
       } finally {
         setLoading(false);
