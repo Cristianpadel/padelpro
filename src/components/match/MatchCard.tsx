@@ -363,8 +363,8 @@ const MatchCardContentComponent: React.FC<MatchCardContentComponentProps> = Reac
                                         <div className="text-sm font-semibold truncate max-w-[140px]">
                                             {currentMatch.organizerId ? (getMockUserDatabase().find(u => u.id === currentMatch.organizerId)?.name || 'Organizador') : 'Organizador'}
                                         </div>
-                                        <div className="text-xs text-muted-foreground flex items-center gap-2">
-                                            <Badge className="px-2 py-0.5 h-5 rounded-full bg-sky-600 text-white hover:bg-sky-600">Partida Fija</Badge>
+                                        <div className="text-xs text-muted-foreground flex flex-col items-start gap-1">
+                                            <Badge className="px-2 py-0.5 h-5 rounded-full bg-sky-600 text-white">Partida Fija</Badge>
                                             {currentMatch.isFixedMatch && (
                                                 isPrivateFixed ? (
                                                     isOrganizer ? (
@@ -401,6 +401,35 @@ const MatchCardContentComponent: React.FC<MatchCardContentComponentProps> = Reac
                                             )}
                                         </div>
                                     </div>
+                                    {/* Share button (Mi agenda y tarjeta principal) */}
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const code = (currentMatch as any).privateShareCode as string | undefined;
+                                                        if (!code) {
+                                                            toast({ title: 'Sin enlace', description: 'Esta partida no tiene enlace para compartir.', variant: 'destructive' });
+                                                            return;
+                                                        }
+                                                        const shareUrl = `${window.location.origin}/?view=partidas&code=${code}`;
+                                                        if (navigator.share) {
+                                                            navigator.share({ title: 'Partida fija', url: shareUrl }).catch(() => {});
+                                                        }
+                                                        navigator.clipboard.writeText(shareUrl)
+                                                            .then(() => toast({ title: 'Enlace copiado', description: 'Comparte este enlace con tus amigos.' }))
+                                                            .catch(() => toast({ title: 'Error al copiar', description: 'No se pudo copiar el enlace.', variant: 'destructive' }));
+                                                    }}
+                                                    className={cn('inline-flex items-center justify-center rounded-full border bg-white text-slate-700 shadow-sm hover:bg-slate-50', compact ? 'h-8 w-8' : 'h-9 w-9')}
+                                                    aria-label="Compartir partida fija"
+                                                >
+                                                    <Share2 className={cn(compact ? 'h-4 w-4' : 'h-5 w-5')} />
+                                                </button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Compartir</TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
                                 </div>
                             )}
                             {!currentMatch.isFixedMatch && (
@@ -493,30 +522,55 @@ const MatchCardContentComponent: React.FC<MatchCardContentComponentProps> = Reac
                                     />
                                     <span className="font-semibold">{isPrivateFixed ? 'Priv.' : 'Púb.'}</span>
                                 </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleInfoClick('level')}
-                                    className={cn(
-                                        "inline-flex items-center gap-2 rounded-full border bg-white shadow-inner text-slate-700",
-                                        compact ? "px-2 py-0.5 text-[11px]" : "px-3 py-1 text-xs",
-                                        isLevelAssigned ? classifiedBadgeClass : "border-slate-200 hover:border-slate-300"
-                                    )}
-                                >
-                                    <BarChartHorizontal className="h-3.5 w-3.5 text-slate-500" />
-                                    <span className="font-semibold">Nivel</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleInfoClick('category')}
-                                    className={cn(
-                                        "inline-flex items-center gap-2 rounded-full border bg-white shadow-inner text-slate-700",
-                                        compact ? "px-2 py-0.5 text-[11px]" : "px-3 py-1 text-xs",
-                                        isCategoryAssigned ? classifiedBadgeClass : "border-slate-200 hover:border-slate-300"
-                                    )}
-                                >
-                                    <Users2 className="h-3.5 w-3.5 text-slate-500" />
-                                    <span className="font-semibold">Cat.</span>
-                                </button>
+                                {compact ? (
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleInfoClick('level')}
+                                            className={cn(
+                                                "inline-flex items-center gap-2 rounded-full border bg-white shadow-inner text-slate-700",
+                                                "px-2 py-0.5 text-[11px]",
+                                                isLevelAssigned ? classifiedBadgeClass : "border-slate-200 hover:border-slate-300"
+                                            )}
+                                        >
+                                            <span className="font-semibold">Nivel</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleInfoClick('category')}
+                                            className={cn(
+                                                "inline-flex items-center gap-2 rounded-full border bg-white shadow-inner text-slate-700",
+                                                "px-2 py-0.5 text-[11px]",
+                                                isCategoryAssigned ? classifiedBadgeClass : "border-slate-200 hover:border-slate-300"
+                                            )}
+                                        >
+                                            <span className="font-semibold">Cat.</span>
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        {/* Principal: solo valores, sin iconos */}
+                                        <span
+                                            className={cn(
+                                                "inline-flex items-center rounded-full border bg-white shadow-inner text-slate-700 px-3 py-1 text-xs font-semibold",
+                                                isLevelAssigned ? classifiedBadgeClass : "border-slate-200"
+                                            )}
+                                        >
+                                            {matchLevelToDisplay}
+                                        </span>
+                                        <span
+                                            className={cn(
+                                                "inline-flex items-center rounded-full border bg-white shadow-inner text-slate-700 px-3 py-1 text-xs font-semibold",
+                                                isCategoryAssigned ? classifiedBadgeClass : "border-slate-200"
+                                            )}
+                                        >
+                                            {(() => {
+                                                const cat = matchCategoryToDisplay;
+                                                return cat === 'abierta' ? 'Abierta' : cat === 'chico' ? 'Chico' : cat === 'chica' ? 'Chica' : String(cat);
+                                            })()}
+                                        </span>
+                                    </>
+                                )}
                                 <button
                                     type="button"
                                     onClick={() => handleInfoClick('court')}
@@ -526,15 +580,44 @@ const MatchCardContentComponent: React.FC<MatchCardContentComponentProps> = Reac
                                         isCourtAssigned ? 'text-green-700 border-green-200 bg-green-100 hover:border-green-300' : 'border-slate-200 hover:border-slate-300'
                                     )}
                                 >
-                                    <Hash className="h-3.5 w-3.5 text-slate-500" />
                                     <span className="font-semibold">{isCourtAssigned ? `# ${currentMatch.courtNumber}` : '# Pista'}</span>
                                 </button>
                             </>
                         ) : (
                             <>
-                                <InfoButton icon={BarChartHorizontal} text={`Nivel`} onClick={() => handleInfoClick('level')} className={isLevelAssigned ? classifiedBadgeClass : ''} />
-                                <InfoButton icon={CategoryIconDisplay} text={`Cat.`} onClick={() => handleInfoClick('category')} className={isCategoryAssigned ? classifiedBadgeClass : ''} />
-                                <InfoButton icon={Hash} text={isCourtAssigned ? `# ${currentMatch.courtNumber}` : `# Pista`} onClick={() => handleInfoClick('court')} className={isCourtAssigned ? 'text-green-700 border-green-200 bg-green-100 hover:border-green-300' : ''} />
+                                {/* Partidas normales: mostrar solo valores y reducir tamaño de chips */}
+                                <span
+                                    className={cn(
+                                        "inline-flex items-center rounded-full border bg-white shadow-inner text-slate-700 font-semibold",
+                                        compact ? "px-2 py-0.5 text-[11px]" : "px-2.5 py-0.5 text-[11px]",
+                                        isLevelAssigned ? classifiedBadgeClass : "border-slate-200"
+                                    )}
+                                >
+                                    {matchLevelToDisplay}
+                                </span>
+                                <span
+                                    className={cn(
+                                        "inline-flex items-center rounded-full border bg-white shadow-inner text-slate-700 font-semibold",
+                                        compact ? "px-2 py-0.5 text-[11px]" : "px-2.5 py-0.5 text-[11px]",
+                                        isCategoryAssigned ? classifiedBadgeClass : "border-slate-200"
+                                    )}
+                                >
+                                    {(() => {
+                                        const cat = matchCategoryToDisplay;
+                                        return cat === 'abierta' ? 'Abierta' : cat === 'chico' ? 'Chico' : cat === 'chica' ? 'Chica' : String(cat);
+                                    })()}
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => handleInfoClick('court')}
+                                    className={cn(
+                                        "inline-flex items-center rounded-full border bg-white shadow-inner text-slate-700 font-semibold",
+                                        compact ? "px-2 py-0.5 text-[11px]" : "px-2.5 py-0.5 text-[11px]",
+                                        isCourtAssigned ? 'text-green-700 border-green-200 bg-green-100 hover:border-green-300' : 'border-slate-200 hover:border-slate-300'
+                                    )}
+                                >
+                                    {isCourtAssigned ? `# ${currentMatch.courtNumber}` : '# Pista'}
+                                </button>
                             </>
                         )}
                     </div>

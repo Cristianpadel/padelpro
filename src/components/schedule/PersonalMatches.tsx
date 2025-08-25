@@ -6,7 +6,7 @@ import type { Booking, User, Review, TimeSlot, PadelCourt, Instructor, UserActiv
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { List, Clock, Users, CalendarCheck, CalendarX, Loader2, Ban, Hash, Trophy, UserCircle, Gift, Info, MessageSquare, Euro, Users2 as CategoryIcon, Venus, Mars, Share2, Unlock, Lock, Repeat, Lightbulb, BarChartHorizontal, Plus, CheckCircle, Edit } from 'lucide-react';
-import { format, differenceInHours, addDays } from 'date-fns';
+import { format, differenceInHours } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { fetchUserMatchBookings, cancelMatchBooking, getMockClubs, makeMatchPublic, cancelPrivateMatchAndReofferWithPoints, getMockMatches, renewRecurringMatch, fillMatchAndMakePrivate, updateMatchLevelAndCategory, removePlayerFromMatch, deleteFixedMatch, getMockUserDatabase } from '@/lib/mockData';
 import * as state from '@/lib/mockDataSources/state';
@@ -34,7 +34,7 @@ import { displayClassCategory } from '@/types';
  
 import { Separator } from '../ui/separator';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-// Removed horizontal ScrollArea for vertical stacking of cards
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import CourtAvailabilityIndicator from '@/components/class/CourtAvailabilityIndicator';
 import { hasAnyActivityForDay, getCourtAvailabilityForInterval } from '@/lib/mockData';
 import { MatchSpotDisplay } from '@/components/match/MatchSpotDisplay';
@@ -406,10 +406,6 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
       };
       
       const provisionalMatch = !isUpcomingItem && nextRecurringMatchId ? state.getMockMatches().find(m => m.id === nextRecurringMatchId) : undefined;
-      // Detect +14 días hold at same hour for the organizer's fixed match
-      const secondHold = (matchDetails as any).isFixedMatch
-        ? state.getMockMatches().find(m => (m as any).isProvisional === true && m.isFixedMatch === true && m.clubId === clubId && new Date(m.startTime).getTime() === addDays(new Date(startTime), 14).getTime())
-        : undefined;
       let renewalTimeLeft = '';
       let isRenewalExpired = false;
       if (provisionalMatch?.provisionalExpiresAt) {
@@ -424,7 +420,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
       }
 
   const canMakePrivate = isUpcomingItem && isUserInMatch && !isMatchFull && status !== 'confirmed_private';
-  const canEditFixedConfig = isUserInMatch && (matchDetails as any).isFixedMatch === true;
+  const canEditFixedConfig = isOrganizerOfFixed && (matchDetails as any).isFixedMatch === true;
       const cardBorderColor = isUpcomingItem
         ? (status === 'confirmed_private' ? 'border-l-purple-600' : (isMatchFull ? 'border-l-red-500' : 'border-l-blue-500'))
         : 'border-l-gray-400';
@@ -435,7 +431,8 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
       <div
             key={booking.id}
             className={cn(
-        "flex flex-col space-y-2 w-full overflow-visible",
+        // Responsive: limit to mobile width and allow shrink on smaller screens; prevent flex stretching in horizontal scroll
+        "flex-none flex flex-col space-y-2 w-full max-w-sm overflow-visible",
               isUpcomingItem ? '' : ''
             )}
           >
@@ -477,47 +474,9 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                 });
               }}
             />
-            {/* Explicit organizer reservation label for fixed private auto-reservations (not an inscription) */}
-            {booking.isOrganizerBooking && !isUserInMatch && status === 'confirmed_private' && (
-              <div className="-mt-1">
-                <Badge variant="outline" className="text-[11px] bg-slate-100 text-slate-700 border-slate-300">Reserva</Badge>
-              </div>
-            )}
-            {/* Compact court availability bar: available (green), occupied (gray), assigned (blue) */}
-            {(availability && availability.total > 0) && (
-              <div className="mt-1">
-                <div className="mx-auto w-full sm:w-auto bg-white/90 rounded-xl shadow border border-slate-200 px-2 py-1">
-                  <div className="flex items-center justify-center gap-1">
-                    {Array.from({ length: availability.total }).map((_, idx) => {
-                      const n = idx + 1;
-                      const isAssigned = !!courtNumber && n === courtNumber;
-                      const isAvailable = (availability.available || []).some(c => c.courtNumber === n);
-                      const isOccupied = (availability.occupied || []).some(c => c.courtNumber === n);
-                      const baseCls = "h-6 w-6 rounded-md flex items-center justify-center text-[11px] font-semibold shadow-sm";
-                      if (isAssigned) {
-                        return (
-                          <div key={n} className={cn(baseCls, "bg-blue-600 text-white border border-blue-700")}>{n}</div>
-                        );
-                      }
-                      if (isAvailable) {
-                        return (
-                          <div key={n} className={cn(baseCls, "bg-green-500 border border-green-600")} />
-                        );
-                      }
-                      // Fallback to occupied/unknown as gray
-                      return (
-                        <div key={n} className={cn(baseCls, "bg-slate-300 border border-slate-400")} />
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
             {/* Organizer extra actions below the card (Mi agenda specific) */}
             {(isOrganizerOfFixed) && isUpcomingItem && (
               <div className="pt-2 grid grid-cols-2 gap-1 w-full sm:flex sm:gap-2">
-                {/* Compartir */}
-                <Button variant="outline" size="sm" className="flex-1 h-8 sm:h-9 text-[11px] sm:text-xs px-2 sm:px-3 bg-purple-500 text-white border-purple-600 hover:bg-purple-600" onClick={() => handleSharePrivateMatch()} disabled={isProcessingAction}><Share2 className="mr-1.5 h-3.5 w-3.5" /> Compartir</Button>
                 {/* Cancelar y Ofrecer por puntos */}
                 <AlertDialog>
                   <AlertDialogTrigger asChild><Button variant="outline" size="sm" className="flex-1 h-8 sm:h-9 text-[11px] sm:text-xs px-2 sm:px-3 text-destructive border-destructive hover:bg-destructive/10" disabled={isProcessingAction}><Ban className="mr-1.5 h-3.5 w-3.5" /> Ofrecer</Button></AlertDialogTrigger>
@@ -616,20 +575,18 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                 <Button onClick={() => handleRenew(booking.activityId)} size="sm" className="h-8 bg-blue-600 hover:bg-blue-700 w-full sm:w-auto shrink-0" disabled={isProcessingAction}>{isProcessingAction && currentActionInfo?.type === 'renew' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Repeat className="mr-2 h-4 w-4"/>} Renovar Reserva</Button>
               </div>
             )}
-            {/* Indicator for +14d hold (retained slot) */}
-            {secondHold && (
-              <div className="w-full flex items-center gap-2 text-[11px] text-slate-600 mt-1">
-                <Badge variant="outline" className="h-5 px-2 rounded-full bg-slate-100 text-slate-700 border-slate-300">Retención +14 días</Badge>
-                {secondHold.courtNumber && <span className="text-xs">Pista {secondHold.courtNumber} retenida</span>}
-              </div>
-            )}
           </div>
         );
       }
 
       // Non-fixed matches: keep existing compact agenda card
       return (
-        <div key={booking.id} className={cn("flex flex-col p-3 rounded-lg shadow-md space-y-2 border-l-4 w-full overflow-hidden", cardBorderColor, isUpcomingItem ? 'bg-card border' : 'bg-muted/60 border border-border/50')}>
+        <div key={booking.id} className={cn(
+          // Responsive: limitar al ancho móvil y evitar estirarse en el carrusel
+          "flex-none flex flex-col p-3 rounded-lg shadow-md space-y-2 border-l-4 w-full max-w-sm overflow-hidden",
+          cardBorderColor,
+          isUpcomingItem ? 'bg-card border' : 'bg-muted/60 border border-border/50'
+        )}>
              <div className="flex items-start justify-between">
                  <div className="flex items-center space-x-3">
                      <div className="flex-shrink-0 text-center font-bold bg-white p-1 rounded-md w-14 shadow-lg border border-border/20">
@@ -760,7 +717,6 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
               <div className="pt-2 border-t mt-2 flex flex-col items-center justify-center space-y-2">
          {(isOrganizerOfPrivateMatch || isOrganizerOfFixed) && isUpcomingItem && (
            <div className="flex w-full gap-2">
-                         <Button variant="outline" size="sm" className="flex-1 text-xs bg-purple-500 text-white border-purple-600 hover:bg-purple-600" onClick={handleSharePrivateMatch} disabled={isProcessingAction}><Share2 className="mr-1.5 h-3.5 w-3.5" /> Compartir</Button>
                          <AlertDialog>
                              <AlertDialogTrigger asChild><Button variant="outline" size="sm" className="flex-1 text-xs border-orange-500 text-orange-600 hover:bg-orange-500/10 hover:text-orange-700" disabled={isProcessingAction}>{isProcessingAction ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin"/> : <Unlock className="mr-1.5 h-3.5 w-3.5"/>} Pública</Button></AlertDialogTrigger>
                               <AlertDialogContent>
@@ -776,7 +732,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                               </AlertDialogContent>
                          </AlertDialog>
                          {/* Organizer: remove player from fixed match while forming */}
-                         {isOrganizerOfFixed && status !== 'confirmed' && (
+                        {isOrganizerOfFixed && status !== 'confirmed' && (
                            <AlertDialog>
                              <AlertDialogTrigger asChild>
                                <Button variant="outline" size="sm" className="flex-1 text-xs border-red-400 text-red-600 hover:bg-red-50" disabled={isProcessingAction}>
@@ -814,7 +770,7 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
                            </AlertDialog>
                          )}
                          {/* Organizer: cancel entire fixed match */}
-                         {isOrganizerOfFixed && (
+                        {isOrganizerOfFixed && (
                            <AlertDialog>
                              <AlertDialogTrigger asChild>
                                <Button variant="outline" size="sm" className="flex-1 text-xs border-slate-400 text-slate-700 hover:bg-slate-50" disabled={isProcessingAction}>
@@ -919,22 +875,24 @@ const PersonalMatches: React.FC<PersonalMatchesProps> = ({ currentUser, newMatch
           {hasUpcomingBookings && (
               <div>
                 <h4 className="text-base font-semibold mb-3 text-foreground flex items-center"><Clock className="mr-2 h-4 w-4" /> Próximas</h4>
-                <div className="w-full px-1">
-                  <div className="flex flex-col gap-4 pb-4">
-                    {upcomingBookings.map(b => renderBookingItem(b, true))}
-                  </div>
-                </div>
+                  <ScrollArea className="w-full whitespace-nowrap px-1">
+                    <div className="flex pb-4 space-x-4">
+                        {upcomingBookings.map(b => renderBookingItem(b, true))}
+                    </div>
+                    <ScrollBar orientation="horizontal" />
+                  </ScrollArea>
               </div>
           )}
           {hasUpcomingBookings && hasPastBookings && <Separator />}
           {hasPastBookings && (
               <div>
                 <h4 className="text-base font-semibold mb-3 text-muted-foreground flex items-center"><CheckCircle className="mr-2 h-4 w-4" /> Historial</h4>
-                <div className="w-full px-1">
-                  <div className="flex flex-col gap-4 pb-4">
-                    {pastBookings.map(b => renderBookingItem(b, false))}
-                  </div>
-                </div>
+                 <ScrollArea className="w-full whitespace-nowrap px-1">
+                    <div className="flex pb-4 space-x-4">
+                      {pastBookings.map(b => renderBookingItem(b, false))}
+                    </div>
+                    <ScrollBar orientation="horizontal" />
+                 </ScrollArea>
               </div>
           )}
       </div>

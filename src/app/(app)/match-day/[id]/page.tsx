@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useTransition } from 'react';
+import { performInitialization } from '@/lib/mockDataSources/init';
 import { notFound, useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
@@ -46,6 +47,8 @@ export default function MatchDayDetailPage() {
     const loadEventData = useCallback(async () => {
         setLoading(true);
         try {
+            // Ensure mock data is initialized on direct visit
+            performInitialization();
             const [eventData, user, courts] = await Promise.all([
                 getMatchDayEventById(id),
                 getMockCurrentUser(),
@@ -81,7 +84,10 @@ export default function MatchDayDetailPage() {
     }, [id]);
 
     useEffect(() => {
-        if(id) loadEventData();
+        if(id) {
+            performInitialization();
+            loadEventData();
+        }
     }, [id, loadEventData]);
 
     const handleSignUp = () => {

@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useTransition } from 'react';
+import { performInitialization } from '@/lib/mockDataSources/init';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
@@ -45,6 +46,8 @@ export default function MatchDayPage() {
     const loadEventData = useCallback(async () => {
         setLoading(true);
         try {
+            // Ensure mock data is initialized when landing directly on this page
+            performInitialization();
             const [user, courts] = await Promise.all([
                 getMockCurrentUser(),
                 getMockPadelCourts()
@@ -79,7 +82,9 @@ export default function MatchDayPage() {
     }, []);
 
     useEffect(() => {
-        loadEventData();
+    // Initialize and then load event data
+    performInitialization();
+    loadEventData();
     }, [loadEventData]);
 
     // Guard: if club disables Match-Day, redirect to dashboard with toast

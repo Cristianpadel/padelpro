@@ -20,13 +20,6 @@ import { calculateActivityPrice } from './clubs';
 
 export const fetchMatches = async (clubId?: string): Promise<Match[]> => {
     await new Promise(resolve => setTimeout(resolve, config.MINIMAL_DELAY));
-    // Cleanup: remove expired provisional holds before returning
-    try {
-        const now = new Date();
-        state.getMockMatches()
-            .filter(m => (m as any).isProvisional === true && (m as any).provisionalExpiresAt && new Date((m as any).provisionalExpiresAt) < now)
-            .forEach(m => state.removeMatchFromState(m.id));
-    } catch { /* noop */ }
     // Ejecutar migración de avatares antes de devolver los matches
     if (typeof (state as any).migrateBookedPlayersProfilePictures === 'function') {
         (state as any).migrateBookedPlayersProfilePictures();
@@ -165,15 +158,12 @@ export const bookMatch = async (
         if (match.isPlaceholder === true) {
             match.isPlaceholder = false;
         }
-        // Para partidas normales, si estaba abierto, sugerimos nivel/categoría del usuario.
-        // Para partidas fijas, NO auto-asignamos: el usuario elegirá explícitamente en la UI.
-        if (!match.isFixedMatch) {
-            if (match.level === 'abierto' || !match.level) {
-                match.level = user.level || '1.0';
-            }
-            if (match.category === 'abierta' || !match.category) {
-                match.category = user.genderCategory === 'femenino' ? 'chica' : user.genderCategory === 'masculino' ? 'chico' : 'abierta';
-            }
+        // Si estaba abierto, sugerir nivel/categoría del primer jugador inscrito (también para partidas fijas)
+        if (match.level === 'abierto' || !match.level) {
+            match.level = (user.level as any) || '1.0';
+        }
+        if (match.category === 'abierta' || !match.category) {
+            match.category = (user.genderCategory === 'femenino' ? 'chica' : user.genderCategory === 'masculino' ? 'chico' : 'abierta') as any;
         }
         // El primer inscrito pasa a ser el organizador SOLO en partidas fijas
         if (match.isFixedMatch) {
@@ -856,9 +846,7 @@ export const confirmMatchAsPrivate = async (
         return { error: `Saldo insuficiente. Necesitas ${totalPrice.toFixed(2)}€ y tienes ${(organizerUser.credit ?? 0).toFixed(2)}€.` };
     }
 
-    // Prefer the held court if this was provisionally held
-    const preferredCourtNumber = (matchToConfirm as any).courtNumber;
-    let availableCourt = preferredCourtNumber ? { courtNumber: preferredCourtNumber } as any : findAvailableCourt(matchToConfirm.clubId, new Date(matchToConfirm.startTime), new Date(matchToConfirm.endTime));
+    const availableCourt = findAvailableCourt(matchToConfirm.clubId, new Date(matchToConfirm.startTime), new Date(matchToConfirm.endTime));
     if (!availableCourt) {
         return { error: "No hay pistas disponibles en este momento para confirmar la partida." };
     }
@@ -919,11 +907,7 @@ function _scheduleNextFixedMatch(baseMatch: Match) {
         const nextStart = addDays(baseStart, 7);
         const nextEnd = addDays(computedEnd, 7);
         const renewalDeadline = addHours(computedEnd, 24);
-    // Attempt to hold a specific court for the next week at the same time
-    const heldCourt = mockUtils.findAvailableCourt(baseMatch.clubId, nextStart, nextEnd) || (baseMatch.courtNumber ? { courtNumber: baseMatch.courtNumber } as any : undefined);
-        // Avoid duplicates if a provisional already exists at that exact time
-        const existsNext = state.getMockMatches().some(m => m.clubId === baseMatch.clubId && new Date(m.startTime).getTime() === nextStart.getTime() && (m as any).isProvisional === true);
-                const provisional: Match | null = existsNext ? null : {
+                const provisional: Match = {
                         id: `match-provisional-${baseMatch.clubId}-${format(nextStart, 'yyyyMMddHHmm')}-${Math.random().toString(36).slice(2,7)}`,
                         clubId: baseMatch.clubId,
                         startTime: nextStart,
@@ -939,87 +923,17 @@ function _scheduleNextFixedMatch(baseMatch: Match) {
                         isProvisional: true,
                         provisionalForUserId: baseMatch.organizerId,
             provisionalExpiresAt: renewalDeadline,
-            // Mark a held courtNumber so availability and court selection avoid it
-            courtNumber: heldCourt?.courtNumber,
                         organizerId: baseMatch.organizerId,
                 } as Match;
-        if (provisional) {
-                    state.addMatchToState(provisional);
-                }
-                const updatedCurrent = { ...baseMatch, isRecurring: true, nextRecurringMatchId: provisional ? provisional.id : baseMatch.nextRecurringMatchId } as Match;
+                state.addMatchToState(provisional);
+                const updatedCurrent = { ...baseMatch, isRecurring: true, nextRecurringMatchId: provisional.id } as Match;
                 state.updateMatchInState(baseMatch.id, updatedCurrent);
-    // Ensure there is at least one open-level fixed placeholder at this same hour if any court remains available
-    _ensureOpenFixedPlaceholderForSlot(baseMatch.clubId, nextStart, nextEnd, baseMatch.durationMinutes || 90);
-        // Also schedule a second provisional 14 days out to keep a 14-day horizon
-        const nextStart14 = addDays(baseStart, 14);
-        const nextEnd14 = addDays(computedEnd, 14);
-        // Expiry for the +14d hold: 24h after the next week's match ends
-        const renewalDeadline14 = addHours(nextEnd, 24);
-        const heldCourt14 = mockUtils.findAvailableCourt(baseMatch.clubId, nextStart14, nextEnd14) || (baseMatch.courtNumber ? { courtNumber: baseMatch.courtNumber } as any : undefined);
-        const existsNext14 = state.getMockMatches().some(m => m.clubId === baseMatch.clubId && new Date(m.startTime).getTime() === nextStart14.getTime() && (m as any).isProvisional === true);
-    if (!existsNext14) {
-            const provisional14: Match = {
-                id: `match-provisional-${baseMatch.clubId}-${format(nextStart14, 'yyyyMMddHHmm')}-${Math.random().toString(36).slice(2,7)}`,
-                clubId: baseMatch.clubId,
-                startTime: nextStart14,
-                endTime: nextEnd14,
-                durationMinutes: baseMatch.durationMinutes || 90,
-                level: baseMatch.level || 'abierto',
-                category: baseMatch.category || 'abierta',
-                bookedPlayers: baseMatch.bookedPlayers?.length ? [...baseMatch.bookedPlayers] : [],
-                status: 'forming',
-                isPlaceholder: true,
-                isFixedMatch: true,
-                fixedSchedule: baseMatch.fixedSchedule || undefined,
-                isProvisional: true,
-                provisionalForUserId: baseMatch.organizerId,
-                provisionalExpiresAt: renewalDeadline14,
-                courtNumber: heldCourt14?.courtNumber,
-                organizerId: baseMatch.organizerId,
-            } as Match;
-            state.addMatchToState(provisional14);
-        }
-        // Also ensure open-level placeholder exists for +14d slot
-        _ensureOpenFixedPlaceholderForSlot(baseMatch.clubId, nextStart14, nextEnd14, baseMatch.durationMinutes || 90);
-                return provisional || null;
+                return provisional;
         } catch (e) {
                 // eslint-disable-next-line no-console
                 console.warn('Failed to schedule next fixed match', e);
                 return null;
         }
-}
-
-// Ensure one open-level fixed placeholder exists for the provided slot time if any court is available
-function _ensureOpenFixedPlaceholderForSlot(clubId: string, slotStart: Date, slotEnd: Date, durationMinutes: number) {
-    try {
-        // If a fixed placeholder already exists for this exact timestamp, nothing to do
-        const alreadyExists = state.getMockMatches().some(m =>
-            m.clubId === clubId && m.isFixedMatch === true && m.isPlaceholder === true && new Date(m.startTime).getTime() === slotStart.getTime()
-        );
-        if (alreadyExists) return;
-
-        // Check availability for the slot
-        const availability = getCourtAvailabilityForInterval(clubId, new Date(slotStart), new Date(slotEnd));
-        if ((availability.available || []).length <= 0) return;
-
-        const uniqueSuffix = Math.random().toString(36).slice(2, 7);
-        const openFixedPlaceholder: Match = {
-            id: `match-fixed-ph-${clubId}-${format(slotStart, 'yyyyMMddHHmm')}-${uniqueSuffix}`,
-            clubId,
-            startTime: new Date(slotStart),
-            endTime: new Date(slotEnd),
-            level: 'abierto',
-            category: 'abierta',
-            bookedPlayers: [],
-            isPlaceholder: true,
-            isFixedMatch: true,
-            status: 'forming',
-            durationMinutes,
-        } as Match;
-        state.addMatchToState(openFixedPlaceholder);
-    } catch {
-        // noop
-    }
 }
 
 export const createFixedMatchFromPlaceholder = async (
@@ -1068,10 +982,15 @@ export const createFixedMatchFromPlaceholder = async (
         match.privateShareCode = privateShareCode;
         match.courtNumber = availableCourt.courtNumber;
         match.isFixedMatch = true;
-    match.fixedSchedule = { dayOfWeek: dayKey, time, hasReservedCourt: true } as any;
-        // Keep level/category open for fixed matches
-        match.level = 'abierto' as any;
-        match.category = 'abierta' as any;
+        match.fixedSchedule = { dayOfWeek: dayKey, time, hasReservedCourt: true } as any;
+        // Nivel/categoría por defecto: si el organizador se inscribe como jugador, fijarlos según su perfil; en caso contrario, dejarlos abiertos
+        if (options.organizerJoins) {
+            match.level = (organizerUser.level as any) || '1.0';
+            match.category = (organizerUser.genderCategory === 'femenino' ? 'chica' : organizerUser.genderCategory === 'masculino' ? 'chico' : 'abierta') as any;
+        } else {
+            match.level = 'abierto' as any;
+            match.category = 'abierta' as any;
+        }
         match.totalCourtFee = totalPrice;
         // Only add organizer to players if explicitly requested
         match.bookedPlayers = options.organizerJoins ? [{ userId: organizerUserId, name: organizerUser.name, profilePictureUrl: organizerUser.profilePictureUrl }] : [];
@@ -1112,9 +1031,9 @@ export const createFixedMatchFromPlaceholder = async (
         status: 'forming',
         bookedPlayers: [{ userId: organizerUserId, name: organizerUser.name, profilePictureUrl: organizerUser.profilePictureUrl }],
     };
-    // Keep level/category open; user will choose explicitly in UI
-    match.level = 'abierto' as any;
-    match.category = 'abierta' as any;
+    // Nivel/categoría por defecto: primer inscrito (organizador) define
+    match.level = (organizerUser.level as any) || '1.0';
+    match.category = (organizerUser.genderCategory === 'femenino' ? 'chica' : organizerUser.genderCategory === 'masculino' ? 'chico' : 'abierta') as any;
     state.updateMatchInState(matchId, match);
     state.addUserMatchBookingToState({
         id: `matchbooking-${matchId}-${organizerUserId}-${Date.now()}`,
@@ -1166,7 +1085,17 @@ export const joinPrivateMatch = async (
         addCreditToStudent(match.organizerId, pricePerPerson, `Reembolso por invitado: ${inviteeUser.name}`);
     }
 
+    const hadNoPlayers = (match.bookedPlayers || []).length === 0;
     match.bookedPlayers.push({ userId: inviteeUserId, name: inviteeUser.name, profilePictureUrl: inviteeUser.profilePictureUrl });
+    // Si no había jugadores aún y el nivel/categoría siguen abiertos, fijarlos según el primer invitado
+    if (hadNoPlayers) {
+        if (match.level === 'abierto' || !match.level) {
+            match.level = (inviteeUser.level as any) || '1.0';
+        }
+        if (match.category === 'abierta' || !match.category) {
+            match.category = (inviteeUser.genderCategory === 'femenino' ? 'chica' : inviteeUser.genderCategory === 'masculino' ? 'chico' : 'abierta') as any;
+        }
+    }
     state.updateMatchInState(matchId, match);
 
     const newBooking: MatchBooking = {
@@ -1222,10 +1151,9 @@ export const updateMatchLevelAndCategory = async (
     if (match.status === 'confirmed') {
         return { error: 'No se pueden cambiar los datos de una partida confirmada.' };
     }
-    const isUserInMatch = (match.bookedPlayers || []).some(p => p.userId === userId);
     const isOrganizer = match.organizerId === userId;
-    if (!isUserInMatch && !isOrganizer) {
-        return { error: 'Solo el organizador o los jugadores inscritos pueden configurar nivel o categoría.' };
+    if (!isOrganizer) {
+        return { error: 'Solo el organizador puede configurar nivel o categoría.' };
     }
 
     // Apply updates
@@ -1427,8 +1355,7 @@ export const fillMatchAndMakePrivate = async (userId: string, matchId: string): 
         return { error: 'Ya tienes otra actividad confirmada hoy.' };
     }
 
-    const preferredHeldCourt = (match as any).isProvisional === true && match.courtNumber ? { courtNumber: match.courtNumber } as any : undefined;
-    const availableCourt = preferredHeldCourt || findAvailableCourt(match.clubId, new Date(match.startTime), new Date(match.endTime));
+    const availableCourt = findAvailableCourt(match.clubId, new Date(match.startTime), new Date(match.endTime));
     if (!availableCourt) {
         return { error: "No hay pistas disponibles en este momento para confirmar la partida." };
     }

@@ -424,6 +424,9 @@ const MatchDisplay: React.FC<MatchDisplayProps> = ({
                     {viewPreference === 'myInscriptions' ? 'Próximo día con inscripciones' : 'Próximo día con partidas'}
                     <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
+                <div className="mt-6 text-sm text-muted-foreground">
+                    ¿Buscas “partidas fijas”? <Link href="/activities?view=matchpro" className="font-semibold text-primary underline">Ver partidas fijas</Link>
+                </div>
             </div>
         )}
 

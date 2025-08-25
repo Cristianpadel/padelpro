@@ -34,16 +34,15 @@ interface CourtAvailabilityState {
 }
 
 const InfoButton: React.FC<{
-    icon: React.ElementType;
-    text: string;
-    onClick: () => void;
-    className?: string;
-}> = ({ icon: Icon, text, onClick, className }) => (
+  icon: React.ElementType;
+  text: string;
+  onClick: () => void;
+  className?: string;
+}> = ({ /* icon: Icon */ icon: _Icon, text, onClick, className }) => (
     <button className="flex-1" onClick={onClick}>
-        <Badge variant="outline" className={cn("w-full justify-center text-xs py-1.5 rounded-full capitalize shadow-inner bg-slate-50 border-slate-200 hover:border-slate-300 transition-colors", className)}>
-            <Icon className="mr-1.5 h-3 w-3 text-slate-500" /> 
-            <span className="font-medium text-slate-700">{text}</span>
-        </Badge>
+    <Badge variant="outline" className={cn("w-full justify-center text-xs py-1.5 rounded-full capitalize shadow-inner bg-slate-50 border-slate-200 hover:border-slate-300 transition-colors", className)}>
+      <span className="font-medium text-slate-700">{text}</span>
+    </Badge>
     </button>
 );
 

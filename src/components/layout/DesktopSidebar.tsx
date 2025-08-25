@@ -231,10 +231,41 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                 </div>
         {isActivitiesPage && (
                 <div className="mt-4">
-                    <div className="grid grid-cols-2 gap-2">
-            {isClassesEnabled && <Button size="sm" variant={activeView === 'clases' ? 'default' : 'outline'} onClick={() => updateUrlFilter('view', 'clases')}><Activity className="mr-2 h-4 w-4" />Clases</Button>}
-            {isMatchesEnabled && <Button size="sm" variant={activeView === 'partidas' ? 'default' : 'outline'} onClick={() => updateUrlFilter('view', 'partidas')}><Users className="mr-2 h-4 w-4" />Partidas</Button>}
-                    </div>
+                    {(() => {
+                        const cols = (isClassesEnabled ? 1 : 0) + (isMatchProEnabled ? 1 : 0) + (isMatchesEnabled ? 1 : 0);
+                        const gridCols = `grid grid-cols-${cols || 2} gap-2`;
+                        return (
+                            <div className={gridCols}>
+                                {isClassesEnabled && (
+                                    <Button
+                                        size="sm"
+                                        variant={activeView === 'clases' ? 'default' : 'outline'}
+                                        onClick={() => updateUrlFilter('view', 'clases')}
+                                    >
+                                        <Activity className="mr-2 h-4 w-4" />Clases
+                                    </Button>
+                                )}
+                                {isMatchProEnabled && (
+                                    <Button
+                                        size="sm"
+                                        variant={isActivitiesPage && activeView === 'matchpro' ? 'default' : 'outline'}
+                                        onClick={() => updateUrlFilter('view', 'matchpro')}
+                                    >
+                                        <Trophy className="mr-2 h-4 w-4" />Partidas fijas
+                                    </Button>
+                                )}
+                                {isMatchesEnabled && (
+                                    <Button
+                                        size="sm"
+                                        variant={activeView === 'partidas' ? 'default' : 'outline'}
+                                        onClick={() => updateUrlFilter('view', 'partidas')}
+                                    >
+                                        <Users className="mr-2 h-4 w-4" />Partidas
+                                    </Button>
+                                )}
+                            </div>
+                        );
+                    })()}
                 </div>
                 )}
             </header>

@@ -38,12 +38,12 @@ const renderStarsDisplay = (rating: number) => {
   return <div className="flex items-center">{stars} <span className="ml-1.5 text-sm text-gray-600 font-medium">({rating.toFixed(1)})</span></div>;
 };
 
-const InfoButton = ({ icon: Icon, text, onClick, className }: { icon: React.ElementType, text: string, onClick: () => void, className?: string }) => (
-    <button className="flex-1" onClick={onClick}>
-        <Badge variant="outline" className={cn("w-full justify-center text-xs py-1.5 rounded-full capitalize shadow-inner bg-slate-50 border-slate-200 hover:border-slate-300 transition-colors", className)}>
-            <Icon className="mr-1.5 h-3 w-3" /> {text}
-        </Badge>
-    </button>
+const InfoButton = ({ icon: _Icon, text, onClick, className }: { icon: React.ElementType, text: string, onClick: () => void, className?: string }) => (
+  <button className="flex-1" onClick={onClick}>
+    <Badge variant="outline" className={cn("w-full justify-center text-xs py-1.5 rounded-full capitalize shadow-inner bg-slate-50 border-slate-200 hover:border-slate-300 transition-colors", className)}>
+      {text}
+    </Badge>
+  </button>
 );
 
 
@@ -115,24 +115,9 @@ export const ClassCardHeader: React.FC<ClassCardHeaderProps> = ({
 
        {/* Info Buttons Section */}
       <div className="flex justify-center items-center gap-1.5 pt-1">
-          <InfoButton 
-              icon={Lightbulb} 
-              text={levelDisplay} 
-              onClick={() => onInfoClick('level')}
-              className={cn(isLevelAssigned && classifiedBadgeClass)}
-          />
-          <InfoButton 
-              icon={CategoryIcon} 
-              text={categoryDisplay} 
-              onClick={() => onInfoClick('category')} 
-              className={cn(isCategoryAssigned && classifiedBadgeClass)}
-          />
-          <InfoButton 
-              icon={Hash} 
-              text={courtDisplay} 
-              onClick={() => onInfoClick('court')} 
-              className={cn(isCourtAssigned && classifiedBadgeClass)}
-          />
+        <InfoButton icon={Lightbulb} text={levelDisplay} onClick={() => onInfoClick('level')} className={cn(isLevelAssigned && classifiedBadgeClass)} />
+        <InfoButton icon={CategoryIcon} text={categoryDisplay} onClick={() => onInfoClick('category')} className={cn(isCategoryAssigned && classifiedBadgeClass)} />
+        <InfoButton icon={Hash} text={courtDisplay} onClick={() => onInfoClick('court')} className={cn(isCourtAssigned && classifiedBadgeClass)} />
       </div>
 
       {/* Middle section: Date, Time, Duration, and Share */}

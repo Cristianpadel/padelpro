@@ -82,8 +82,11 @@ export default function LoginPage() {
               </CardFooter>
           </form>
         </Card>
-        <div className="mt-6 text-center">
-            <Button variant="outline" size="sm" onClick={() => setIsProfessionalAccessOpen(true)} className="bg-background/80 backdrop-blur-sm">
+        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <Button asChild className="w-full">
+              <Link href="/activities?view=partidas">Ver la web</Link>
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setIsProfessionalAccessOpen(true)} className="bg-background/80 backdrop-blur-sm w-full">
                 Acceso Profesional
             </Button>
         </div>

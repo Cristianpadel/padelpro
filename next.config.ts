@@ -10,6 +10,12 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // Redirect old Jugar route to the Partidas wall
+      {
+        source: '/play',
+        destination: '/activities?view=partidas',
+        permanent: false,
+      },
       // Strip the segment group from URLs like /app/... which are not routable
       {
         source: '/app',
