@@ -1,4 +1,4 @@
-// src/app/(app)/classfinder/MatchProDisplay.tsx
+// src/components/classfinder/MatchProDisplay.tsx
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';

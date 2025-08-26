@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import ClassDisplay from '@/components/classfinder/ClassDisplay';
 import MatchDisplay from '@/components/classfinder/MatchDisplay';
-import MatchProDisplay from '@/app/(app)/classfinder/MatchProDisplay';
+import MatchProDisplay from '@/components/classfinder/MatchProDisplay';
 import { getMockTimeSlots, fetchMatches, fetchMatchDayEventsForDate, createMatchesForDay, getMockClubs } from '@/lib/mockData';
 import type { TimeSlot, User, Match, MatchDayEvent, Club, ActivityViewType } from '@/types';
 import { addDays, isSameDay, format } from 'date-fns';
@@ -262,16 +262,15 @@ export default function ActivitiesPageContent({ currentUser, onCurrentUserUpdate
                             proposalView={'join'}
                             showPointsBonus={showPointsBonus}
                         />;
-                        case 'matchpro':
-                             return <MatchProDisplay
-                                        {...restOfFilters}
-                                        currentUser={currentUser}
-                                        onBookingSuccess={handleBookingSuccess}
-                                        selectedDate={selectedDate}
-                                        onDateChange={handleDateChange}
-                                        timeSlotFilter={activityFilters.timeSlotFilter}
-                                        selectedLevel={activityFilters.selectedLevel}
-                                    />;
+            case 'matchpro':
+                return (
+                    <MatchProDisplay
+                        currentUser={currentUser}
+                        onBookingSuccess={handleBookingSuccess}
+                        selectedDate={selectedDate}
+                        onDateChange={handleDateChange}
+                    />
+                );
             default:
                 return null;
         }

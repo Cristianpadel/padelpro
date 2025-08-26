@@ -1,3 +1,4 @@
+import Link from 'next/link';
 // src/app/(app)/reservar/page.tsx
 "use client";
 
@@ -43,7 +44,7 @@ const CourtBookingCard: React.FC<{
         const getSlots = async () => {
             const dayKey = dayOfWeekArray[date.getDay()];
             const ranges = club.pointBookingSlots?.[dayKey] || [];
-            const courts = await getMockPadelCourts(club.id);
+            const courts = await getMockPadelCourts();
             const activeCourts = courts.filter(c => c.isActive);
 
             if (ranges.length === 0 || activeCourts.length === 0) {

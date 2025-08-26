@@ -74,7 +74,7 @@ const InstructorBookingOption: React.FC<InstructorBookingOptionProps> = ({
             <span className="text-[10px] mt-0.5 truncate w-full">{playerName.split(' ')[0]}</span>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="link" size="xs" className="text-destructive h-auto p-0 text-[10px] leading-tight" disabled={isProcessingAction || isCancellingClass || isThisSpotActionProcessing}>
+                <Button variant="link" size="sm" className="text-destructive h-auto p-0 text-[10px] leading-tight" disabled={isProcessingAction || isCancellingClass || isThisSpotActionProcessing}>
                   {isThisSpotActionProcessing && processingActionKey === removeActionKey ? <Loader2 className="h-3 w-3 animate-spin"/> : 'Eliminar'}
                 </Button>
               </AlertDialogTrigger>
@@ -101,7 +101,7 @@ const InstructorBookingOption: React.FC<InstructorBookingOptionProps> = ({
             </div>
             <span className="text-[10px] font-semibold text-yellow-600">Gratis</span>
             <Button
-              variant="outline" size="xs"
+              variant="outline" size="sm"
               className="text-destructive border-destructive hover:bg-destructive/10 h-auto py-0.5 px-1 text-[9px] leading-tight"
               onClick={() => onToggleGratis(slot.id, optionSize, spotIndex)}
               disabled={isProcessingAction || isCancellingClass || isThisSpotActionProcessing || isSlotCompletedOverall}
@@ -144,7 +144,7 @@ const InstructorBookingOption: React.FC<InstructorBookingOptionProps> = ({
             </TooltipProvider>
             <span className="text-[10px] text-muted-foreground">Libre</span>
             <Button
-              variant="link" size="xs"
+              variant="link" size="sm"
               className="h-auto py-0 px-1 text-[9px] leading-tight text-yellow-600 hover:text-yellow-700/80"
               onClick={() => onToggleGratis(slot.id, optionSize, spotIndex)}
               disabled={isProcessingAction || isCancellingClass || isThisSpotActionProcessing || isSlotCompletedOverall || playersInThisOption.length >= optionSize}

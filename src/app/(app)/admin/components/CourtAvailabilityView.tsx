@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import type { PadelCourt, CourtGridBooking, Club, Instructor as InstructorType } from '@/types';
 import { fetchPadelCourtsByClub, fetchCourtBookingsForDay, getMockClubs } from '@/lib/mockData';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { format, startOfDay, isEqual, addDays, setHours, setMinutes, differenceInMinutes } from 'date-fns';
+import { format, startOfDay, isEqual, addDays, setHours, setMinutes, differenceInMinutes, addMinutes, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { CalendarClock, Loader2, AlertTriangle, Building } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';

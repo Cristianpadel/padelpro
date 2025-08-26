@@ -347,7 +347,7 @@ const ManageMatchDayPanel: React.FC<ManageMatchDayPanelProps> = ({ club, onEvent
                                 <div className="flex items-center justify-between mt-2">
                                     <Badge variant="outline" className="flex items-center"><Users className="h-3 w-3 mr-1"/> {inscriptionCounts[event.id] || 0} / {event.maxPlayers}</Badge>
                                     <Link href={`/match-day/${event.id}`} passHref>
-                                        <Button size="xs" variant="ghost">Ver <ArrowRight className="ml-1 h-3 w-3"/></Button>
+                                        <Button size="sm" variant="ghost">Ver <ArrowRight className="ml-1 h-3 w-3"/></Button>
                                     </Link>
                                 </div>
                                  {event.matchesGenerated && (

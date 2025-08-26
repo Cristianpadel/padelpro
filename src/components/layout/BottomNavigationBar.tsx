@@ -16,7 +16,6 @@ import {
     isSlotEffectivelyCompleted,
     getMockUserMatchBookings,
     getMockMatches,
-    countConfirmedLiberadasSpots,
     fetchMatchDayEventsForDate,
     countUserReservedProducts,
 } from '@/lib/mockData';
@@ -77,7 +76,7 @@ export function BottomNavigationBar({ onMobileFiltersClick }: BottomNavigationBa
         }
         let count = 0;
         const now = new Date();
-        const userClassBookingsData = await getMockUserBookings(userId);
+    const userClassBookingsData = await getMockUserBookings();
         const allTimeSlots = await getMockTimeSlots();
         userClassBookingsData.forEach(booking => {
             const slot = allTimeSlots.find(s => s.id === booking.activityId && booking.activityType === 'class');
@@ -85,7 +84,7 @@ export function BottomNavigationBar({ onMobileFiltersClick }: BottomNavigationBa
                 count++;
             }
         });
-        const userMatchBookingsDataAll = await getMockUserMatchBookings(userId);
+    const userMatchBookingsDataAll = await getMockUserMatchBookings();
         const allMatches = await getMockMatches();
         userMatchBookingsDataAll.forEach(booking => {
             const match = allMatches.find(m => m.id === booking.activityId);
@@ -128,7 +127,7 @@ export function BottomNavigationBar({ onMobileFiltersClick }: BottomNavigationBa
             currentClub = clubs[0];
         }
         
-        setClubInfo(currentClub);
+    setClubInfo(currentClub ?? null);
 
         updateCountsAndNotifications();
         const intervalId = setInterval(updateCountsAndNotifications, 5000);
