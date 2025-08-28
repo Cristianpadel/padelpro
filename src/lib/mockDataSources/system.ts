@@ -136,7 +136,7 @@ export const simulateBookings = async (options: {
                 // console.log(`Simulation could not book ${student.name} in ${activity.id}: ${result.error}`);
             } else if (result) {
                  bookingsCreated++;
-                const bookingId = 'booking' in result ? result.booking.id : ('newBooking' in result ? result.newBooking.id : '');
+                const bookingId = 'booking' in result ? result.booking.id : ('newBooking' in result && result.newBooking ? result.newBooking.id : '');
                 if (!bookingId) continue;
                 // Mark as simulated
                 if(activityType === 'clases'){

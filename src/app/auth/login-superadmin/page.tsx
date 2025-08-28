@@ -23,8 +23,9 @@ export default function LoginSuperAdminPage() {
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
-        const email = (e.currentTarget.elements.namedItem('email') as HTMLInputElement).value;
-        const password = (e.currentTarget.elements.namedItem('password') as HTMLInputElement).value;
+  const form = e.currentTarget as HTMLFormElement;
+  const email = (form.elements.namedItem('email') as HTMLInputElement).value;
+  const password = (form.elements.namedItem('password') as HTMLInputElement).value;
         
         if (email === 'superadmin@padelapp.com' && password === 'superadminpass') {
              toast({ title: "Acceso de Super Admin Concedido", description: `Bienvenido.` });

@@ -135,7 +135,7 @@ const UserProfileSheet: React.FC = () => {
                             onEditClick={() => setIsEditingName(true)}
                             onSaveClick={handleSaveName}
                             onCancelClick={() => { setIsEditingName(false); setName(user.name || ''); }}
-                            onChange={handleNameChange}
+                            onChange={handleNameChange as unknown as (e: React.ChangeEvent<HTMLInputElement> | string) => void}
                             isFirst
                             showSeparator={!isEditingName}
                         />
@@ -147,7 +147,7 @@ const UserProfileSheet: React.FC = () => {
                             onEditClick={() => setIsEditingEmail(true)}
                             onSaveClick={handleSaveEmail}
                             onCancelClick={() => { setIsEditingEmail(false); setEmail(user.email || ''); }}
-                            onChange={handleEmailChange}
+                            onChange={handleEmailChange as unknown as (e: React.ChangeEvent<HTMLInputElement> | string) => void}
                             inputType="email"
                             showSeparator={!isEditingEmail}
                         />

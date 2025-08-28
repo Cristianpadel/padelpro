@@ -12,7 +12,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
-    "incremental": true,
+  "incremental": false,
     "plugins": [
       {
         "name": "next"
@@ -23,5 +23,11 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "prisma/**",
+  "src/app/admin/**",
+  "src/app/(app)/dashboard/components/ScheduleDisplay.tsx",
+  "src/app/(app)/dashboard/components/TimeSlotCard.tsx"
+  ]
 }

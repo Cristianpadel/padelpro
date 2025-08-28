@@ -2,8 +2,8 @@
 "use client";
 
 import React, { useState, useEffect, useTransition, useMemo } from 'react';
-import type { Club, PadelCourt, Match, MatchPadelLevel, PadelCategoryForSlot } from '@/types';
-import { matchPadelLevels, padelCategoryForSlotOptions } from '@/types';
+import type { Club, PadelCourt, Match, MatchPadelLevel, PadelCategoryForSlot, NumericMatchPadelLevel } from '@/types';
+import { matchPadelLevels, padelCategoryForSlotOptions, numericMatchPadelLevels } from '@/types';
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarDays, Users2 as CategoryIcon } from "lucide-react"; 
 import { format, addMinutes, startOfDay, setMinutes, setHours } from "date-fns";
@@ -27,11 +27,13 @@ interface OpenMatchProFormProps {
     onMatchOpened: (match: Match) => void;
 }
 
+const numericLevelsTuple = [...numericMatchPadelLevels] as [NumericMatchPadelLevel, ...NumericMatchPadelLevel[]];
+
 const matchSchema = z.object({
   date: z.date({ required_error: "Se requiere una fecha." }),
   startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Formato de hora inválido (HH:MM)."),
   courtNumber: z.coerce.number().int().min(1, "Pista inválida."),
-  level: z.enum(matchPadelLevels as [string, ...string[]], { required_error: "Selecciona un nivel." }), 
+    level: z.enum(numericLevelsTuple, { required_error: "Selecciona un nivel." }),
   category: z.enum(['abierta', 'chica', 'chico'] as [PadelCategoryForSlot, ...PadelCategoryForSlot[]], { required_error: "Selecciona una categoría." }),
   totalCourtFee: z.coerce.number().min(0, "El precio no puede ser negativo.").optional(),
   clubId: z.string(),
@@ -108,7 +110,20 @@ const OpenMatchProForm: React.FC<OpenMatchProFormProps> = ({ club, clubPadelCour
                     <FormField control={form.control} name="courtNumber" render={({ field }) => (<FormItem className="flex-1"><FormLabel>Pista</FormLabel><Select onValueChange={(v) => field.onChange(Number(v))} value={String(field.value)} disabled={clubPadelCourts.length === 0}><FormControl><SelectTrigger><SelectValue placeholder="Pista"/></SelectTrigger></FormControl><SelectContent>{clubPadelCourts.length > 0 ? (clubPadelCourts.map(court => (<SelectItem key={court.id} value={String(court.courtNumber)}>{court.name}</SelectItem>))) : (<SelectItem value="no-courts" disabled>No hay pistas</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>)}/>
                 </div>
                 <div className="flex space-x-4">
-                    <FormField control={form.control} name="level" render={({ field }) => (<FormItem className="flex-1"><FormLabel>Nivel</FormLabel><Select onValueChange={field.onChange} value={String(field.value)}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>{[...matchPadelLevels].filter(l => l !== 'abierto').map(l => (<SelectItem key={l} value={l} className="capitalize">{l}</SelectItem>))}</SelectContent></Select><FormMessage/></FormItem>)}/>
+                    <FormField control={form.control} name="level" render={({ field }) => (
+                        <FormItem className="flex-1">
+                            <FormLabel>Nivel</FormLabel>
+                            <Select onValueChange={field.onChange} value={String(field.value)}>
+                                <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
+                                <SelectContent>
+                                    {matchPadelLevels.map(l => (
+                                        <SelectItem key={l} value={l}>{`Nivel ${l}`}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage/>
+                        </FormItem>
+                    )}/>
                     <FormField control={form.control} name="category" render={({ field }) => (<FormItem className="flex-1"><FormLabel>Categoría</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>{padelCategoryForSlotOptions.map(opt => (<SelectItem key={opt.value} value={opt.value} className="capitalize">{opt.label}</SelectItem>))}</SelectContent></Select><FormMessage/></FormItem>)}/>
                 </div>
                 <FormField control={form.control} name="totalCourtFee" render={({ field }) => (<FormItem><FormLabel>Precio Total Pista (€)</FormLabel><FormControl><Input type="number" min="0" step="0.01" {...field}/></FormControl><FormMessage/></FormItem>)}/>

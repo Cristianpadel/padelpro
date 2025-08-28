@@ -61,7 +61,7 @@ const LevelFilterDialog: React.FC<LevelFilterDialogProps> = ({ isOpen, onOpenCha
                  <Button
                     key={range.name}
                     variant={isSelected ? "default" : "outline"}
-                    onClick={() => handleSelect(range.value)}
+                    onClick={() => handleSelect(range.value as MatchPadelLevel | 'all')}
                     className="h-auto p-3 text-sm justify-between items-center"
                  >
                     <div className="text-left">

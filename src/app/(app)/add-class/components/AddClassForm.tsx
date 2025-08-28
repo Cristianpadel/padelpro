@@ -292,7 +292,7 @@ const AddClassForm: React.FC<AddClassFormProps> = ({ instructor, onClassAdded })
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
-                    selected={field.value || null}
+                    selected={field.value ?? undefined}
                     onSelect={field.onChange}
                     disabled={(date) => date < startOfDay(new Date())}
                     initialFocus

@@ -79,8 +79,8 @@ const ManagedSlotsList: React.FC<ManagedSlotsListProps> = ({ instructorId }) => 
     startTransition(async () => {
         try {
             const result = await removeBookingFromTimeSlotInState(slotId, userId, groupSize);
-             if ('error' in result) {
-                toast({ title: 'Error al Eliminar', description: result.error, variant: 'destructive' });
+      if (result && typeof result === 'object' && 'error' in result) {
+        toast({ title: 'Error al Eliminar', description: String((result as any).error), variant: 'destructive' });
              } else {
                  toast({ title: 'Reserva Eliminada', description: 'Se ha eliminado la inscripción del alumno.', className: 'bg-accent text-accent-foreground' });
                  setRefreshKey(prev => prev + 1);

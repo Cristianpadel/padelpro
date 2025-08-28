@@ -25,11 +25,11 @@ import { cn } from '@/lib/utils';
 import { CalendarIcon, Loader2, Users, BarChart, Hash, Euro, PlayCircle, Users2 as CategoryIcon } from 'lucide-react'; // Changed Users to CategoryIcon
 import { useToast } from '@/hooks/use-toast';
 import { addMatch, getMockClubs, getMockPadelCourts } from '@/lib/mockData';
-import type { Match, User, MatchPadelLevel, PadelCategoryForSlot, PadelCourt } from '@/types'; 
+import type { Match, Instructor, MatchPadelLevel, PadelCategoryForSlot, PadelCourt } from '@/types'; 
 import { matchPadelLevels, padelCategoryForSlotOptions, daysOfWeek } from '@/types'; 
 
 interface OpenMatchFormProps {
-  instructor: User;
+  instructor: Instructor;
   onMatchOpened: (newMatch: Match) => void;
 }
 
@@ -42,7 +42,7 @@ const timeOptions = Array.from({ length: 28 }, (_, i) => {
 const matchSchema = z.object({
   date: z.date({ required_error: "Se requiere una fecha." }),
   startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Formato de hora inválido (HH:MM)."),
-  courtNumber: z.coerce.number().int().min(1, "Pista inválida."),
+  courtNumber: z.coerce.number().int().min(1, "Pista inválida.").optional(),
   level: z.enum(matchPadelLevels as [MatchPadelLevel, ...MatchPadelLevel[]], { required_error: "Selecciona un nivel." }), 
   category: z.enum(['abierta', 'chica', 'chico'] as [PadelCategoryForSlot, ...PadelCategoryForSlot[]], { required_error: "Selecciona una categoría." }),
   totalCourtFee: z.coerce.number().min(0, "El precio no puede ser negativo.").optional(),
@@ -89,11 +89,11 @@ const OpenMatchForm: React.FC<OpenMatchFormProps> = ({ instructor, onMatchOpened
             .filter(court => court.clubId === selectedClubId && court.isActive)
             .sort((a, b) => a.courtNumber - b.courtNumber);
         setAvailableCourtsForSelectedClub(courtsOfClub);
-        if (courtsOfClub.length > 0 && !courtsOfClub.some(c => c.courtNumber === form.getValues('courtNumber'))) {
-            form.setValue('courtNumber', courtsOfClub[0].courtNumber);
-        } else if (courtsOfClub.length === 0) {
-             form.setValue('courtNumber', undefined); 
-        }
+    if (courtsOfClub.length > 0 && !courtsOfClub.some(c => c.courtNumber === form.getValues('courtNumber'))) {
+      form.setValue('courtNumber', courtsOfClub[0].courtNumber);
+    } else if (courtsOfClub.length === 0) {
+       form.setValue('courtNumber', undefined); 
+    }
     } else {
         setAvailableCourtsForSelectedClub([]); 
     }
@@ -117,6 +117,10 @@ const OpenMatchForm: React.FC<OpenMatchFormProps> = ({ instructor, onMatchOpened
   const onSubmit = (values: MatchFormData) => {
     startTransition(async () => {
       try {
+        if (values.courtNumber === undefined) {
+          toast({ title: 'Falta seleccionar pista', description: 'Selecciona una pista disponible antes de abrir la partida.', variant: 'destructive' });
+          return;
+        }
         const [startHour, startMinute] = values.startTime.split(':').map(Number);
         const startTimeDate = setMinutes(setHours(values.date, startHour), startMinute);
         const endTimeDate = addMinutes(startTimeDate, 90); 
@@ -308,7 +312,7 @@ const OpenMatchForm: React.FC<OpenMatchFormProps> = ({ instructor, onMatchOpened
                   <SelectContent>
                     {matchPadelLevels.map(level => ( 
                       <SelectItem key={level} value={level} className="capitalize">
-                        {level === 'abierto' ? 'Nivel Abierto (Determinado por el primer inscrito)' : level}
+                        {level}
                       </SelectItem>
                     ))}
                   </SelectContent>

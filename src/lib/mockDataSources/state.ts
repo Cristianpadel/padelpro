@@ -27,7 +27,7 @@ function migrateBookedPlayersProfilePictures() {
 }
 
 // lib/state.ts
-import type { TimeSlot, Club, Instructor, PadelCourt, CourtGridBooking, PointTransaction, User, Match, MatchDayEvent, Product, Booking, MatchBooking, DealOfTheDaySettings, UserDB, MatchDayInscription, Review, Transaction } from '@/types';
+import type { TimeSlot, Club, Instructor, PadelCourt, CourtGridBooking, PointTransaction, User, Match, MatchDayEvent, Product, Booking, MatchBooking, UserDB, MatchDayInscription, Review, Transaction } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { startOfDay, addHours, addMinutes, subDays } from 'date-fns';
 import { isSlotEffectivelyCompleted as isSlotEffectivelyCompletedInternal } from './utils'; // Import the internal utility

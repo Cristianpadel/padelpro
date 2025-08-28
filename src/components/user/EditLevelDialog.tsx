@@ -71,7 +71,7 @@ const EditLevelDialog: React.FC<EditLevelDialogProps> = ({
             <SelectContent>
               {matchPadelLevels.map(level => (
                 <SelectItem key={level} value={level} className="capitalize">
-                  {level === 'abierto' ? 'Nivel Abierto' : `Nivel ${level}`}
+                  {`Nivel ${level}`}
                 </SelectItem>
               ))}
             </SelectContent>

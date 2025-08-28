@@ -14,7 +14,7 @@ import * as z from 'zod';
 import { Trash2, PlusCircle, Save, Settings2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { matchPadelLevels, numericMatchPadelLevels as importedNumericMatchPadelLevels } from '@/types'; // Renamed for clarity
+import { numericMatchPadelLevels as importedNumericMatchPadelLevels } from '@/types'; // numeric levels only
 import { cn } from '@/lib/utils';
 
 interface ManageLevelRangesFormProps {
@@ -23,13 +23,15 @@ interface ManageLevelRangesFormProps {
 }
 
 // Use the imported numericMatchPadelLevels
-const numericLevelsForSchema = importedNumericMatchPadelLevels.length > 0 ? importedNumericMatchPadelLevels : ['1.0'] as Exclude<MatchPadelLevel, 'abierto' | PadelLevelRange>[];
+// Create a mutable tuple for z.enum from the readonly const array
+const numericLevelsForSchema = [...importedNumericMatchPadelLevels] as [NumericLevel, ...NumericLevel[]];
+type NumericLevel = typeof importedNumericMatchPadelLevels[number];
 
 
 const levelRangeSchema = z.object({
     name: z.string().min(1, "El nombre del rango es obligatorio.").max(50, "Máximo 50 caracteres."),
-    min: z.enum(numericLevelsForSchema as [string, ...string[]] as [Exclude<MatchPadelLevel, 'abierto' | PadelLevelRange>, ...Exclude<MatchPadelLevel, 'abierto' | PadelLevelRange>[]], { required_error: "Nivel mínimo requerido."}),
-    max: z.enum(numericLevelsForSchema as [string, ...string[]] as [Exclude<MatchPadelLevel, 'abierto' | PadelLevelRange>, ...Exclude<MatchPadelLevel, 'abierto' | PadelLevelRange>[]], { required_error: "Nivel máximo requerido."}),
+    min: z.enum(numericLevelsForSchema, { required_error: "Nivel mínimo requerido."}),
+    max: z.enum(numericLevelsForSchema, { required_error: "Nivel máximo requerido."}),
 }).refine(data => parseFloat(data.max) >= parseFloat(data.min), {
     message: "El nivel máx. debe ser >= nivel mín.",
     path: ["max"],
@@ -180,8 +182,8 @@ const ManageLevelRangesForm: React.FC<ManageLevelRangesFormProps> = ({ club, onR
                                 variant="outline"
                                 onClick={() => {
                                     let newRangeName = "Nuevo Rango";
-                                    let newMin: Exclude<MatchPadelLevel, 'abierto' | PadelLevelRange> = importedNumericMatchPadelLevels[0];
-                                    let newMax: Exclude<MatchPadelLevel, 'abierto' | PadelLevelRange> = importedNumericMatchPadelLevels[0];
+                                    let newMin: NumericLevel = importedNumericMatchPadelLevels[0];
+                                    let newMax: NumericLevel = importedNumericMatchPadelLevels[0];
 
                                     if (fields.length < defaultClubLevelRangesForForm.length) {
                                         const defaultRange = defaultClubLevelRangesForForm[fields.length];
@@ -189,7 +191,7 @@ const ManageLevelRangesForm: React.FC<ManageLevelRangesFormProps> = ({ club, onR
                                         newMin = defaultRange.min;
                                         newMax = defaultRange.max;
                                     } else if (fields.length > 0) {
-                                        const lastRange = fields[fields.length -1];
+                                        const lastRange = fields[fields.length -1] as unknown as { min: NumericLevel; max: NumericLevel };
                                         const lastMaxIndex = importedNumericMatchPadelLevels.indexOf(lastRange.max);
                                         if (lastMaxIndex < importedNumericMatchPadelLevels.length -1) {
                                             newMin = importedNumericMatchPadelLevels[lastMaxIndex + 1];

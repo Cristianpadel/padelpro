@@ -122,7 +122,7 @@ const CourtBookingManagement: React.FC<CourtBookingManagementProps> = ({ clubId 
         const durationMinutes = data.title === 'clases 60min' ? 60 : 90;
         const bookingEndTime = addMinutes(bookingStartTime, durationMinutes);
 
-        const newBookingData = {
+        const newBookingData: Omit<Match, 'id' | 'status' | 'organizerId' | 'privateShareCode'> = {
           clubId: clubId,
           startTime: bookingStartTime,
           endTime: bookingEndTime,
@@ -130,8 +130,6 @@ const CourtBookingManagement: React.FC<CourtBookingManagementProps> = ({ clubId 
           level: 'abierto',
           category: 'abierta',
           bookedPlayers: [],
-          status: 'confirmed_private',
-          organizerId: 'admin',
           isPlaceholder: false,
           totalCourtFee: 0,
           durationMinutes: durationMinutes,

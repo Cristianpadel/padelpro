@@ -1,12 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { purgeExpiredProvisionalHoldsDb, ensureOpenPlaceholdersForAllProvisionalDb } from '@/lib/db/repositories/fixedMatches'
+import { NextResponse } from 'next/server';
 
-export async function POST(_req: NextRequest) {
-  try {
-  const purged = await purgeExpiredProvisionalHoldsDb()
-  const ensured = await ensureOpenPlaceholdersForAllProvisionalDb()
-  return NextResponse.json({ ...purged, ...ensured })
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'Unknown error' }, { status: 500 })
-  }
+export async function POST() {
+	return NextResponse.json({ error: 'Not implemented' }, { status: 501 });
 }
+

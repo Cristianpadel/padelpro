@@ -40,7 +40,8 @@ interface EditInstructorDialogProps {
 
 const rateTierSchema = z.object({
   id: z.string(),
-  days: z.array(z.string()).min(1, "Debes seleccionar al menos un día."),
+  days: z.array(z.enum(["monday","tuesday","wednesday","thursday","friday","saturday","sunday"]))
+    .min(1, "Debes seleccionar al menos un día."),
   startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Hora inválida."),
   endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Hora inválida."),
   rate: z.coerce.number().positive("La tarifa debe ser un número positivo."),

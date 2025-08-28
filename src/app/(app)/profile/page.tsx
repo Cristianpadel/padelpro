@@ -52,7 +52,7 @@ function ProfilePageContent() {
     
     const levelOptions = matchPadelLevels.map(level => ({
         value: level,
-        label: level === 'abierto' ? 'Nivel Abierto' : `Nivel ${level}`
+        label: (level as unknown as MatchPadelLevel) === 'abierto' ? 'Nivel Abierto' : `Nivel ${level}`
     }));
 
 
@@ -81,7 +81,7 @@ function ProfilePageContent() {
                         onEditClick={() => setIsEditingName(true)}
                         onSaveClick={handleSaveName}
                         onCancelClick={() => { setIsEditingName(false); setName(user.name || ''); }}
-                        onChange={handleNameChange}
+                        onChange={(e) => handleNameChange(e as React.ChangeEvent<HTMLInputElement>)}
                         isFirst
                         showSeparator={!isEditingName}
                     />
@@ -93,7 +93,7 @@ function ProfilePageContent() {
                         onEditClick={() => setIsEditingEmail(true)}
                         onSaveClick={handleSaveEmail}
                         onCancelClick={() => { setIsEditingEmail(false); setEmail(user.email || ''); }}
-                        onChange={handleEmailChange}
+                        onChange={(e) => handleEmailChange(e as React.ChangeEvent<HTMLInputElement>)}
                         inputType="email"
                         showSeparator={!isEditingEmail}
                     />

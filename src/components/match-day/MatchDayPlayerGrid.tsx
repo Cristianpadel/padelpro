@@ -380,11 +380,11 @@ const MatchDayPlayerGrid: React.FC<MatchDayPlayerGridProps> = ({ event, inscript
                     </div>
                 </div>
 
-                {event.reservePlayers > 0 && (
+                {(event.reservePlayers ?? 0) > 0 && (
                     <div>
                         <h4 className="font-semibold mb-3">Lista de Reserva ({reserveList.length} / {event.reservePlayers})</h4>
                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                            {Array.from({ length: event.reservePlayers }).map((_, index) => {
+                            {Array.from({ length: event.reservePlayers ?? 0 }).map((_, index) => {
                                 const inscription = reserveList[index];
                                 if (inscription) {
                                      const isCurrentUser = inscription.userId === currentUser?.id;

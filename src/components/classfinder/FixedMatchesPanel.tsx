@@ -2,14 +2,12 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import type { Match, User, Club } from '@/types';
-import { fetchMatches as fetchMatchesMock, getMockClubs, getMockCurrentUser } from '@/lib/mockData';
-import { USE_DB_FIXED } from '@/lib/config';
+import { fetchMatches, getMockClubs, getMockCurrentUser } from '@/lib/mockData';
 import { format, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import LevelCategorySemicircle from '@/components/common/LevelCategorySemicircle';
 
 interface FixedMatchesPanelProps {
   selectedDate: Date | null;
@@ -28,40 +26,18 @@ export default function FixedMatchesPanel({ selectedDate }: FixedMatchesPanelPro
         const clubs = await getMockClubs();
         const c = clubs[0];
         setClub(c || null);
-        // Best-effort purge of expired provisional holds (server will no-op if none)
-        if (USE_DB_FIXED) {
-          fetch('/api/fixed-matches/maintenance', { method: 'POST' }).catch(() => {});
-        }
         const [ms, u] = await Promise.all([
-          USE_DB_FIXED
-            ? fetch(`/api/fixed-matches?clubId=${encodeURIComponent(c?.id || '')}`).then(r => r.json()).then(j => j.data as Match[])
-            : fetchMatchesMock(c?.id),
+          fetchMatches(c?.id),
           getMockCurrentUser()
         ]);
-        setMatches((ms || []).filter(m => m.isFixedMatch));
+        setMatches(ms.filter(m => m.isFixedMatch));
         setCurrentUser(u);
       } finally {
         setLoading(false);
       }
     };
     load();
-    // Refresh on global updates (e.g., after editing level/cat in Mi agenda)
-    const handler = () => {
-      if (!club) return;
-      (async () => {
-        try {
-          const ms = USE_DB_FIXED
-            ? await fetch(`/api/fixed-matches?clubId=${encodeURIComponent(club.id)}`).then(r => r.json()).then(j => j.data as Match[])
-            : await fetchMatchesMock(club.id);
-          setMatches((ms || []).filter(m => m.isFixedMatch));
-        } catch {}
-      })();
-    };
-    if (typeof window !== 'undefined') window.addEventListener('matchesUpdated', handler);
-    return () => {
-      if (typeof window !== 'undefined') window.removeEventListener('matchesUpdated', handler);
-    };
-  }, [club]);
+  }, []);
 
   const matchesForDay = useMemo(() => {
     if (!selectedDate) return [];
@@ -110,8 +86,6 @@ export default function FixedMatchesPanel({ selectedDate }: FixedMatchesPanelPro
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    {/* Level/Category semicircle indicator */}
-                    <LevelCategorySemicircle level={m.level} category={m.category} club={club} size={16} />
                     {(m.bookedPlayers || []).map(p => (
                       <Avatar key={p.userId} className="h-8 w-8 border">
                         <AvatarImage src={p.profilePictureUrl} alt={p.name || p.userId} />

@@ -93,10 +93,13 @@ const ManageCourtRatesPanel: React.FC<ManageCourtRatesPanelProps> = ({ club, onR
 
     const onSubmit = async (data: CourtRateFormData) => {
         startSaveTransition(async () => {
+            const mapDays = (days: string[]): DayOfWeek[] => days.filter((d): d is DayOfWeek => (['monday','tuesday','wednesday','thursday','friday','saturday','sunday'] as string[]).includes(d));
+            const fixed = data.courtRateTiers.map(t => ({ ...t, days: mapDays(t.days) }));
+            const dynamic = data.dynamicPricingTiers.map(t => ({ ...t, days: mapDays(t.days) }));
             const result = await updateClub(club.id, { 
                 dynamicPricingEnabled: data.dynamicPricingEnabled,
-                courtRateTiers: data.courtRateTiers,
-                dynamicPricingTiers: data.dynamicPricingTiers,
+                courtRateTiers: fixed as CourtRateTier[],
+                dynamicPricingTiers: dynamic as DynamicPricingTier[],
             });
 
             if ('error' in result) {

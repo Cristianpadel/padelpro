@@ -73,7 +73,10 @@ export function useActivityFilters(
   // --- URL Update Logic ---
   const updateUrlFilter = useCallback((key: string, value: string | boolean | null) => {
     const newSearchParams = new URLSearchParams(searchParams.toString());
-    if (value && value !== 'all' && value !== false && value !== 'normal') {
+    const shouldKeep =
+      (typeof value === 'string' && value.length > 0 && value !== 'all' && value !== 'normal') ||
+      (typeof value === 'boolean' && value === true);
+    if (shouldKeep) {
       newSearchParams.set(key, String(value));
     } else {
       newSearchParams.delete(key);
@@ -83,16 +86,19 @@ export function useActivityFilters(
   
   const setUrlFilters = useCallback((filters: Record<string, string | boolean | null>) => {
     const newSearchParams = new URLSearchParams(searchParams.toString());
-    for(const key in filters) {
-        const value = filters[key];
-        if (value && value !== 'all' && value !== false && value !== 'normal') {
-            newSearchParams.set(key, String(value));
-        } else {
-            newSearchParams.delete(key);
-        }
+    for (const key in filters) {
+      const value = filters[key];
+      const shouldKeep =
+        (typeof value === 'string' && value.length > 0 && value !== 'all' && value !== 'normal') ||
+        (typeof value === 'boolean' && value === true);
+      if (shouldKeep) {
+        newSearchParams.set(key, String(value));
+      } else {
+        newSearchParams.delete(key);
+      }
     }
     router.replace(`${pathname}?${newSearchParams.toString()}`, { scroll: false });
-  },[searchParams, router, pathname]);
+  }, [searchParams, router, pathname]);
 
   const clearAllFilters = useCallback(() => {
     const newSearchParams = new URLSearchParams();

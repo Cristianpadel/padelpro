@@ -3,11 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import InstructorPanel from './components/InstructorPanel';
 import { getMockInstructors } from '@/lib/mockData';
-import type { User } from '@/types';
+import type { Instructor } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function InstructorPage() {
-    const [instructor, setInstructor] = useState<User | null>(null);
+    const [instructor, setInstructor] = useState<Instructor | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -16,10 +16,10 @@ export default function InstructorPage() {
             // In a real app, you'd get the currently logged-in user.
             // For this mock, we'll assume an instructor is a user.
             // Let's take the first instructor and treat them as a user for this context.
-            const instructors = await getMockInstructors();
+          const instructors = await getMockInstructors();
             if (instructors.length > 0) {
                  // We'll simulate 'inst-2' (Ana García) being the logged-in instructor
-                 const currentInstructor = instructors.find(i => i.id === 'inst-2') || instructors[0];
+              const currentInstructor = instructors.find(i => i.id === 'inst-2') || instructors[0];
                  setInstructor(currentInstructor);
             }
             setLoading(false);

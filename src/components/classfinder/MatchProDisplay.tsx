@@ -6,7 +6,7 @@ import type { User, Match } from '@/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import MatchCard from '@/components/match/MatchCard'; // Changed from MatchProCard to MatchCard
-import { fetchMatches, getMockCurrentUser } from '@/lib/mockData';
+import { fetchMatches, getMockCurrentUser, getMockClubs, createFixedPlaceholdersForDay, addMatch } from '@/lib/mockData';
 import { isSameDay, startOfDay } from 'date-fns';
 
 interface MatchProDisplayProps {
@@ -26,23 +26,34 @@ const MatchProDisplay: React.FC<MatchProDisplayProps> = ({ currentUser, onBookin
         const loadMatchesAndUser = async () => {
             setLoading(true);
             try {
+                // Determine club and target date
+                const clubs = await getMockClubs();
+                const currentClub = clubs[0];
+                const targetDate = selectedDate ? new Date(selectedDate) : new Date();
+
+                // Generate fixed placeholders for the day and persist only new ones
+                if (currentClub?.id) {
+                    const generated = createFixedPlaceholdersForDay(currentClub, targetDate);
+                    for (const ph of generated) {
+                        await addMatch({ ...(ph as any), creatorId: undefined });
+                    }
+                }
+
                 const [allMatches, user] = await Promise.all([
-                    fetchMatches('club-1'), // Assuming a single club for now
+                    fetchMatches(currentClub?.id || 'club-1'),
                     getMockCurrentUser()
                 ]);
 
-                let proMatches = allMatches.filter(m => m.isFixedMatch);
+                let proMatches = allMatches.filter(m => m.isFixedMatch === true);
 
-                // Filter by selectedDate if it exists
                 if (selectedDate) {
                     proMatches = proMatches.filter(m => isSameDay(new Date(m.startTime), selectedDate));
                 }
 
                 setFixedMatches(proMatches);
                 setLocalCurrentUser(user);
-
             } catch (error) {
-                console.error("Error fetching pro matches or user", error);
+                console.error('Error fetching pro matches or user', error);
             } finally {
                 setLoading(false);
             }

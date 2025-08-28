@@ -109,7 +109,7 @@ const UserProfileSheet: React.FC = () => {
     
      const levelOptions = matchPadelLevels.map(level => ({
         value: level,
-        label: level === 'abierto' ? 'Nivel Abierto' : `Nivel ${level}`
+        label: `Nivel ${level}`
     }));
 
 
@@ -139,7 +139,7 @@ const UserProfileSheet: React.FC = () => {
                             onEditClick={() => setIsEditingName(true)}
                             onSaveClick={handleSaveName}
                             onCancelClick={() => { setIsEditingName(false); setName(user.name || ''); }}
-                            onChange={handleNameChange}
+                            onChange={(e) => handleNameChange(e as React.ChangeEvent<HTMLInputElement>)}
                             isFirst
                             showSeparator={!isEditingName}
                         />
@@ -151,7 +151,7 @@ const UserProfileSheet: React.FC = () => {
                             onEditClick={() => setIsEditingEmail(true)}
                             onSaveClick={handleSaveEmail}
                             onCancelClick={() => { setIsEditingEmail(false); setEmail(user.email || ''); }}
-                            onChange={handleEmailChange}
+                            onChange={(e) => handleEmailChange(e as React.ChangeEvent<HTMLInputElement>)}
                             inputType="email"
                             showSeparator={!isEditingEmail}
                         />
