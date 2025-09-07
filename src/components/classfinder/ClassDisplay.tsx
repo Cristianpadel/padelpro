@@ -275,7 +275,7 @@ const ClassDisplay: React.FC<ClassDisplayProps> = ({
         return () => { if (currentRef) observer.unobserve(currentRef); observer.disconnect(); };
     }, [canLoadMore, isLoadingMore, handleLoadMore]);
     
-    if (isLoading) return <div className="space-y-4"> <Skeleton className="h-10 w-full" /> <div className="grid grid-cols-[repeat(auto-fill,minmax(350px,1fr))] gap-6"><Skeleton className="h-96 w-full" /><Skeleton className="h-96 w-full" /><Skeleton className="h-96 w-full" /></div></div>
+    if (isLoading) return <div className="space-y-4"> <Skeleton className="h-10 w-full" /> <div className="w-full px-0 sm:px-3"><div className="space-y-4"><Skeleton className="h-96 w-full" /><Skeleton className="h-96 w-full" /><Skeleton className="h-96 w-full" /></div></div></div>
 
     const handleBackToAvailable = () => {
         const newSearchParams = new URLSearchParams(searchParams.toString());
@@ -379,12 +379,14 @@ const ClassDisplay: React.FC<ClassDisplayProps> = ({
                     </div>
                 )}
                 {displayedClasses.length > 0 && currentUser && (
-                    <div className="grid grid-cols-[repeat(auto-fill,minmax(360px,1fr))] justify-center gap-6">
-                        {displayedClasses.map((classData) => (
-                            <div key={classData.id} className="w-full max-w-sm mx-auto">
-                                <ClassCard classData={classData} currentUser={currentUser} onBookingSuccess={handleClassBookingSuccess} showPointsBonus={showPointsBonus} />
-                            </div>
-                        ))}
+                    <div className="w-full px-0 sm:px-3">
+                        <div className="space-y-4 max-w-[350px] mx-auto md:max-w-none md:mx-0 md:space-y-0 md:grid md:grid-cols-[repeat(auto-fill,minmax(350px,1fr))] md:gap-6">
+                            {displayedClasses.map((classData) => (
+                                <div key={classData.id} className="w-full">
+                                    <ClassCard classData={classData} currentUser={currentUser} onBookingSuccess={handleClassBookingSuccess} showPointsBonus={showPointsBonus} />
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
                 {canLoadMore && displayedClasses.length > 0 && (

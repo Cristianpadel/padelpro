@@ -4,8 +4,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { Home, Activity, Users, User as UserIconLucideProfile, ClipboardList, PartyPopper, ShoppingBag, SlidersHorizontal, Star, Trophy } from 'lucide-react';
+import { cn, getInitials } from '@/lib/utils';
+import { Home, Activity, Users, User as UserIconLucideProfile, ClipboardList, PartyPopper, ShoppingBag, SlidersHorizontal, Star, Trophy, Calendar, Zap } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
     getMockCurrentUser,
     getMockClubs,
@@ -175,15 +176,6 @@ export function BottomNavigationBar({ onMobileFiltersClick }: BottomNavigationBa
     
     const navItems = [
         {
-            key: 'agenda',
-            href: '/dashboard',
-            icon: ClipboardList,
-            label: 'Agenda',
-            isActive: pathname === '/dashboard' || pathname === '/schedule',
-            hidden: !currentUser,
-            badgeCount: confirmedBookingsCount,
-        },
-        {
             key: 'partidas',
             href: '/activities?view=partidas',
             icon: Users,
@@ -191,97 +183,117 @@ export function BottomNavigationBar({ onMobileFiltersClick }: BottomNavigationBa
             isActive: pathname === '/activities' && searchParams.get('view') === 'partidas',
             hidden: !currentUser || !(clubInfo?.showMatchesTabOnFrontend ?? true),
         },
-        // Optionally add classes tab on mobile if desired
         {
-            key: 'filters',
-            onClick: onMobileFiltersClick,
-            icon: SlidersHorizontal,
-            label: 'Filtros',
-            isActive: false, // This button is for action, not navigation state
-            hidden: !currentUser || !isActivitiesPage,
+            key: 'clases',
+            href: '/activities?view=clases',
+            icon: ClipboardList,
+            label: 'Clases',
+            isActive: pathname === '/activities' && searchParams.get('view') === 'clases',
+            hidden: !currentUser,
         },
         {
-            key: 'liberadas',
-            href: '/activities?filter=liberadas',
-            icon: Star,
-            label: 'Liberadas',
-            isActive: pathname === '/activities' && searchParams.get('filter') === 'liberadas',
+            key: 'match-day',
+            href: '/match-day',
+            icon: Calendar,
+            label: 'Match Day',
+            isActive: pathname === '/match-day' || pathname.startsWith('/match-day/'),
             hidden: !currentUser,
-            showNotificationDot: showGratisNotificationDot,
         },
         {
-            key: 'profile',
-            href: '/profile',
-            icon: UserIconLucideProfile,
-            label: 'Perfil',
-            isActive: pathname === '/profile',
+            key: 'partidas-fijas',
+            href: '/activities?view=matchpro',
+            icon: Zap,
+            label: 'P. Fijas',
+            isActive: pathname === '/activities' && searchParams.get('view') === 'matchpro',
             hidden: !currentUser,
+        },
+        {
+            key: 'tienda',
+            href: '/store',
+            icon: ShoppingBag,
+            label: 'Tienda',
+            isActive: pathname === '/store' || pathname.startsWith('/store/'),
+            hidden: !currentUser || !(clubInfo?.isStoreEnabled ?? true),
         },
     ];
 
-    const visibleNavItems = navItems.filter(item => !item.hidden);
+    // Define navigation items for guests (when no user is logged in)
+    const guestNavItems = [
+        {
+            key: 'home',
+            href: '/',
+            icon: Home,
+            label: 'Inicio',
+            isActive: pathname === '/',
+            hidden: false,
+        },
+        {
+            key: 'login',
+            href: '/auth/login',
+            icon: UserIconLucideProfile,
+            label: 'Acceder',
+            isActive: pathname.startsWith('/auth/login'),
+            hidden: false,
+        }
+    ];
+
+    const navItemsToUse = currentUser ? navItems : guestNavItems;
+    const visibleNavItems = navItemsToUse.filter(item => !item.hidden);
     const visibleNavItemsCount = visibleNavItems.length;
     const itemWidthClass = visibleNavItemsCount > 0 ? `w-1/${visibleNavItemsCount}` : 'w-full';
 
-     if (!isClient || !currentUser) {
-        return <div className="fixed bottom-0 left-0 right-0 h-16 bg-card border-t" />;
+     if (!isClient) {
+        return (
+            <>
+                <div className="fixed bottom-0 left-0 right-0 h-16 bg-card border-t md:hidden" />
+            </>
+        );
     }
 
-    if (pathname.startsWith('/auth') || pathname === '/') {
-        return null; // Don't show on auth pages
-    }
-
-
+    // Show on all pages in mobile
     return (
-        <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-30 md:hidden">
-            <div className="w-full px-1 h-16 flex justify-around items-center">
-                {visibleNavItems.map(item => {
-                    const IconComponent = item.icon;
-                    const buttonContent = (
-                        <>
-                            <div className="relative">
-                                <IconComponent className={cn("h-5 w-5 mb-0.5", item.isActive && "text-primary")} />
-                                {item.badgeCount !== undefined && item.badgeCount > 0 && (
-                                    <Badge variant="destructive" className="absolute -top-1.5 -right-2.5 px-1.5 py-0 text-[9px] h-4 min-w-[16px] flex items-center justify-center rounded-full">
-                                        {item.badgeCount}
-                                    </Badge>
-                                )}
-                                {'showNotificationDot' in item && item.showNotificationDot && (
-                                     <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-                                    </span>
-                                )}
-                            </div>
-                            <span className={cn("text-xs", item.isActive ? "text-primary" : "text-muted-foreground")}>{item.label}</span>
-                        </>
-                    );
-
-                    const className = cn(
-                        "flex flex-col items-center justify-center font-medium p-1 rounded-lg h-full transition-transform duration-200 ease-in-out",
-                        itemWidthClass,
-                        item.isActive && 'scale-110'
-                    );
-
-                    if ('href' in item && item.href) {
-                        return (
-                            <Link key={item.key} href={item.href} scroll={false} className={className}>
-                                {buttonContent}
-                            </Link>
+        <>
+            {/* Bottom Navigation Bar */}
+            <nav className="fixed bottom-0 left-0 right-0 border-t border-border shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-30 md:hidden">
+                {/* Fondo con gradiente blanco sutil - permite ver los iconos claramente */}
+                <div className="absolute inset-0 bg-gradient-to-t from-white/90 via-white/60 via-white/30 via-white/10 to-white/5 backdrop-blur-sm"></div>
+                <div className="relative w-full px-2 h-16 flex items-center">
+                    {visibleNavItems.map(item => {
+                        const IconComponent = item.icon;
+                        const buttonContent = (
+                            <>
+                                <div className="relative">
+                                    <IconComponent className={cn("h-4 w-4 mb-1", item.isActive && "text-primary")} />
+                                </div>
+                                <span className={cn("text-[10px] leading-none", item.isActive ? "text-primary" : "text-muted-foreground")}>{item.label}</span>
+                            </>
                         );
-                    }
-                    return (
-                        <button
-                            key={item.key}
-                            onClick={(item as any).onClick}
-                            className={className}
-                            aria-pressed={item.isActive}
-                        >
-                            {buttonContent}
-                        </button>
-                    );
-                })}
-            </div>
-        </nav>
+
+                        const className = cn(
+                            "flex flex-col items-center justify-center font-medium px-1 py-2 rounded-lg h-full transition-transform duration-200 ease-in-out flex-1",
+                            item.isActive && 'scale-105'
+                        );
+
+                        if ('href' in item && item.href) {
+                            return (
+                                <Link key={item.key} href={item.href} scroll={false} className={className}>
+                                    {buttonContent}
+                                </Link>
+                            );
+                        }
+                        return (
+                            <button
+                                key={item.key}
+                                onClick={(item as any).onClick}
+                                className={className}
+                                aria-pressed={item.isActive}
+                            >
+                                {buttonContent}
+                            </button>
+                        );
+                    })}
+                </div>
+            </nav>
+        </>
     );
 }

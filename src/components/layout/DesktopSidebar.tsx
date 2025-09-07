@@ -143,8 +143,8 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
 
     return (
         <>
-            <aside className="hidden md:flex md:flex-col md:w-72 md:p-4">
-                <div className="p-4 flex flex-col gap-4 sticky top-6 h-[calc(100vh-3rem)] max-h-[calc(100vh-3rem)] rounded-2xl bg-card border shadow-lg overflow-y-auto">
+            <aside className="hidden md:flex md:flex-col md:w-72 md:p-4 md:fixed md:h-screen md:left-0 md:top-0">
+                <div className="p-4 flex flex-col gap-4 top-6 h-[calc(100vh-3rem)] max-h-[calc(100vh-3rem)] rounded-2xl bg-card border shadow-lg">
                      <div className="flex flex-col items-center text-center gap-2">
                             <Avatar className="h-20 w-20 rounded-md">
                                 <AvatarImage src={clubInfo.logoUrl} alt={clubInfo.name} data-ai-hint="club logo" />
@@ -218,57 +218,6 @@ const DesktopSidebar: React.FC<DesktopSidebarProps> = ({
                 <TimeOfDayFilterDialog isOpen={isTimeFilterOpen} onOpenChange={setIsTimeFilterOpen} currentValue={timeSlotFilter} onSelect={handleTimeFilterChange} />
                 <ViewOptionsDialog isOpen={isViewOptionsOpen} onOpenChange={setIsViewOptionsOpen} viewPreference={viewPreference} onViewPreferenceChange={(pref) => handleViewPrefChange(pref, activeView as ActivityViewType)} />
             </aside>
-            
-             <header className="md:hidden p-4 bg-card border-b sticky top-0 z-20">
-                <div className="flex justify-between items-center">
-                    <Link href="/profile" className="flex items-center gap-2">
-                        <Avatar className="h-8 w-8"><AvatarImage src={currentUser.profilePictureUrl} alt={currentUser.name} /><AvatarFallback>{getInitials(currentUser.name)}</AvatarFallback></Avatar>
-                        <div><p className="font-semibold text-sm">{currentUser.name}</p></div>
-                    </Link>
-                    <Button variant="ghost" size="icon" onClick={onMobileFiltersClick}>
-                        <SlidersHorizontal />
-                    </Button>
-                </div>
-        {isActivitiesPage && (
-                <div className="mt-4">
-                    {(() => {
-                        const cols = (isClassesEnabled ? 1 : 0) + (isMatchProEnabled ? 1 : 0) + (isMatchesEnabled ? 1 : 0);
-                        const gridCols = `grid grid-cols-${cols || 2} gap-2`;
-                        return (
-                            <div className={gridCols}>
-                                {isClassesEnabled && (
-                                    <Button
-                                        size="sm"
-                                        variant={activeView === 'clases' ? 'default' : 'outline'}
-                                        onClick={() => updateUrlFilter('view', 'clases')}
-                                    >
-                                        <Activity className="mr-2 h-4 w-4" />Clases
-                                    </Button>
-                                )}
-                                {isMatchProEnabled && (
-                                    <Button
-                                        size="sm"
-                                        variant={isActivitiesPage && activeView === 'matchpro' ? 'default' : 'outline'}
-                                        onClick={() => updateUrlFilter('view', 'matchpro')}
-                                    >
-                                        <Trophy className="mr-2 h-4 w-4" />Partidas fijas
-                                    </Button>
-                                )}
-                                {isMatchesEnabled && (
-                                    <Button
-                                        size="sm"
-                                        variant={activeView === 'partidas' ? 'default' : 'outline'}
-                                        onClick={() => updateUrlFilter('view', 'partidas')}
-                                    >
-                                        <Users className="mr-2 h-4 w-4" />Partidas
-                                    </Button>
-                                )}
-                            </div>
-                        );
-                    })()}
-                </div>
-                )}
-            </header>
         </>
     );
 };
