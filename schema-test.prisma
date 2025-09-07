@@ -1,0 +1,58 @@
+// Test schema for classes only
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String        @id @default(cuid())
+  email            String        @unique
+  name             String?
+  bookings         Booking[]
+}
+
+model Club {
+  id          String      @id @default(cuid())
+  name        String
+  instructors Instructor[]
+  timeSlots   TimeSlot[]
+}
+
+model Instructor {
+  id                String    @id @default(cuid())
+  clubId            String
+  name              String
+  profilePictureUrl String?
+  club              Club      @relation(fields: [clubId], references: [id])
+  timeSlots         TimeSlot[]
+}
+
+model TimeSlot {
+  id           String       @id @default(cuid())
+  clubId       String
+  instructorId String?
+  start        DateTime
+  end          DateTime
+  maxPlayers   Int
+  totalPrice   Float?
+  level        String?
+  category     String?
+  club         Club         @relation(fields: [clubId], references: [id])
+  instructor   Instructor?  @relation(fields: [instructorId], references: [id])
+  bookings     Booking[]
+}
+
+model Booking {
+  id         String   @id @default(cuid())
+  userId     String
+  timeSlotId String
+  groupSize  Int      @default(1)
+  user       User     @relation(fields: [userId], references: [id])
+  timeSlot   TimeSlot @relation(fields: [timeSlotId], references: [id])
+
+  @@unique([userId, timeSlotId])
+}
