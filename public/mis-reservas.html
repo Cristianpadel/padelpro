@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Reservas</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .booking-card { border: 1px solid #ccc; margin: 10px 0; padding: 15px; border-radius: 5px; background-color: #f9f9f9; }
+        .confirmed { border-left: 4px solid #28a745; }
+        .nav { margin-bottom: 20px; }
+        .nav a { margin-right: 20px; color: #007bff; text-decoration: none; }
+        .nav a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <a href="/reservas.html">← Volver a Reservas</a>
+    </div>
+    
+    <h1>Mis Reservas</h1>
+    <div id="bookings"></div>
+
+    <script>
+        async function loadBookings() {
+            try {
+                const response = await fetch('/api/my/bookings?userId=user-alex-test');
+                const bookings = await response.json();
+                displayBookings(bookings);
+            } catch (error) {
+                document.getElementById('bookings').innerHTML = `<p>Error cargando reservas: ${error.message}</p>`;
+            }
+        }
+
+        function displayBookings(bookings) {
+            const container = document.getElementById('bookings');
+            
+            if (bookings.length === 0) {
+                container.innerHTML = '<p>No tienes reservas activas.</p>';
+                return;
+            }
+
+            container.innerHTML = '';
+
+            bookings.forEach(booking => {
+                const startTime = new Date(booking.timeSlot.start).toLocaleTimeString('es-ES', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+                const startDate = new Date(booking.timeSlot.start).toLocaleDateString('es-ES');
+                
+                const card = document.createElement('div');
+                card.className = `booking-card ${booking.status === 'CONFIRMED' ? 'confirmed' : ''}`;
+                
+                card.innerHTML = `
+                    <h3>${startDate} - ${startTime}</h3>
+                    <p><strong>Instructor:</strong> ${booking.timeSlot.instructor.name}</p>
+                    <p><strong>Nivel:</strong> ${booking.timeSlot.level || 'abierto'}</p>
+                    <p><strong>Estado:</strong> ${booking.status === 'CONFIRMED' ? 'Confirmada' : booking.status}</p>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+
+        // Cargar reservas al inicio
+        loadBookings();
+    </script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reservas - Funcional</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .class-card { border: 1px solid #ccc; margin: 10px 0; padding: 15px; border-radius: 5px; }
+        .available { background-color: #f0f8f0; }
+        .full { background-color: #f8f0f0; }
+        .button { background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+        .button:disabled { background-color: #ccc; cursor: not-allowed; }
+        .message { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div style="margin-bottom: 20px;">
+        <a href="/mis-reservas.html" style="color: #007bff; text-decoration: none;">Ver Mis Reservas →</a>
+    </div>
+    
+    <h1>Sistema de Reservas - Funcional</h1>
+    <div id="message"></div>
+    <div id="classes"></div>
+
+    <script>
+        let classes = [];
+
+        async function loadClasses() {
+            try {
+                const response = await fetch('/api/timeslots?clubId=club-1&date=2025-09-11');
+                classes = await response.json();
+                displayClasses();
+            } catch (error) {
+                showMessage('Error cargando clases: ' + error.message, 'error');
+            }
+        }
+
+        function displayClasses() {
+            const container = document.getElementById('classes');
+            container.innerHTML = '';
+
+            classes.forEach(cls => {
+                const startTime = new Date(cls.start).toLocaleTimeString('es-ES', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+
+                const available = cls.bookedPlayers < cls.maxPlayers;
+                
+                const card = document.createElement('div');
+                card.className = `class-card ${available ? 'available' : 'full'}`;
+                
+                card.innerHTML = `
+                    <h3>${startTime} - ${cls.instructorName}</h3>
+                    <p>Nivel: ${cls.level || 'abierto'}</p>
+                    <p>Reservas: ${cls.bookedPlayers}/${cls.maxPlayers}</p>
+                    <button class="button" 
+                            ${available ? '' : 'disabled'} 
+                            onclick="bookClass('${cls.id}')">
+                        ${available ? 'Reservar' : 'Completa'}
+                    </button>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+
+        async function bookClass(classId) {
+            try {
+                showMessage('Procesando reserva...', 'success');
+                
+                const response = await fetch('/api/classes/book', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        timeSlotId: classId,
+                        userId: 'user-alex-test'
+                    }),
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showMessage('¡Reserva exitosa! ' + result.message, 'success');
+                    loadClasses(); // Recargar clases
+                } else {
+                    showMessage('Error: ' + result.message, 'error');
+                }
+            } catch (error) {
+                showMessage('Error: ' + error.message, 'error');
+            }
+        }
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.className = 'message ' + type;
+            messageDiv.textContent = text;
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    messageDiv.textContent = '';
+                    messageDiv.className = '';
+                }, 3000);
+            }
+        }
+
+        // Cargar clases al inicio
+        loadClasses();
+    </script>
+</body>
+</html>

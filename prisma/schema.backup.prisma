@@ -1,0 +1,191 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String         @id @default(cuid())
+  email             String         @unique
+  name              String
+  profilePictureUrl String?
+  phone             String?
+  level             String         @default("principiante")
+  position          String?
+  clubId            String?
+  role              Role           @default("PLAYER")
+  preference        UserPreference @default("NORMAL")
+  visibility        UserVisibility @default("PUBLIC")
+  bio               String?
+  credits           Int            @default(0)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  bookings          Booking[]
+  instructorProfile Instructor?
+  playerMatches     MatchPlayer[]
+  club              Club?          @relation(fields: [clubId], references: [id])
+
+  @@map("User")
+}
+
+model Club {
+  id          String       @id @default(cuid())
+  name        String
+  address     String
+  phone       String?
+  email       String?
+  website     String?
+  description String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  courts      Court[]
+  instructors Instructor[]
+  matches     Match[]
+  timeSlots   TimeSlot[]
+  users       User[]
+
+  @@map("Club")
+}
+
+model Court {
+  id        String     @id @default(cuid())
+  number    Int
+  name      String?
+  clubId    String
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  club      Club       @relation(fields: [clubId], references: [id])
+  matches   Match[]
+  timeSlots TimeSlot[]
+
+  @@unique([clubId, number])
+  @@map("Court")
+}
+
+model Match {
+  id          String        @id @default(cuid())
+  clubId      String
+  courtId     String
+  startTime   DateTime
+  endTime     DateTime
+  type        MatchType     @default("CASUAL")
+  status      MatchStatus   @default("SCHEDULED")
+  isPrivate   Boolean       @default(false)
+  description String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  court       Court         @relation(fields: [courtId], references: [id])
+  club        Club          @relation(fields: [clubId], references: [id])
+  players     MatchPlayer[]
+
+  @@map("Match")
+}
+
+model MatchPlayer {
+  id       String  @id @default(cuid())
+  matchId  String
+  userId   String
+  position String?
+  score    Int?
+  user     User    @relation(fields: [userId], references: [id])
+  match    Match   @relation(fields: [matchId], references: [id])
+
+  @@unique([matchId, userId])
+  @@map("MatchPlayer")
+}
+
+model Instructor {
+  id                String     @id @default(cuid())
+  userId            String     @unique
+  name              String
+  specialties       String?
+  experience        String?
+  profilePictureUrl String?
+  hourlyRate        Float?
+  clubId            String
+  isActive          Boolean    @default(true)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  club              Club       @relation(fields: [clubId], references: [id])
+  user              User       @relation(fields: [userId], references: [id])
+  timeSlots         TimeSlot[]
+
+  @@map("Instructor")
+}
+
+model TimeSlot {
+  id           String     @id @default(cuid())
+  clubId       String
+  courtId      String
+  instructorId String
+  start        DateTime
+  end          DateTime
+  maxPlayers   Int        @default(4)
+  totalPrice   Float
+  level        String
+  category     String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  bookings     Booking[]
+  instructor   Instructor @relation(fields: [instructorId], references: [id])
+  court        Court      @relation(fields: [courtId], references: [id])
+  club         Club       @relation(fields: [clubId], references: [id])
+
+  @@map("TimeSlot")
+}
+
+model Booking {
+  id         String        @id @default(cuid())
+  userId     String
+  timeSlotId String
+  status     BookingStatus @default("CONFIRMED")
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  timeSlot   TimeSlot      @relation(fields: [timeSlotId], references: [id])
+  user       User          @relation(fields: [userId], references: [id])
+
+  @@unique([userId, timeSlotId])
+  @@map("Booking")
+}
+
+enum Role {
+  PLAYER
+  INSTRUCTOR
+  CLUB_ADMIN
+  SUPER_ADMIN
+}
+
+enum UserPreference {
+  NORMAL
+  QUIET
+  SOCIAL
+}
+
+enum UserVisibility {
+  PUBLIC
+  PRIVATE
+  FRIENDS
+}
+
+enum MatchType {
+  CASUAL
+  RANKED
+  TOURNAMENT
+}
+
+enum MatchStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum BookingStatus {
+  CONFIRMED
+  PENDING
+  CANCELLED
+}
