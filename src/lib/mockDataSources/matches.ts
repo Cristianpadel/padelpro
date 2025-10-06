@@ -1,6 +1,5 @@
 
 // src/lib/mockDataSources/matches.ts
-"use client";
 
 import { addHours, setHours, setMinutes, startOfDay, format, isSameDay, addDays, addMinutes, areIntervalsOverlapping, getDay, parse, differenceInHours, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';

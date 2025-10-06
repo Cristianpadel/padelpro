@@ -61,6 +61,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { userId, timeSlotId, groupSize = 1 } = body;
 
+    console.log('📝 Creating booking:', { userId, timeSlotId, groupSize });
+
     if (!userId || !timeSlotId) {
       return NextResponse.json(
         { error: 'userId and timeSlotId are required' },
@@ -68,28 +70,53 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar que el time slot existe y tiene espacio
-    const timeSlot = await prisma.$queryRaw`
-      SELECT 
-        ts.*,
-        COUNT(b.id) as bookedPlayers
-      FROM TimeSlot ts
-      LEFT JOIN Booking b ON ts.id = b.timeSlotId
-      WHERE ts.id = ${timeSlotId}
-      GROUP BY ts.id
+    // Verificar que el time slot existe
+    const timeSlotQuery = await prisma.$queryRaw`
+      SELECT * FROM TimeSlot WHERE id = ${timeSlotId}
     ` as any[];
 
-    if (timeSlot.length === 0) {
+    console.log('📊 TimeSlot query result:', timeSlotQuery);
+
+    if (timeSlotQuery.length === 0) {
       return NextResponse.json(
         { error: 'Time slot not found' },
         { status: 404 }
       );
     }
 
-    const slot = timeSlot[0];
-    if (slot.bookedPlayers + groupSize > slot.maxPlayers) {
+    const slot = timeSlotQuery[0];
+
+    // Contar reservas por separado para evitar problemas de BigInt
+    const bookingCount = await prisma.$queryRaw`
+      SELECT COUNT(*) as count FROM Booking 
+      WHERE timeSlotId = ${timeSlotId} AND status = 'CONFIRMED'
+    ` as any[];
+
+    const bookedPlayers = Number(bookingCount[0].count);
+
+    console.log(' Slot details:', { 
+      id: slot.id, 
+      maxPlayers: slot.maxPlayers, 
+      bookedPlayers: bookedPlayers,
+      availableSpots: slot.maxPlayers - bookedPlayers 
+    });
+
+    if (bookedPlayers + groupSize > slot.maxPlayers) {
       return NextResponse.json(
         { error: 'Not enough space in this class' },
+        { status: 400 }
+      );
+    }
+
+    // Verificar si ya existe una reserva del usuario para este slot
+    const existingBooking = await prisma.$queryRaw`
+      SELECT id FROM Booking 
+      WHERE userId = ${userId} AND timeSlotId = ${timeSlotId}
+    ` as any[];
+
+    if (existingBooking.length > 0) {
+      return NextResponse.json(
+        { error: 'User already has a booking for this time slot' },
         { status: 400 }
       );
     }
@@ -97,8 +124,8 @@ export async function POST(request: NextRequest) {
     // Crear la reserva
     const bookingId = `booking-${Date.now()}-${userId}`;
     await prisma.$executeRaw`
-      INSERT INTO Booking (id, userId, timeSlotId, groupSize, createdAt)
-      VALUES (${bookingId}, ${userId}, ${timeSlotId}, ${groupSize}, datetime('now'))
+      INSERT INTO Booking (id, userId, timeSlotId, groupSize, status, createdAt, updatedAt)
+      VALUES (${bookingId}, ${userId}, ${timeSlotId}, ${groupSize}, 'CONFIRMED', datetime('now'), datetime('now'))
     `;
 
     return NextResponse.json({ 
@@ -108,9 +135,13 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Error creating booking:', error);
+    console.error('❌ Error creating booking:', error);
+    console.error('❌ Error details:', error instanceof Error ? error.message : 'Unknown error');
     return NextResponse.json(
-      { error: 'Failed to create booking' },
+      { 
+        error: 'Failed to create booking',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   } finally {

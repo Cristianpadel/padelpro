@@ -1,5 +1,4 @@
 // src/lib/mockDataSources/clubs.ts
-"use client";
 import type { Club, DayOfWeek, TimeRange, CourtRateTier, Instructor } from '@/types';
 import * as state from './index';
 import { daysOfWeek } from '@/types';

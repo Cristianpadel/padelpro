@@ -1,5 +1,4 @@
 // src/lib/mockDataSources/shop.ts
-"use client";
 
 import type { Product } from '@/types';
 import * as state from './index';

@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PadelRacketIcon } from '@/components/PadelRacketIcon';
 import { useToast } from '@/hooks/use-toast';
-import { getMockClubs } from '@/lib/mockData';
+import { getMockClubs } from '@/lib/mockDataSources';
 import { Building } from 'lucide-react';
 
 export default function LoginClubAdminPage() {
@@ -27,14 +27,44 @@ export default function LoginClubAdminPage() {
 
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
-        const club = getMockClubs().find(c => c.adminEmail === email);
+        console.log('🔍 Intentando login con:', { email, password });
+        
+        // Forzar inicialización si es necesario
+        try {
+            const { performInitialization } = require('@/lib/mockDataSources/init');
+            performInitialization();
+        } catch (error) {
+            console.warn('Error en inicialización:', error);
+        }
+        
+        const allClubs = getMockClubs();
+        console.log('🏢 Clubs disponibles:', allClubs.map(c => ({ id: c.id, name: c.name, email: c.adminEmail, password: c.adminPassword })));
+        
+        const club = allClubs.find(c => c.adminEmail === email);
+        console.log('🎯 Club encontrado:', club);
+        
         if (club && club.adminPassword === password) {
+            console.log('✅ Login exitoso para club:', club.name);
             if (typeof window !== 'undefined') {
                 localStorage.setItem('activeAdminClubId', club.id);
             }
             toast({ title: "Acceso Concedido", description: `Bienvenido al panel de ${club.name}.` });
             router.push('/admin');
         } else {
+            console.log('❌ Login fallido - Credenciales incorrectas');
+            console.log('📧 Email buscado:', email);
+            console.log('🔑 Password proporcionado:', password);
+            console.log('🏢 Total clubs encontrados:', allClubs.length);
+            if (club) {
+                console.log('🔓 Password esperado:', club.adminPassword);
+            } else {
+                console.log('🚫 No se encontró club con email:', email);
+                console.log('📋 Emails disponibles:', allClubs.map(c => c.adminEmail));
+            }
+            
+            // Debug: mostrar alert además del toast
+            alert(`Login fallido. Clubs: ${allClubs.length}, Club encontrado: ${!!club}`);
+            
             toast({ title: "Acceso Denegado", description: "Credenciales de administrador de club incorrectas.", variant: "destructive" });
         }
     };

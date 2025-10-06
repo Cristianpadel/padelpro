@@ -3,19 +3,53 @@
 
 import React, { useState, useEffect } from 'react';
 import type { User } from '@/types';
-import { getMockCurrentUser } from '@/lib/mockData';
+import { getMockCurrentUser, performInitialization } from '@/lib/mockData';
 import ActivitiesPageContent from './ActivitiesPageContent';
 import PageSkeleton from '@/components/layout/PageSkeleton';
 
 export default function ActivitiesClientWrapper() {
+    // Ensure mock data is initialized when visiting Activities directly
+    performInitialization();
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [loadingUser, setLoadingUser] = useState(true);
 
     useEffect(() => {
         const fetchUser = async () => {
             setLoadingUser(true);
-            const user = await getMockCurrentUser();
-            setCurrentUser(user);
+            try {
+                // Intentar obtener usuario real de la API primero
+                const response = await fetch('/api/me', { 
+                    credentials: 'include',
+                    cache: 'no-store' 
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data?.user) {
+                        // Mapear campos de la BD al formato esperado por el frontend
+                        const mappedUser = {
+                            ...data.user,
+                            credit: data.user.credits || 0, // Mapear credits -> credit
+                            blockedCredit: data.user.blockedCredit || 0,
+                            loyaltyPoints: data.user.loyaltyPoints || 0
+                        };
+                        console.log('✅ Usuario real cargado:', mappedUser.name, 'Crédito:', mappedUser.credit);
+                        setCurrentUser(mappedUser);
+                        setLoadingUser(false);
+                        return;
+                    }
+                }
+                
+                // Fallback al usuario mock si no hay usuario real
+                console.log('⚠️ Fallback a usuario mock');
+                const user = await getMockCurrentUser();
+                setCurrentUser(user);
+            } catch (error) {
+                console.error('❌ Error cargando usuario:', error);
+                // Fallback al usuario mock en caso de error
+                const user = await getMockCurrentUser();
+                setCurrentUser(user);
+            }
             setLoadingUser(false);
         };
         fetchUser();

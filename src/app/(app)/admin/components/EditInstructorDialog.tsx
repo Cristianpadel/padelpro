@@ -28,7 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, UserCog, Mail, BuildingIcon, Hash, ToggleLeft, ToggleRight, AlertTriangle, Euro, Clock, Trash2, PlusCircle, Calendar as CalendarIconLucide } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { updateInstructor, getMockClubs, getMockPadelCourts } from '@/lib/mockData';
-import type { Instructor, Club, PadelCourt, DayOfWeek, InstructorRateTier } from '@/types';
+import type { Instructor, Club, PadelCourt, DayOfWeek, InstructorRateTier, InstructorAvailability } from '@/types';
 import { cn } from '@/lib/utils';
 import { daysOfWeek, dayOfWeekLabels } from '@/types';
 
@@ -50,6 +50,18 @@ const rateTierSchema = z.object({
   path: ["endTime"],
 });
 
+const availabilitySchema = z.object({
+  id: z.string(),
+  days: z.array(z.enum(["monday","tuesday","wednesday","thursday","friday","saturday","sunday"]))
+    .min(1, "Debes seleccionar al menos un día."),
+  startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Hora inválida."),
+  endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Hora inválida."),
+  isActive: z.boolean().optional().default(true),
+}).refine(data => data.startTime < data.endTime, {
+  message: "La hora de fin debe ser posterior a la de inicio.",
+  path: ["endTime"],
+});
+
 const formSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres.").max(50, "El nombre no puede exceder los 50 caracteres."),
   email: z.string().email("Debe ser un correo electrónico válido."),
@@ -59,6 +71,7 @@ const formSchema = z.object({
   assignedCourtNumber: z.coerce.number().int().optional().nullable(),
   defaultRatePerHour: z.coerce.number().min(0, "La tarifa no puede ser negativa.").optional(),
   rateTiers: z.array(rateTierSchema).optional(),
+  availability: z.array(availabilitySchema).optional(),
 });
 
 
@@ -87,12 +100,18 @@ const EditInstructorDialog: React.FC<EditInstructorDialogProps> = ({ instructor,
       assignedCourtNumber: instructor.assignedCourtNumber || null,
       defaultRatePerHour: instructor.defaultRatePerHour || 28,
       rateTiers: instructor.rateTiers || [],
+      availability: instructor.availability || [],
     },
   });
   
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "rateTiers",
+  });
+
+  const { fields: availabilityFields, append: appendAvailability, remove: removeAvailability } = useFieldArray({
+    control: form.control,
+    name: "availability",
   });
 
 
@@ -112,6 +131,7 @@ const EditInstructorDialog: React.FC<EditInstructorDialogProps> = ({ instructor,
           assignedCourtNumber: instructor.assignedCourtNumber || null,
           defaultRatePerHour: instructor.defaultRatePerHour || 28,
           rateTiers: instructor.rateTiers || [],
+          availability: instructor.availability || [],
         });
         if (instructor.assignedClubId) {
             const courts = getMockPadelCourts().filter(c => c.clubId === instructor.assignedClubId && c.isActive);
@@ -149,6 +169,7 @@ const EditInstructorDialog: React.FC<EditInstructorDialogProps> = ({ instructor,
             assignedCourtNumber: values.assignedCourtNumber || undefined, // Send undefined if null
             defaultRatePerHour: values.defaultRatePerHour,
             rateTiers: values.rateTiers,
+            availability: values.availability,
         };
 
         const result = await updateInstructor(instructor.id, updatePayload);
@@ -313,6 +334,100 @@ const EditInstructorDialog: React.FC<EditInstructorDialogProps> = ({ instructor,
                 ))}
                  <Button type="button" variant="outline" size="sm" onClick={() => append({ id: `tier-${Date.now()}`, days: [], startTime: '09:00', endTime: '10:00', rate: 50 })}>
                     <PlusCircle className="mr-2 h-4 w-4" /> Añadir Tarifa Especial
+                </Button>
+            </div>
+
+            <div className="space-y-4 rounded-lg border p-3 shadow-sm bg-secondary/20">
+                <FormLabel className="flex items-center">
+                    <Clock className="mr-2 h-4 w-4 text-muted-foreground"/>
+                    Horarios de Disponibilidad
+                </FormLabel>
+                <FormDescription className="text-xs text-muted-foreground">
+                    Define los horarios en los que el instructor está disponible para dar clases.
+                </FormDescription>
+                {availabilityFields.map((item, index) => (
+                    <div key={item.id} className="p-3 border rounded-md bg-background/50 relative space-y-2">
+                         <div className="grid grid-cols-2 gap-2">
+                             <FormField
+                                control={form.control}
+                                name={`availability.${index}.startTime`}
+                                render={({ field }) => (
+                                    <FormItem><FormLabel className="text-xs">Desde</FormLabel>
+                                        <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger></FormControl><SelectContent>{timeOptions.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent></Select>
+                                    <FormMessage className="text-xs" />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name={`availability.${index}.endTime`}
+                                render={({ field }) => (
+                                    <FormItem><FormLabel className="text-xs">Hasta</FormLabel>
+                                        <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger></FormControl><SelectContent>{timeOptions.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent></Select>
+                                    <FormMessage className="text-xs" />
+                                    </FormItem>
+                                )}
+                            />
+                         </div>
+                         <FormField
+                            control={form.control}
+                            name={`availability.${index}.days`}
+                            render={() => (
+                                <FormItem>
+                                    <FormLabel className="text-xs">Días de la Semana</FormLabel>
+                                    <div className="grid grid-cols-4 gap-1.5">
+                                        {(Object.keys(dayOfWeekLabels) as DayOfWeek[]).map((day) => (
+                                            <FormField
+                                                key={day}
+                                                control={form.control}
+                                                name={`availability.${index}.days`}
+                                                render={({ field }) => (
+                                                    <FormItem className="flex flex-row items-center space-x-1.5 space-y-0">
+                                                        <FormControl>
+                                                            <Switch
+                                                                className="h-4 w-7 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input"
+                                                                checked={field.value?.includes(day)}
+                                                                onCheckedChange={(checked) => {
+                                                                    return checked
+                                                                        ? field.onChange([...(field.value || []), day])
+                                                                        : field.onChange((field.value || []).filter((value) => value !== day))
+                                                                }}
+                                                            />
+                                                        </FormControl>
+                                                        <FormLabel className="text-xs font-normal">{dayOfWeekLabels[day].substring(0,3)}</FormLabel>
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        ))}
+                                    </div>
+                                    <FormMessage className="text-xs"/>
+                                </FormItem>
+                            )}
+                         />
+                         <FormField
+                            control={form.control}
+                            name={`availability.${index}.isActive`}
+                            render={({ field }) => (
+                                <FormItem className="flex flex-row items-center justify-between">
+                                    <div className="space-y-0.5">
+                                        <FormLabel className="text-xs">Activo</FormLabel>
+                                        <FormDescription className="text-xs">Desmarcar para deshabilitar temporalmente este horario</FormDescription>  
+                                    </div>
+                                    <FormControl>
+                                        <Switch 
+                                            checked={field.value ?? true} 
+                                            onCheckedChange={field.onChange}
+                                            className="h-4 w-7"
+                                        />
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                         />
+                         <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6" onClick={() => removeAvailability(index)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                    </div>
+                ))}
+                 <Button type="button" variant="outline" size="sm" onClick={() => appendAvailability({ id: `availability-${Date.now()}`, days: [], startTime: '09:00', endTime: '12:00', isActive: true })}>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Añadir Horario de Disponibilidad
                 </Button>
             </div>
 

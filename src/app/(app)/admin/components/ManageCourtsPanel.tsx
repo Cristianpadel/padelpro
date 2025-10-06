@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { PlusCircle, Trash2, Edit, ListChecks, ToggleLeft, ToggleRight, ServerIcon } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PlusCircle, Trash2, Edit, ListChecks, ToggleLeft, ToggleRight, ServerIcon, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription as FormFieldDescription } from '@/components/ui/form';
@@ -22,6 +23,9 @@ import { Label } from '@/components/ui/label';
 const courtFormSchema = z.object({
   courtNumber: z.coerce.number().int().min(1, "El número de pista debe ser al menos 1."),
   name: z.string().min(3, "El nombre debe tener al menos 3 caracteres.").max(50, "El nombre no puede exceder 50 caracteres."),
+  capacity: z.enum(['2', '4'], {
+    required_error: "Debes seleccionar la capacidad de la pista.",
+  }).transform((val) => parseInt(val) as 2 | 4),
 });
 type CourtFormData = z.infer<typeof courtFormSchema>;
 
@@ -40,7 +44,7 @@ const ManageCourtsPanel: React.FC<ManageCourtsPanelProps> = ({ clubId }) => {
 
   const form = useForm<CourtFormData>({
     resolver: zodResolver(courtFormSchema),
-    defaultValues: { courtNumber: undefined, name: "" },
+    defaultValues: { courtNumber: undefined, name: "", capacity: 4 },
   });
 
   const loadCourts = useCallback(async () => {
@@ -69,6 +73,7 @@ const ManageCourtsPanel: React.FC<ManageCourtsPanelProps> = ({ clubId }) => {
         clubId,
         courtNumber: data.courtNumber,
         name: data.name,
+        capacity: data.capacity,
       };
       if (editingCourt) {
         const result = await updatePadelCourt(editingCourt.id, courtPayload);
@@ -79,7 +84,7 @@ const ManageCourtsPanel: React.FC<ManageCourtsPanelProps> = ({ clubId }) => {
         if ('error' in result) throw new Error(result.error);
         toast({ title: "Pista Añadida", description: `La ${result.name} ha sido añadida.` });
       }
-      form.reset({ courtNumber: undefined, name: "" });
+      form.reset({ courtNumber: undefined, name: "", capacity: 4 });
       setEditingCourt(null);
       loadCourts();
     } catch (err: any) {
@@ -117,11 +122,12 @@ const ManageCourtsPanel: React.FC<ManageCourtsPanelProps> = ({ clubId }) => {
     setEditingCourt(court);
     form.setValue("courtNumber", court.courtNumber);
     form.setValue("name", court.name);
+    form.setValue("capacity", court.capacity);
   };
 
   const cancelEdit = () => {
     setEditingCourt(null);
-    form.reset({ courtNumber: undefined, name: "" });
+    form.reset({ courtNumber: undefined, name: "", capacity: 4 });
   };
 
   return (
@@ -160,6 +166,28 @@ const ManageCourtsPanel: React.FC<ManageCourtsPanelProps> = ({ clubId }) => {
                       <FormLabel>Nombre de la Pista</FormLabel>
                       <FormControl><Input placeholder={`Ej: Pista Central`} {...field} /></FormControl>
                       <FormFieldDescription>Nombre descriptivo (e.g., Pista Central, Pista Cristal).</FormFieldDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="capacity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Capacidad de Jugadores</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value?.toString()}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecciona capacidad" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="2">2 Jugadores (Singles)</SelectItem>
+                          <SelectItem value="4">4 Jugadores (Dobles)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormFieldDescription>Número máximo de jugadores que pueden jugar simultáneamente en esta pista.</FormFieldDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -203,7 +231,13 @@ const ManageCourtsPanel: React.FC<ManageCourtsPanelProps> = ({ clubId }) => {
                         <ServerIcon className={cn("h-6 w-6", court.isActive ? "text-green-600" : "text-muted-foreground")} />
                         <div>
                           <p className="font-semibold text-base">{court.name}</p>
-                          <p className="text-sm text-muted-foreground">Número: {court.courtNumber}</p>
+                          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                            <span>Número: {court.courtNumber}</span>
+                            <span className="flex items-center space-x-1">
+                              <Users className="h-3 w-3" />
+                              <span>{court.capacity} jugadores</span>
+                            </span>
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">

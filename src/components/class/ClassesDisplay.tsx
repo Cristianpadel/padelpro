@@ -56,6 +56,7 @@ export function ClassesDisplay({ selectedDate, clubId = 'club-1', currentUser, o
       clubId: apiSlot.clubId,
       instructorId: apiSlot.instructorId || `instructor-${apiSlot.id.substring(0, 8)}`,
       instructorName: apiSlot.instructorName || 'Instructor',
+      instructorProfilePicture: apiSlot.instructorProfilePicture,
       startTime: new Date(apiSlot.start),
       endTime: new Date(apiSlot.end),
       durationMinutes: 90,

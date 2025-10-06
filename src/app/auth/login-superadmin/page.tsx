@@ -27,11 +27,16 @@ export default function LoginSuperAdminPage() {
   const email = (form.elements.namedItem('email') as HTMLInputElement).value;
   const password = (form.elements.namedItem('password') as HTMLInputElement).value;
         
+        console.log('Email ingresado:', email);
+        console.log('Contraseña ingresada:', password);
+        console.log('Email esperado: superadmin@padelapp.com');
+        console.log('Contraseña esperada: superadminpass');
+        
         if (email === 'superadmin@padelapp.com' && password === 'superadminpass') {
              toast({ title: "Acceso de Super Admin Concedido", description: `Bienvenido.` });
              router.push('/superadmin');
         } else {
-             toast({ title: "Acceso Denegado", description: "Credenciales de Super Admin incorrectas.", variant: "destructive" });
+             toast({ title: "Acceso Denegado", description: `Email: "${email}" | Contraseña: "${password}"`, variant: "destructive" });
         }
     };
 

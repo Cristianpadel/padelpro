@@ -7,6 +7,8 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import ClassDisplay from '@/components/classfinder/ClassDisplay';
 import MatchDisplay from '@/components/classfinder/MatchDisplay';
 import MatchProDisplay from '@/components/classfinder/MatchProDisplay';
+import { ClassesDisplay } from '@/components/class/ClassesDisplay';
+import OpenGroupClasses from '@/components/class/OpenGroupClasses';
 import { getMockTimeSlots, fetchMatches, fetchMatchDayEventsForDate, createMatchesForDay, getMockClubs } from '@/lib/mockData';
 import type { TimeSlot, User, Match, MatchDayEvent, Club, ActivityViewType } from '@/types';
 import { addDays, isSameDay, format } from 'date-fns';
@@ -49,6 +51,7 @@ export default function ActivitiesPageContent({ currentUser, onCurrentUserUpdate
     const [allMatches, setAllMatches] = useState<Match[]>([]);
     const [matchDayEvents, setMatchDayEvents] = useState<MatchDayEvent[]>([]);
     const [isInitialLoading, setIsInitialLoading] = useState(true);
+    const [useNewClassesSystem, setUseNewClassesSystem] = useState(true);
 
     const [activitySelection, setActivitySelection] = useState<{
         isOpen: boolean;
@@ -105,8 +108,29 @@ export default function ActivitiesPageContent({ currentUser, onCurrentUserUpdate
         const loadInitialData = async () => {
             setIsInitialLoading(true);
             try {
-                const clubs = await getMockClubs();
-                const club = clubs[0];
+                // Usar clubes reales de la API
+                let clubs = [];
+                let club = null;
+                
+                try {
+                    const clubsResponse = await fetch('/api/clubs');
+                    if (clubsResponse.ok) {
+                        clubs = await clubsResponse.json();
+                        // Priorizar "Padel Estrella" por ID o nombre
+                        club = clubs.find(c => 
+                            c.id === 'cmftnbe2o0001tgkobtrxipip' || 
+                            c.name.toLowerCase().includes('estrella')
+                        ) || clubs[0];
+                        console.log('🏢 Clubes disponibles:', clubs.map(c => `${c.name} (${c.id})`));
+                        console.log('✅ Club seleccionado:', club?.name, 'ID:', club?.id);
+                    }
+                } catch (error) {
+                    console.log('Fallback to mock clubs');
+                    clubs = await getMockClubs();
+                    club = clubs[0];
+                }
+                
+                console.log('🏢 Club seleccionado:', club?.name, 'ID:', club?.id);
                 setCurrentClub(club);
                 
                 let slots: TimeSlot[] = [];
@@ -114,11 +138,26 @@ export default function ActivitiesPageContent({ currentUser, onCurrentUserUpdate
 
                 if (club) {
                     const [allSlots, fetchedMatches] = await Promise.all([
-                        Promise.resolve(getMockTimeSlots()),
+                        // Usar datos reales de la API en lugar de mock
+                        fetch(`/api/timeslots?clubId=${club.id}`)
+                            .then(async res => {
+                                if (!res.ok) {
+                                    console.error('❌ Error fetching timeslots:', res.status, res.statusText);
+                                    throw new Error(`HTTP error! status: ${res.status}`);
+                                }
+                                const data = await res.json();
+                                console.log('✅ Timeslots cargados:', data.length);
+                                return data;
+                            })
+                            .catch(error => {
+                                console.error('❌ Error en fetch de timeslots:', error);
+                                return getMockTimeSlots();
+                            }),
                         fetchMatches(club.id),
                     ]);
-                    slots = allSlots.filter(s => s.clubId === club.id);
+                    slots = Array.isArray(allSlots) ? allSlots.filter(s => s.clubId === club.id) : allSlots.filter(s => s.clubId === club.id);
                     existingMatches = fetchedMatches;
+                    console.log('📊 Total slots filtrados para club:', slots.length);
                 }
 
                 setAllTimeSlots(slots);
@@ -226,24 +265,78 @@ export default function ActivitiesPageContent({ currentUser, onCurrentUserUpdate
         
         switch(activeView) {
             case 'clases':
-                return <ClassDisplay
-                            {...restOfFilters}
-                            currentUser={currentUser}
-                            onBookingSuccess={handleBookingSuccess}
+                return (
+                    <div className="space-y-4">
+                        {/* Toggle para alternar entre sistemas de clases */}
+                        <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div>
+                                <h3 className="font-semibold text-blue-900">
+                                    {useNewClassesSystem ? 'Sistema de Clases (Base de Datos)' : 'Sistema de Clases (Mock)'}
+                                </h3>
+                                <p className="text-sm text-blue-700">
+                                    {useNewClassesSystem 
+                                        ? 'Mostrando clases reales desde la base de datos con instructores y reservas'
+                                        : 'Mostrando clases del sistema mock original'
+                                    }
+                                </p>
+                            </div>
+                            <Button
+                                onClick={() => setUseNewClassesSystem(!useNewClassesSystem)}
+                                variant={useNewClassesSystem ? "default" : "outline"}
+                                className="ml-4"
+                            >
+                                {useNewClassesSystem ? 'Usar Mock' : 'Usar BD'}
+                            </Button>
+                        </div>
+
+                        {/* Renderizar el sistema correspondiente */}
+                        {useNewClassesSystem ? (
+                            <ClassesDisplay 
+                                selectedDate={selectedDate}
+                                clubId={currentClub?.id || "club-1"}
+                                currentUser={currentUser}
+                                onBookingSuccess={triggerRefresh}
+                            />
+                        ) : (
+                            <ClassDisplay
+                                {...restOfFilters}
+                                currentUser={currentUser}
+                                onBookingSuccess={handleBookingSuccess}
+                                selectedDate={selectedDate}
+                                onDateChange={handleDateChange}
+                                filterByFavoriteInstructors={activityFilters.filterByFavorites}
+                                allClasses={preFilteredClasses}
+                                isLoading={isInitialLoading}
+                                dateStripIndicators={dateStripIndicators}
+                                dateStripDates={dateStripDates}
+                                onViewPrefChange={onViewPrefChangeCompat}
+                                selectedLevelsSheet={[]}
+                                sortBy={'time'}
+                                filterAlsoConfirmedClasses={false}
+                                proposalView={'join'}
+                                showPointsBonus={showPointsBonus}
+                            />
+                        )}
+                    </div>
+                );
+            case 'grupos':
+                return (
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg">
+                            <div>
+                                <h3 className="font-semibold text-green-900">🎯 Clases Grupales Abiertas</h3>
+                                <p className="text-sm text-green-700">
+                                    Únete a clases propuestas por instructores. Cuando se complete el grupo (4 jugadores), se asignará automáticamente una cancha.
+                                </p>
+                            </div>
+                        </div>
+                        <OpenGroupClasses 
+                            clubId="club-1"
                             selectedDate={selectedDate}
-                            onDateChange={handleDateChange}
-                            filterByFavoriteInstructors={activityFilters.filterByFavorites}
-                            allClasses={preFilteredClasses}
-                            isLoading={isInitialLoading}
-                            dateStripIndicators={dateStripIndicators}
-                            dateStripDates={dateStripDates}
-                            onViewPrefChange={onViewPrefChangeCompat}
-                            selectedLevelsSheet={[]}
-                            sortBy={'time'}
-                            filterAlsoConfirmedClasses={false}
-                            proposalView={'join'}
-                            showPointsBonus={showPointsBonus}
-                        />;
+                            currentUserId={currentUser?.id || 'user-1'}
+                        />
+                    </div>
+                );
             case 'partidas':
                  return <MatchDisplay
                             {...restOfFilters}

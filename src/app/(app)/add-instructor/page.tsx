@@ -1,12 +1,12 @@
 // src/app/(app)/add-instructor/page.tsx
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import AddInstructorForm from './components/AddInstructorForm';
 import { getMockInstructors } from '@/lib/mockData';
 import type { Instructor } from '@/types';
 
-export default function AddInstructorPage() {
+function AddInstructorContent() {
     const [allInstructors, setAllInstructors] = useState<Instructor[]>([]);
 
     useEffect(() => {
@@ -39,5 +39,13 @@ export default function AddInstructorPage() {
                 </div>
             </main>
         </div>
+    );
+}
+
+export default function AddInstructorPage() {
+    return (
+        <Suspense fallback={<div className="flex justify-center items-center h-screen">Cargando...</div>}>
+            <AddInstructorContent />
+        </Suspense>
     );
 }

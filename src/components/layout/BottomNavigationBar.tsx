@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { cn, getInitials } from '@/lib/utils';
-import { Home, Activity, Users, User as UserIconLucideProfile, ClipboardList, PartyPopper, ShoppingBag, SlidersHorizontal, Star, Trophy, Calendar, Zap } from 'lucide-react';
+import { Home, Activity, Users, User as UserIconLucideProfile, ClipboardList, PartyPopper, ShoppingBag, SlidersHorizontal, Star, Trophy, Calendar, Zap, Building } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
     getMockCurrentUser,
@@ -192,6 +192,14 @@ export function BottomNavigationBar({ onMobileFiltersClick }: BottomNavigationBa
             hidden: !currentUser,
         },
         {
+            key: 'grupos',
+            href: '/activities?view=grupos',
+            icon: Users,
+            label: 'Grupos',
+            isActive: pathname === '/activities' && searchParams.get('view') === 'grupos',
+            hidden: !currentUser,
+        },
+        {
             key: 'match-day',
             href: '/match-day',
             icon: Calendar,
@@ -214,6 +222,14 @@ export function BottomNavigationBar({ onMobileFiltersClick }: BottomNavigationBa
             label: 'Tienda',
             isActive: pathname === '/store' || pathname.startsWith('/store/'),
             hidden: !currentUser || !(clubInfo?.isStoreEnabled ?? true),
+        },
+        {
+            key: 'admin',
+            href: '/admin',
+            icon: Building,
+            label: 'Acceso Club',
+            isActive: pathname === '/admin' || pathname.startsWith('/admin/'),
+            hidden: !currentUser,
         },
     ];
 

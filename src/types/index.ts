@@ -77,7 +77,7 @@ export const timeSlotFilterOptions: { value: TimeOfDayFilterType, label: string 
 
 export type ViewPreference = 'normal' | 'myInscriptions' | 'myConfirmed' | 'withPlayers' | 'completed';
 
-export type ActivityViewType = 'clases' | 'partidas' | 'matchpro';
+export type ActivityViewType = 'clases' | 'grupos' | 'partidas' | 'matchpro';
 
 // --- Interfaces & Rich Types ---
 
@@ -119,6 +119,14 @@ export interface InstructorRateTier {
   rate: number;
 }
 
+export interface InstructorAvailability {
+  id: string;
+  days: DayOfWeek[];
+  startTime: string; // "HH:mm"
+  endTime: string;   // "HH:mm"
+  isActive: boolean;
+}
+
 export interface Instructor extends User {
     isBlocked?: boolean;
     assignedClubId?: string;
@@ -127,6 +135,7 @@ export interface Instructor extends User {
     unavailableHours?: Partial<Record<DayOfWeek, TimeRange[]>>;
     defaultRatePerHour?: number;
     rateTiers?: InstructorRateTier[];
+    availability?: InstructorAvailability[];
     experience?: string[];
     languages?: string[];
 }
@@ -226,6 +235,7 @@ export interface PadelCourt {
     clubId: string;
     courtNumber: number;
     isActive: boolean;
+    capacity: 2 | 4; // Number of players the court can accommodate
 }
 
 export interface TimeSlot {
@@ -236,6 +246,7 @@ export interface TimeSlot {
     durationMinutes: number;
     instructorId: string;
     instructorName: string;
+    instructorProfilePicture?: string;
     maxPlayers: number;
     courtNumber?: number;
     level: ClassPadelLevel;

@@ -27,6 +27,9 @@ interface Booking {
   status: 'PENDING' | 'CONFIRMED' | 'CANCELLED';
   name: string;
   profilePictureUrl?: string;
+  userLevel?: string;
+  userGender?: string;
+  createdAt?: string;
 }
 
 const ClassCardReal: React.FC<ClassCardRealProps> = ({
@@ -63,22 +66,33 @@ const ClassCardReal: React.FC<ClassCardRealProps> = ({
       
       // Agregar timeout para evitar requests que se cuelguen
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos timeout
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 segundos timeout
       
       const response = await fetch(`/api/classes/${classData.id}/bookings`, {
-        signal: controller.signal
+        signal: controller.signal,
+        cache: 'no-store' // Evitar cache que pueda causar problemas
       });
       clearTimeout(timeoutId);
       
       console.log('📡 Response status:', response.status);
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ API Response OK:', data.length, 'bookings');
-        console.log('📋 Bookings data:', data);
+        console.log('✅ API Response OK:', data.length, 'bookings for class:', classData.id.substring(0, 8));
+        console.log('📋 Bookings data:', JSON.stringify(data, null, 2));
         if (Array.isArray(data)) {
           setBookings(data);
           setBookingsLoaded(true);
-          console.log('✅ Bookings actualizados en estado:', data);
+          console.log('✅ Bookings actualizados en estado. Total bookings:', data.length);
+          
+          // LOG ADICIONAL: Verificar estructura de cada booking
+          data.forEach((booking, index) => {
+            console.log(`📋 Booking ${index + 1}:`, {
+              userId: booking.userId,
+              groupSize: booking.groupSize,
+              status: booking.status,
+              name: booking.name
+            });
+          });
         } else {
           console.warn('❌ API retornó datos no válidos:', data);
           // No resetear bookings si ya se cargaron antes exitosamente
@@ -125,14 +139,10 @@ const ClassCardReal: React.FC<ClassCardRealProps> = ({
     console.log('🆔 User ID que se va a enviar:', currentUser.id);
     console.log('📋 Tipo de currentUser.id:', typeof currentUser.id);
     
-    // 🔧 TEMPORAL: Forzar user-1 para evitar problemas de cache
-    const forceUserId = 'user-1';
-    console.log('🔧 FORZANDO USER ID:', forceUserId);
-    
     setBooking(true);
     try {
       console.log('📝 Enviando booking:', { 
-        userId: forceUserId, 
+        userId: currentUser.id, 
         timeSlotId: classData.id, 
         groupSize 
       });
@@ -142,7 +152,7 @@ const ClassCardReal: React.FC<ClassCardRealProps> = ({
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          userId: forceUserId,
+          userId: currentUser.id,
           timeSlotId: classData.id,
           groupSize
         })
@@ -158,11 +168,22 @@ const ClassCardReal: React.FC<ClassCardRealProps> = ({
         onBookingSuccess();
       } else {
         const error = await response.json();
-        toast({
-          title: "Error en la reserva",
-          description: error.error || "No se pudo completar la reserva",
-          variant: "destructive"
-        });
+        
+        // Mensaje especial para saldo insuficiente
+        if (error.error?.includes('Saldo insuficiente') || error.details) {
+          toast({
+            title: "💰 Saldo Insuficiente",
+            description: error.details || error.error || "No tienes saldo suficiente para esta reserva",
+            variant: "destructive",
+            duration: 5000
+          });
+        } else {
+          toast({
+            title: "Error en la reserva",
+            description: error.error || "No se pudo completar la reserva",
+            variant: "destructive"
+          });
+        }
       }
     } catch (error) {
       toast({
@@ -213,14 +234,21 @@ const ClassCardReal: React.FC<ClassCardRealProps> = ({
 
   const getAvailableSpots = (groupSize: number) => {
     if (!Array.isArray(bookings)) return groupSize;
-    const bookedForSize = bookings.filter(b => b.groupSize === groupSize).length;
-    return groupSize - bookedForSize;
+    // Contar cuántos usuarios han reservado específicamente para este groupSize
+    const modalityBookedUsers = bookings.filter(b => 
+      b.status !== 'CANCELLED' && b.groupSize === groupSize
+    ).length;
+    return Math.max(0, groupSize - modalityBookedUsers);
   };
 
   const isUserBooked = (groupSize: number) => {
-    if (!Array.isArray(bookings)) return false;
-    // 🔧 TEMPORAL: Forzar user-1 para mostrar reservas correctamente
-    return bookings.some(b => b.groupSize === groupSize && b.userId === 'user-1');
+    if (!Array.isArray(bookings) || !currentUser?.id) return false;
+    // Verificar si el usuario actual tiene una reserva específica para este groupSize
+    return bookings.some(b => 
+      b.status !== 'CANCELLED' && 
+      b.userId === currentUser.id && 
+      b.groupSize === groupSize
+    );
   };
 
   const getInitials = (name: string) => {
@@ -228,10 +256,24 @@ const ClassCardReal: React.FC<ClassCardRealProps> = ({
   };
 
   // Función para formatear hora de manera consistente (evita problemas de hidratación)
-  const formatTime = (date: Date) => {
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    return `${hours}:${minutes}`;
+  const formatTime = (date: Date | string) => {
+    try {
+      // Si es string, convertir a Date
+      const dateObj = date instanceof Date ? date : new Date(date);
+      
+      // Validar que es un Date válido
+      if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) {
+        console.warn('⚠️ Invalid date in formatTime:', date);
+        return '00:00';
+      }
+      
+      const hours = dateObj.getHours().toString().padStart(2, '0');
+      const minutes = dateObj.getMinutes().toString().padStart(2, '0');
+      return `${hours}:${minutes}`;
+    } catch (error) {
+      console.error('❌ Error in formatTime:', error, 'for date:', date);
+      return '00:00';
+    }
   };
 
   const renderStarsDisplay = (rating: number) => {
@@ -334,6 +376,73 @@ const ClassCardReal: React.FC<ClassCardRealProps> = ({
 
   const courtAssignment = getCourtAssignment();
 
+  // Determinar categoría dinámica basada en el primer usuario inscrito
+  const getDynamicCategory = () => {
+    if (!Array.isArray(bookings) || bookings.length === 0) {
+      return { category: String(classData.category) || 'General', isAssigned: false };
+    }
+
+    // Buscar el primer usuario inscrito (ordenado por fecha de creación)
+    const sortedBookings = [...bookings].sort((a, b) => 
+      new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
+    );
+    
+    const firstUser = sortedBookings[0];
+    if (firstUser?.userGender) {
+      // Mapear diferentes tipos de género a la categoría mostrada
+      const genderMapping = {
+        'chica': 'Chica',
+        'chico': 'Chico', 
+        'femenino': 'Chica',
+        'masculino': 'Chico',
+        'mujer': 'Chica',
+        'hombre': 'Chico'
+      };
+      
+      const gender = firstUser.userGender.toLowerCase();
+      const category = genderMapping[gender as keyof typeof genderMapping] || 'Mixto';
+      
+      return { category, isAssigned: true };
+    }
+
+    return { category: String(classData.category) || 'General', isAssigned: false };
+  };
+
+  // Determinar nivel dinámico basado en el primer usuario inscrito  
+  const getDynamicLevel = () => {
+    if (!Array.isArray(bookings) || bookings.length === 0) {
+      return { level: String(classData.level) || 'Abierto', isAssigned: false };
+    }
+
+    // Buscar el primer usuario inscrito
+    const sortedBookings = [...bookings].sort((a, b) => 
+      new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
+    );
+    
+    const firstUser = sortedBookings[0];
+    if (firstUser?.userLevel) {
+      // Mapear nivel de usuario a rango de nivel con rangos numéricos
+      const levelRanges = {
+        'principiante': '1.0 - 2.5',
+        'inicial-medio': '2.0 - 3.5', 
+        'intermedio': '3.0 - 4.5',
+        'avanzado': '4.0 - 5.5',
+        'profesional': '5.0 - 6.0',
+        'abierto': 'Abierto'
+      };
+      
+      const userLevel = firstUser.userLevel.toLowerCase();
+      const levelRange = levelRanges[userLevel as keyof typeof levelRanges] || firstUser.userLevel;
+      
+      return { level: levelRange, isAssigned: true };
+    }
+
+    return { level: String(classData.level) || 'Abierto', isAssigned: false };
+  };
+
+  const categoryInfo = getDynamicCategory();
+  const levelInfo = getDynamicLevel();
+
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden max-w-sm mx-auto">
       {/* Header with Instructor Info */}
@@ -341,12 +450,18 @@ const ClassCardReal: React.FC<ClassCardRealProps> = ({
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             {/* Instructor Avatar */}
-            <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden">
-              <img 
-                src={`https://avatar.vercel.sh/${classData.instructorName || 'Carlos Santana'}.png?size=48`}
-                alt={classData.instructorName || 'Instructor'}
-                className="w-full h-full object-cover"
-              />
+            <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center">
+              {classData.instructorProfilePicture ? (
+                <img 
+                  src={classData.instructorProfilePicture}
+                  alt={classData.instructorName || 'Instructor'}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-semibold text-lg">
+                  {(classData.instructorName || 'I').charAt(0).toUpperCase()}
+                </div>
+              )}
             </div>
             
             {/* Instructor Name and Rating */}
@@ -381,15 +496,37 @@ const ClassCardReal: React.FC<ClassCardRealProps> = ({
         <div className="grid grid-cols-3 gap-4 text-center text-sm text-gray-600 border-b border-gray-100 pb-3">
           <div>
             <div className="font-medium text-gray-900">Nivel</div>
-            <div className="capitalize">{String(classData.level) || 'Abierto'}</div>
+            <div 
+              className={`capitalize px-2 py-1 rounded-full text-xs font-medium ${
+                levelInfo.isAssigned 
+                  ? 'bg-blue-100 text-blue-700' 
+                  : 'text-gray-600'
+              }`}
+            >
+              {levelInfo.level}
+            </div>
           </div>
           <div>
             <div className="font-medium text-gray-900">Cat.</div>
-            <div className="capitalize">{String(classData.category) || 'General'}</div>
+            <div 
+              className={`capitalize px-2 py-1 rounded-full text-xs font-medium ${
+                categoryInfo.isAssigned 
+                  ? 'bg-blue-100 text-blue-700' 
+                  : 'text-gray-600'
+              }`}
+            >
+              {categoryInfo.category}
+            </div>
           </div>
           <div>
             <div className="font-medium text-gray-900">Pista</div>
-            <div>
+            <div 
+              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                courtAssignment.isAssigned 
+                  ? 'bg-blue-100 text-blue-700' 
+                  : 'text-gray-600'
+              }`}
+            >
               {courtAssignment.isAssigned 
                 ? `Pista ${courtAssignment.courtNumber}` 
                 : 'Pista'
@@ -438,9 +575,21 @@ const ClassCardReal: React.FC<ClassCardRealProps> = ({
       {/* Pricing Options */}
       <div className="px-4 py-4 space-y-3">
         {[1, 2, 3, 4].map((players) => {
-          const bookedUsers = Array.isArray(bookings) 
-            ? bookings.filter(b => b.groupSize === players && b.status !== 'CANCELLED') 
+          // CORRECCIÓN: Solo mostrar reservas que corresponden exactamente a esta modalidad
+          const modalityBookings = Array.isArray(bookings) 
+            ? bookings.filter(b => b.status !== 'CANCELLED' && b.groupSize === players) 
             : [];
+          
+          // Debug log para mostrar el filtrado
+          if (bookings.length > 0) {
+            console.log(`🎯 Clase ${classData.id.substring(0, 8)}: Modalidad ${players} jugadores`);
+            console.log(`📋 Todas las reservas:`, bookings.map(b => `${b.name}(${b.groupSize})`));
+            console.log(`📋 Reservas filtradas para ${players}:`, modalityBookings.map(b => `${b.name}(${b.groupSize})`));
+          }
+          
+          // Para esta modalidad específica, mostrar solo las reservas que tienen este groupSize
+          const bookedUsers = modalityBookings.slice(0, players);
+          
           const isUserBookedForOption = isUserBooked(players);
           const pricePerPerson = (classData.totalPrice || 55) / players;
           
@@ -455,21 +604,42 @@ const ClassCardReal: React.FC<ClassCardRealProps> = ({
                 {Array.from({ length: players }).map((_, index) => {
                   const booking = bookedUsers[index];
                   const isOccupied = !!booking;
-                  const isCurrentUser = booking?.userId === 'user-1';
+                  const isCurrentUser = booking?.userId === currentUser?.id;
                   
                   return (
                     <div
                       key={index}
-                      className={`w-8 h-8 rounded-full border-2 border-dashed border-green-400 flex items-center justify-center text-green-400 text-lg font-bold ${
-                        isOccupied ? 'bg-green-100' : 'bg-white'
-                      } ${isCurrentUser ? 'ring-2 ring-blue-400' : ''}`}
+                      className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-lg font-bold transition-all ${
+                        isOccupied 
+                          ? 'border-green-500 bg-white' 
+                          : 'border-dashed border-green-400 bg-white text-green-400'
+                      } ${isCurrentUser ? 'ring-2 ring-blue-400 ring-offset-1' : ''}`}
+                      title={isOccupied ? booking.name : 'Disponible'}
                     >
                       {isOccupied ? (
-                        <div className="w-6 h-6 rounded-full bg-green-400 flex items-center justify-center">
-                          <span className="text-white text-xs font-bold">
-                            {getInitials(booking.name || booking.userId)}
-                          </span>
-                        </div>
+                        booking.profilePictureUrl ? (
+                          <div className="w-full h-full rounded-full overflow-hidden">
+                            <img 
+                              src={booking.profilePictureUrl} 
+                              alt={booking.name}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                // Fallback a iniciales si la imagen falla
+                                const target = e.currentTarget;
+                                const parent = target.parentElement?.parentElement;
+                                if (parent) {
+                                  parent.innerHTML = `<div class="w-6 h-6 rounded-full bg-green-400 flex items-center justify-center"><span class="text-white text-xs font-bold">${getInitials(booking.name || booking.userId)}</span></div>`;
+                                }
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-green-400 flex items-center justify-center">
+                            <span className="text-white text-xs font-bold">
+                              {getInitials(booking.name || booking.userId)}
+                            </span>
+                          </div>
+                        )
                       ) : (
                         '+'
                       )}

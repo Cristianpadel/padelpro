@@ -1,5 +1,5 @@
 // lib/mockDataSources/init.ts
-"use client";
+// src/lib/mockDataSources/init.ts
 
 import {
   initializeMockStudents,
@@ -83,24 +83,94 @@ export function performInitialization() {
         },
   shopReservationFee: 10, // Default reservation fee for store reservations (in euros)
     },
+    {
+        id: 'club-mallorca',
+        name: 'Padel Club Mallorca',
+        location: 'Mallorca, España',
+        logoUrl: 'https://placehold.co/80x80.png?text=PCM',
+        showClassesTabOnFrontend: true,
+        showMatchesTabOnFrontend: true,
+        isMatchDayEnabled: true,
+        isMatchProEnabled: true,
+        isStoreEnabled: true,
+        pointSettings: defaultPointSettings,
+        adminEmail: 'padelclubmallorca@hotmail.com',
+        adminPassword: '1234567890',
+        levelRanges: [
+            { name: "Iniciación", min: '1.0' as import('@/types').NumericMatchPadelLevel, max: '2.0' as import('@/types').NumericMatchPadelLevel, color: 'hsl(142.1 76.2% 36.3%)' },
+            { name: "Intermedio", min: '2.5' as import('@/types').NumericMatchPadelLevel, max: '3.5' as import('@/types').NumericMatchPadelLevel, color: 'hsl(210 100% 56%)' },
+            { name: "Avanzado", min: '4.0' as import('@/types').NumericMatchPadelLevel, max: '5.5' as import('@/types').NumericMatchPadelLevel, color: 'hsl(24.6 95% 53.1%)' },
+            { name: "Competición", min: '6.0' as import('@/types').NumericMatchPadelLevel, max: '7.0' as import('@/types').NumericMatchPadelLevel, color: 'hsl(346.8 77.2% 49.8%)' },
+        ],
+        courtRateTiers: [
+          { id: uuidv4(), name: "Valle", days: ["monday", "tuesday", "wednesday", "thursday", "friday"], startTime: "09:00", endTime: "18:00", rate: 20 },
+          { id: uuidv4(), name: "Punta", days: ["monday", "tuesday", "wednesday", "thursday", "friday"], startTime: "18:00", endTime: "22:00", rate: 28 },
+          { id: uuidv4(), name: "Fines de Semana", days: ["saturday", "sunday"], startTime: "09:00", endTime: "22:00", rate: 30 }
+        ],
+        pointBookingSlots: {
+            saturday: [{ start: "14:00", end: "17:00" }],
+            sunday: [{ start: "14:00", end: "17:00" }],
+        },
+        cardShadowEffect: {
+            enabled: true,
+            color: '#808080',
+            intensity: 0.7,
+        },
+        shopReservationFee: 10,
+    },
+    {
+        id: 'club-test',
+        name: 'Club de Prueba',
+        location: 'Madrid, España',
+        logoUrl: 'https://placehold.co/80x80.png?text=TEST',
+        showClassesTabOnFrontend: true,
+        showMatchesTabOnFrontend: true,
+        isMatchDayEnabled: true,
+        isMatchProEnabled: true,
+        isStoreEnabled: true,
+        pointSettings: defaultPointSettings,
+        adminEmail: 'test@test.com',
+        adminPassword: '123',
+        levelRanges: [
+            { name: "Iniciación", min: '1.0' as import('@/types').NumericMatchPadelLevel, max: '2.0' as import('@/types').NumericMatchPadelLevel, color: 'hsl(142.1 76.2% 36.3%)' },
+        ],
+        courtRateTiers: [
+          { id: uuidv4(), name: "Valle", days: ["monday", "tuesday", "wednesday", "thursday", "friday"], startTime: "09:00", endTime: "18:00", rate: 20 },
+        ],
+        pointBookingSlots: {
+            saturday: [{ start: "14:00", end: "17:00" }],
+        },
+        cardShadowEffect: {
+            enabled: true,
+            color: '#808080',
+            intensity: 0.7,
+        },
+        shopReservationFee: 10,
+    },
     // ... other clubs
   ];
   initializeMockClubs(initialClubs);
 
   // --- Initialize Padel Courts ---
   const initialPadelCourts = [
-      { id: 'court-1', clubId: 'club-1', courtNumber: 1, name: 'Pista Central', isActive: true },
-      { id: 'court-2', clubId: 'club-1', courtNumber: 2, name: 'Pista 2', isActive: true },
-      { id: 'court-3', clubId: 'club-1', courtNumber: 3, name: 'Pista 3 (Cristal)', isActive: true },
-      { id: 'court-4', clubId: 'club-1', courtNumber: 4, name: 'Pista 4', isActive: true },
-      { id: 'court-5', clubId: 'club-1', courtNumber: 5, name: 'Pista 5', isActive: false },
+      // Pistas para Padel Estrella (club-1)
+      { id: 'court-1', clubId: 'club-1', courtNumber: 1, name: 'Pista Central', isActive: true, capacity: 4 as const },
+      { id: 'court-2', clubId: 'club-1', courtNumber: 2, name: 'Pista 2', isActive: true, capacity: 4 as const },
+      { id: 'court-3', clubId: 'club-1', courtNumber: 3, name: 'Pista 3 (Cristal)', isActive: true, capacity: 4 as const },
+      { id: 'court-4', clubId: 'club-1', courtNumber: 4, name: 'Pista 4', isActive: true, capacity: 2 as const },
+      { id: 'court-5', clubId: 'club-1', courtNumber: 5, name: 'Pista 5', isActive: false, capacity: 4 as const },
+      
+      // Pistas para Padel Club Mallorca (club-mallorca)
+      { id: 'court-mallorca-1', clubId: 'club-mallorca', courtNumber: 1, name: 'Pista Mar', isActive: true, capacity: 4 as const },
+      { id: 'court-mallorca-2', clubId: 'club-mallorca', courtNumber: 2, name: 'Pista Sol', isActive: true, capacity: 4 as const },
+      { id: 'court-mallorca-3', clubId: 'club-mallorca', courtNumber: 3, name: 'Pista Playa', isActive: true, capacity: 2 as const },
   ];
   initializeMockPadelCourts(initialPadelCourts);
 
   // --- Initialize Users ---
   const initialUserDatabase: import('@/types').UserDB[] = [
     {
-      id: 'user-current',
+      id: 'cmge3nlkv0001tg30p0pw8hdm', // Real database ID for Alex García
       name: 'Alex García',
       email: 'alex.garcia@email.com',
       hashedPassword: 'hashed_password123',
@@ -115,7 +185,7 @@ export function performInitialization() {
       profilePictureUrl: 'https://randomuser.me/api/portraits/men/32.jpg',
       genderCategory: 'masculino',
       createdAt: new Date(),
-      clubId: 'club-1',
+      clubId: 'club-padel-estrella', // Use real club ID
     },
      { id: 'user-2', name: 'Beatriz López', email: 'beatriz.lopez@email.com', hashedPassword: 'hashed_password123', level: '3.5' as import('@/types').MatchPadelLevel, credit: 80.00, loyaltyPoints: 450, profilePictureUrl: 'https://randomuser.me/api/portraits/women/44.jpg', genderCategory: 'femenino', createdAt: new Date(), clubId: 'club-1', },
      { id: 'user-3', name: 'Carlos Fernández', email: 'carlos.fernandez@email.com', hashedPassword: 'hashed_password123', level: '4.5' as import('@/types').MatchPadelLevel, credit: 25.00, loyaltyPoints: 800, profilePictureUrl: 'https://randomuser.me/api/portraits/men/45.jpg', genderCategory: 'masculino', createdAt: new Date(), clubId: 'club-1', },
@@ -148,7 +218,7 @@ export function performInitialization() {
     }));
   initializeMockStudents(initialStudents);
 
-  const currentUserData = initialUserDatabase.find(u => u.id === 'user-current');
+  const currentUserData = initialUserDatabase.find(u => u.id === 'cmge3nlkv0001tg30p0pw8hdm'); // Use real database ID
   initializeMockCurrentUser(currentUserData ? {
       id: currentUserData.id, name: currentUserData.name, email: currentUserData.email, level: currentUserData.level,
       credit: currentUserData.credit, blockedCredit: currentUserData.blockedCredit, loyaltyPoints: currentUserData.loyaltyPoints,

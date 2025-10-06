@@ -1,5 +1,4 @@
 // src/lib/mockDataSources/system.ts
-"use client";
 
 import { isSameDay, format, addDays } from 'date-fns';
 import type { User, Booking, MatchBooking, TimeSlot, Match } from '@/types';
@@ -116,7 +115,7 @@ export const simulateBookings = async (options: {
         .slice(0, Math.ceil(targetActivities.length * (density / 100)));
 
     let bookingsCreated = 0;
-    const allStudents = state.getMockStudents().filter(s => s.id !== 'user-current');
+    const allStudents = state.getMockStudents().filter(s => s.id !== 'user-1');
 
     for (const activity of activitiesToBook) {
         const studentsAlreadyBooked = 'bookedPlayers' in activity ? (activity.bookedPlayers || []).map(p => p.userId) : [];

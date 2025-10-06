@@ -1,6 +1,4 @@
-"use client";
-
-import type { PadelCourt } from '@/types';
+import type { PadelCourt, Club } from '@/types';
 import * as state from './index';
 
 export const fetchPadelCourtsByClub = async (clubId: string): Promise<PadelCourt[]> => {
@@ -18,6 +16,8 @@ export const addPadelCourt = async (courtData: Omit<PadelCourt, 'id' | 'isActive
         ...courtData,
         id: `court-${Date.now()}`,
         isActive: true,
+        // If capacity is not provided, default to 4 players
+        capacity: courtData.capacity || 4,
     };
     state.addPadelCourtToState(newCourt);
     return newCourt;

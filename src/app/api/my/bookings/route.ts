@@ -19,7 +19,8 @@ export async function GET(request: Request) {
       );
     }
 
-    // Usar SQL directo para obtener las reservas del usuario
+    // Obtener solo las reservas que pertenecen a clases COMPLETADAS (clases que ya se llenaron y se confirmaron)
+    // Una clase se considera completada cuando tiene suficientes reservas para funcionar
     const bookings = await prisma.$queryRaw`
       SELECT 
         b.id,
@@ -33,73 +34,102 @@ export async function GET(request: Request) {
         ts.clubId as timeSlot_clubId,
         ts.courtId as timeSlot_courtId,
         ts.instructorId as timeSlot_instructorId,
-        ts.date as timeSlot_date,
-        ts.startTime as timeSlot_startTime,
-        ts.endTime as timeSlot_endTime,
-        ts.maxParticipants as timeSlot_maxParticipants,
-        ts.price as timeSlot_price,
+        ts.start as timeSlot_start,
+        ts.end as timeSlot_end,
+        ts.maxPlayers as timeSlot_maxPlayers,
+        ts.totalPrice as timeSlot_totalPrice,
         ts.level as timeSlot_level,
-        ts.classType as timeSlot_classType,
-        ts.description as timeSlot_description,
+        ts.category as timeSlot_category,
         u.name as instructor_name,
         u.profilePictureUrl as instructor_profilePictureUrl,
-        c.name as court_name
+        c.number as court_number,
+        (SELECT COUNT(*) FROM Booking b2 
+         WHERE b2.timeSlotId = ts.id 
+         AND b2.status IN ('PENDING', 'CONFIRMED')) as total_bookings
       FROM Booking b
       LEFT JOIN TimeSlot ts ON b.timeSlotId = ts.id
       LEFT JOIN Instructor i ON ts.instructorId = i.id
       LEFT JOIN User u ON i.userId = u.id
       LEFT JOIN Court c ON ts.courtId = c.id
       WHERE b.userId = ${userId}
-      ORDER BY b.createdAt DESC
+      AND b.status = 'CONFIRMED'
+      AND (
+        -- Solo mostrar clases que están completas (suficientes reservas para funcionar)
+        (SELECT COUNT(*) FROM Booking b2 
+         WHERE b2.timeSlotId = ts.id 
+         AND b2.status IN ('PENDING', 'CONFIRMED')) >= ts.maxPlayers
+        OR 
+        -- O clases que ya pasaron (sin importar si se completaron)
+        ts.start < datetime('now')
+      )
+      ORDER BY ts.start DESC
     ` as any[];
 
     console.log('📊 Reservas encontradas:', bookings.length);
 
-    // Formatear las reservas al formato que espera el frontend
-    const formattedBookings = bookings.map(booking => {
-      console.log('📋 Processing booking:', booking.id, 'for timeSlot:', booking.timeSlot_id);
+    // Agrupar reservas por timeSlot para evitar duplicados
+    const bookingsByTimeSlot = new Map<string, any[]>();
+    
+    bookings.forEach(booking => {
+      const timeSlotId = booking.timeSlot_id;
+      if (!bookingsByTimeSlot.has(timeSlotId)) {
+        bookingsByTimeSlot.set(timeSlotId, []);
+      }
+      bookingsByTimeSlot.get(timeSlotId)!.push(booking);
+    });
+
+    console.log('📊 TimeSlots únicos encontrados:', bookingsByTimeSlot.size);
+
+    // Formatear cada timeSlot con todas sus reservas agrupadas
+    const formattedBookings = Array.from(bookingsByTimeSlot.entries()).map(([timeSlotId, timeSlotBookings]) => {
+      const firstBooking = timeSlotBookings[0]; // Usar el primer booking para datos del timeSlot
+      console.log('📋 Processing timeSlot:', timeSlotId, 'with', timeSlotBookings.length, 'bookings');
       
-      // Crear fechas completas combinando date + time
-      const dateStr = booking.timeSlot_date instanceof Date 
-        ? booking.timeSlot_date.toISOString().split('T')[0]
-        : booking.timeSlot_date;
-      const startDateTime = `${dateStr}T${booking.timeSlot_startTime}:00`;
-      const endDateTime = `${dateStr}T${booking.timeSlot_endTime}:00`;
+      // Calcular total de jugadores reservados por este usuario
+      const totalGroupSize = timeSlotBookings.reduce((sum, b) => sum + (b.groupSize || 1), 0);
       
+      // Formato exacto que espera ClassCardReal (TimeSlot interface)
       return {
-        id: booking.id,
-        userId: booking.userId,
-        timeSlotId: booking.timeSlotId,
-        groupSize: Number(booking.groupSize),
-        status: booking.status,
-        createdAt: booking.createdAt,
-        updatedAt: booking.updatedAt,
-        timeSlot: {
-          id: booking.timeSlot_id,
-          clubId: booking.timeSlot_clubId,
-          courtId: booking.timeSlot_courtId,
-          instructorId: booking.timeSlot_instructorId,
-          date: booking.timeSlot_date,
-          startTime: booking.timeSlot_startTime,
-          endTime: booking.timeSlot_endTime,
-          // ✅ Agregar start y end que espera el frontend
-          start: startDateTime,
-          end: endDateTime,
-          maxParticipants: Number(booking.timeSlot_maxParticipants),
-          maxPlayers: Number(booking.timeSlot_maxParticipants), // Alias para compatibilidad
-          price: Number(booking.timeSlot_price),
-          totalPrice: Number(booking.timeSlot_price), // Alias para compatibilidad
-          level: booking.timeSlot_level,
-          classType: booking.timeSlot_classType,
-          description: booking.timeSlot_description,
-          instructor: booking.instructor_name ? {
-            name: booking.instructor_name,
-            profilePictureUrl: booking.instructor_profilePictureUrl
-          } : { name: 'Instructor no asignado' },
-          court: booking.court_name ? {
-            name: booking.court_name,
-            number: booking.court_name.replace(/[^0-9]/g, '') || '1'
-          } : { name: 'Cancha no asignada', number: '1' }
+        id: timeSlotId,  // ID original del timeSlot para APIs
+        uniqueKey: `${timeSlotId}-user-bookings`,  // Key único para React
+        clubId: firstBooking.timeSlot_clubId,
+        startTime: new Date(firstBooking.timeSlot_start),
+        endTime: new Date(firstBooking.timeSlot_end),
+        durationMinutes: Math.floor((new Date(firstBooking.timeSlot_end).getTime() - new Date(firstBooking.timeSlot_start).getTime()) / (1000 * 60)),
+        instructorId: firstBooking.timeSlot_instructorId,
+        instructorName: firstBooking.instructor_name || 'Instructor no asignado',
+        maxPlayers: Number(firstBooking.timeSlot_maxPlayers),
+        courtNumber: firstBooking.court_number || 1,
+        level: firstBooking.timeSlot_level || 'abierto',
+        category: firstBooking.timeSlot_category || 'abierta',
+        status: 'confirmed', // Las reservas confirmadas siempre están confirmed
+        totalPrice: Number(firstBooking.timeSlot_totalPrice),
+        
+        // Lista de jugadores reservados (formato que espera ClassCardReal)
+        bookedPlayers: [
+          {
+            userId: firstBooking.userId,
+            name: `Tus reservas (${totalGroupSize} jugador${totalGroupSize > 1 ? 'es' : ''})`,
+            groupSize: totalGroupSize,
+            isSimulated: false,
+            profilePictureUrl: `https://avatar.vercel.sh/reserva-total-${totalGroupSize}.png?size=60`
+          }
+        ],
+        
+        // Metadatos específicos de las reservas del usuario (usando la más reciente)
+        userBooking: {
+          id: timeSlotBookings.map(b => b.id).join(','), // IDs de todas las reservas
+          userId: firstBooking.userId,
+          groupSize: totalGroupSize, // Total de jugadores reservados
+          status: firstBooking.status, // Todas deberían tener el mismo status
+          createdAt: firstBooking.createdAt,
+          bookingDetails: timeSlotBookings.map(b => ({
+            id: b.id,
+            groupSize: b.groupSize || 1,
+            createdAt: b.createdAt
+          })),
+          isCompleted: Number(firstBooking.total_bookings) >= Number(firstBooking.timeSlot_maxPlayers),
+          isPast: new Date(firstBooking.timeSlot_start) < new Date()
         }
       };
     });
