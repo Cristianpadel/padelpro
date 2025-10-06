@@ -1,0 +1,229 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PLAYER
+  INSTRUCTOR
+  CLUB_ADMIN
+  SUPER_ADMIN
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  CLUB_ADMIN
+}
+
+enum UserPreference {
+  NORMAL
+  QUIET
+  SOCIAL
+}
+
+enum UserVisibility {
+  PUBLIC
+  PRIVATE
+  FRIENDS
+}
+
+enum MatchType {
+  CASUAL
+  RANKED
+  TOURNAMENT
+}
+
+enum MatchStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum BookingStatus {
+  CONFIRMED
+  PENDING
+  CANCELLED
+}
+
+model User {
+  id                String          @id @default(cuid())
+  email             String          @unique
+  name              String
+  profilePictureUrl String?
+  phone             String?
+  level             String          @default("principiante")
+  position          String?
+  club              Club            @relation(fields: [clubId], references: [id])
+  clubId            String
+  role              Role            @default(PLAYER)
+  preference        UserPreference  @default(NORMAL)
+  visibility        UserVisibility  @default(PUBLIC)
+  bio               String?
+  credits           Int             @default(0)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  // Relaciones
+  playerMatches     MatchPlayer[]
+  instructorProfile Instructor?
+  bookings          Booking[]
+
+  @@map("User")
+}
+
+model Admin {
+  id          String    @id @default(cuid())
+  email       String    @unique
+  name        String
+  role        AdminRole @default(CLUB_ADMIN)
+  phone       String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relaciones
+  clubs       Club[]
+
+  @@map("Admin")
+}
+
+model Club {
+  id          String   @id @default(cuid())
+  name        String
+  address     String
+  phone       String?
+  email       String?
+  website     String?
+  description String?
+  admin       Admin    @relation(fields: [adminId], references: [id])
+  adminId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relaciones
+  users      User[]
+  courts     Court[]
+  matches    Match[]
+  timeSlots  TimeSlot[]
+  instructors Instructor[]
+
+  @@map("Club")
+}
+
+model Court {
+  id        String   @id @default(cuid())
+  number    Int
+  name      String?
+  club      Club     @relation(fields: [clubId], references: [id])
+  clubId    String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones
+  matches   Match[]
+  timeSlots TimeSlot[]
+
+  @@unique([clubId, number])
+  @@map("Court")
+}
+
+model Match {
+  id          String      @id @default(cuid())
+  club        Club        @relation(fields: [clubId], references: [id])
+  clubId      String
+  court       Court       @relation(fields: [courtId], references: [id])
+  courtId     String
+  startTime   DateTime
+  endTime     DateTime
+  type        MatchType   @default(CASUAL)
+  status      MatchStatus @default(SCHEDULED)
+  isPrivate   Boolean     @default(false)
+  description String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relaciones
+  players MatchPlayer[]
+
+  @@map("Match")
+}
+
+model MatchPlayer {
+  id       String  @id @default(cuid())
+  match    Match   @relation(fields: [matchId], references: [id])
+  matchId  String
+  user     User    @relation(fields: [userId], references: [id])
+  userId   String
+  position String?
+  score    Int?
+
+  @@unique([matchId, userId])
+  @@map("MatchPlayer")
+}
+
+model Instructor {
+  id                String   @id @default(cuid())
+  user              User     @relation(fields: [userId], references: [id])
+  userId            String   @unique
+  name              String
+  specialties       String?
+  experience        String?
+  profilePictureUrl String?
+  hourlyRate        Float?
+  club              Club     @relation(fields: [clubId], references: [id])
+  clubId            String
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relaciones
+  timeSlots TimeSlot[]
+
+  @@map("Instructor")
+}
+
+model TimeSlot {
+  id           String   @id @default(cuid())
+  club         Club     @relation(fields: [clubId], references: [id])
+  clubId       String
+  court        Court    @relation(fields: [courtId], references: [id])
+  courtId      String
+  instructor   Instructor @relation(fields: [instructorId], references: [id])
+  instructorId String
+  start        DateTime
+  end          DateTime
+  maxPlayers   Int      @default(4)
+  totalPrice   Float
+  level        String
+  category     String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relaciones
+  bookings Booking[]
+
+  @@map("TimeSlot")
+}
+
+model Booking {
+  id         String        @id @default(cuid())
+  user       User          @relation(fields: [userId], references: [id])
+  userId     String
+  timeSlot   TimeSlot      @relation(fields: [timeSlotId], references: [id])
+  timeSlotId String
+  status     BookingStatus @default(CONFIRMED)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@unique([userId, timeSlotId])
+  @@map("Booking")
+}

@@ -3,18 +3,27 @@ const prisma = new PrismaClient();
 
 async function createTestUser() {
   try {
-    const testUser = await prisma.user.upsert({
-      where: { email: 'alex@padel.com' },
-      update: {},
-      create: {
-        email: 'alex@padel.com',
-        name: 'Alex García'
-      }
+    console.log('👤 Creating test instructor user...');
+    
+    const userId = `user-test-instructor-${Date.now()}`;
+    const email = 'new-instructor@example.com';
+    const name = 'Carlos Instructor';
+    
+    await prisma.$executeRaw`
+      INSERT INTO User (id, email, name, clubId, level, role, preference, visibility, credits, createdAt, updatedAt)
+      VALUES (${userId}, ${email}, ${name}, 'club-1', 'intermedio', 'PLAYER', 'NORMAL', 'PUBLIC', 0, datetime('now'), datetime('now'))
+    `;
+    
+    console.log('✅ Test instructor user created:', {
+      id: userId,
+      email: email,
+      name: name
     });
     
-    console.log('Usuario de prueba creado/actualizado:', JSON.stringify(testUser, null, 2));
+    return userId;
+    
   } catch (error) {
-    console.error('Error:', error);
+    console.error('❌ Error creating test user:', error);
   } finally {
     await prisma.$disconnect();
   }

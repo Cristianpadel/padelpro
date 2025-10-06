@@ -26,7 +26,6 @@
   "exclude": [
     "node_modules",
     "prisma/**",
-  "src/app/admin/**",
   "src/app/(app)/dashboard/components/ScheduleDisplay.tsx",
   "src/app/(app)/dashboard/components/TimeSlotCard.tsx"
   ]

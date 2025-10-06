@@ -1,0 +1,21 @@
+// Sync script - updates mock localStorage to use real database IDs
+console.log('🔄 SYNC INSTRUCTIONS');
+console.log('='.repeat(50));
+console.log('\n📝 To fix the booking issue, you need to:');
+console.log('\n1. Open your browser (http://localhost:9002)');
+console.log('2. Open Developer Tools (F12)');
+console.log('3. Go to Console tab');
+console.log('4. Run this command:');
+console.log('\n   localStorage.clear(); location.reload();');
+console.log('\n5. Login again with:');
+console.log('   Email: alex.garcia@email.com');
+console.log('   Password: password123');
+console.log('\n✅ After this, bookings will be saved to the real database!');
+console.log('\n' + '='.repeat(50));
+console.log('\n💡 The system has been updated to use:');
+console.log('   - User ID: cmge3nlkv0001tg30p0pw8hdm (real DB)');
+console.log('   - Club ID: club-padel-estrella (real DB)');
+console.log('\n📊 Alex García already has 3 bookings in the database:');
+console.log('   1. CONFIRMED - 6/10/2025, 10:00 - Group of 4');
+console.log('   2. CONFIRMED - 7/10/2025, 10:00 - Group of 2');
+console.log('   3. PENDING   - 8/10/2025, 10:00 - Group of 1');

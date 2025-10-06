@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Bookings API</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .booking { border: 1px solid #ccc; margin: 10px 0; padding: 10px; }
+        .loading { color: blue; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Test Bookings API Direct</h1>
+    <button onclick="loadBookings()">Load Bookings</button>
+    <div id="status"></div>
+    <div id="results"></div>
+
+    <script>
+        async function loadBookings() {
+            const status = document.getElementById('status');
+            const results = document.getElementById('results');
+            
+            status.innerHTML = '<div class="loading">🔄 Loading bookings...</div>';
+            results.innerHTML = '';
+            
+            try {
+                console.log('🔍 Fetching bookings...');
+                
+                const response = await fetch('/api/my/bookings?userId=user-alex-test');
+                console.log('📡 Response:', response);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('📥 Data:', data);
+                
+                status.innerHTML = `<div class="success">✅ Loaded ${data.length} bookings</div>`;
+                
+                if (data.length === 0) {
+                    results.innerHTML = '<p>No bookings found</p>';
+                    return;
+                }
+                
+                let html = '';
+                data.forEach((booking, index) => {
+                    const start = new Date(booking.timeSlot.start);
+                    const end = new Date(booking.timeSlot.end);
+                    
+                    html += `
+                        <div class="booking">
+                            <h3>Booking ${index + 1}</h3>
+                            <p><strong>ID:</strong> ${booking.id}</p>
+                            <p><strong>Status:</strong> ${booking.status}</p>
+                            <p><strong>Date:</strong> ${start.toLocaleDateString()}</p>
+                            <p><strong>Time:</strong> ${start.toLocaleTimeString()} - ${end.toLocaleTimeString()}</p>
+                            <p><strong>Instructor:</strong> ${booking.timeSlot.instructor.name}</p>
+                            <p><strong>Court:</strong> ${booking.timeSlot.court.number}</p>
+                            <p><strong>Price:</strong> €${booking.timeSlot.totalPrice}</p>
+                        </div>
+                    `;
+                });
+                
+                results.innerHTML = html;
+                
+            } catch (error) {
+                console.error('❌ Error:', error);
+                status.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+        
+        // Auto-load on page load
+        window.onload = () => {
+            loadBookings();
+        };
+    </script>
+</body>
+</html>

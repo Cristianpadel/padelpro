@@ -19,10 +19,7 @@ import { calculateActivityPrice } from './clubs';
 
 export const fetchMatches = async (clubId?: string): Promise<Match[]> => {
     await new Promise(resolve => setTimeout(resolve, config.MINIMAL_DELAY));
-    // Ejecutar migración de avatares antes de devolver los matches
-    if (typeof (state as any).migrateBookedPlayersProfilePictures === 'function') {
-        (state as any).migrateBookedPlayersProfilePictures();
-    }
+    // Migration removed - no longer needed
     let matchesToReturn = JSON.parse(JSON.stringify(state.getMockMatches())) as Match[];
     if (clubId) {
         matchesToReturn = matchesToReturn.filter(match => match.clubId === clubId);
@@ -145,9 +142,7 @@ export const bookMatch = async (
     if (typeof (state as any).updateMatchInState === 'function') {
         (state as any).updateMatchInState(match.id, match);
     }
-    if (typeof (state as any).migrateBookedPlayersProfilePictures === 'function') {
-        (state as any).migrateBookedPlayersProfilePictures();
-    }
+    // Migration removed
 
     // 8. Si el usuario es el primero en inscribirse (tanto en placeholder como en partidas vacías)
     const nowHasOnePlayer = (match.bookedPlayers || []).filter(p => p.userId && p.userId.trim() !== '').length === 1;
@@ -178,10 +173,7 @@ export const bookMatch = async (
     const uniquePlayerIds = new Set(validPlayers.map((p) => p.userId));
     let shouldConfirm = validPlayers.length === 4 && uniquePlayerIds.size === 4;
 
-    // 10. Persistir el match tras inscripción (siempre)
-    if (typeof (state as any).persistMockMatches === 'function') {
-        (state as any).persistMockMatches();
-    }
+    // 10. Persistence removed - no longer needed
 
     let newBooking: MatchBooking | null = null;
     if (shouldConfirm) {
@@ -252,16 +244,12 @@ export const bookMatch = async (
         name: p.name,
         profilePictureUrl: p.profilePictureUrl
     }));
-    if (typeof (state as any).migrateBookedPlayersProfilePictures === 'function') {
-        (state as any).migrateBookedPlayersProfilePictures();
-    }
+    // Migration removed
     // Asegurar que el estado del match queda actualizado con totalCourtFee y jugadores definitivos
     if (typeof (state as any).updateMatchInState === 'function') {
         (state as any).updateMatchInState(match.id, match);
     }
-    if (typeof (state as any).persistMockMatches === 'function') {
-        (state as any).persistMockMatches();
-    }
+    // Persistence removed
 
     // Si era una propuesta original, crear la nueva partida abierta para otros usuarios
     if (isOriginalProposal) {
@@ -293,15 +281,11 @@ export const bookMatch = async (
         name: p.name,
         profilePictureUrl: p.profilePictureUrl
     }));
-    if (typeof (state as any).migrateBookedPlayersProfilePictures === 'function') {
-        (state as any).migrateBookedPlayersProfilePictures();
-    }
+    // Migration removed
     if (typeof (state as any).updateMatchInState === 'function') {
         (state as any).updateMatchInState(match.id, match);
     }
-    if (typeof (state as any).persistMockMatches === 'function') {
-        (state as any).persistMockMatches();
-    }
+    // Persistence removed
     // DEBUG: Log temporal para depuración de bookedPlayers tras inscripción
     // eslint-disable-next-line no-console
     console.log('DEBUG [bookMatch] bookedPlayers:', JSON.stringify(match.bookedPlayers));
@@ -1164,9 +1148,7 @@ export const updateMatchLevelAndCategory = async (
     }
 
     state.updateMatchInState(matchId, match);
-    if (typeof (state as any).persistMockMatches === 'function') {
-        (state as any).persistMockMatches();
-    }
+    // Persistence removed
     return { success: true, updatedMatch: match };
 };
 
@@ -1400,3 +1382,5 @@ export const fillMatchAndMakePrivate = async (userId: string, matchId: string): 
 
   return { updatedMatch: match, cost: totalCost };
 };
+
+

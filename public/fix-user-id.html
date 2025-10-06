@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fix User ID in LocalStorage</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        button {
+            background: #0070f3;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0051cc;
+        }
+        .success {
+            background: #10b981;
+            padding: 15px;
+            border-radius: 6px;
+            color: white;
+            margin: 15px 0;
+            display: none;
+        }
+        .info {
+            background: #3b82f6;
+            padding: 15px;
+            border-radius: 6px;
+            color: white;
+            margin: 15px 0;
+        }
+        .code {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            margin: 10px 0;
+            border: 1px solid #e5e7eb;
+        }
+        .warning {
+            background: #fbbf24;
+            padding: 15px;
+            border-radius: 6px;
+            color: #000;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Fix User ID LocalStorage</h1>
+        
+        <div class="warning">
+            <strong>⚠️ Importante:</strong> Esta página actualiza el ID del usuario en localStorage para que coincida con la base de datos real.
+        </div>
+
+        <div class="info">
+            <strong>📊 Información Actual:</strong>
+            <div class="code" id="current-info">Cargando...</div>
+        </div>
+
+        <button onclick="fixUserId()">✅ Actualizar ID a Base de Datos Real</button>
+        <button onclick="clearAll()">🗑️ Limpiar Todo el LocalStorage</button>
+        <button onclick="checkStatus()">🔍 Ver Estado Actual</button>
+
+        <div class="success" id="success-msg">
+            ✅ ¡IDs actualizados correctamente! Recarga la página de la aplicación.
+        </div>
+    </div>
+
+    <script>
+        const OLD_ID = 'user-1';
+        const NEW_ID = 'cmge3nlkv0001tg30p0pw8hdm';
+        const OLD_CLUB_ID = 'club-1';
+        const NEW_CLUB_ID = 'club-padel-estrella';
+
+        function checkStatus() {
+            const students = JSON.parse(localStorage.getItem('padelpro_mock_students') || '[]');
+            const userdb = JSON.parse(localStorage.getItem('padelpro_mock_userdb') || '[]');
+            const bookings = JSON.parse(localStorage.getItem('padelpro_mock_bookings') || '[]');
+
+            const alex = students.find(s => s.email === 'alex.garcia@email.com') || 
+                        userdb.find(u => u.email === 'alex.garcia@email.com');
+
+            let info = '<strong>Usuario Alex García:</strong><br>';
+            if (alex) {
+                info += `- ID: ${alex.id}<br>`;
+                info += `- Email: ${alex.email}<br>`;
+                info += `- Club ID: ${alex.clubId || 'N/A'}<br>`;
+                info += `- Necesita actualización: ${alex.id === OLD_ID ? '❌ SÍ' : '✅ NO'}<br>`;
+            } else {
+                info += '- ❌ No encontrado en localStorage<br>';
+            }
+
+            info += `<br><strong>Reservas en localStorage:</strong> ${bookings.length}<br>`;
+            if (bookings.length > 0) {
+                info += `- Con ID antiguo (${OLD_ID}): ${bookings.filter(b => b.userId === OLD_ID).length}<br>`;
+                info += `- Con ID nuevo (${NEW_ID}): ${bookings.filter(b => b.userId === NEW_ID).length}<br>`;
+            }
+
+            document.getElementById('current-info').innerHTML = info;
+        }
+
+        function fixUserId() {
+            try {
+                // Actualizar students
+                let students = JSON.parse(localStorage.getItem('padelpro_mock_students') || '[]');
+                students = students.map(student => {
+                    if (student.id === OLD_ID || student.email === 'alex.garcia@email.com') {
+                        return {
+                            ...student,
+                            id: NEW_ID,
+                            clubId: NEW_CLUB_ID
+                        };
+                    }
+                    return student;
+                });
+                localStorage.setItem('padelpro_mock_students', JSON.stringify(students));
+
+                // Actualizar userdb
+                let userdb = JSON.parse(localStorage.getItem('padelpro_mock_userdb') || '[]');
+                userdb = userdb.map(user => {
+                    if (user.id === OLD_ID || user.email === 'alex.garcia@email.com') {
+                        return {
+                            ...user,
+                            id: NEW_ID,
+                            clubId: NEW_CLUB_ID
+                        };
+                    }
+                    return user;
+                });
+                localStorage.setItem('padelpro_mock_userdb', JSON.stringify(userdb));
+
+                // Actualizar bookings
+                let bookings = JSON.parse(localStorage.getItem('padelpro_mock_bookings') || '[]');
+                bookings = bookings.map(booking => {
+                    if (booking.userId === OLD_ID) {
+                        return {
+                            ...booking,
+                            userId: NEW_ID
+                        };
+                    }
+                    return booking;
+                });
+                localStorage.setItem('padelpro_mock_bookings', JSON.stringify(bookings));
+
+                // Actualizar match bookings
+                let matchBookings = JSON.parse(localStorage.getItem('padelpro_mock_match_bookings') || '[]');
+                matchBookings = matchBookings.map(booking => {
+                    if (booking.userId === OLD_ID) {
+                        return {
+                            ...booking,
+                            userId: NEW_ID
+                        };
+                    }
+                    return booking;
+                });
+                localStorage.setItem('padelpro_mock_match_bookings', JSON.stringify(matchBookings));
+
+                document.getElementById('success-msg').style.display = 'block';
+                setTimeout(checkStatus, 100);
+
+                console.log('✅ IDs actualizados correctamente');
+                console.log('📊 Nuevo ID:', NEW_ID);
+                console.log('🏢 Nuevo Club ID:', NEW_CLUB_ID);
+            } catch (error) {
+                console.error('❌ Error actualizando IDs:', error);
+                alert('Error actualizando IDs: ' + error.message);
+            }
+        }
+
+        function clearAll() {
+            if (confirm('⚠️ ¿Estás seguro? Esto eliminará TODOS los datos del localStorage.')) {
+                localStorage.clear();
+                alert('✅ LocalStorage limpiado. Recarga la aplicación.');
+                checkStatus();
+            }
+        }
+
+        // Cargar estado inicial
+        checkStatus();
+    </script>
+</body>
+</html>
